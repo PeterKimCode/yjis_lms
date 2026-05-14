@@ -45,6 +45,24 @@ Copy `.env.example` to `.env.local` and replace placeholder values before runnin
 
 Security warning: PostgreSQL, Redis, and MinIO are local infrastructure services and must not be exposed publicly. The Compose ports are bound to `127.0.0.1` only. When remote access is needed later, expose only the Next.js app through Cloudflare Tunnel.
 
+## Demo Seed Data
+
+After the database is migrated, load local-only demo data:
+
+```bash
+npx prisma db seed
+```
+
+The seed creates demo users for local development only. Do not reuse these credentials outside your PC.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| SUPER_ADMIN | `super.admin@demo.local` | `DemoPass123!` |
+| SCHOOL_ADMIN | `school.admin@demo.local` | `DemoPass123!` |
+| INSTRUCTOR | `instructor@demo.local` | `DemoPass123!` |
+| STUDENT | `student@demo.local` | `DemoPass123!` |
+| PARENT | `parent@demo.local` | `DemoPass123!` |
+
 ## Project Structure
 
 - `src/app` - App Router pages, layouts, and route handlers.
