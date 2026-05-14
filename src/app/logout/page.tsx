@@ -19,7 +19,7 @@ export default async function LogoutPage() {
             End the current LMS session for {session.user.email}.
           </p>
         </div>
-        <LogoutButton />
+        <LogoutButton className="w-full" />
       </div>
     </main>
   )

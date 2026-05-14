@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { LogIn, LogOut } from "lucide-react"
+import { LogIn } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { LogoutButton } from "@/modules/auth/logout-button"
 import { getCurrentSession } from "@/modules/auth/session"
 
 export async function AppNavigation() {
@@ -23,12 +24,7 @@ export async function AppNavigation() {
                 <p className="text-sm font-medium">{session.user.name}</p>
                 <p className="text-xs text-muted-foreground">{roleSummary}</p>
               </div>
-              <Button asChild size="sm" variant="outline">
-                <Link href="/logout">
-                  <LogOut />
-                  Logout
-                </Link>
-              </Button>
+              <LogoutButton size="sm" />
             </>
           ) : (
             <Button asChild size="sm">
