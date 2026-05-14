@@ -26,6 +26,25 @@ npm run build
 npm run start
 ```
 
+## Local Infrastructure
+
+Start PostgreSQL, Redis, and MinIO for local development:
+
+```bash
+docker compose up -d
+docker ps
+```
+
+Copy `.env.example` to `.env.local` and replace placeholder values before running the app. The default local services are:
+
+- PostgreSQL: `127.0.0.1:5432`, database `lms_db`, user `lms`
+- Redis: `127.0.0.1:6379`
+- MinIO API: `http://127.0.0.1:9000`
+- MinIO console: `http://127.0.0.1:9001`
+- MinIO bucket name: `lms-files`
+
+Security warning: PostgreSQL, Redis, and MinIO are local infrastructure services and must not be exposed publicly. The Compose ports are bound to `127.0.0.1` only. When remote access is needed later, expose only the Next.js app through Cloudflare Tunnel.
+
 ## Project Structure
 
 - `src/app` - App Router pages, layouts, and route handlers.
