@@ -475,82 +475,135 @@ async function findOrCreateClassSection(input: {
 }
 
 async function ensureDefaultPolicies(organizationId: string) {
-  await ensurePolicy("academicPolicy", organizationId, "Default Academic Policy", {
+  const academicPolicy = await prisma.academicPolicy.findFirst({
+    where: { organizationId, name: "Default Academic Policy" },
+  })
+  const academicPolicyData = {
     settings: {
       academicCalendar: "semester",
       supportsK12ReportCards: true,
       supportsUniversityTranscripts: true,
     },
-  })
+  }
 
-  await ensurePolicy("attendancePolicy", organizationId, "Default Attendance Policy", {
+  if (academicPolicy) {
+    await prisma.academicPolicy.update({
+      where: { id: academicPolicy.id },
+      data: academicPolicyData,
+    })
+  } else {
+    await prisma.academicPolicy.create({
+      data: {
+        organizationId,
+        name: "Default Academic Policy",
+        ...academicPolicyData,
+      },
+    })
+  }
+
+  const attendancePolicy = await prisma.attendancePolicy.findFirst({
+    where: { organizationId, name: "Default Attendance Policy" },
+  })
+  const attendancePolicyData = {
     lateAfterMinutes: 10,
     absenceAfterMinutes: 30,
     settings: {
       allowInstructorEdits: true,
       requireAbsenceReason: true,
     },
-  })
+  }
 
-  await ensurePolicy(
-    "videoCompletionPolicy",
-    organizationId,
-    "Default Video Completion Policy",
-    {
-      requiredPercentage: "90.00",
-      settings: {
-        completionRate: 90,
+  if (attendancePolicy) {
+    await prisma.attendancePolicy.update({
+      where: { id: attendancePolicy.id },
+      data: attendancePolicyData,
+    })
+  } else {
+    await prisma.attendancePolicy.create({
+      data: {
+        organizationId,
+        name: "Default Attendance Policy",
+        ...attendancePolicyData,
       },
-    }
-  )
+    })
+  }
 
-  await ensurePolicy("gradingPolicy", organizationId, "Default Grading Policy", {
+  const videoPolicy = await prisma.videoCompletionPolicy.findFirst({
+    where: { organizationId, name: "Default Video Completion Policy" },
+  })
+  const videoPolicyData = {
+    requiredPercentage: "90.00",
+    settings: {
+      completionRate: 90,
+    },
+  }
+
+  if (videoPolicy) {
+    await prisma.videoCompletionPolicy.update({
+      where: { id: videoPolicy.id },
+      data: videoPolicyData,
+    })
+  } else {
+    await prisma.videoCompletionPolicy.create({
+      data: {
+        organizationId,
+        name: "Default Video Completion Policy",
+        ...videoPolicyData,
+      },
+    })
+  }
+
+  const gradingPolicy = await prisma.gradingPolicy.findFirst({
+    where: { organizationId, name: "Default Grading Policy" },
+  })
+  const gradingPolicyData = {
     gpaScale: "4.50",
     settings: {
       rounding: "half-up",
       publishFinalGradesAfterReview: true,
     },
-  })
+  }
 
-  await ensurePolicy("messagingPolicy", organizationId, "Default Messaging Policy", {
+  if (gradingPolicy) {
+    await prisma.gradingPolicy.update({
+      where: { id: gradingPolicy.id },
+      data: gradingPolicyData,
+    })
+  } else {
+    await prisma.gradingPolicy.create({
+      data: {
+        organizationId,
+        name: "Default Grading Policy",
+        ...gradingPolicyData,
+      },
+    })
+  }
+
+  const messagingPolicy = await prisma.messagingPolicy.findFirst({
+    where: { organizationId, name: "Default Messaging Policy" },
+  })
+  const messagingPolicyData = {
     allowStudentDirectMessages: false,
     settings: {
       allowParentInstructorMessages: true,
       retainMessages: true,
     },
-  })
-}
-
-async function ensurePolicy(
-  model:
-    | "academicPolicy"
-    | "attendancePolicy"
-    | "videoCompletionPolicy"
-    | "gradingPolicy"
-    | "messagingPolicy",
-  organizationId: string,
-  name: string,
-  data: Record<string, unknown>
-) {
-  const delegate = prisma[model]
-  const existing = await delegate.findFirst({
-    where: { organizationId, name },
-  })
-
-  if (existing) {
-    return delegate.update({
-      where: { id: existing.id },
-      data,
-    })
   }
 
-  return delegate.create({
-    data: {
+  if (messagingPolicy) {
+    await prisma.messagingPolicy.update({
+      where: { id: messagingPolicy.id },
+      data: messagingPolicyData,
+    })
+  } else {
+    await prisma.messagingPolicy.create({
+      data: {
       organizationId,
-      name,
-      ...data,
-    },
-  })
+        name: "Default Messaging Policy",
+        ...messagingPolicyData,
+      },
+    })
+  }
 }
 
 async function ensureDefaultGradingScale(organizationId: string) {
