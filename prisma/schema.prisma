@@ -678,28 +678,34 @@ model ClassSession {
 }
 
 model Lesson {
-  id             String             @id @default(cuid())
-  organizationId String
-  classSectionId String
-  createdById    String?
-  title          String
-  description    String?
-  sequence       Int                @default(1)
-  contentType    LessonContentType  @default(TEXT)
-  availableFrom  DateTime?
-  availableUntil DateTime?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  classSection   ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
-  createdBy      User?              @relation("LessonCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  materials      LearningMaterial[]
-  videoProgress  VideoProgress[]
-  assignments    Assignment[]
-  quizzes        Quiz[]
+  id               String             @id @default(cuid())
+  organizationId   String
+  classSectionId   String
+  createdById      String?
+  title            String
+  description      String?
+  sequence         Int                @default(1)
+  contentType      LessonContentType  @default(TEXT)
+  videoUrl         String?
+  videoFileAssetId String?
+  durationSeconds  Int?
+  isPublished      Boolean            @default(false)
+  availableFrom    DateTime?
+  availableUntil   DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection     ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  createdBy        User?              @relation("LessonCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  videoFileAsset   FileAsset?         @relation(fields: [videoFileAssetId], references: [id], onDelete: SetNull)
+  materials        LearningMaterial[]
+  videoProgress    VideoProgress[]
+  assignments      Assignment[]
+  quizzes          Quiz[]
 
   @@index([organizationId])
   @@index([classSectionId])
+  @@index([videoFileAssetId])
   @@index([createdAt])
 }
 
@@ -728,28 +734,32 @@ model LearningMaterial {
 }
 
 model VideoProgress {
-  id              String            @id @default(cuid())
-  organizationId  String
-  lessonId        String?
-  materialId      String?
-  studentId       String
-  watchedSeconds  Int               @default(0)
-  totalSeconds    Int?
-  percentComplete Decimal           @default(0) @db.Decimal(5, 2)
-  completedAt     DateTime?
-  lastWatchedAt   DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  lesson          Lesson?           @relation(fields: [lessonId], references: [id], onDelete: SetNull)
-  material        LearningMaterial? @relation(fields: [materialId], references: [id], onDelete: SetNull)
-  student         User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id                  String            @id @default(cuid())
+  organizationId      String
+  lessonId            String?
+  materialId          String?
+  studentId           String
+  watchedSeconds      Int               @default(0)
+  durationSeconds     Int?
+  totalSeconds        Int?
+  progressRate        Decimal           @default(0) @db.Decimal(5, 2)
+  percentComplete     Decimal           @default(0) @db.Decimal(5, 2)
+  completed           Boolean           @default(false)
+  completedAt         DateTime?
+  lastPositionSeconds Int               @default(0)
+  lastWatchedAt       DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  organization        Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lesson              Lesson?           @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  material            LearningMaterial? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([studentId, materialId])
   @@index([organizationId])
   @@index([lessonId])
   @@index([studentId])
   @@index([createdAt])
+  @@unique([studentId, materialId])
 }
 
 model AttendanceSession {
@@ -1520,6 +1530,7 @@ model FileAsset {
   classSection           ClassSection?         @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
   uploadedBy             User?                 @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
   avatarUsers            User[]                @relation("UserAvatar")
+  lessons                Lesson[]
   learningMaterials      LearningMaterial[]
   assignmentSubmission   AssignmentSubmission? @relation(fields: [assignmentSubmissionId], references: [id], onDelete: SetNull)
   assignmentSubmissionId String?

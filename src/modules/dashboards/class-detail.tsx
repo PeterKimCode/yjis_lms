@@ -1,9 +1,15 @@
+import { LessonContentType } from "@prisma/client"
 import { notFound } from "next/navigation"
 
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { deleteLesson, saveLesson } from "@/modules/learning/actions"
 import {
   DashboardPage,
   EmptyState,
   MetricCard,
+  OpenButton,
   SectionBlock,
   SimpleTable,
   TableCell,
@@ -15,25 +21,37 @@ import {
   getClassSectionDetail,
 } from "@/modules/dashboards/data"
 
+type ClassSectionDetailMode = "instructor" | "student"
+
+type LessonForDetail = NonNullable<
+  Awaited<ReturnType<typeof getClassSectionDetail>>
+>["lessons"][number]
+
 export async function ClassSectionDetail({
   userId,
   classSectionId,
+  mode = "student",
 }: {
   userId: string
   classSectionId: string
+  mode?: ClassSectionDetailMode
 }) {
-  const section = await getClassSectionDetail(userId, classSectionId)
+  const section = await getClassSectionDetail(userId, classSectionId, {
+    publishedLessonsOnly: mode === "student",
+  })
 
   if (!section) {
     notFound()
   }
 
+  const enrollmentCount = section.enrollments.length
+
   return (
     <DashboardPage
       title={section.name}
-      description={`${section.course.title} · ${
+      description={`${section.course.title} - ${
         section.campus?.name ?? "Organization-wide"
-      } · ${section.term?.name ?? "No term"}`}
+      } - ${section.term?.name ?? "No term"}`}
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Students" value={section._count.enrollments} />
@@ -44,17 +62,60 @@ export async function ClassSectionDetail({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionBlock title="Lessons">
-          <SimpleTable
-            empty="No lessons yet."
-            headers={["Title", "Type", "Materials"]}
-            rows={section.lessons.map((lesson) => (
-              <TableRow key={lesson.id}>
-                <TableCell className="font-medium">{lesson.title}</TableCell>
-                <TableCell>{lesson.contentType}</TableCell>
-                <TableCell>{lesson.materials.length}</TableCell>
-              </TableRow>
-            ))}
-          />
+          <div className="space-y-4">
+            {mode === "instructor" ? (
+              <LessonForm classSectionId={section.id} />
+            ) : null}
+            <SimpleTable
+              empty={
+                mode === "instructor"
+                  ? "No lessons yet."
+                  : "No published lessons yet."
+              }
+              headers={
+                mode === "instructor"
+                  ? ["Order", "Title", "Type", "Published", "Completion", "Edit"]
+                  : ["Order", "Title", "Type", "Duration", "Open"]
+              }
+              rows={section.lessons.map((lesson) => {
+                const completedCount = lesson.videoProgress.filter(
+                  (progress) => progress.completed
+                ).length
+
+                return (
+                  <TableRow key={lesson.id}>
+                    <TableCell>{lesson.sequence}</TableCell>
+                    <TableCell className="font-medium">{lesson.title}</TableCell>
+                    <TableCell>{lesson.contentType}</TableCell>
+                    {mode === "instructor" ? (
+                      <>
+                        <TableCell>{lesson.isPublished ? "Yes" : "No"}</TableCell>
+                        <TableCell>
+                          {completedCount}/{enrollmentCount}
+                        </TableCell>
+                        <TableCell>
+                          <LessonForm classSectionId={section.id} lesson={lesson} />
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>
+                          {lesson.durationSeconds
+                            ? `${lesson.durationSeconds}s`
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <OpenButton
+                            href={`/student/classes/${section.id}/lessons/${lesson.id}`}
+                          />
+                        </TableCell>
+                      </>
+                    )}
+                  </TableRow>
+                )
+              })}
+            />
+          </div>
         </SectionBlock>
 
         <SectionBlock title="Sessions">
@@ -97,7 +158,9 @@ export async function ClassSectionDetail({
               <TableRow key={assignment.id}>
                 <TableCell className="font-medium">{assignment.title}</TableCell>
                 <TableCell>{formatDate(assignment.dueAt)}</TableCell>
-                <TableCell>{assignment.pointsPossible?.toString() ?? "-"}</TableCell>
+                <TableCell>
+                  {assignment.pointsPossible?.toString() ?? "-"}
+                </TableCell>
               </TableRow>
             ))}
           />
@@ -139,7 +202,7 @@ export async function ClassSectionDetail({
                   className="rounded-md border bg-background px-3 py-2 text-sm"
                   key={board.id}
                 >
-                  {board.name} · {board.type}
+                  {board.name} - {board.type}
                 </span>
               ))}
             </div>
@@ -149,5 +212,106 @@ export async function ClassSectionDetail({
         </SectionBlock>
       </div>
     </DashboardPage>
+  )
+}
+
+function LessonForm({
+  classSectionId,
+  lesson,
+}: {
+  classSectionId: string
+  lesson?: LessonForDetail
+}) {
+  const isEditing = Boolean(lesson)
+
+  return (
+    <form action={saveLesson} className="space-y-3 rounded-md border p-3">
+      <input name="id" type="hidden" value={lesson?.id ?? ""} />
+      <input name="classSectionId" type="hidden" value={classSectionId} />
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Title</span>
+          <Input name="title" required defaultValue={lesson?.title ?? ""} />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Order</span>
+          <Input
+            min={1}
+            name="sequence"
+            required
+            type="number"
+            defaultValue={lesson?.sequence ?? 1}
+          />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Content type</span>
+          <select
+            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            name="contentType"
+            defaultValue={lesson?.contentType ?? LessonContentType.TEXT}
+          >
+            {Object.values(LessonContentType).map((contentType) => (
+              <option key={contentType} value={contentType}>
+                {contentType}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="font-medium">Duration seconds</span>
+          <Input
+            min={0}
+            name="durationSeconds"
+            type="number"
+            defaultValue={lesson?.durationSeconds ?? ""}
+          />
+        </label>
+        <label className="space-y-1 text-sm md:col-span-2">
+          <span className="font-medium">Video URL</span>
+          <Input name="videoUrl" defaultValue={lesson?.videoUrl ?? ""} />
+        </label>
+        <label className="space-y-1 text-sm md:col-span-2">
+          <span className="font-medium">Video file ID</span>
+          <Input
+            name="videoFileAssetId"
+            defaultValue={lesson?.videoFileAssetId ?? ""}
+          />
+        </label>
+        <label className="space-y-1 text-sm md:col-span-2">
+          <span className="font-medium">Description</span>
+          <Textarea
+            name="description"
+            rows={3}
+            defaultValue={lesson?.description ?? ""}
+          />
+        </label>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          className="size-4"
+          name="isPublished"
+          type="checkbox"
+          defaultChecked={lesson?.isPublished ?? false}
+        />
+        Published
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" type="submit">
+          {isEditing ? "Save lesson" : "Create lesson"}
+        </Button>
+        {lesson ? (
+          <Button
+            formAction={deleteLesson}
+            name="lessonId"
+            size="sm"
+            type="submit"
+            value={lesson.id}
+            variant="destructive"
+          >
+            Delete
+          </Button>
+        ) : null}
+      </div>
+    </form>
   )
 }

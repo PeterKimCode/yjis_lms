@@ -11,5 +11,11 @@ export default async function StudentClassDetailPage({
   const user = await requireAnyRole([UserRole.STUDENT])
   const { classSectionId } = await params
 
-  return <ClassSectionDetail classSectionId={classSectionId} userId={user.id} />
+  return (
+    <ClassSectionDetail
+      classSectionId={classSectionId}
+      mode="student"
+      userId={user.id}
+    />
+  )
 }

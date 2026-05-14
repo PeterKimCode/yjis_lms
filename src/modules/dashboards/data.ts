@@ -117,7 +117,8 @@ export async function getParentStudents() {
 
 export async function getClassSectionDetail(
   userId: string,
-  classSectionId: string
+  classSectionId: string,
+  options: { publishedLessonsOnly?: boolean } = {}
 ) {
   if (!(await canViewClassSection(userId, classSectionId))) {
     return null
@@ -135,10 +136,22 @@ export async function getClassSectionDetail(
         },
       },
       lessons: {
+        where: options.publishedLessonsOnly ? { isPublished: true } : undefined,
         orderBy: { sequence: "asc" },
         include: {
           materials: true,
+          videoProgress: {
+            include: {
+              student: true,
+            },
+          },
         },
+      },
+      enrollments: {
+        include: {
+          student: true,
+        },
+        orderBy: { enrolledAt: "asc" },
       },
       sessions: {
         orderBy: { startsAt: "asc" },
@@ -165,6 +178,44 @@ export async function getClassSectionDetail(
         select: {
           enrollments: true,
         },
+      },
+    },
+  })
+}
+
+export async function getPublishedLessonForStudent({
+  studentId,
+  classSectionId,
+  lessonId,
+}: {
+  studentId: string
+  classSectionId: string
+  lessonId: string
+}) {
+  if (!(await canViewClassSection(studentId, classSectionId))) {
+    return null
+  }
+
+  return getPrismaClient().lesson.findFirst({
+    where: {
+      id: lessonId,
+      classSectionId,
+      isPublished: true,
+    },
+    include: {
+      classSection: {
+        include: {
+          campus: true,
+          course: true,
+          term: true,
+        },
+      },
+      videoFileAsset: true,
+      videoProgress: {
+        where: {
+          studentId,
+        },
+        take: 1,
       },
     },
   })
