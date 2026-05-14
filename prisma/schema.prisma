@@ -1,0 +1,1536 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum InstitutionType {
+  ELEMENTARY
+  MIDDLE
+  HIGH
+  UNIVERSITY
+  ACADEMY
+  CORPORATE
+  ONLINE_SCHOOL
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  SCHOOL_ADMIN
+  ACADEMIC_STAFF
+  INSTRUCTOR
+  HOMEROOM_TEACHER
+  STUDENT
+  PARENT
+}
+
+enum DeliveryMode {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EARLY_LEAVE
+  ABSENT
+  EXCUSED
+  SICK_LEAVE
+  OFFICIAL_ABSENCE
+  PENDING
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  DROPPED
+  COMPLETED
+  WITHDRAWN
+}
+
+enum LessonContentType {
+  VIDEO
+  TEXT
+  FILE
+  QUIZ
+  ASSIGNMENT
+  LIVE_SESSION
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum FinalGradeStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  PUBLISHED
+  FINALIZED
+  CORRECTION_REQUESTED
+  CORRECTED
+}
+
+enum DocumentType {
+  REPORT_CARD
+  TRANSCRIPT
+  CERTIFICATE
+  ATTENDANCE_REPORT
+}
+
+enum DocumentStatus {
+  PENDING
+  GENERATED
+  FAILED
+  VOIDED
+}
+
+enum BoardType {
+  NOTICE
+  GENERAL
+  QNA
+  MATERIAL
+  HOMEROOM
+  CLASS_SECTION
+}
+
+enum BoardScopeType {
+  ORGANIZATION
+  CAMPUS
+  GRADE_LEVEL
+  HOMEROOM
+  CLASS_SECTION
+}
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  HOMEROOM
+  CLASS_SECTION
+  SUPPORT
+}
+
+enum NotificationType {
+  NEW_POST
+  NEW_COMMENT
+  NEW_MESSAGE
+  ASSIGNMENT_DUE
+  QUIZ_OPENED
+  GRADE_PUBLISHED
+  ATTENDANCE_CHANGED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+  KAKAO
+}
+
+enum FileVisibility {
+  PRIVATE
+  ORGANIZATION
+  CLASS_SECTION
+  PUBLIC
+}
+
+model Organization {
+  id                      String                   @id @default(cuid())
+  name                    String
+  slug                    String                   @unique
+  institutionType         InstitutionType
+  defaultLocale           String                   @default("ko-KR")
+  timezone                String                   @default("Asia/Seoul")
+  isActive                Boolean                  @default(true)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  campuses                Campus[]
+  users                   User[]
+  roleAssignments         UserRoleAssignment[]
+  academicYears           AcademicYear[]
+  terms                   Term[]
+  gradeLevels             GradeLevel[]
+  homerooms               Homeroom[]
+  departments             Department[]
+  programs                Program[]
+  subjects                Subject[]
+  courses                 Course[]
+  classSections           ClassSection[]
+  classSessions           ClassSession[]
+  enrollments             Enrollment[]
+  lessons                 Lesson[]
+  learningMaterials       LearningMaterial[]
+  videoProgress           VideoProgress[]
+  attendanceSessions      AttendanceSession[]
+  attendanceRecords       AttendanceRecord[]
+  assignments             Assignment[]
+  submissions             AssignmentSubmission[]
+  quizzes                 Quiz[]
+  questions               Question[]
+  quizAttempts            QuizAttempt[]
+  exams                   Exam[]
+  gradeCategories         GradeCategory[]
+  gradeItems              GradeItem[]
+  gradeScores             GradeScore[]
+  gradingScales           GradingScale[]
+  finalGrades             FinalGrade[]
+  transcripts             Transcript[]
+  transcriptTerms         TranscriptTerm[]
+  transcriptItems         TranscriptItem[]
+  reportCards             ReportCard[]
+  reportCardItems         ReportCardItem[]
+  generatedDocuments      GeneratedDocument[]
+  boards                  Board[]
+  posts                   Post[]
+  comments                Comment[]
+  conversations           Conversation[]
+  messages                Message[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  academicPolicies        AcademicPolicy[]
+  attendancePolicies      AttendancePolicy[]
+  videoCompletionPolicies VideoCompletionPolicy[]
+  gradingPolicies         GradingPolicy[]
+  messagingPolicies       MessagingPolicy[]
+  fileAssets              FileAsset[]
+  studentProfiles         StudentProfile[]
+  instructorProfiles      InstructorProfile[]
+  parentStudentRelations  ParentStudentRelation[]
+  classSectionInstructors ClassSectionInstructor[]
+
+  @@index([institutionType])
+  @@index([createdAt])
+}
+
+model Campus {
+  id                 String               @id @default(cuid())
+  organizationId     String
+  name               String
+  code               String?
+  address            String?
+  phone              String?
+  isActive           Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleAssignments    UserRoleAssignment[]
+  studentProfiles    StudentProfile[]
+  instructorProfiles InstructorProfile[]
+  academicYears      AcademicYear[]
+  terms              Term[]
+  gradeLevels        GradeLevel[]
+  homerooms          Homeroom[]
+  departments        Department[]
+  programs           Program[]
+  courses            Course[]
+  classSections      ClassSection[]
+  classSessions      ClassSession[]
+  enrollments        Enrollment[]
+  attendanceSessions AttendanceSession[]
+  attendanceRecords  AttendanceRecord[]
+  boards             Board[]
+  conversations      Conversation[]
+  fileAssets         FileAsset[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model User {
+  id                       String                    @id @default(cuid())
+  organizationId           String
+  email                    String?
+  username                 String?
+  passwordHash             String?
+  name                     String
+  phone                    String?
+  avatarFileAssetId        String?
+  isActive                 Boolean                   @default(true)
+  lastLoginAt              DateTime?
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  avatarFileAsset          FileAsset?                @relation("UserAvatar", fields: [avatarFileAssetId], references: [id], onDelete: SetNull)
+  roleAssignments          UserRoleAssignment[]
+  studentProfile           StudentProfile?
+  instructorProfile        InstructorProfile?
+  parentRelations          ParentStudentRelation[]   @relation("ParentRelations")
+  studentParentRelations   ParentStudentRelation[]   @relation("StudentRelations")
+  sectionInstructors       ClassSectionInstructor[]
+  enrollments              Enrollment[]
+  createdLessons           Lesson[]                  @relation("LessonCreator")
+  videoProgress            VideoProgress[]
+  attendanceRecords        AttendanceRecord[]
+  assignmentSubmissions    AssignmentSubmission[]
+  quizAttempts             QuizAttempt[]
+  quizAnswers              QuizAnswer[]
+  gradeScores              GradeScore[]
+  finalGrades              FinalGrade[]
+  transcripts              Transcript[]
+  reportCards              ReportCard[]
+  generatedDocuments       GeneratedDocument[]
+  posts                    Post[]
+  comments                 Comment[]
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]                 @relation("SentMessages")
+  readReceipts             MessageReadReceipt[]
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  uploadedFiles            FileAsset[]               @relation("UploadedFiles")
+  homerooms                Homeroom[]
+
+  @@unique([organizationId, email])
+  @@unique([organizationId, username])
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model UserRoleAssignment {
+  id             String       @id @default(cuid())
+  organizationId String
+  campusId       String?
+  userId         String
+  role           UserRole
+  startsAt       DateTime?
+  endsAt         DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([userId])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model StudentProfile {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  campusId            String?
+  userId              String       @unique
+  studentNumber       String?
+  admissionDate       DateTime?
+  graduationDate      DateTime?
+  currentGradeLevelId String?
+  metadata            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus              Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentGradeLevel   GradeLevel?  @relation(fields: [currentGradeLevelId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, studentNumber])
+  @@index([organizationId])
+  @@index([campusId])
+}
+
+model InstructorProfile {
+  id             String       @id @default(cuid())
+  organizationId String
+  campusId       String?
+  userId         String       @unique
+  employeeNumber String?
+  title          String?
+  bio            String?
+  hireDate       DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, employeeNumber])
+  @@index([organizationId])
+  @@index([campusId])
+}
+
+model ParentStudentRelation {
+  id             String       @id @default(cuid())
+  organizationId String
+  parentId       String
+  studentId      String
+  relation       String
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent         User         @relation("ParentRelations", fields: [parentId], references: [id], onDelete: Cascade)
+  student        User         @relation("StudentRelations", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model AcademicYear {
+  id             String         @id @default(cuid())
+  organizationId String
+  campusId       String?
+  name           String
+  startsAt       DateTime
+  endsAt         DateTime
+  isActive       Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?        @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  terms          Term[]
+  gradeLevels    GradeLevel[]
+  homerooms      Homeroom[]
+  classSections  ClassSection[]
+  reportCards    ReportCard[]
+  transcripts    Transcript[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([createdAt])
+}
+
+model Term {
+  id              String           @id @default(cuid())
+  organizationId  String
+  campusId        String?
+  academicYearId  String
+  name            String
+  startsAt        DateTime
+  endsAt          DateTime
+  sequence        Int              @default(1)
+  isActive        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus          Campus?          @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear    AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  classSections   ClassSection[]
+  classSessions   ClassSession[]
+  gradeCategories GradeCategory[]
+  gradeItems      GradeItem[]
+  finalGrades     FinalGrade[]
+  transcriptTerms TranscriptTerm[]
+  reportCards     ReportCard[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([academicYearId])
+  @@index([createdAt])
+}
+
+model GradeLevel {
+  id              String           @id @default(cuid())
+  organizationId  String
+  campusId        String?
+  academicYearId  String?
+  name            String
+  code            String?
+  sequence        Int              @default(1)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus          Campus?          @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear    AcademicYear?    @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  studentProfiles StudentProfile[]
+  homerooms       Homeroom[]
+  classSections   ClassSection[]
+  boards          Board[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([academicYearId])
+}
+
+model Homeroom {
+  id             String         @id @default(cuid())
+  organizationId String
+  campusId       String?
+  academicYearId String
+  gradeLevelId   String?
+  name           String
+  teacherId      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?        @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear   AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  gradeLevel     GradeLevel?    @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  teacher        User?          @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  classSections  ClassSection[]
+  boards         Board[]
+  conversations  Conversation[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([teacherId])
+  @@index([createdAt])
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  organizationId String
+  campusId       String?
+  name           String
+  code           String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  programs       Program[]
+  subjects       Subject[]
+  courses        Course[]
+
+  @@index([organizationId])
+  @@index([campusId])
+}
+
+model Program {
+  id             String       @id @default(cuid())
+  organizationId String
+  campusId       String?
+  departmentId   String?
+  name           String
+  code           String?
+  degreeType     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  courses        Course[]
+  transcripts    Transcript[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([departmentId])
+}
+
+model Subject {
+  id             String       @id @default(cuid())
+  organizationId String
+  departmentId   String?
+  name           String
+  code           String?
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  courses        Course[]
+
+  @@index([organizationId])
+  @@index([departmentId])
+}
+
+model Course {
+  id                  String         @id @default(cuid())
+  organizationId      String
+  campusId            String?
+  departmentId        String?
+  programId           String?
+  subjectId           String?
+  code                String?
+  title               String
+  description         String?
+  credits             Decimal?       @db.Decimal(5, 2)
+  defaultDeliveryMode DeliveryMode   @default(OFFLINE)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  organization        Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus              Campus?        @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  department          Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  program             Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
+  subject             Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  classSections       ClassSection[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([departmentId])
+  @@index([programId])
+  @@index([subjectId])
+}
+
+model ClassSection {
+  id                 String                   @id @default(cuid())
+  organizationId     String
+  campusId           String?
+  academicYearId     String
+  termId             String?
+  courseId           String
+  gradeLevelId       String?
+  homeroomId         String?
+  name               String
+  sectionCode        String?
+  deliveryMode       DeliveryMode             @default(OFFLINE)
+  capacity           Int?
+  startsAt           DateTime?
+  endsAt             DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  organization       Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus             Campus?                  @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear       AcademicYear             @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term               Term?                    @relation(fields: [termId], references: [id], onDelete: SetNull)
+  course             Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  gradeLevel         GradeLevel?              @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  homeroom           Homeroom?                @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
+  instructors        ClassSectionInstructor[]
+  enrollments        Enrollment[]
+  sessions           ClassSession[]
+  lessons            Lesson[]
+  attendanceSessions AttendanceSession[]
+  assignments        Assignment[]
+  quizzes            Quiz[]
+  exams              Exam[]
+  gradeCategories    GradeCategory[]
+  gradeItems         GradeItem[]
+  finalGrades        FinalGrade[]
+  boards             Board[]
+  conversations      Conversation[]
+  fileAssets         FileAsset[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([academicYearId])
+  @@index([termId])
+  @@index([courseId])
+  @@index([gradeLevelId])
+  @@index([homeroomId])
+  @@index([createdAt])
+}
+
+model ClassSectionInstructor {
+  id             String       @id @default(cuid())
+  organizationId String
+  classSectionId String
+  instructorId   String
+  roleLabel      String?
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  instructor     User         @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([classSectionId, instructorId])
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([instructorId])
+}
+
+model Enrollment {
+  id             String           @id @default(cuid())
+  organizationId String
+  campusId       String?
+  classSectionId String
+  studentId      String
+  status         EnrollmentStatus @default(ENROLLED)
+  enrolledAt     DateTime         @default(now())
+  completedAt    DateTime?
+  droppedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?          @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection     @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classSectionId, studentId])
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model ClassSession {
+  id                String             @id @default(cuid())
+  organizationId    String
+  campusId          String?
+  classSectionId    String
+  termId            String?
+  title             String?
+  startsAt          DateTime
+  endsAt            DateTime?
+  deliveryMode      DeliveryMode       @default(OFFLINE)
+  location          String?
+  meetingUrl        String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus            Campus?            @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection      ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  term              Term?              @relation(fields: [termId], references: [id], onDelete: SetNull)
+  attendanceSession AttendanceSession?
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([termId])
+  @@index([createdAt])
+}
+
+model Lesson {
+  id             String             @id @default(cuid())
+  organizationId String
+  classSectionId String
+  createdById    String?
+  title          String
+  description    String?
+  sequence       Int                @default(1)
+  contentType    LessonContentType  @default(TEXT)
+  availableFrom  DateTime?
+  availableUntil DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  createdBy      User?              @relation("LessonCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  materials      LearningMaterial[]
+  videoProgress  VideoProgress[]
+  assignments    Assignment[]
+  quizzes        Quiz[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model LearningMaterial {
+  id              String            @id @default(cuid())
+  organizationId  String
+  lessonId        String
+  fileAssetId     String?
+  title           String
+  contentType     LessonContentType
+  body            String?
+  url             String?
+  sequence        Int               @default(1)
+  durationSeconds Int?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lesson          Lesson            @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  fileAsset       FileAsset?        @relation(fields: [fileAssetId], references: [id], onDelete: SetNull)
+  videoProgress   VideoProgress[]
+
+  @@index([organizationId])
+  @@index([lessonId])
+  @@index([fileAssetId])
+  @@index([createdAt])
+}
+
+model VideoProgress {
+  id              String            @id @default(cuid())
+  organizationId  String
+  lessonId        String?
+  materialId      String?
+  studentId       String
+  watchedSeconds  Int               @default(0)
+  totalSeconds    Int?
+  percentComplete Decimal           @default(0) @db.Decimal(5, 2)
+  completedAt     DateTime?
+  lastWatchedAt   DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lesson          Lesson?           @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  material        LearningMaterial? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  student         User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, materialId])
+  @@index([organizationId])
+  @@index([lessonId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model AttendanceSession {
+  id             String             @id @default(cuid())
+  organizationId String
+  campusId       String?
+  classSectionId String
+  classSessionId String?            @unique
+  title          String?
+  takenAt        DateTime           @default(now())
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?            @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  classSession   ClassSession?      @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
+  records        AttendanceRecord[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model AttendanceRecord {
+  id                  String            @id @default(cuid())
+  organizationId      String
+  campusId            String?
+  attendanceSessionId String
+  studentId           String
+  status              AttendanceStatus  @default(PENDING)
+  checkedInAt         DateTime?
+  checkedOutAt        DateTime?
+  note                String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  organization        Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus              Campus?           @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  attendanceSession   AttendanceSession @relation(fields: [attendanceSessionId], references: [id], onDelete: Cascade)
+  student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([attendanceSessionId, studentId])
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Assignment {
+  id             String                 @id @default(cuid())
+  organizationId String
+  classSectionId String
+  lessonId       String?
+  title          String
+  description    String?
+  pointsPossible Decimal?               @db.Decimal(8, 2)
+  dueAt          DateTime?
+  acceptsLate    Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection           @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  lesson         Lesson?                @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  submissions    AssignmentSubmission[]
+  gradeItems     GradeItem[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model AssignmentSubmission {
+  id             String       @id @default(cuid())
+  organizationId String
+  assignmentId   String
+  studentId      String
+  content        String?
+  submittedAt    DateTime?
+  score          Decimal?     @db.Decimal(8, 2)
+  feedback       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignment     Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attachments    FileAsset[]
+
+  @@unique([assignmentId, studentId])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Quiz {
+  id               String        @id @default(cuid())
+  organizationId   String
+  classSectionId   String
+  lessonId         String?
+  title            String
+  description      String?
+  opensAt          DateTime?
+  closesAt         DateTime?
+  timeLimitMinutes Int?
+  maxAttempts      Int?
+  pointsPossible   Decimal?      @db.Decimal(8, 2)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection     ClassSection  @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  lesson           Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  questions        Question[]
+  attempts         QuizAttempt[]
+  gradeItems       GradeItem[]
+  exams            Exam[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model Question {
+  id             String           @id @default(cuid())
+  organizationId String
+  quizId         String
+  type           QuestionType
+  prompt         String
+  points         Decimal          @default(0) @db.Decimal(8, 2)
+  sequence       Int              @default(1)
+  answerKey      Json?
+  rubric         Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quiz           Quiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options        QuestionOption[]
+  answers        QuizAnswer[]
+
+  @@index([organizationId])
+  @@index([quizId])
+}
+
+model QuestionOption {
+  id          String       @id @default(cuid())
+  questionId  String
+  text        String
+  isCorrect   Boolean      @default(false)
+  sequence    Int          @default(1)
+  createdAt   DateTime     @default(now())
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  quizAnswers QuizAnswer[]
+
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id             String       @id @default(cuid())
+  organizationId String
+  quizId         String
+  studentId      String
+  attemptNumber  Int          @default(1)
+  startedAt      DateTime     @default(now())
+  submittedAt    DateTime?
+  score          Decimal?     @db.Decimal(8, 2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  quiz           Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers        QuizAnswer[]
+
+  @@unique([quizId, studentId, attemptNumber])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model QuizAnswer {
+  id               String          @id @default(cuid())
+  attemptId        String
+  questionId       String
+  studentId        String
+  selectedOptionId String?
+  answerText       String?
+  score            Decimal?        @db.Decimal(8, 2)
+  feedback         String?
+  createdAt        DateTime        @default(now())
+  attempt          QuizAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  student          User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Exam {
+  id             String       @id @default(cuid())
+  organizationId String
+  classSectionId String
+  quizId         String?
+  title          String
+  examType       String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  pointsPossible Decimal?     @db.Decimal(8, 2)
+  weight         Decimal?     @db.Decimal(5, 2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  quiz           Quiz?        @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  gradeItems     GradeItem[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model GradeCategory {
+  id             String       @id @default(cuid())
+  organizationId String
+  classSectionId String
+  termId         String?
+  name           String
+  weight         Decimal?     @db.Decimal(5, 2)
+  sequence       Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  term           Term?        @relation(fields: [termId], references: [id], onDelete: SetNull)
+  gradeItems     GradeItem[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([termId])
+}
+
+model GradeItem {
+  id             String         @id @default(cuid())
+  organizationId String
+  classSectionId String
+  termId         String?
+  categoryId     String?
+  assignmentId   String?
+  quizId         String?
+  examId         String?
+  title          String
+  pointsPossible Decimal        @default(100) @db.Decimal(8, 2)
+  weight         Decimal?       @db.Decimal(5, 2)
+  dueAt          DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection   ClassSection   @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  term           Term?          @relation(fields: [termId], references: [id], onDelete: SetNull)
+  category       GradeCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  assignment     Assignment?    @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  quiz           Quiz?          @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  exam           Exam?          @relation(fields: [examId], references: [id], onDelete: SetNull)
+  scores         GradeScore[]
+
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([termId])
+  @@index([categoryId])
+  @@index([createdAt])
+}
+
+model GradeScore {
+  id             String       @id @default(cuid())
+  organizationId String
+  gradeItemId    String
+  studentId      String
+  score          Decimal?     @db.Decimal(8, 2)
+  percentage     Decimal?     @db.Decimal(5, 2)
+  letterGrade    String?
+  feedback       String?
+  gradedAt       DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  gradeItem      GradeItem    @relation(fields: [gradeItemId], references: [id], onDelete: Cascade)
+  student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([gradeItemId, studentId])
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model GradingScale {
+  id             String             @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  isDefault      Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items          GradingScaleItem[]
+  finalGrades    FinalGrade[]
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model GradingScaleItem {
+  id             String       @id @default(cuid())
+  gradingScaleId String
+  label          String
+  minPercentage  Decimal      @db.Decimal(5, 2)
+  maxPercentage  Decimal      @db.Decimal(5, 2)
+  gradePoint     Decimal?     @db.Decimal(4, 2)
+  createdAt      DateTime     @default(now())
+  gradingScale   GradingScale @relation(fields: [gradingScaleId], references: [id], onDelete: Cascade)
+
+  @@index([gradingScaleId])
+}
+
+model FinalGrade {
+  id              String           @id @default(cuid())
+  organizationId  String
+  classSectionId  String
+  termId          String?
+  studentId       String
+  gradingScaleId  String?
+  numericScore    Decimal?         @db.Decimal(8, 2)
+  percentage      Decimal?         @db.Decimal(5, 2)
+  letterGrade     String?
+  gradePoint      Decimal?         @db.Decimal(4, 2)
+  creditsEarned   Decimal?         @db.Decimal(5, 2)
+  status          FinalGradeStatus @default(DRAFT)
+  publishedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection    ClassSection     @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  term            Term?            @relation(fields: [termId], references: [id], onDelete: SetNull)
+  student         User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradingScale    GradingScale?    @relation(fields: [gradingScaleId], references: [id], onDelete: SetNull)
+  transcriptItems TranscriptItem[]
+  reportCardItems ReportCardItem[]
+
+  @@unique([classSectionId, studentId, termId])
+  @@index([organizationId])
+  @@index([classSectionId])
+  @@index([studentId])
+  @@index([termId])
+  @@index([createdAt])
+}
+
+model Transcript {
+  id                 String              @id @default(cuid())
+  organizationId     String
+  academicYearId     String?
+  programId          String?
+  studentId          String
+  title              String
+  cumulativeGpa      Decimal?            @db.Decimal(4, 2)
+  totalCredits       Decimal?            @db.Decimal(6, 2)
+  issuedAt           DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  academicYear       AcademicYear?       @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  program            Program?            @relation(fields: [programId], references: [id], onDelete: SetNull)
+  student            User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  terms              TranscriptTerm[]
+  generatedDocuments GeneratedDocument[]
+
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model TranscriptTerm {
+  id               String           @id @default(cuid())
+  organizationId   String
+  transcriptId     String
+  termId           String?
+  name             String
+  termGpa          Decimal?         @db.Decimal(4, 2)
+  creditsAttempted Decimal?         @db.Decimal(6, 2)
+  creditsEarned    Decimal?         @db.Decimal(6, 2)
+  createdAt        DateTime         @default(now())
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transcript       Transcript       @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  term             Term?            @relation(fields: [termId], references: [id], onDelete: SetNull)
+  items            TranscriptItem[]
+
+  @@index([organizationId])
+  @@index([termId])
+  @@index([createdAt])
+}
+
+model TranscriptItem {
+  id               String         @id @default(cuid())
+  organizationId   String
+  transcriptTermId String
+  finalGradeId     String?
+  courseCode       String?
+  courseTitle      String
+  credits          Decimal?       @db.Decimal(5, 2)
+  letterGrade      String?
+  gradePoint       Decimal?       @db.Decimal(4, 2)
+  createdAt        DateTime       @default(now())
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transcriptTerm   TranscriptTerm @relation(fields: [transcriptTermId], references: [id], onDelete: Cascade)
+  finalGrade       FinalGrade?    @relation(fields: [finalGradeId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model ReportCard {
+  id                 String              @id @default(cuid())
+  organizationId     String
+  academicYearId     String?
+  termId             String?
+  studentId          String
+  title              String
+  overallComment     String?
+  issuedAt           DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  academicYear       AcademicYear?       @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  term               Term?               @relation(fields: [termId], references: [id], onDelete: SetNull)
+  student            User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items              ReportCardItem[]
+  generatedDocuments GeneratedDocument[]
+
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([termId])
+  @@index([createdAt])
+}
+
+model ReportCardItem {
+  id             String       @id @default(cuid())
+  organizationId String
+  reportCardId   String
+  finalGradeId   String?
+  subjectName    String
+  scoreLabel     String?
+  comment        String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reportCard     ReportCard   @relation(fields: [reportCardId], references: [id], onDelete: Cascade)
+  finalGrade     FinalGrade?  @relation(fields: [finalGradeId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model GeneratedDocument {
+  id             String         @id @default(cuid())
+  organizationId String
+  documentType   DocumentType
+  status         DocumentStatus @default(PENDING)
+  studentId      String?
+  reportCardId   String?
+  transcriptId   String?
+  fileAssetId    String?
+  errorMessage   String?
+  generatedAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student        User?          @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  reportCard     ReportCard?    @relation(fields: [reportCardId], references: [id], onDelete: SetNull)
+  transcript     Transcript?    @relation(fields: [transcriptId], references: [id], onDelete: SetNull)
+  fileAsset      FileAsset?     @relation(fields: [fileAssetId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Board {
+  id             String         @id @default(cuid())
+  organizationId String
+  campusId       String?
+  classSectionId String?
+  gradeLevelId   String?
+  homeroomId     String?
+  type           BoardType
+  scopeType      BoardScopeType
+  name           String
+  description    String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?        @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection?  @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
+  gradeLevel     GradeLevel?    @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  homeroom       Homeroom?      @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
+  posts          Post[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model Post {
+  id             String           @id @default(cuid())
+  organizationId String
+  boardId        String
+  authorId       String?
+  title          String
+  body           String
+  isPinned       Boolean          @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  board          Board            @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author         User?            @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  attachments    PostAttachment[]
+  comments       Comment[]
+
+  @@index([organizationId])
+  @@index([boardId])
+  @@index([createdAt])
+}
+
+model PostAttachment {
+  id          String    @id @default(cuid())
+  postId      String
+  fileAssetId String
+  createdAt   DateTime  @default(now())
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, fileAssetId])
+  @@index([postId])
+}
+
+model Comment {
+  id             String       @id @default(cuid())
+  organizationId String
+  postId         String
+  authorId       String?
+  parentId       String?
+  body           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post           Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author         User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parent         Comment?     @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies        Comment[]    @relation("CommentThread")
+
+  @@index([organizationId])
+  @@index([postId])
+  @@index([createdAt])
+}
+
+model Conversation {
+  id             String                    @id @default(cuid())
+  organizationId String
+  campusId       String?
+  classSectionId String?
+  homeroomId     String?
+  type           ConversationType
+  title          String?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?                   @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection?             @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
+  homeroom       Homeroom?                 @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
+  participants   ConversationParticipant[]
+  messages       Message[]
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String               @id @default(cuid())
+  organizationId String
+  conversationId String
+  senderId       String?
+  body           String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User?                @relation("SentMessages", fields: [senderId], references: [id], onDelete: SetNull)
+  attachments    MessageAttachment[]
+  readReceipts   MessageReadReceipt[]
+
+  @@index([organizationId])
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model MessageAttachment {
+  id          String    @id @default(cuid())
+  messageId   String
+  fileAssetId String
+  createdAt   DateTime  @default(now())
+  message     Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, fileAssetId])
+  @@index([messageId])
+}
+
+model MessageReadReceipt {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+}
+
+model Notification {
+  id             String              @id @default(cuid())
+  organizationId String
+  userId         String
+  type           NotificationType
+  channel        NotificationChannel @default(IN_APP)
+  title          String
+  body           String?
+  data           Json?
+  readAt         DateTime?
+  createdAt      DateTime            @default(now())
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model NotificationPreference {
+  id             String              @id @default(cuid())
+  organizationId String
+  userId         String
+  type           NotificationType
+  channel        NotificationChannel
+  enabled        Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, channel])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model AcademicPolicy {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  effectiveFrom  DateTime?
+  effectiveUntil DateTime?
+  settings       Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model AttendancePolicy {
+  id                  String       @id @default(cuid())
+  organizationId      String
+  name                String
+  lateAfterMinutes    Int?
+  absenceAfterMinutes Int?
+  settings            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model VideoCompletionPolicy {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  name               String
+  requiredPercentage Decimal      @default(90) @db.Decimal(5, 2)
+  settings           Json?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model GradingPolicy {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  gpaScale       Decimal?     @db.Decimal(4, 2)
+  settings       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model MessagingPolicy {
+  id                         String       @id @default(cuid())
+  organizationId             String
+  name                       String
+  allowStudentDirectMessages Boolean      @default(false)
+  settings                   Json?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([createdAt])
+}
+
+model FileAsset {
+  id                     String                @id @default(cuid())
+  organizationId         String
+  campusId               String?
+  classSectionId         String?
+  uploadedById           String?
+  bucket                 String
+  objectKey              String
+  originalName           String
+  contentType            String?
+  byteSize               BigInt?
+  checksum               String?
+  visibility             FileVisibility        @default(PRIVATE)
+  metadata               Json?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  organization           Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus                 Campus?               @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection           ClassSection?         @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
+  uploadedBy             User?                 @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
+  avatarUsers            User[]                @relation("UserAvatar")
+  learningMaterials      LearningMaterial[]
+  assignmentSubmission   AssignmentSubmission? @relation(fields: [assignmentSubmissionId], references: [id], onDelete: SetNull)
+  assignmentSubmissionId String?
+  postAttachments        PostAttachment[]
+  messageAttachments     MessageAttachment[]
+  generatedDocuments     GeneratedDocument[]
+
+  @@unique([bucket, objectKey])
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
+  @@index([createdAt])
+}
