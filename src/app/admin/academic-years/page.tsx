@@ -34,7 +34,11 @@ export default async function AcademicYearsPage() {
             <TableCell>
               {formatDate(year.startsAt)} - {formatDate(year.endsAt)}
             </TableCell>
-            <TableCell>{year.campusId ?? "All campuses"}</TableCell>
+            <TableCell>
+              {year.campus
+                ? `${year.campus.name} (${year.organization.name})`
+                : "Organization-wide"}
+            </TableCell>
             <TableCell>
               <ActiveBadge active={year.isActive} />
             </TableCell>
@@ -67,6 +71,8 @@ function AcademicYearForm({
     startsAt: Date
     endsAt: Date
     isActive: boolean
+    campus?: { name: string } | null
+    organization?: { name: string }
   }
 }) {
   return (

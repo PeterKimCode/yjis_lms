@@ -1,6 +1,6 @@
 import "server-only"
 
-import { UserRole, type Prisma } from "@prisma/client"
+import { UserRole } from "@prisma/client"
 
 import {
   requireAnyRole,
@@ -21,24 +21,65 @@ export async function requireAdmin() {
   return requireAnyRole(adminRoles)
 }
 
-export function getAdminScopeFilter(user: AdminUser) {
-  if (
-    user.roleAssignments.some(
-      (assignment) => assignment.role === UserRole.SUPER_ADMIN
-    )
-  ) {
-    return {}
-  }
+export function isSuperAdmin(user: AdminUser) {
+  return user.roleAssignments.some(
+    (assignment) => assignment.role === UserRole.SUPER_ADMIN
+  )
+}
 
-  const scopedAssignments = user.roleAssignments.filter((assignment) =>
+function adminAssignments(user: AdminUser) {
+  return user.roleAssignments.filter((assignment) =>
     adminRoles.includes(assignment.role)
   )
+}
+
+export function getOrganizationWhereForAdmin(user: AdminUser) {
+  if (isSuperAdmin(user)) return {}
 
   return {
-    OR: scopedAssignments.map((assignment) => ({
+    id: {
+      in: [...new Set(adminAssignments(user).map((item) => item.organizationId))],
+    },
+  }
+}
+
+export function getCampusWhereForAdmin(user: AdminUser) {
+  if (isSuperAdmin(user)) return {}
+
+  return {
+    OR: adminAssignments(user).map((assignment) => ({
+      organizationId: assignment.organizationId,
+      ...(assignment.campusId ? { id: assignment.campusId } : {}),
+    })),
+  }
+}
+
+export function getScopedWhereForAdmin(user: AdminUser) {
+  if (isSuperAdmin(user)) return {}
+
+  return {
+    OR: adminAssignments(user).map((assignment) => ({
       organizationId: assignment.organizationId,
       ...(assignment.campusId ? { campusId: assignment.campusId } : {}),
     })),
+  }
+}
+
+export const getAcademicYearWhereForAdmin = getScopedWhereForAdmin
+export const getTermWhereForAdmin = getScopedWhereForAdmin
+export const getGradeLevelWhereForAdmin = getScopedWhereForAdmin
+export const getHomeroomWhereForAdmin = getScopedWhereForAdmin
+export const getDepartmentWhereForAdmin = getScopedWhereForAdmin
+export const getCourseWhereForAdmin = getScopedWhereForAdmin
+export const getClassSectionWhereForAdmin = getScopedWhereForAdmin
+
+export function getUserWhereForAdmin(user: AdminUser) {
+  if (isSuperAdmin(user)) return {}
+
+  return {
+    organizationId: {
+      in: [...new Set(adminAssignments(user).map((item) => item.organizationId))],
+    },
   }
 }
 
@@ -51,18 +92,5 @@ export async function assertAdminScope(input: {
 
   if (input.campusId) {
     await requireCampusScope(input.campusId)
-  }
-}
-
-export function mergeScope<T extends Prisma.OrganizationWhereInput>(
-  where: T,
-  scope: Prisma.OrganizationWhereInput
-) {
-  if (!("OR" in scope)) {
-    return where
-  }
-
-  return {
-    AND: [where, scope],
   }
 }

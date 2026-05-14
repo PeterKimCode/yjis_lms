@@ -3,40 +3,41 @@ import "server-only"
 import { UserRole } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
-import { getAdminScopeFilter, requireAdmin } from "@/modules/admin/access"
+import {
+  getAcademicYearWhereForAdmin,
+  getCampusWhereForAdmin,
+  getClassSectionWhereForAdmin,
+  getCourseWhereForAdmin,
+  getDepartmentWhereForAdmin,
+  getGradeLevelWhereForAdmin,
+  getHomeroomWhereForAdmin,
+  getOrganizationWhereForAdmin,
+  getTermWhereForAdmin,
+  getUserWhereForAdmin,
+  requireAdmin,
+} from "@/modules/admin/access"
 
 export async function getAdminData() {
   const user = await requireAdmin()
   const prisma = getPrismaClient()
-  const scope = getAdminScopeFilter(user)
   const isSuperAdmin = user.roleAssignments.some(
     (assignment) => assignment.role === UserRole.SUPER_ADMIN
   )
-  const organizationIds = [
-    ...new Set(user.roleAssignments.map((assignment) => assignment.organizationId)),
-  ]
 
   const organizations = await prisma.organization.findMany({
-    where: isSuperAdmin ? {} : { id: { in: organizationIds } },
+    where: getOrganizationWhereForAdmin(user),
     orderBy: { name: "asc" },
   })
 
   const campuses = await prisma.campus.findMany({
-    where: isSuperAdmin
-      ? {}
-      : {
-          OR: user.roleAssignments.map((assignment) => ({
-            organizationId: assignment.organizationId,
-            ...(assignment.campusId ? { id: assignment.campusId } : {}),
-          })),
-        },
+    where: getCampusWhereForAdmin(user),
     include: { organization: true },
     orderBy: [{ organization: { name: "asc" } }, { name: "asc" }],
   })
 
   return {
     user,
-    scope,
+    isSuperAdmin,
     organizations,
     campuses,
     organizationOptions: organizations.map((organization) => ({
@@ -65,37 +66,44 @@ export async function getAcademicSetupOptions() {
     users,
   ] = await Promise.all([
       prisma.academicYear.findMany({
-        where: admin.scope,
+        where: getAcademicYearWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: { startsAt: "desc" },
       }),
       prisma.term.findMany({
-        where: admin.scope,
+        where: getTermWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: [{ startsAt: "desc" }, { sequence: "asc" }],
       }),
       prisma.gradeLevel.findMany({
-        where: admin.scope,
+        where: getGradeLevelWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: [{ sequence: "asc" }, { name: "asc" }],
       }),
       prisma.homeroom.findMany({
-        where: admin.scope,
+        where: getHomeroomWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: { name: "asc" },
       }),
       prisma.department.findMany({
-        where: admin.scope,
+        where: getDepartmentWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: { name: "asc" },
       }),
       prisma.course.findMany({
-        where: admin.scope,
+        where: getCourseWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: { title: "asc" },
       }),
       prisma.classSection.findMany({
-        where: admin.scope,
+        where: getClassSectionWhereForAdmin(admin.user),
+        include: { campus: true, organization: true },
         orderBy: { name: "asc" },
       }),
       prisma.user.findMany({
         where: {
           isActive: true,
-          organizationId: { in: admin.organizations.map((org) => org.id) },
+          ...getUserWhereForAdmin(admin.user),
         },
         orderBy: { name: "asc" },
       }),

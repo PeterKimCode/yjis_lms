@@ -1,11 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { DeliveryMode } from "@prisma/client"
+import { DeliveryMode, InstitutionType, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
-import { assertAdminScope } from "@/modules/admin/access"
+import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
+import { hashPassword } from "@/modules/auth/password"
 
 const optionalString = z
   .string()
@@ -36,6 +37,145 @@ function maybeId(value: string | null | undefined) {
 async function revalidateAdmin(path: string) {
   revalidatePath(path)
   revalidatePath("/admin")
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+const organizationSchema = z.object({
+  id: optionalString,
+  name: requiredString,
+  institutionType: z.nativeEnum(InstitutionType),
+  isActive: checkboxBoolean,
+})
+
+export async function saveOrganization(formData: FormData) {
+  const data = organizationSchema.parse({
+    ...readForm(formData),
+    isActive: formData.get("isActive"),
+  })
+  const { id, ...values } = data
+  const admin = await requireAdmin()
+  const canCreateOrganization = admin.roleAssignments.some(
+    (assignment) => assignment.role === UserRole.SUPER_ADMIN
+  )
+
+  if (id) {
+    await assertAdminScope({ organizationId: id })
+  } else if (!canCreateOrganization) {
+    throw new Error("Only super admins can create organizations.")
+  }
+
+  if (id) {
+    await getPrismaClient().organization.update({
+      where: { id },
+      data: values,
+    })
+  } else {
+    await getPrismaClient().organization.create({
+      data: {
+        ...values,
+        slug: slugify(values.name),
+      },
+    })
+  }
+  await revalidateAdmin("/admin/organizations")
+}
+
+const campusSchema = z.object({
+  id: optionalString,
+  organizationId: requiredString,
+  name: requiredString,
+  code: optionalString,
+  address: optionalString,
+  phone: optionalString,
+  isActive: checkboxBoolean,
+})
+
+export async function saveCampus(formData: FormData) {
+  const data = campusSchema.parse({
+    ...readForm(formData),
+    isActive: formData.get("isActive"),
+  })
+  const { id, ...values } = data
+
+  await assertAdminScope({ organizationId: values.organizationId })
+  await getPrismaClient().campus.upsert({
+    where: { id: maybeId(id) ?? "__new_campus__" },
+    update: values,
+    create: values,
+  })
+  await revalidateAdmin("/admin/campuses")
+}
+
+const userSchema = z.object({
+  id: optionalString,
+  organizationId: requiredString,
+  campusId: optionalString,
+  name: requiredString,
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  password: z.string().optional().default(""),
+  role: z.nativeEnum(UserRole),
+  isActive: checkboxBoolean,
+})
+
+export async function saveUser(formData: FormData) {
+  const data = userSchema.parse({
+    ...readForm(formData),
+    isActive: formData.get("isActive"),
+  })
+  const { id, password, role, campusId, ...userValues } = data
+
+  await assertAdminScope({ organizationId: userValues.organizationId, campusId })
+
+  if (!id && password.length < 8) {
+    throw new Error("Password must be at least 8 characters.")
+  }
+
+  const passwordData = password
+    ? { passwordHash: await hashPassword(password) }
+    : {}
+  const prisma = getPrismaClient()
+  const user = id
+    ? await prisma.user.update({
+        where: { id },
+        data: { ...userValues, ...passwordData },
+      })
+    : await prisma.user.create({
+        data: { ...userValues, ...passwordData },
+      })
+
+  const existingRole = await prisma.userRoleAssignment.findFirst({
+    where: { userId: user.id },
+    orderBy: { createdAt: "asc" },
+  })
+
+  if (existingRole) {
+    await prisma.userRoleAssignment.update({
+      where: { id: existingRole.id },
+      data: {
+        organizationId: userValues.organizationId,
+        campusId,
+        role,
+      },
+    })
+  } else {
+    await prisma.userRoleAssignment.create({
+      data: {
+        organizationId: userValues.organizationId,
+        campusId,
+        userId: user.id,
+        role,
+      },
+    })
+  }
+
+  await revalidateAdmin("/admin/users")
 }
 
 const academicYearSchema = z.object({
