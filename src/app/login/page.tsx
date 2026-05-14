@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 
 import { LoginForm } from "@/modules/auth/login-form"
+import { getPostLoginPath } from "@/modules/auth/roles"
 import { getCurrentSession } from "@/modules/auth/session"
 
 export default async function LoginPage({
@@ -12,7 +13,7 @@ export default async function LoginPage({
   const params = await searchParams
 
   if (session?.user?.id) {
-    redirect(params.callbackUrl ?? "/")
+    redirect(getPostLoginPath(session.user.roleAssignments))
   }
 
   return (
@@ -25,7 +26,7 @@ export default async function LoginPage({
           </p>
         </div>
         <LoginForm
-          callbackUrl={params.callbackUrl ?? "/"}
+          callbackUrl="/login/redirect"
           hasError={params.error === "CredentialsSignin"}
         />
       </div>

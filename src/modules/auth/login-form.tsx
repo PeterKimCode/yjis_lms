@@ -27,8 +27,8 @@ export function LoginForm({
 
     const formData = new FormData(event.currentTarget)
     const result = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email: String(formData.get("email") ?? ""),
+      password: String(formData.get("password") ?? ""),
       callbackUrl,
       redirect: false,
     })
@@ -50,7 +50,7 @@ export function LoginForm({
           Demo: student@demo.local / DemoPass123!
         </p>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form action="/login" method="post" onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">
