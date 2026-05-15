@@ -3,10 +3,14 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getPostLoginPath } from "@/modules/auth/roles"
 import { getCurrentSession } from "@/modules/auth/session"
 
 export default async function Home() {
   const session = await getCurrentSession()
+  const dashboardHref = session?.user
+    ? getPostLoginPath(session.user.roleAssignments)
+    : "/login"
 
   return (
     <main className="flex-1 bg-muted/40 px-4 py-10">
@@ -24,9 +28,14 @@ export default async function Home() {
           </div>
           <div className="flex flex-wrap gap-3">
             {session?.user ? (
-              <Button asChild>
-                <Link href="/">Continue as {session.user.name}</Link>
-              </Button>
+              <>
+                <Button asChild>
+                  <Link href={dashboardHref}>Go to dashboard</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/instructor">Continue as Demo Instructor</Link>
+                </Button>
+              </>
             ) : (
               <Button asChild>
                 <Link href="/login">Sign in with a demo user</Link>

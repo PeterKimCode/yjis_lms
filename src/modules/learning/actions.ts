@@ -11,17 +11,8 @@ import {
   canViewClassSection,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import type { LessonActionState } from "@/modules/learning/action-state"
 import { isYouTubeUrl } from "@/modules/learning/video"
-
-export type LessonActionState = {
-  ok: boolean
-  message: string
-}
-
-export const initialLessonActionState: LessonActionState = {
-  ok: false,
-  message: "",
-}
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
