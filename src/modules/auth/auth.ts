@@ -41,7 +41,7 @@ export const authOptions: NextAuthOptions = {
 
         const { email, password } = parsedCredentials.data
         const prisma = getPrismaClient()
-        const user = await prisma.user.findFirst({
+        const users = await prisma.user.findMany({
           where: {
             email,
             isActive: true,
@@ -55,24 +55,27 @@ export const authOptions: NextAuthOptions = {
               },
             },
           },
+          orderBy: { updatedAt: "desc" },
         })
 
-        if (!user?.passwordHash) {
-          return null
+        for (const user of users) {
+          if (!user.passwordHash) {
+            continue
+          }
+
+          const isValidPassword = await verifyPassword(password, user.passwordHash)
+
+          if (isValidPassword) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              roleAssignments: user.roleAssignments,
+            }
+          }
         }
 
-        const isValidPassword = await verifyPassword(password, user.passwordHash)
-
-        if (!isValidPassword) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          roleAssignments: user.roleAssignments,
-        }
+        return null
       },
     }),
   ],

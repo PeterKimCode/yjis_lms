@@ -124,7 +124,7 @@ const userSchema = z.object({
   campusId: optionalString,
   name: requiredString,
   email: z.string().trim().email().transform((value) => value.toLowerCase()),
-  password: z.string().optional().default(""),
+  password: z.string().trim().optional().default(""),
   role: z.nativeEnum(UserRole),
   currentGradeLevelId: optionalString,
   homeroomId: optionalString,

@@ -33,6 +33,7 @@ async function main() {
       name: "Demo Education Organization",
       slug: "demo-education-organization",
       institutionType: InstitutionType.ONLINE_SCHOOL,
+      isActive: true,
     },
   })
 
@@ -110,9 +111,12 @@ async function main() {
   await prisma.studentProfile.upsert({
     where: { userId: student.id },
     update: {
+      organizationId: organization.id,
       campusId: campus.id,
       currentGradeLevelId: gradeLevel.id,
+      homeroomId: homeroom.id,
       studentNumber: "DEMO-STUDENT-001",
+      admissionDate: new Date("2026-03-01T00:00:00.000Z"),
     },
     create: {
       organizationId: organization.id,
@@ -120,12 +124,15 @@ async function main() {
       userId: student.id,
       studentNumber: "DEMO-STUDENT-001",
       currentGradeLevelId: gradeLevel.id,
+      homeroomId: homeroom.id,
+      admissionDate: new Date("2026-03-01T00:00:00.000Z"),
     },
   })
 
   await prisma.instructorProfile.upsert({
     where: { userId: instructor.id },
     update: {
+      organizationId: organization.id,
       campusId: campus.id,
       employeeNumber: "DEMO-INSTRUCTOR-001",
       title: "Instructor",
@@ -241,15 +248,19 @@ async function upsertUser(
       },
     },
     update: {
+      organizationId,
+      email,
       name,
       passwordHash,
       isActive: true,
+      username: null,
     },
     create: {
       organizationId,
       email,
       name,
       passwordHash,
+      isActive: true,
     },
   })
 }
@@ -267,7 +278,11 @@ async function ensureRole(
   if (existing) {
     return prisma.userRoleAssignment.update({
       where: { id: existing.id },
-      data: { campusId },
+      data: {
+        campusId,
+        startsAt: null,
+        endsAt: null,
+      },
     })
   }
 
