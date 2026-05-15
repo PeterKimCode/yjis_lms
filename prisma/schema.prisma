@@ -322,6 +322,7 @@ model StudentProfile {
   admissionDate       DateTime?
   graduationDate      DateTime?
   currentGradeLevelId String?
+  homeroomId          String?
   metadata            Json?
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
@@ -329,10 +330,12 @@ model StudentProfile {
   campus              Campus?      @relation(fields: [campusId], references: [id], onDelete: SetNull)
   user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   currentGradeLevel   GradeLevel?  @relation(fields: [currentGradeLevelId], references: [id], onDelete: SetNull)
+  homeroom            Homeroom?    @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, studentNumber])
   @@index([organizationId])
   @@index([campusId])
+  @@index([homeroomId])
 }
 
 model InstructorProfile {
@@ -450,23 +453,24 @@ model GradeLevel {
 }
 
 model Homeroom {
-  id             String         @id @default(cuid())
-  organizationId String
-  campusId       String?
-  academicYearId String
-  gradeLevelId   String?
-  name           String
-  teacherId      String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  campus         Campus?        @relation(fields: [campusId], references: [id], onDelete: SetNull)
-  academicYear   AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  gradeLevel     GradeLevel?    @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
-  teacher        User?          @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  classSections  ClassSection[]
-  boards         Board[]
-  conversations  Conversation[]
+  id              String           @id @default(cuid())
+  organizationId  String
+  campusId        String?
+  academicYearId  String
+  gradeLevelId    String?
+  name            String
+  teacherId       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus          Campus?          @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear    AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  gradeLevel      GradeLevel?      @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  teacher         User?            @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  studentProfiles StudentProfile[]
+  classSections   ClassSection[]
+  boards          Board[]
+  conversations   Conversation[]
 
   @@index([organizationId])
   @@index([campusId])
@@ -755,11 +759,11 @@ model VideoProgress {
   material            LearningMaterial? @relation(fields: [materialId], references: [id], onDelete: SetNull)
   student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
+  @@unique([studentId, materialId])
   @@index([organizationId])
   @@index([lessonId])
   @@index([studentId])
   @@index([createdAt])
-  @@unique([studentId, materialId])
 }
 
 model AttendanceSession {

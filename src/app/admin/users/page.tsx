@@ -14,14 +14,20 @@ import {
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
-import { getAdminData } from "@/modules/admin/data"
+import { getAcademicSetupOptions } from "@/modules/admin/data"
 
 export default async function UsersPage() {
-  const admin = await getAdminData()
+  const admin = await getAcademicSetupOptions()
   const users = await getPrismaClient().user.findMany({
     where: getUserWhereForAdmin(admin.user),
     include: {
       organization: true,
+      studentProfile: {
+        include: {
+          currentGradeLevel: true,
+          homeroom: true,
+        },
+      },
       roleAssignments: {
         select: { id: true, role: true, organizationId: true, campusId: true, campus: true },
         orderBy: { createdAt: "asc" },
@@ -38,11 +44,21 @@ export default async function UsersPage() {
       />
       <UserForm
         campusOptions={admin.campusOptions}
+        gradeLevelOptions={admin.gradeLevelOptions}
+        homeroomOptions={admin.homeroomOptions}
         organizationOptions={admin.organizationOptions}
       />
       <DataTable
         empty="No users are available for your scope."
-        headers={["Name", "Email", "Organization", "Roles", "Status", "Edit"]}
+        headers={[
+          "Name",
+          "Email",
+          "Organization",
+          "Roles",
+          "Student placement",
+          "Status",
+          "Edit",
+        ]}
         rows={users.map((user) => (
           <TableRow key={user.id}>
             <TableCell className="font-medium">{user.name}</TableCell>
@@ -58,11 +74,27 @@ export default async function UsersPage() {
                 .join(", ") || "-"}
             </TableCell>
             <TableCell>
+              {user.studentProfile ? (
+                <div className="space-y-1 text-sm">
+                  <div>
+                    {user.studentProfile.currentGradeLevel?.name ?? "No grade"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {user.studentProfile.homeroom?.name ?? "No homeroom"}
+                  </div>
+                </div>
+              ) : (
+                "-"
+              )}
+            </TableCell>
+            <TableCell>
               <ActiveBadge active={user.isActive} />
             </TableCell>
             <TableCell>
               <UserForm
                 campusOptions={admin.campusOptions}
+                gradeLevelOptions={admin.gradeLevelOptions}
+                homeroomOptions={admin.homeroomOptions}
                 organizationOptions={admin.organizationOptions}
                 user={user}
               />
@@ -77,16 +109,26 @@ export default async function UsersPage() {
 function UserForm({
   organizationOptions,
   campusOptions,
+  gradeLevelOptions,
+  homeroomOptions,
   user,
 }: {
   organizationOptions: { id: string; label: string }[]
   campusOptions: { id: string; label: string }[]
+  gradeLevelOptions: { id: string; label: string }[]
+  homeroomOptions: { id: string; label: string }[]
   user?: {
     id: string
     organizationId: string
     name: string
     email: string | null
     isActive: boolean
+    studentProfile: {
+      studentNumber: string | null
+      admissionDate: Date | null
+      currentGradeLevelId: string | null
+      homeroomId: string | null
+    } | null
     roleAssignments: {
       role: UserRole
       organizationId: string
@@ -136,6 +178,29 @@ function UserForm({
             ))}
           </select>
         </label>
+        <AdminSelect
+          label="Student grade"
+          name="currentGradeLevelId"
+          options={gradeLevelOptions}
+          defaultValue={user?.studentProfile?.currentGradeLevelId}
+        />
+        <AdminSelect
+          label="Student homeroom"
+          name="homeroomId"
+          options={homeroomOptions}
+          defaultValue={user?.studentProfile?.homeroomId}
+        />
+        <Field
+          label="Student number"
+          name="studentNumber"
+          defaultValue={user?.studentProfile?.studentNumber}
+        />
+        <Field
+          label="Admission year"
+          name="admissionYear"
+          type="number"
+          defaultValue={user?.studentProfile?.admissionDate?.getUTCFullYear()}
+        />
         <label className="flex items-end gap-2 text-sm">
           <input
             name="isActive"

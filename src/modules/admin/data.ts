@@ -82,7 +82,21 @@ export async function getAcademicSetupOptions() {
       }),
       prisma.homeroom.findMany({
         where: getHomeroomWhereForAdmin(admin.user),
-        include: { campus: true, organization: true },
+        include: {
+          campus: true,
+          organization: true,
+          gradeLevel: true,
+          teacher: true,
+          studentProfiles: {
+            include: {
+              user: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
+          _count: {
+            select: { studentProfiles: true },
+          },
+        },
         orderBy: { name: "asc" },
       }),
       prisma.department.findMany({
@@ -97,13 +111,50 @@ export async function getAcademicSetupOptions() {
       }),
       prisma.classSection.findMany({
         where: getClassSectionWhereForAdmin(admin.user),
-        include: { campus: true, organization: true },
+        include: {
+          campus: true,
+          organization: true,
+          course: true,
+          term: true,
+          instructors: {
+            include: {
+              instructor: true,
+            },
+            orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+          },
+          enrollments: {
+            include: {
+              student: {
+                include: {
+                  studentProfile: {
+                    include: {
+                      homeroom: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { enrolledAt: "asc" },
+          },
+          _count: {
+            select: { enrollments: true },
+          },
+        },
         orderBy: { name: "asc" },
       }),
       prisma.user.findMany({
         where: {
           isActive: true,
           ...getUserWhereForAdmin(admin.user),
+        },
+        include: {
+          roleAssignments: true,
+          studentProfile: {
+            include: {
+              currentGradeLevel: true,
+              homeroom: true,
+            },
+          },
         },
         orderBy: { name: "asc" },
       }),
@@ -122,6 +173,34 @@ export async function getAcademicSetupOptions() {
       id: user.id,
       label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
     })),
+    instructorOptions: users
+      .filter((user) =>
+        user.roleAssignments.some((assignment) =>
+          ([
+            UserRole.INSTRUCTOR,
+            UserRole.HOMEROOM_TEACHER,
+            UserRole.ACADEMIC_STAFF,
+          ] as UserRole[]).includes(assignment.role)
+        )
+      )
+      .map((user) => ({
+        id: user.id,
+        label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+      })),
+    studentOptions: users
+      .filter((user) =>
+        user.roleAssignments.some(
+          (assignment) => assignment.role === UserRole.STUDENT
+        )
+      )
+      .map((user) => ({
+        id: user.id,
+        label: `${user.name}${user.email ? ` (${user.email})` : ""}${
+          user.studentProfile?.homeroom
+            ? ` - ${user.studentProfile.homeroom.name}`
+            : ""
+        }`,
+      })),
     academicYearOptions: academicYears.map((year) => ({
       id: year.id,
       label: year.name,

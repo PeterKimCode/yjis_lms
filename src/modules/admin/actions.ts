@@ -1,7 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { DeliveryMode, InstitutionType, UserRole } from "@prisma/client"
+import {
+  DeliveryMode,
+  EnrollmentStatus,
+  InstitutionType,
+  UserRole,
+} from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -121,6 +126,10 @@ const userSchema = z.object({
   email: z.string().trim().email().transform((value) => value.toLowerCase()),
   password: z.string().optional().default(""),
   role: z.nativeEnum(UserRole),
+  currentGradeLevelId: optionalString,
+  homeroomId: optionalString,
+  studentNumber: optionalString,
+  admissionYear: optionalString,
   isActive: checkboxBoolean,
 })
 
@@ -129,7 +138,17 @@ export async function saveUser(formData: FormData) {
     ...readForm(formData),
     isActive: formData.get("isActive"),
   })
-  const { id, password, role, campusId, ...userValues } = data
+  const {
+    id,
+    password,
+    role,
+    campusId,
+    currentGradeLevelId,
+    homeroomId,
+    studentNumber,
+    admissionYear,
+    ...userValues
+  } = data
 
   await assertAdminScope({ organizationId: userValues.organizationId, campusId })
 
@@ -171,6 +190,33 @@ export async function saveUser(formData: FormData) {
         campusId,
         userId: user.id,
         role,
+      },
+    })
+  }
+
+  if (role === UserRole.STUDENT) {
+    const admissionDate = admissionYear
+      ? new Date(`${admissionYear}-01-01T00:00:00.000Z`)
+      : undefined
+
+    await prisma.studentProfile.upsert({
+      where: { userId: user.id },
+      update: {
+        organizationId: userValues.organizationId,
+        campusId,
+        currentGradeLevelId,
+        homeroomId,
+        studentNumber,
+        ...(admissionDate ? { admissionDate } : {}),
+      },
+      create: {
+        organizationId: userValues.organizationId,
+        campusId,
+        userId: user.id,
+        currentGradeLevelId,
+        homeroomId,
+        studentNumber,
+        admissionDate,
       },
     })
   }
@@ -350,4 +396,256 @@ export async function saveClassSection(formData: FormData) {
     create: values,
   })
   await revalidateAdmin("/admin/class-sections")
+}
+
+const instructorAssignmentSchema = z.object({
+  classSectionId: requiredString,
+  instructorId: requiredString,
+  roleLabel: z.enum(["PRIMARY", "ASSISTANT", "TA"]),
+})
+
+export async function assignClassSectionInstructor(formData: FormData) {
+  const data = instructorAssignmentSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const classSection = await prisma.classSection.findUniqueOrThrow({
+    where: { id: data.classSectionId },
+    select: { organizationId: true, campusId: true },
+  })
+
+  await assertAdminScope(classSection)
+
+  const instructor = await prisma.user.findFirstOrThrow({
+    where: {
+      id: data.instructorId,
+      roleAssignments: {
+        some: {
+          role: {
+            in: [
+              UserRole.INSTRUCTOR,
+              UserRole.HOMEROOM_TEACHER,
+              UserRole.ACADEMIC_STAFF,
+            ],
+          },
+        },
+      },
+    },
+    select: { id: true },
+  })
+
+  await prisma.classSectionInstructor.upsert({
+    where: {
+      classSectionId_instructorId: {
+        classSectionId: data.classSectionId,
+        instructorId: instructor.id,
+      },
+    },
+    update: {
+      roleLabel: data.roleLabel,
+      isPrimary: data.roleLabel === "PRIMARY",
+    },
+    create: {
+      organizationId: classSection.organizationId,
+      classSectionId: data.classSectionId,
+      instructorId: instructor.id,
+      roleLabel: data.roleLabel,
+      isPrimary: data.roleLabel === "PRIMARY",
+    },
+  })
+
+  await revalidateAdmin("/admin/class-sections")
+}
+
+const removeInstructorAssignmentSchema = z.object({
+  assignmentId: requiredString,
+})
+
+export async function removeClassSectionInstructor(formData: FormData) {
+  const data = removeInstructorAssignmentSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const assignment = await prisma.classSectionInstructor.findUniqueOrThrow({
+    where: { id: data.assignmentId },
+    include: {
+      classSection: {
+        select: { organizationId: true, campusId: true },
+      },
+    },
+  })
+
+  await assertAdminScope(assignment.classSection)
+  await prisma.classSectionInstructor.delete({ where: { id: assignment.id } })
+  await revalidateAdmin("/admin/class-sections")
+}
+
+const enrollmentSchema = z.object({
+  classSectionId: requiredString,
+  studentId: requiredString,
+  status: z.nativeEnum(EnrollmentStatus),
+})
+
+export async function saveEnrollment(formData: FormData) {
+  const data = enrollmentSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const classSection = await prisma.classSection.findUniqueOrThrow({
+    where: { id: data.classSectionId },
+    select: { organizationId: true, campusId: true },
+  })
+
+  await assertAdminScope(classSection)
+
+  const student = await prisma.user.findFirstOrThrow({
+    where: {
+      id: data.studentId,
+      roleAssignments: {
+        some: { role: UserRole.STUDENT },
+      },
+    },
+    select: { id: true },
+  })
+  const statusDates = enrollmentStatusDates(data.status)
+
+  await prisma.enrollment.upsert({
+    where: {
+      classSectionId_studentId: {
+        classSectionId: data.classSectionId,
+        studentId: student.id,
+      },
+    },
+    update: {
+      status: data.status,
+      ...statusDates,
+    },
+    create: {
+      organizationId: classSection.organizationId,
+      campusId: classSection.campusId,
+      classSectionId: data.classSectionId,
+      studentId: student.id,
+      status: data.status,
+      ...statusDates,
+    },
+  })
+
+  await revalidateAdmin("/admin/class-sections")
+}
+
+const removeEnrollmentSchema = z.object({
+  enrollmentId: requiredString,
+})
+
+export async function removeEnrollment(formData: FormData) {
+  const data = removeEnrollmentSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const enrollment = await prisma.enrollment.findUniqueOrThrow({
+    where: { id: data.enrollmentId },
+    include: {
+      classSection: {
+        select: { organizationId: true, campusId: true },
+      },
+    },
+  })
+
+  await assertAdminScope(enrollment.classSection)
+  await prisma.enrollment.delete({ where: { id: enrollment.id } })
+  await revalidateAdmin("/admin/class-sections")
+}
+
+const homeroomPlacementSchema = z.object({
+  studentId: requiredString,
+  homeroomId: requiredString,
+})
+
+export async function assignStudentToHomeroom(formData: FormData) {
+  const data = homeroomPlacementSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const homeroom = await prisma.homeroom.findUniqueOrThrow({
+    where: { id: data.homeroomId },
+    select: {
+      organizationId: true,
+      campusId: true,
+      gradeLevelId: true,
+    },
+  })
+  const student = await prisma.user.findFirstOrThrow({
+    where: {
+      id: data.studentId,
+      roleAssignments: {
+        some: { role: UserRole.STUDENT },
+      },
+    },
+    select: { id: true },
+  })
+
+  await assertAdminScope(homeroom)
+  await prisma.studentProfile.upsert({
+    where: { userId: student.id },
+    update: {
+      organizationId: homeroom.organizationId,
+      campusId: homeroom.campusId,
+      currentGradeLevelId: homeroom.gradeLevelId,
+      homeroomId: data.homeroomId,
+    },
+    create: {
+      organizationId: homeroom.organizationId,
+      campusId: homeroom.campusId,
+      userId: student.id,
+      currentGradeLevelId: homeroom.gradeLevelId,
+      homeroomId: data.homeroomId,
+    },
+  })
+
+  await revalidateAdmin("/admin/homerooms")
+  await revalidateAdmin("/admin/users")
+}
+
+const bulkHomeroomEnrollmentSchema = z.object({
+  classSectionId: requiredString,
+  homeroomId: requiredString,
+})
+
+export async function enrollHomeroomInClassSection(formData: FormData) {
+  const data = bulkHomeroomEnrollmentSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const classSection = await prisma.classSection.findUniqueOrThrow({
+    where: { id: data.classSectionId },
+    select: { organizationId: true, campusId: true },
+  })
+
+  await assertAdminScope(classSection)
+
+  const students = await prisma.studentProfile.findMany({
+    where: {
+      homeroomId: data.homeroomId,
+      organizationId: classSection.organizationId,
+    },
+    select: {
+      userId: true,
+    },
+  })
+
+  if (students.length) {
+    await prisma.enrollment.createMany({
+      data: students.map((student) => ({
+        organizationId: classSection.organizationId,
+        campusId: classSection.campusId,
+        classSectionId: data.classSectionId,
+        studentId: student.userId,
+        status: EnrollmentStatus.ENROLLED,
+      })),
+      skipDuplicates: true,
+    })
+  }
+
+  await revalidateAdmin("/admin/class-sections")
+}
+
+function enrollmentStatusDates(status: EnrollmentStatus) {
+  const now = new Date()
+
+  return {
+    completedAt: status === EnrollmentStatus.COMPLETED ? now : null,
+    droppedAt:
+      status === EnrollmentStatus.DROPPED ||
+      status === EnrollmentStatus.WITHDRAWN
+        ? now
+        : null,
+  }
 }
