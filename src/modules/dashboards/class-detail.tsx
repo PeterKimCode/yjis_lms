@@ -14,6 +14,7 @@ import {
   formatDate,
   formatDateTime,
   getClassSectionDetail,
+  getVideoFileOptionsForClassSection,
 } from "@/modules/dashboards/data"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
 
@@ -37,6 +38,14 @@ export async function ClassSectionDetail({
   }
 
   const enrollmentCount = section.enrollments.length
+  const videoFileOptions =
+    mode === "instructor"
+      ? await getVideoFileOptionsForClassSection({
+          classSectionId: section.id,
+          organizationId: section.organizationId,
+          campusId: section.campusId,
+        })
+      : []
 
   return (
     <DashboardPage
@@ -56,7 +65,10 @@ export async function ClassSectionDetail({
         <SectionBlock title="Lessons">
           <div className="space-y-4">
             {mode === "instructor" ? (
-              <LessonForm classSectionId={section.id} />
+              <LessonForm
+                classSectionId={section.id}
+                videoFileOptions={videoFileOptions}
+              />
             ) : null}
             <SimpleTable
               empty={
@@ -124,6 +136,7 @@ export async function ClassSectionDetail({
                       <LessonForm
                         classSectionId={section.id}
                         lesson={toLessonFormValue(lesson)}
+                        videoFileOptions={videoFileOptions}
                       />
                     </div>
                   </details>

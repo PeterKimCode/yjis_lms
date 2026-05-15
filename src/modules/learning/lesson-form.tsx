@@ -1,11 +1,16 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useActionState, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { deleteLesson, saveLesson } from "@/modules/learning/actions"
+import {
+  deleteLesson,
+  initialLessonActionState,
+  saveLesson,
+  uploadLessonVideo,
+} from "@/modules/learning/actions"
 
 const contentTypes = [
   "VIDEO",
@@ -40,10 +45,20 @@ export type LessonFormValue = {
 export function LessonForm({
   classSectionId,
   lesson,
+  videoFileOptions,
 }: {
   classSectionId: string
   lesson?: LessonFormValue
+  videoFileOptions: { id: string; label: string }[]
 }) {
+  const [saveState, saveAction, isSaving] = useActionState(
+    saveLesson,
+    initialLessonActionState
+  )
+  const [uploadState, uploadAction, isUploading] = useActionState(
+    uploadLessonVideo,
+    initialLessonActionState
+  )
   const [contentType, setContentType] = useState<ContentType>(
     lesson?.contentType ?? "TEXT"
   )
@@ -66,7 +81,7 @@ export function LessonForm({
 
   return (
     <div className="space-y-3 rounded-md border bg-background p-3">
-      <form action={saveLesson} className="space-y-3">
+      <form action={saveAction} className="space-y-3">
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
         <input name="classSectionId" type="hidden" value={classSectionId} />
         <div className="grid gap-3 md:grid-cols-2">
@@ -129,7 +144,7 @@ export function LessonForm({
                 defaultValue={lesson?.durationSeconds ?? ""}
               />
               <span className="text-xs text-muted-foreground">
-                Used to calculate completion rate. 10 minutes = 600 seconds.
+                Used to calculate completion rate. Leave blank for text lessons.
               </span>
             </label>
           ) : null}
@@ -138,26 +153,33 @@ export function LessonForm({
               <span className="font-medium">Video URL</span>
               <Input
                 name="videoUrl"
-                placeholder="MP4 URL or YouTube URL"
+                placeholder="https://example.com/video.mp4 or YouTube URL"
                 defaultValue={lesson?.videoUrl ?? ""}
               />
               <span className="text-xs text-muted-foreground">
-                For HTML5, use a direct MP4/video URL. For YouTube, select
-                YouTube as provider.
+                For YouTube, select YouTube provider. For direct video, select
+                HTML5.
               </span>
             </label>
           ) : null}
           {isVideo && videoProvider === "HTML5" ? (
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="font-medium">Video file ID</span>
-              <Input
+              <span className="font-medium">Uploaded video file</span>
+              <select
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
                 name="videoFileAssetId"
-                placeholder="Optional FileAsset ID from MinIO upload"
                 defaultValue={lesson?.videoFileAssetId ?? ""}
-              />
+              >
+                <option value="">Select uploaded MinIO video</option>
+                {videoFileOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <span className="text-xs text-muted-foreground">
-                Used for videos uploaded to local MinIO. Leave blank if using
-                Video URL.
+                Upload through the LMS so FileAsset metadata exists. Files
+                uploaded directly in the MinIO Console do not appear here.
               </span>
             </label>
           ) : null}
@@ -172,6 +194,14 @@ export function LessonForm({
           </label>
         </div>
         {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
+        {saveState.message ? (
+          <p
+            className={`text-sm ${saveState.ok ? "text-muted-foreground" : "text-destructive"}`}
+            role="status"
+          >
+            {saveState.message}
+          </p>
+        ) : null}
         <label className="flex items-center gap-2 text-sm">
           <input
             className="size-4"
@@ -181,10 +211,47 @@ export function LessonForm({
           />
           Published
         </label>
-        <Button size="sm" type="submit">
-          {isEditing ? "Save lesson" : "Create lesson"}
+        <Button size="sm" type="submit" disabled={isSaving}>
+          {isSaving
+            ? "Saving..."
+            : isEditing
+              ? "Save lesson"
+              : "Create lesson"}
         </Button>
       </form>
+      {isVideo && videoProvider === "HTML5" ? (
+        <form action={uploadAction} className="space-y-2 rounded-md border p-3">
+          <input name="classSectionId" type="hidden" value={classSectionId} />
+          <label className="space-y-1 text-sm">
+            <span className="font-medium">Upload video to LMS</span>
+            <Input
+              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
+              name="videoFile"
+              type="file"
+            />
+            <span className="text-xs text-muted-foreground">
+              Upload through the LMS so FileAsset metadata exists for the
+              dropdown.
+            </span>
+          </label>
+          {uploadState.message ? (
+            <p
+              className={`text-sm ${uploadState.ok ? "text-muted-foreground" : "text-destructive"}`}
+              role="status"
+            >
+              {uploadState.message}
+            </p>
+          ) : null}
+          <Button
+            size="sm"
+            type="submit"
+            variant="outline"
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Upload video"}
+          </Button>
+        </form>
+      ) : null}
       {lesson ? (
         <form action={deleteLesson}>
           <input name="lessonId" type="hidden" value={lesson.id} />

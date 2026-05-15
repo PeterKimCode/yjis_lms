@@ -29,6 +29,13 @@ export default async function StudentLessonPage({
     lesson.videoProvider === VideoProvider.YOUTUBE && lesson.videoUrl
       ? parseYouTubeVideoId(lesson.videoUrl)
       : null
+  const html5VideoUrl =
+    lesson.videoProvider === VideoProvider.HTML5
+      ? lesson.videoUrl ??
+        (lesson.videoFileAsset
+          ? `/api/files/${lesson.videoFileAsset.id}/download`
+          : null)
+      : null
 
   return (
     <main className="flex-1 bg-muted/40 px-4 py-8">
@@ -63,7 +70,7 @@ export default async function StudentLessonPage({
             </div>
           ) : lesson.videoProvider === VideoProvider.YOUTUBE ? (
             <EmptyState>This YouTube lesson has an invalid video URL.</EmptyState>
-          ) : lesson.videoUrl ? (
+          ) : html5VideoUrl ? (
             <VideoProgressPlayer
               classSectionId={classSectionId}
               durationSeconds={lesson.durationSeconds}
@@ -71,7 +78,7 @@ export default async function StudentLessonPage({
               initialLastPositionSeconds={progress?.lastPositionSeconds ?? 0}
               initialProgressRate={Number(progress?.progressRate ?? 0)}
               lessonId={lesson.id}
-              videoUrl={lesson.videoUrl}
+              videoUrl={html5VideoUrl}
             />
           ) : lesson.videoFileAsset ? (
             <EmptyState>
