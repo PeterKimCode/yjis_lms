@@ -6,14 +6,24 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { formatDate, getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function AcademicYearsPage() {
+export default async function AcademicYearsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const data = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
+  const academicYears = data.academicYears.filter((year) =>
+    matchesSearch(q, [year.name, year.campus?.name, year.organization.name])
+  )
 
   return (
     <div className="space-y-6">
@@ -21,6 +31,7 @@ export default async function AcademicYearsPage() {
         title="Academic years"
         description="Create and edit school years for K-12, academy, or university terms."
       />
+      <SearchForm q={q} placeholder="Search academic years..." />
       <AcademicYearForm
         campusOptions={data.campusOptions}
         organizationOptions={data.organizationOptions}
@@ -28,7 +39,7 @@ export default async function AcademicYearsPage() {
       <DataTable
         empty="No academic years yet."
         headers={["Name", "Dates", "Campus", "Status", "Edit"]}
-        rows={data.academicYears.map((year) => (
+        rows={academicYears.map((year) => (
           <TableRow key={year.id}>
             <TableCell className="font-medium">{year.name}</TableCell>
             <TableCell>
@@ -77,7 +88,7 @@ function AcademicYearForm({
 }) {
   return (
     <FormCard title={year ? "Edit academic year" : "Create academic year"}>
-      <form action={saveAcademicYear} className="grid gap-3 md:grid-cols-4">
+      <form action={saveAcademicYear} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={year?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

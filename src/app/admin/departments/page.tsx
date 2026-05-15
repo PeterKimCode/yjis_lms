@@ -5,14 +5,29 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function DepartmentsPage() {
+export default async function DepartmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const data = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
+  const departments = data.departments.filter((department) =>
+    matchesSearch(q, [
+      department.name,
+      department.code,
+      department.campus?.name,
+      department.organization.name,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -20,11 +35,12 @@ export default async function DepartmentsPage() {
         title="Departments"
         description="Define university or academy departments for course ownership."
       />
+      <SearchForm q={q} placeholder="Search departments..." />
       <DepartmentForm data={data} />
       <DataTable
         empty="No departments yet."
         headers={["Name", "Code", "Campus", "Edit"]}
-        rows={data.departments.map((department) => (
+        rows={departments.map((department) => (
           <TableRow key={department.id}>
             <TableCell className="font-medium">{department.name}</TableCell>
             <TableCell>{department.code ?? "-"}</TableCell>
@@ -57,7 +73,7 @@ function DepartmentForm({
 }) {
   return (
     <FormCard title={department ? "Edit department" : "Create department"}>
-      <form action={saveDepartment} className="grid gap-3 md:grid-cols-4">
+      <form action={saveDepartment} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={department?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

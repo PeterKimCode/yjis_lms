@@ -128,6 +128,7 @@ export async function getAcademicSetupOptions() {
                 include: {
                   studentProfile: {
                     include: {
+                      currentGradeLevel: true,
                       homeroom: true,
                     },
                   },
@@ -226,6 +227,22 @@ export async function getAcademicSetupOptions() {
       label: course.title,
     })),
   }
+}
+
+export async function getClassSectionDetailForAdmin(classSectionId: string) {
+  const admin = await getAcademicSetupOptions()
+  const classSection = admin.classSections.find(
+    (section) => section.id === classSectionId
+  )
+
+  return classSection ? { ...admin, classSection } : null
+}
+
+export async function getHomeroomDetailForAdmin(homeroomId: string) {
+  const admin = await getAcademicSetupOptions()
+  const homeroom = admin.homerooms.find((item) => item.id === homeroomId)
+
+  return homeroom ? { ...admin, homeroom } : null
 }
 
 export function formatDate(value: Date | null | undefined) {

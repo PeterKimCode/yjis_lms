@@ -7,14 +7,32 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function CoursesPage() {
+export default async function CoursesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const data = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
+  const courses = data.courses.filter((course) =>
+    matchesSearch(q, [
+      course.title,
+      course.code,
+      course.description,
+      course.campus?.name,
+      course.organization.name,
+      data.departments.find((department) => department.id === course.departmentId)
+        ?.name,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -22,11 +40,12 @@ export default async function CoursesPage() {
         title="Courses"
         description="Create reusable course records with credits and delivery defaults."
       />
+      <SearchForm q={q} placeholder="Search courses..." />
       <CourseForm data={data} />
       <DataTable
         empty="No courses yet."
         headers={["Title", "Code", "Credits", "Department", "Mode", "Edit"]}
-        rows={data.courses.map((course) => (
+        rows={courses.map((course) => (
           <TableRow key={course.id}>
             <TableCell className="font-medium">{course.title}</TableCell>
             <TableCell>{course.code ?? "-"}</TableCell>
@@ -66,7 +85,7 @@ function CourseForm({
 }) {
   return (
     <FormCard title={course ? "Edit course" : "Create course"}>
-      <form action={saveCourse} className="grid gap-3 md:grid-cols-4">
+      <form action={saveCourse} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={course?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

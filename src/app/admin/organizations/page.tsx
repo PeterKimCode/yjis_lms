@@ -6,14 +6,28 @@ import {
   AdminPageHeader,
   DataTable,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAdminData } from "@/modules/admin/data"
 
-export default async function OrganizationsPage() {
+export default async function OrganizationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const { organizations } = await getAdminData()
+  const q = (await searchParams).q?.trim() ?? ""
+  const filteredOrganizations = organizations.filter((organization) =>
+    matchesSearch(q, [
+      organization.name,
+      organization.slug,
+      organization.institutionType,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -21,11 +35,12 @@ export default async function OrganizationsPage() {
         title="Organizations"
         description="Tenant organizations available in your admin scope."
       />
+      <SearchForm q={q} placeholder="Search organizations..." />
       <OrganizationForm />
       <DataTable
         empty="No organizations are available for your scope."
         headers={["Name", "Slug", "Type", "Status", "Edit"]}
-        rows={organizations.map((organization) => (
+        rows={filteredOrganizations.map((organization) => (
           <TableRow key={organization.id}>
             <TableCell className="font-medium">{organization.name}</TableCell>
             <TableCell>{organization.slug}</TableCell>
@@ -55,7 +70,7 @@ function OrganizationForm({
 }) {
   return (
     <FormCard title={organization ? "Edit organization" : "Create organization"}>
-      <form action={saveOrganization} className="grid gap-3 md:grid-cols-4">
+      <form action={saveOrganization} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={organization?.id ?? ""} />
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Name</span>

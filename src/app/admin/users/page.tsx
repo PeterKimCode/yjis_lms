@@ -10,14 +10,21 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const admin = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
   const users = await getPrismaClient().user.findMany({
     where: getUserWhereForAdmin(admin.user),
     include: {
@@ -35,6 +42,18 @@ export default async function UsersPage() {
     },
     orderBy: { name: "asc" },
   })
+  const filteredUsers = users.filter((user) =>
+    matchesSearch(q, [
+      user.name,
+      user.email,
+      user.organization.name,
+      user.roleAssignments.map((assignment) => assignment.role).join(" "),
+      user.roleAssignments.map((assignment) => assignment.campus?.name).join(" "),
+      user.studentProfile?.currentGradeLevel?.name,
+      user.studentProfile?.homeroom?.name,
+      user.studentProfile?.studentNumber,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -42,6 +61,7 @@ export default async function UsersPage() {
         title="Users"
         description="School-managed users. Public registration is intentionally unavailable."
       />
+      <SearchForm q={q} placeholder="Search users, emails, roles..." />
       <UserForm
         campusOptions={admin.campusOptions}
         gradeLevelOptions={admin.gradeLevelOptions}
@@ -59,7 +79,7 @@ export default async function UsersPage() {
           "Status",
           "Edit",
         ]}
-        rows={users.map((user) => (
+        rows={filteredUsers.map((user) => (
           <TableRow key={user.id}>
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email ?? "-"}</TableCell>
@@ -140,7 +160,7 @@ function UserForm({
 
   return (
     <FormCard title={user ? "Edit user" : "Create user"}>
-      <form action={saveUser} className="grid gap-3 md:grid-cols-4">
+      <form action={saveUser} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={user?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

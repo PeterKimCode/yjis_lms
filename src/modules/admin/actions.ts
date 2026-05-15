@@ -322,6 +322,9 @@ export async function saveHomeroom(formData: FormData) {
     create: values,
   })
   await revalidateAdmin("/admin/homerooms")
+  if (id) {
+    await revalidateAdmin(`/admin/homerooms/${id}`)
+  }
 }
 
 const departmentSchema = z.object({
@@ -396,6 +399,9 @@ export async function saveClassSection(formData: FormData) {
     create: values,
   })
   await revalidateAdmin("/admin/class-sections")
+  if (id) {
+    await revalidateAdmin(`/admin/class-sections/${id}`)
+  }
 }
 
 const instructorAssignmentSchema = z.object({
@@ -474,6 +480,7 @@ export async function removeClassSectionInstructor(formData: FormData) {
   await assertAdminScope(assignment.classSection)
   await prisma.classSectionInstructor.delete({ where: { id: assignment.id } })
   await revalidateAdmin("/admin/class-sections")
+  await revalidateAdmin(`/admin/class-sections/${assignment.classSectionId}`)
 }
 
 const enrollmentSchema = z.object({
@@ -525,6 +532,7 @@ export async function saveEnrollment(formData: FormData) {
   })
 
   await revalidateAdmin("/admin/class-sections")
+  await revalidateAdmin(`/admin/class-sections/${data.classSectionId}`)
 }
 
 const removeEnrollmentSchema = z.object({
@@ -546,6 +554,7 @@ export async function removeEnrollment(formData: FormData) {
   await assertAdminScope(enrollment.classSection)
   await prisma.enrollment.delete({ where: { id: enrollment.id } })
   await revalidateAdmin("/admin/class-sections")
+  await revalidateAdmin(`/admin/class-sections/${enrollment.classSectionId}`)
 }
 
 const homeroomPlacementSchema = z.object({
@@ -593,6 +602,36 @@ export async function assignStudentToHomeroom(formData: FormData) {
   })
 
   await revalidateAdmin("/admin/homerooms")
+  await revalidateAdmin(`/admin/homerooms/${data.homeroomId}`)
+  await revalidateAdmin("/admin/users")
+}
+
+const removeStudentHomeroomSchema = z.object({
+  studentId: requiredString,
+  homeroomId: requiredString,
+})
+
+export async function removeStudentFromHomeroom(formData: FormData) {
+  const data = removeStudentHomeroomSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const homeroom = await prisma.homeroom.findUniqueOrThrow({
+    where: { id: data.homeroomId },
+    select: { organizationId: true, campusId: true },
+  })
+
+  await assertAdminScope(homeroom)
+  await prisma.studentProfile.updateMany({
+    where: {
+      userId: data.studentId,
+      homeroomId: data.homeroomId,
+    },
+    data: {
+      homeroomId: null,
+    },
+  })
+
+  await revalidateAdmin("/admin/homerooms")
+  await revalidateAdmin(`/admin/homerooms/${data.homeroomId}`)
   await revalidateAdmin("/admin/users")
 }
 
@@ -635,6 +674,7 @@ export async function enrollHomeroomInClassSection(formData: FormData) {
   }
 
   await revalidateAdmin("/admin/class-sections")
+  await revalidateAdmin(`/admin/class-sections/${data.classSectionId}`)
 }
 
 function enrollmentStatusDates(status: EnrollmentStatus) {

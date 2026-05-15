@@ -72,10 +72,12 @@ export function DataTable({
   headers,
   rows,
   empty,
+  minWidth = "min-w-[760px]",
 }: {
   headers: string[]
   rows: ReactNode[]
   empty: string
+  minWidth?: string
 }) {
   if (rows.length === 0) {
     return <EmptyState label={empty} />
@@ -83,11 +85,13 @@ export function DataTable({
 
   return (
     <div className="overflow-x-auto rounded-lg border">
-      <Table>
+      <Table className={minWidth}>
         <TableHeader>
           <TableRow>
             {headers.map((header) => (
-              <TableHead key={header}>{header}</TableHead>
+              <TableHead className="whitespace-nowrap" key={header}>
+                {header}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
@@ -95,6 +99,43 @@ export function DataTable({
       </Table>
     </div>
   )
+}
+
+export function SearchForm({
+  q,
+  placeholder = "Search...",
+}: {
+  q: string
+  placeholder?: string
+}) {
+  return (
+    <form className="flex flex-col gap-2 sm:flex-row" action="">
+      <Input
+        className="sm:max-w-sm"
+        name="q"
+        placeholder={placeholder}
+        defaultValue={q}
+      />
+      <div className="flex gap-2">
+        <Button type="submit" variant="outline">
+          Search
+        </Button>
+        {q ? (
+          <Button asChild type="button" variant="ghost">
+            <Link href="?">Clear</Link>
+          </Button>
+        ) : null}
+      </div>
+    </form>
+  )
+}
+
+export function matchesSearch(q: string, values: Array<string | null | undefined>) {
+  const query = q.trim().toLowerCase()
+
+  if (!query) return true
+
+  return values.some((value) => value?.toLowerCase().includes(query))
 }
 
 export function AdminSelect({

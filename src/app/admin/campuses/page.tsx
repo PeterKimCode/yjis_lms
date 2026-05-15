@@ -6,14 +6,30 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAdminData } from "@/modules/admin/data"
 
-export default async function CampusesPage() {
+export default async function CampusesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const { campuses, organizationOptions } = await getAdminData()
+  const q = (await searchParams).q?.trim() ?? ""
+  const filteredCampuses = campuses.filter((campus) =>
+    matchesSearch(q, [
+      campus.name,
+      campus.code,
+      campus.address,
+      campus.phone,
+      campus.organization.name,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -21,11 +37,12 @@ export default async function CampusesPage() {
         title="Campuses"
         description="Campus records in your assigned organization or campus scope."
       />
+      <SearchForm q={q} placeholder="Search campuses..." />
       <CampusForm organizationOptions={organizationOptions} />
       <DataTable
         empty="No campuses are available for your scope."
         headers={["Name", "Code", "Organization", "Address", "Status", "Edit"]}
-        rows={campuses.map((campus) => (
+        rows={filteredCampuses.map((campus) => (
           <TableRow key={campus.id}>
             <TableCell className="font-medium">{campus.name}</TableCell>
             <TableCell>{campus.code ?? "-"}</TableCell>
@@ -61,7 +78,7 @@ function CampusForm({
 }) {
   return (
     <FormCard title={campus ? "Edit campus" : "Create campus"}>
-      <form action={saveCampus} className="grid gap-3 md:grid-cols-4">
+      <form action={saveCampus} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={campus?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

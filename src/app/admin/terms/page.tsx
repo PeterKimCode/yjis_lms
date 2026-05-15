@@ -6,14 +6,29 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { formatDate, getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function TermsPage() {
+export default async function TermsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const data = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
+  const terms = data.terms.filter((term) =>
+    matchesSearch(q, [
+      term.name,
+      term.campus?.name,
+      term.organization.name,
+      data.academicYears.find((year) => year.id === term.academicYearId)?.name,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -21,11 +36,12 @@ export default async function TermsPage() {
         title="Terms"
         description="Create semester, trimester, quarter, or academy term windows."
       />
+      <SearchForm q={q} placeholder="Search terms..." />
       <TermForm data={data} />
       <DataTable
         empty="No terms yet."
         headers={["Name", "Academic Year", "Dates", "Status", "Edit"]}
-        rows={data.terms.map((term) => (
+        rows={terms.map((term) => (
           <TableRow key={term.id}>
             <TableCell className="font-medium">{term.name}</TableCell>
             <TableCell>
@@ -67,7 +83,7 @@ function TermForm({
 }) {
   return (
     <FormCard title={term ? "Edit term" : "Create term"}>
-      <form action={saveTerm} className="grid gap-3 md:grid-cols-4">
+      <form action={saveTerm} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={term?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}

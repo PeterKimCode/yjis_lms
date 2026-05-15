@@ -5,14 +5,31 @@ import {
   DataTable,
   Field,
   FormCard,
+  matchesSearch,
+  SearchForm,
   SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 
-export default async function GradeLevelsPage() {
+export default async function GradeLevelsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const data = await getAcademicSetupOptions()
+  const q = (await searchParams).q?.trim() ?? ""
+  const gradeLevels = data.gradeLevels.filter((gradeLevel) =>
+    matchesSearch(q, [
+      gradeLevel.name,
+      gradeLevel.code,
+      gradeLevel.campus?.name,
+      gradeLevel.organization.name,
+      data.academicYears.find((year) => year.id === gradeLevel.academicYearId)
+        ?.name,
+    ])
+  )
 
   return (
     <div className="space-y-6">
@@ -20,11 +37,12 @@ export default async function GradeLevelsPage() {
         title="Grade levels"
         description="Define K-12 grade levels or academy cohorts."
       />
+      <SearchForm q={q} placeholder="Search grade levels..." />
       <GradeLevelForm data={data} />
       <DataTable
         empty="No grade levels yet."
         headers={["Name", "Code", "Sequence", "Academic Year", "Edit"]}
-        rows={data.gradeLevels.map((gradeLevel) => (
+        rows={gradeLevels.map((gradeLevel) => (
           <TableRow key={gradeLevel.id}>
             <TableCell className="font-medium">{gradeLevel.name}</TableCell>
             <TableCell>{gradeLevel.code ?? "-"}</TableCell>
@@ -61,7 +79,7 @@ function GradeLevelForm({
 }) {
   return (
     <FormCard title={gradeLevel ? "Edit grade level" : "Create grade level"}>
-      <form action={saveGradeLevel} className="grid gap-3 md:grid-cols-4">
+      <form action={saveGradeLevel} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={gradeLevel?.id ?? ""} />
         <AdminSelect
           includeEmpty={false}
