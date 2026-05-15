@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { LessonContentType, UserRole } from "@prisma/client"
+import { LessonContentType, UserRole, VideoProvider } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -10,6 +10,7 @@ import {
   canViewClassSection,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import { isYouTubeUrl } from "@/modules/learning/video"
 
 const optionalString = z
   .string()
@@ -30,10 +31,34 @@ const lessonSchema = z.object({
   description: optionalString,
   sequence: z.coerce.number().int().min(1),
   contentType: z.nativeEnum(LessonContentType),
+  videoProvider: z.nativeEnum(VideoProvider).default(VideoProvider.HTML5),
   videoUrl: optionalString,
   videoFileAssetId: optionalString,
   durationSeconds: optionalInt,
   isPublished: checkboxBoolean,
+}).superRefine((data, context) => {
+  if (data.contentType !== LessonContentType.VIDEO) {
+    return
+  }
+
+  if (data.videoProvider === VideoProvider.YOUTUBE) {
+    if (!data.videoUrl || !isYouTubeUrl(data.videoUrl)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "YouTube lessons require a valid YouTube URL.",
+        path: ["videoUrl"],
+      })
+    }
+    return
+  }
+
+  if (data.videoUrl && isYouTubeUrl(data.videoUrl)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Select YouTube as the provider for YouTube URLs.",
+      path: ["videoProvider"],
+    })
+  }
 })
 
 export async function saveLesson(formData: FormData) {
@@ -55,16 +80,32 @@ export async function saveLesson(formData: FormData) {
     select: { organizationId: true },
   })
   const { id, ...values } = data
+  const lessonValues =
+    values.contentType === LessonContentType.VIDEO
+      ? {
+          ...values,
+          videoFileAssetId:
+            values.videoProvider === VideoProvider.YOUTUBE
+              ? null
+              : values.videoFileAssetId,
+        }
+      : {
+          ...values,
+          videoProvider: VideoProvider.HTML5,
+          videoUrl: null,
+          videoFileAssetId: null,
+          durationSeconds: null,
+        }
 
   if (id) {
     await getPrismaClient().lesson.update({
       where: { id },
-      data: values,
+      data: lessonValues,
     })
   } else {
     await getPrismaClient().lesson.create({
       data: {
-        ...values,
+        ...lessonValues,
         organizationId: classSection.organizationId,
         createdById: instructor.id,
       },

@@ -60,6 +60,11 @@ enum LessonContentType {
   LIVE_SESSION
 }
 
+enum VideoProvider {
+  HTML5
+  YOUTUBE
+}
+
 enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
@@ -690,6 +695,7 @@ model Lesson {
   description      String?
   sequence         Int                @default(1)
   contentType      LessonContentType  @default(TEXT)
+  videoProvider    VideoProvider      @default(HTML5)
   videoUrl         String?
   videoFileAssetId String?
   durationSeconds  Int?

@@ -1,10 +1,11 @@
-import { UserRole } from "@prisma/client"
+import { UserRole, VideoProvider } from "@prisma/client"
 import { notFound } from "next/navigation"
 
 import { EmptyState, SectionBlock } from "@/modules/dashboards/components"
 import { getPublishedLessonForStudent } from "@/modules/dashboards/data"
 import { requireAnyRole } from "@/modules/auth/permissions"
 import { VideoProgressPlayer } from "@/modules/learning/video-progress-player"
+import { parseYouTubeVideoId } from "@/modules/learning/video"
 
 export default async function StudentLessonPage({
   params,
@@ -24,6 +25,10 @@ export default async function StudentLessonPage({
   }
 
   const progress = lesson.videoProgress[0]
+  const youtubeVideoId =
+    lesson.videoProvider === VideoProvider.YOUTUBE && lesson.videoUrl
+      ? parseYouTubeVideoId(lesson.videoUrl)
+      : null
 
   return (
     <main className="flex-1 bg-muted/40 px-4 py-8">
@@ -41,7 +46,24 @@ export default async function StudentLessonPage({
         </div>
 
         <SectionBlock title="Lesson video">
-          {lesson.videoUrl ? (
+          {youtubeVideoId ? (
+            <div className="space-y-3">
+              <iframe
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="aspect-video w-full rounded-md border bg-black"
+                referrerPolicy="strict-origin-when-cross-origin"
+                src={`https://www.youtube.com/embed/${youtubeVideoId}`}
+                title={lesson.title}
+              />
+              <p className="text-sm text-muted-foreground">
+                Accurate YouTube progress tracking requires YouTube IFrame
+                Player API.
+              </p>
+            </div>
+          ) : lesson.videoProvider === VideoProvider.YOUTUBE ? (
+            <EmptyState>This YouTube lesson has an invalid video URL.</EmptyState>
+          ) : lesson.videoUrl ? (
             <VideoProgressPlayer
               classSectionId={classSectionId}
               durationSeconds={lesson.durationSeconds}
