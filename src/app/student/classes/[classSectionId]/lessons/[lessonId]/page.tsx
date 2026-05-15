@@ -5,6 +5,7 @@ import { EmptyState, SectionBlock } from "@/modules/dashboards/components"
 import { getPublishedLessonForStudent } from "@/modules/dashboards/data"
 import { requireAnyRole } from "@/modules/auth/permissions"
 import { VideoProgressPlayer } from "@/modules/learning/video-progress-player"
+import { YouTubePlayer } from "@/modules/learning/youtube-player"
 import { parseYouTubeVideoId } from "@/modules/learning/video"
 
 export default async function StudentLessonPage({
@@ -54,20 +55,18 @@ export default async function StudentLessonPage({
 
         <SectionBlock title="Lesson video">
           {youtubeVideoId ? (
-            <div className="space-y-3">
-              <iframe
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="aspect-video w-full rounded-md border bg-black"
-                referrerPolicy="strict-origin-when-cross-origin"
-                src={`https://www.youtube.com/embed/${youtubeVideoId}`}
-                title={lesson.title}
-              />
-              <p className="text-sm text-muted-foreground">
-                Accurate YouTube progress tracking requires YouTube IFrame
-                Player API.
-              </p>
-            </div>
+            <YouTubePlayer
+              classSectionId={classSectionId}
+              initialCompleted={progress?.completed ?? false}
+              initialDurationSeconds={
+                progress?.durationSeconds ?? lesson.durationSeconds ?? 0
+              }
+              initialPositionSeconds={progress?.lastPositionSeconds ?? 0}
+              initialProgressRate={Number(progress?.progressRate ?? 0)}
+              initialWatchedSeconds={progress?.watchedSeconds ?? 0}
+              lessonId={lesson.id}
+              videoId={youtubeVideoId}
+            />
           ) : lesson.videoProvider === VideoProvider.YOUTUBE ? (
             <EmptyState>This YouTube lesson has an invalid video URL.</EmptyState>
           ) : html5VideoUrl ? (

@@ -13,10 +13,13 @@ import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
 import { hashPassword } from "@/modules/auth/password"
 
-const optionalString = z
-  .string()
-  .trim()
-  .transform((value) => (value.length ? value : null))
+const optionalString = z.preprocess(
+  (value) => (typeof value === "string" ? value : ""),
+  z
+    .string()
+    .trim()
+    .transform((value) => (value.length ? value : null))
+)
 
 const requiredString = z.string().trim().min(1)
 const optionalInt = optionalString.transform((value) =>
@@ -222,6 +225,91 @@ export async function saveUser(formData: FormData) {
   }
 
   await revalidateAdmin("/admin/users")
+  await revalidateAdmin(`/admin/users/${user.id}`)
+}
+
+const parentStudentRelationSchema = z.object({
+  parentId: requiredString,
+  studentId: requiredString,
+  relation: optionalString,
+  isPrimary: checkboxBoolean,
+})
+
+export async function saveParentStudentRelation(formData: FormData) {
+  const data = parentStudentRelationSchema.parse({
+    ...readForm(formData),
+    isPrimary: formData.get("isPrimary"),
+  })
+  const prisma = getPrismaClient()
+  const [parent, student] = await Promise.all([
+    prisma.user.findFirstOrThrow({
+      where: {
+        id: data.parentId,
+        roleAssignments: { some: { role: UserRole.PARENT } },
+      },
+      select: { id: true, organizationId: true },
+    }),
+    prisma.user.findFirstOrThrow({
+      where: {
+        id: data.studentId,
+        roleAssignments: { some: { role: UserRole.STUDENT } },
+      },
+      select: { id: true, organizationId: true },
+    }),
+  ])
+
+  if (parent.organizationId !== student.organizationId) {
+    throw new Error("Parent and student must belong to the same organization.")
+  }
+
+  await assertAdminScope({ organizationId: parent.organizationId })
+  await prisma.parentStudentRelation.upsert({
+    where: {
+      parentId_studentId: {
+        parentId: parent.id,
+        studentId: student.id,
+      },
+    },
+    update: {
+      relation: data.relation ?? "Guardian",
+      isPrimary: data.isPrimary,
+    },
+    create: {
+      organizationId: parent.organizationId,
+      parentId: parent.id,
+      studentId: student.id,
+      relation: data.relation ?? "Guardian",
+      isPrimary: data.isPrimary,
+    },
+  })
+
+  await revalidateAdmin("/admin/users")
+  await revalidateAdmin(`/admin/users/${parent.id}`)
+  await revalidateAdmin(`/admin/users/${student.id}`)
+}
+
+const removeParentStudentRelationSchema = z.object({
+  relationId: requiredString,
+})
+
+export async function removeParentStudentRelation(formData: FormData) {
+  const data = removeParentStudentRelationSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const relation = await prisma.parentStudentRelation.findUniqueOrThrow({
+    where: { id: data.relationId },
+    select: {
+      id: true,
+      organizationId: true,
+      parentId: true,
+      studentId: true,
+    },
+  })
+
+  await assertAdminScope({ organizationId: relation.organizationId })
+  await prisma.parentStudentRelation.delete({ where: { id: relation.id } })
+  await revalidateAdmin("/admin/users")
+  await revalidateAdmin(`/admin/users/${relation.parentId}`)
+  await revalidateAdmin(`/admin/users/${relation.studentId}`)
 }
 
 const academicYearSchema = z.object({

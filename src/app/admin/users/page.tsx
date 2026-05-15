@@ -1,22 +1,19 @@
-import { UserRole } from "@prisma/client"
+import Link from "next/link"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { getUserWhereForAdmin } from "@/modules/admin/access"
-import { saveUser } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
-  AdminSelect,
   DataTable,
-  Field,
-  FormCard,
   matchesSearch,
   SearchForm,
-  SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { UserForm } from "@/modules/admin/user-form"
+import { Button } from "@/components/ui/button"
 
 export default async function UsersPage({
   searchParams,
@@ -81,17 +78,41 @@ export default async function UsersPage({
         ]}
         rows={filteredUsers.map((user) => (
           <TableRow key={user.id}>
-            <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell>{user.email ?? "-"}</TableCell>
-            <TableCell>{user.organization.name}</TableCell>
-            <TableCell>
-              {user.roleAssignments
-                .map((assignment) =>
-                  assignment.campus
-                    ? `${assignment.role} (${assignment.campus.name})`
-                    : assignment.role
-                )
-                .join(", ") || "-"}
+            <TableCell className="max-w-[220px] font-medium">
+              <Link
+                className="block truncate text-primary underline-offset-4 hover:underline"
+                href={`/admin/users/${user.id}`}
+                title={user.name}
+              >
+                {user.name}
+              </Link>
+            </TableCell>
+            <TableCell className="max-w-[240px] truncate" title={user.email ?? "-"}>
+              {user.email ?? "-"}
+            </TableCell>
+            <TableCell className="max-w-[220px] truncate" title={user.organization.name}>
+              {user.organization.name}
+            </TableCell>
+            <TableCell className="max-w-[280px] truncate">
+              <span
+                title={
+                  user.roleAssignments
+                    .map((assignment) =>
+                      assignment.campus
+                        ? `${assignment.role} (${assignment.campus.name})`
+                        : assignment.role
+                    )
+                    .join(", ") || "-"
+                }
+              >
+                {user.roleAssignments
+                  .map((assignment) =>
+                    assignment.campus
+                      ? `${assignment.role} (${assignment.campus.name})`
+                      : assignment.role
+                  )
+                  .join(", ") || "-"}
+              </span>
             </TableCell>
             <TableCell>
               {user.studentProfile ? (
@@ -111,128 +132,14 @@ export default async function UsersPage({
               <ActiveBadge active={user.isActive} />
             </TableCell>
             <TableCell>
-              <UserForm
-                campusOptions={admin.campusOptions}
-                gradeLevelOptions={admin.gradeLevelOptions}
-                homeroomOptions={admin.homeroomOptions}
-                organizationOptions={admin.organizationOptions}
-                user={user}
-              />
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/admin/users/${user.id}`}>Edit</Link>
+              </Button>
             </TableCell>
           </TableRow>
         ))}
+        minWidth="min-w-[980px]"
       />
     </div>
-  )
-}
-
-function UserForm({
-  organizationOptions,
-  campusOptions,
-  gradeLevelOptions,
-  homeroomOptions,
-  user,
-}: {
-  organizationOptions: { id: string; label: string }[]
-  campusOptions: { id: string; label: string }[]
-  gradeLevelOptions: { id: string; label: string }[]
-  homeroomOptions: { id: string; label: string }[]
-  user?: {
-    id: string
-    organizationId: string
-    name: string
-    email: string | null
-    isActive: boolean
-    studentProfile: {
-      studentNumber: string | null
-      admissionDate: Date | null
-      currentGradeLevelId: string | null
-      homeroomId: string | null
-    } | null
-    roleAssignments: {
-      role: UserRole
-      organizationId: string
-      campusId: string | null
-    }[]
-  }
-}) {
-  const primaryRole = user?.roleAssignments[0]
-
-  return (
-    <FormCard title={user ? "Edit user" : "Create user"}>
-      <form action={saveUser} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <input name="id" type="hidden" value={user?.id ?? ""} />
-        <AdminSelect
-          includeEmpty={false}
-          label="Organization"
-          name="organizationId"
-          options={organizationOptions}
-          defaultValue={primaryRole?.organizationId ?? user?.organizationId}
-          required
-        />
-        <AdminSelect
-          label="Campus"
-          name="campusId"
-          options={campusOptions}
-          defaultValue={primaryRole?.campusId}
-        />
-        <Field label="Name" name="name" defaultValue={user?.name} required />
-        <Field label="Email" name="email" type="email" defaultValue={user?.email} required />
-        <Field
-          label={user ? "New password" : "Password"}
-          name="password"
-          type="password"
-          required={!user}
-        />
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Role</span>
-          <select
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            name="role"
-            defaultValue={primaryRole?.role ?? UserRole.STUDENT}
-          >
-            {Object.values(UserRole).map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-        </label>
-        <AdminSelect
-          label="Student grade"
-          name="currentGradeLevelId"
-          options={gradeLevelOptions}
-          defaultValue={user?.studentProfile?.currentGradeLevelId}
-        />
-        <AdminSelect
-          label="Student homeroom"
-          name="homeroomId"
-          options={homeroomOptions}
-          defaultValue={user?.studentProfile?.homeroomId}
-        />
-        <Field
-          label="Student number"
-          name="studentNumber"
-          defaultValue={user?.studentProfile?.studentNumber}
-        />
-        <Field
-          label="Admission year"
-          name="admissionYear"
-          type="number"
-          defaultValue={user?.studentProfile?.admissionDate?.getUTCFullYear()}
-        />
-        <label className="flex items-end gap-2 text-sm">
-          <input
-            name="isActive"
-            type="checkbox"
-            defaultChecked={user?.isActive ?? true}
-          />
-          Active
-        </label>
-        <div className="flex items-end">
-          <SubmitButton />
-        </div>
-      </form>
-    </FormCard>
   )
 }

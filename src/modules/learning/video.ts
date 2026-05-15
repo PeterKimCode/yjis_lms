@@ -7,7 +7,11 @@ export function parseYouTubeVideoId(url: string): string | null {
       return normalizeYouTubeId(parsedUrl.pathname.slice(1))
     }
 
-    if (host === "youtube.com" || host === "m.youtube.com") {
+    if (
+      host === "youtube.com" ||
+      host === "m.youtube.com" ||
+      host === "youtube-nocookie.com"
+    ) {
       if (parsedUrl.pathname === "/watch") {
         return normalizeYouTubeId(parsedUrl.searchParams.get("v"))
       }
@@ -28,6 +32,14 @@ export function parseYouTubeVideoId(url: string): string | null {
 
 export function isYouTubeUrl(url: string) {
   return parseYouTubeVideoId(url) !== null
+}
+
+export function getYouTubeWatchUrl(videoId: string) {
+  return `https://www.youtube.com/watch?v=${videoId}`
+}
+
+export function getYouTubeEmbedUrl(videoId: string) {
+  return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`
 }
 
 function normalizeYouTubeId(value: string | null | undefined) {

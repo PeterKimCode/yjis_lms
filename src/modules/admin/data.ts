@@ -202,6 +202,16 @@ export async function getAcademicSetupOptions() {
             : ""
         }`,
       })),
+    parentOptions: users
+      .filter((user) =>
+        user.roleAssignments.some(
+          (assignment) => assignment.role === UserRole.PARENT
+        )
+      )
+      .map((user) => ({
+        id: user.id,
+        label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+      })),
     academicYearOptions: academicYears.map((year) => ({
       id: year.id,
       label: year.name,

@@ -154,10 +154,10 @@ export function AdminSelect({
   includeEmpty?: boolean
 }) {
   return (
-    <label className="grid gap-1 text-sm">
+    <label className="grid min-w-0 gap-1 text-sm">
       <span className="font-medium">{label}</span>
       <select
-        className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+        className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
         name={name}
         defaultValue={defaultValue ?? ""}
         required={required}
@@ -187,7 +187,7 @@ export function Field({
   required?: boolean
 }) {
   return (
-    <label className="grid gap-1 text-sm">
+    <label className="grid min-w-0 gap-1 text-sm">
       <span className="font-medium">{label}</span>
       <Input
         name={name}

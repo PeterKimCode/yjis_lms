@@ -251,7 +251,10 @@ export async function uploadLessonVideo(
   })
 
   revalidatePath(`/instructor/classes/${classSectionId}`)
-  return { ok: true, message: "Video uploaded and added to the file dropdown." }
+  return {
+    ok: true,
+    message: "Video uploaded. You can now select it from Uploaded video file.",
+  }
 }
 
 const progressSchema = z.object({
@@ -284,23 +287,27 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
   const threshold = await getCompletionThreshold(lesson.organizationId)
   const durationSeconds =
     data.durationSeconds || lesson.durationSeconds || data.lastPositionSeconds || 0
-  const progressRate =
-    durationSeconds > 0
-      ? Math.min(100, (data.watchedSeconds / durationSeconds) * 100)
-      : 0
-  const completed = progressRate >= threshold
   const existing = await getPrismaClient().videoProgress.findFirst({
     where: {
       lessonId: data.lessonId,
       studentId: student.id,
     },
   })
+  const watchedSeconds = Math.max(
+    existing?.watchedSeconds ?? 0,
+    data.watchedSeconds
+  )
+  const progressRate =
+    durationSeconds > 0
+      ? Math.min(100, (watchedSeconds / durationSeconds) * 100)
+      : 0
+  const completed = progressRate >= threshold
   const now = new Date()
   const values = {
     organizationId: lesson.organizationId,
     lessonId: data.lessonId,
     studentId: student.id,
-    watchedSeconds: data.watchedSeconds,
+    watchedSeconds,
     durationSeconds,
     totalSeconds: durationSeconds,
     progressRate: progressRate.toFixed(2),

@@ -170,7 +170,11 @@ export function LessonForm({
                 name="videoFileAssetId"
                 defaultValue={lesson?.videoFileAssetId ?? ""}
               >
-                <option value="">Select uploaded MinIO video</option>
+                <option value="">
+                  {videoFileOptions.length
+                    ? "Select uploaded MinIO video"
+                    : "No uploaded videos yet. Upload a video below."}
+                </option>
                 {videoFileOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
@@ -220,7 +224,12 @@ export function LessonForm({
         </Button>
       </form>
       {isVideo && videoProvider === "HTML5" ? (
-        <form action={uploadAction} className="space-y-2 rounded-md border p-3">
+        <form
+          action={uploadAction}
+          className="space-y-2 rounded-md border p-3"
+          encType="multipart/form-data"
+          method="post"
+        >
           <input name="classSectionId" type="hidden" value={classSectionId} />
           <label className="space-y-1 text-sm">
             <span className="font-medium">Upload video to LMS</span>
