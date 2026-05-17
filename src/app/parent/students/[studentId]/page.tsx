@@ -1,6 +1,8 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { UserRole } from "@prisma/client"
 
+import { Button } from "@/components/ui/button"
 import { requireAnyRole } from "@/modules/auth/permissions"
 import {
   DashboardPage,
@@ -44,6 +46,14 @@ export default async function ParentStudentDetailPage({
     student.attendanceRecords,
     attendancePolicy
   )
+  const termOptions = [
+    ...new Map(
+      student.enrollments
+        .map((enrollment) => enrollment.classSection.term)
+        .filter((term): term is NonNullable<typeof term> => Boolean(term))
+        .map((term) => [term.id, term])
+    ).values(),
+  ]
 
   return (
     <DashboardPage
@@ -77,6 +87,39 @@ export default async function ParentStudentDetailPage({
             0
           )}
         />
+      </div>
+
+      <div className="rounded-lg border bg-background p-4">
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold">Documents</h2>
+          <p className="text-sm text-muted-foreground">
+            Download published or finalized documents for this linked student.
+          </p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/api/documents/transcript?studentId=${student.id}`}>
+              Download transcript
+            </Link>
+          </Button>
+          {termOptions.length ? (
+            termOptions.map((term) => (
+              <Button asChild key={term.id} size="sm" variant="outline">
+                <Link
+                  href={`/api/documents/report-card?studentId=${student.id}&termId=${term.id}`}
+                >
+                  Report card: {term.name}
+                </Link>
+              </Button>
+            ))
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/api/documents/report-card?studentId=${student.id}`}>
+                Download report card
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <SimpleTable

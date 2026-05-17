@@ -381,6 +381,10 @@ export async function getAdminUserDetail(userId: string) {
         },
         orderBy: { updatedAt: "desc" },
       },
+      generatedDocuments: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
     },
   })
 

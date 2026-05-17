@@ -84,6 +84,12 @@ export default async function AdminUserDetailPage({
 
       {isStudent ? <StudentAcademicOverview user={user} /> : null}
 
+      {isStudent ? (
+        <DetailsSection title="Documents" defaultOpen>
+          <StudentDocuments user={user} />
+        </DetailsSection>
+      ) : null}
+
       <DetailsSection title="Account details" defaultOpen={!isStudent}>
         <UserForm
           campusOptions={detail.campusOptions}
@@ -113,6 +119,61 @@ export default async function AdminUserDetailPage({
           />
         </DetailsSection>
       ) : null}
+    </div>
+  )
+}
+
+function StudentDocuments({ user }: { user: DetailUser }) {
+  const termOptions = [
+    ...new Map(
+      user.enrollments
+        .map((enrollment) => enrollment.classSection.term)
+        .filter((term): term is NonNullable<typeof term> => Boolean(term))
+        .map((term) => [term.id, term])
+    ).values(),
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link href={`/api/documents/transcript?studentId=${user.id}`}>
+            Generate transcript PDF
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href={`/api/documents/report-card?studentId=${user.id}`}>
+            Generate all-term report card PDF
+          </Link>
+        </Button>
+        {termOptions.map((term) => (
+          <Button asChild key={term.id} size="sm" variant="outline">
+            <Link href={`/api/documents/report-card?studentId=${user.id}&termId=${term.id}`}>
+              Report card: {term.name}
+            </Link>
+          </Button>
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Report card: K-12 style term summary. Transcript: university-style
+        credit/GPA record. PDFs are generated directly; storing PDFs in MinIO is
+        a future enhancement.
+      </p>
+      <DataTable
+        empty="No generated document history yet."
+        headers={["Type", "Status", "Generated", "Storage"]}
+        minWidth="min-w-[720px]"
+        rows={user.generatedDocuments.map((document) => (
+          <TableRow key={document.id}>
+            <TableCell>{document.documentType}</TableCell>
+            <TableCell>
+              <Badge variant="secondary">{document.status}</Badge>
+            </TableCell>
+            <TableCell>{document.generatedAt?.toLocaleString("en-US") ?? "-"}</TableCell>
+            <TableCell>{document.fileAssetId ? "Stored" : "Direct PDF"}</TableCell>
+          </TableRow>
+        ))}
+      />
     </div>
   )
 }
