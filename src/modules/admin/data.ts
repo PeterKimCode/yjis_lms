@@ -14,6 +14,7 @@ import {
   getOrganizationWhereForAdmin,
   getTermWhereForAdmin,
   getUserWhereForAdmin,
+  isSuperAdmin,
   requireAdmin,
 } from "@/modules/admin/access"
 
@@ -255,7 +256,164 @@ export async function getHomeroomDetailForAdmin(homeroomId: string) {
   return homeroom ? { ...admin, homeroom } : null
 }
 
+export async function getAdminUserDetail(userId: string) {
+  const admin = await getAcademicSetupOptions()
+  const user = await getPrismaClient().user.findFirst({
+    where: {
+      id: userId,
+      ...getUserWhereForAdmin(admin.user),
+    },
+    include: {
+      organization: true,
+      studentProfile: {
+        include: {
+          campus: true,
+          currentGradeLevel: true,
+          homeroom: true,
+        },
+      },
+      roleAssignments: {
+        include: { campus: true },
+        orderBy: { createdAt: "asc" },
+      },
+      parentRelations: {
+        include: {
+          student: {
+            include: {
+              studentProfile: {
+                include: {
+                  currentGradeLevel: true,
+                  homeroom: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+      studentParentRelations: {
+        include: {
+          parent: true,
+        },
+        orderBy: { createdAt: "asc" },
+      },
+      enrollments: {
+        include: {
+          classSection: {
+            include: {
+              campus: true,
+              course: true,
+              term: true,
+              instructors: {
+                include: {
+                  instructor: true,
+                },
+                orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+              },
+              lessons: {
+                where: { isPublished: true },
+                include: {
+                  videoProgress: {
+                    where: { studentId: userId },
+                    take: 1,
+                  },
+                },
+                orderBy: { sequence: "asc" },
+              },
+              attendanceSessions: {
+                include: {
+                  classSession: true,
+                  records: {
+                    where: { studentId: userId },
+                  },
+                },
+                orderBy: { takenAt: "desc" },
+              },
+              assignments: {
+                include: {
+                  submissions: {
+                    where: { studentId: userId },
+                    take: 1,
+                    orderBy: { updatedAt: "desc" },
+                  },
+                },
+                orderBy: { dueAt: "desc" },
+              },
+              quizzes: {
+                include: {
+                  questions: {
+                    select: {
+                      points: true,
+                    },
+                  },
+                  attempts: {
+                    where: { studentId: userId },
+                    orderBy: { createdAt: "desc" },
+                  },
+                },
+                orderBy: { opensAt: "desc" },
+              },
+              exams: {
+                orderBy: { startsAt: "desc" },
+              },
+              finalGrades: {
+                where: { studentId: userId },
+                orderBy: { updatedAt: "desc" },
+              },
+            },
+          },
+        },
+        orderBy: { enrolledAt: "desc" },
+      },
+      finalGrades: {
+        include: {
+          classSection: {
+            include: {
+              course: true,
+              term: true,
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+      },
+    },
+  })
+
+  if (!user) return null
+
+  const roles = user.roleAssignments.map((assignment) => assignment.role)
+  const isStudent = roles.includes(UserRole.STUDENT)
+  const adminHasCampusScope = admin.user.roleAssignments.some(
+    (assignment) => assignment.campusId
+  )
+  const scopedCampusIds = new Set(admin.campuses.map((campus) => campus.id))
+
+  if (
+    isStudent &&
+    !isSuperAdmin(admin.user) &&
+    adminHasCampusScope &&
+    user.studentProfile?.campusId &&
+    !scopedCampusIds.has(user.studentProfile.campusId)
+  ) {
+    return null
+  }
+
+  return {
+    ...admin,
+    user,
+    studentAcademic: isStudent ? user.enrollments : null,
+  }
+}
+
 export function formatDate(value: Date | null | undefined) {
   if (!value) return ""
   return value.toISOString().slice(0, 10)
+}
+
+export function formatDateTime(value: Date | null | undefined) {
+  if (!value) return "-"
+  return value.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
 }
