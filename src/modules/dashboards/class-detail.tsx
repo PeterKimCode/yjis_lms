@@ -678,6 +678,7 @@ function toQuizPanelValue(
       prompt: question.prompt,
       points: question.points.toString(),
       sequence: question.sequence,
+      explanation: getQuestionExplanation(question.rubric),
       answerKey: question.answerKey,
       options: question.options.map((option) => ({
         id: option.id,
@@ -708,6 +709,15 @@ function toQuizPanelValue(
       })),
     })),
   }
+}
+
+function getQuestionExplanation(rubric: unknown) {
+  if (!rubric || typeof rubric !== "object" || Array.isArray(rubric)) {
+    return null
+  }
+
+  const explanation = (rubric as { explanation?: unknown }).explanation
+  return typeof explanation === "string" && explanation.length ? explanation : null
 }
 
 function toExamPanelValue(

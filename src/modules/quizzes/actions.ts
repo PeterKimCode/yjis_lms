@@ -20,11 +20,22 @@ const requiredString = z.string().trim().min(1)
 const optionalDate = optionalString.transform((value) =>
   value ? new Date(value) : null
 )
-const optionalPositiveInt = optionalString.transform((value) =>
-  value ? Number.parseInt(value, 10) : null
-)
-const optionalDecimal = optionalString.transform((value) =>
-  value ? new Prisma.Decimal(value) : null
+const optionalPositiveInt = z
+  .preprocess((value) => {
+    const text = typeof value === "string" ? value.trim() : ""
+    return text.length ? text : undefined
+  }, z.coerce.number().int().min(1).optional())
+  .transform((value) => value ?? null)
+const optionalDecimal = z.preprocess(
+  (value) => {
+    const text = typeof value === "string" ? value.trim() : ""
+    return text.length ? text : undefined
+  },
+  z.coerce
+    .number()
+    .min(0)
+    .optional()
+    .transform((value) => (value === undefined ? null : new Prisma.Decimal(value)))
 )
 
 async function requireQuizManager(classSectionId: string) {
@@ -103,6 +114,9 @@ export async function saveQuiz(
   }
 
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
+  if (id) {
+    revalidatePath(`/instructor/classes/${data.classSectionId}/quizzes/${id}`)
+  }
   revalidatePath(`/student/classes/${data.classSectionId}`)
   return { ok: true, message: id ? "Quiz saved." : "Quiz created." }
 }
@@ -117,6 +131,7 @@ const questionSchema = z.object({
   correctOptionIndex: optionalPositiveInt,
   trueFalseAnswer: optionalString,
   acceptedAnswers: optionalString,
+  explanation: optionalString,
 })
 
 export async function saveQuestion(
@@ -133,6 +148,7 @@ export async function saveQuestion(
     correctOptionIndex: formData.get("correctOptionIndex") ?? "",
     trueFalseAnswer: formData.get("trueFalseAnswer") ?? "",
     acceptedAnswers: formData.get("acceptedAnswers") ?? "",
+    explanation: formData.get("explanation") ?? "",
   })
 
   if (!parsed.success) {
@@ -181,6 +197,7 @@ export async function saveQuestion(
           points: new Prisma.Decimal(data.points),
           sequence: data.sequence,
           answerKey: answerKey ?? Prisma.JsonNull,
+          rubric: data.explanation ? { explanation: data.explanation } : Prisma.JsonNull,
         },
       })
     : await prisma.question.create({
@@ -192,6 +209,7 @@ export async function saveQuestion(
           points: new Prisma.Decimal(data.points),
           sequence: data.sequence,
           answerKey: answerKey ?? Prisma.JsonNull,
+          rubric: data.explanation ? { explanation: data.explanation } : Prisma.JsonNull,
         },
       })
 
@@ -211,6 +229,7 @@ export async function saveQuestion(
   }
 
   revalidatePath(`/instructor/classes/${quiz.classSectionId}`)
+  revalidatePath(`/instructor/classes/${quiz.classSectionId}/quizzes/${data.quizId}`)
   revalidatePath(`/student/classes/${quiz.classSectionId}`)
   return { ok: true, message: data.id ? "Question saved." : "Question added." }
 }
@@ -235,6 +254,7 @@ export async function deleteQuestion(
 
   await getPrismaClient().question.delete({ where: { id: questionId } })
   revalidatePath(`/instructor/classes/${question.quiz.classSectionId}`)
+  revalidatePath(`/instructor/classes/${question.quiz.classSectionId}/quizzes/${question.quizId}`)
   return { ok: true, message: "Question deleted." }
 }
 
@@ -306,6 +326,7 @@ export async function submitQuiz(
 
   revalidatePath(`/student/classes/${quiz.classSectionId}`)
   revalidatePath(`/instructor/classes/${quiz.classSectionId}`)
+  revalidatePath(`/instructor/classes/${quiz.classSectionId}/quizzes/${quiz.id}`)
   return { ok: true, message: needsManual ? "Quiz submitted. Manual grading is pending." : "Quiz submitted and graded." }
 }
 
@@ -395,6 +416,9 @@ export async function gradeQuizAnswer(
   })
 
   revalidatePath(`/instructor/classes/${answer.attempt.quiz.classSectionId}`)
+  revalidatePath(
+    `/instructor/classes/${answer.attempt.quiz.classSectionId}/quizzes/${answer.attempt.quizId}`
+  )
   revalidatePath(`/student/classes/${answer.attempt.quiz.classSectionId}`)
   return { ok: true, message: "Answer graded." }
 }
