@@ -28,17 +28,12 @@ export default async function Home() {
           </div>
           <div className="flex flex-wrap gap-3">
             {session?.user ? (
-              <>
-                <Button asChild>
-                  <Link href={dashboardHref}>Go to dashboard</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/instructor">Continue as Demo Instructor</Link>
-                </Button>
-              </>
+              <Button asChild>
+                <Link href={dashboardHref}>Go to dashboard</Link>
+              </Button>
             ) : (
               <Button asChild>
-                <Link href="/login">Sign in with a demo user</Link>
+                <Link href="/login">Login</Link>
               </Button>
             )}
           </div>
