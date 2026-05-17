@@ -15,12 +15,15 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import {
-  formatDate,
   formatDateTime,
   getAttendancePolicyForOrganization,
   getClassSectionDetail,
   getVideoFileOptionsForClassSection,
 } from "@/modules/dashboards/data"
+import {
+  AssignmentPanel,
+  type AssignmentPanelValue,
+} from "@/modules/assignments/assignment-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
 import {
   createAttendanceSession,
@@ -477,18 +480,12 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         <SectionBlock title="Assignments">
-          <SimpleTable
-            empty="No assignments yet."
-            headers={["Title", "Due", "Points"]}
-            rows={section.assignments.map((assignment) => (
-              <TableRow key={assignment.id}>
-                <TableCell className="font-medium">{assignment.title}</TableCell>
-                <TableCell>{formatDate(assignment.dueAt)}</TableCell>
-                <TableCell>
-                  {assignment.pointsPossible?.toString() ?? "-"}
-                </TableCell>
-              </TableRow>
-            ))}
+          <AssignmentPanel
+            assignments={section.assignments.map(toAssignmentPanelValue)}
+            classSectionId={section.id}
+            mode={mode}
+            now={new Date().toISOString()}
+            userId={userId}
           />
         </SectionBlock>
 
@@ -596,6 +593,32 @@ function AttendanceStat({
       <div className="mt-1 text-lg font-semibold">{value}</div>
     </div>
   )
+}
+
+function toAssignmentPanelValue(
+  assignment: NonNullable<
+    Awaited<ReturnType<typeof getClassSectionDetail>>
+  >["assignments"][number]
+): AssignmentPanelValue {
+  return {
+    id: assignment.id,
+    title: assignment.title,
+    description: assignment.description,
+    dueAt: assignment.dueAt?.toISOString() ?? null,
+    pointsPossible: assignment.pointsPossible?.toString() ?? null,
+    acceptsLate: assignment.acceptsLate,
+    submissions: assignment.submissions.map((submission) => ({
+      id: submission.id,
+      studentId: submission.studentId,
+      studentName: submission.student.name,
+      studentEmail: submission.student.email,
+      content: submission.content,
+      submittedAt: submission.submittedAt?.toISOString() ?? null,
+      score: submission.score?.toString() ?? null,
+      feedback: submission.feedback,
+      gradedAt: submission.gradedAt?.toISOString() ?? null,
+    })),
+  }
 }
 
 function toLessonFormValue(

@@ -19,6 +19,7 @@ import {
   getAttendanceSummary,
   normalizeAttendancePolicy,
 } from "@/modules/attendance/summary"
+import { getSubmissionStatus } from "@/modules/assignments/status"
 
 export default async function ParentStudentDetailPage({
   params,
@@ -118,6 +119,41 @@ export default async function ParentStudentDetailPage({
             </TableCell>
           </TableRow>
         ))}
+      />
+
+      <SimpleTable
+        empty="No assignments yet."
+        headers={["Class", "Assignment", "Due", "Status", "Submitted", "Score"]}
+        rows={student.enrollments.flatMap((enrollment) =>
+          enrollment.classSection.assignments.map((assignment) => {
+            const submission = assignment.submissions[0]
+
+            return (
+              <TableRow key={assignment.id}>
+                <TableCell className="font-medium">
+                  {enrollment.classSection.name}
+                </TableCell>
+                <TableCell>{assignment.title}</TableCell>
+                <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
+                <TableCell>
+                  {getSubmissionStatus({
+                    dueAt: assignment.dueAt,
+                    score: submission?.score,
+                    submittedAt: submission?.submittedAt,
+                  })}
+                </TableCell>
+                <TableCell>{formatDateTime(submission?.submittedAt)}</TableCell>
+                <TableCell>
+                  {submission?.score
+                    ? `${submission.score.toString()}/${
+                        assignment.pointsPossible?.toString() ?? "-"
+                      }`
+                    : "-"}
+                </TableCell>
+              </TableRow>
+            )
+          })
+        )}
       />
     </DashboardPage>
   )

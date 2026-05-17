@@ -1,0 +1,299 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { UserRole } from "@prisma/client"
+import { z } from "zod"
+
+import { getPrismaClient } from "@/lib/prisma"
+import {
+  canManageClassSection,
+  canViewClassSection,
+  requireAnyRole,
+} from "@/modules/auth/permissions"
+import type { AssignmentActionState } from "@/modules/assignments/action-state"
+
+const optionalString = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : ""),
+  z.string().transform((value) => (value.length ? value : null))
+)
+const requiredString = z.string().trim().min(1)
+const optionalDate = optionalString.transform((value) =>
+  value ? new Date(value) : null
+)
+
+const assignmentSchema = z.object({
+  id: optionalString,
+  classSectionId: requiredString,
+  title: requiredString,
+  description: optionalString,
+  dueAt: optionalDate,
+  pointsPossible: z.coerce.number().positive("Max score must be greater than 0."),
+  acceptsLate: z.boolean(),
+})
+
+export async function saveAssignment(
+  _previousState: AssignmentActionState,
+  formData: FormData
+): Promise<AssignmentActionState> {
+  const parsed = assignmentSchema.safeParse({
+    id: formData.get("id") ?? "",
+    classSectionId: formData.get("classSectionId") ?? "",
+    title: formData.get("title") ?? "",
+    description: formData.get("description") ?? "",
+    dueAt: formData.get("dueAt") ?? "",
+    pointsPossible: formData.get("pointsPossible") ?? "",
+    acceptsLate: formData.get("acceptsLate") === "on",
+  })
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the assignment form.",
+    }
+  }
+
+  const user = await requireAnyRole([
+    UserRole.SUPER_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.ACADEMIC_STAFF,
+    UserRole.INSTRUCTOR,
+    UserRole.HOMEROOM_TEACHER,
+  ])
+  const data = parsed.data
+
+  if (!(await canManageClassSection(user.id, data.classSectionId))) {
+    throw new Error("Forbidden")
+  }
+
+  const prisma = getPrismaClient()
+  const classSection = await prisma.classSection.findUniqueOrThrow({
+    where: { id: data.classSectionId },
+    select: { organizationId: true },
+  })
+  const { id, ...values } = data
+
+  if (id) {
+    const assignment = await prisma.assignment.findUniqueOrThrow({
+      where: { id },
+      select: { classSectionId: true },
+    })
+
+    if (assignment.classSectionId !== data.classSectionId) {
+      throw new Error("Assignment does not belong to this class section.")
+    }
+
+    await prisma.assignment.update({
+      where: { id },
+      data: {
+        ...values,
+        pointsPossible: values.pointsPossible.toString(),
+      },
+    })
+  } else {
+    await prisma.assignment.create({
+      data: {
+        ...values,
+        organizationId: classSection.organizationId,
+        pointsPossible: values.pointsPossible.toString(),
+      },
+    })
+  }
+
+  revalidatePath(`/instructor/classes/${data.classSectionId}`)
+  revalidatePath(`/student/classes/${data.classSectionId}`)
+  return { ok: true, message: id ? "Assignment saved." : "Assignment created." }
+}
+
+export async function deleteAssignment(
+  _previousState: AssignmentActionState,
+  formData: FormData
+): Promise<AssignmentActionState> {
+  const user = await requireAnyRole([
+    UserRole.SUPER_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.ACADEMIC_STAFF,
+    UserRole.INSTRUCTOR,
+    UserRole.HOMEROOM_TEACHER,
+  ])
+  const assignmentId = String(formData.get("assignmentId") ?? "")
+  const assignment = await getPrismaClient().assignment.findUniqueOrThrow({
+    where: { id: assignmentId },
+    include: { _count: { select: { submissions: true } } },
+  })
+
+  if (!(await canManageClassSection(user.id, assignment.classSectionId))) {
+    throw new Error("Forbidden")
+  }
+
+  if (assignment._count.submissions > 0) {
+    return {
+      ok: false,
+      message: "Assignments with submissions cannot be deleted.",
+    }
+  }
+
+  await getPrismaClient().assignment.delete({ where: { id: assignment.id } })
+  revalidatePath(`/instructor/classes/${assignment.classSectionId}`)
+  return { ok: true, message: "Assignment deleted." }
+}
+
+const submissionSchema = z.object({
+  assignmentId: requiredString,
+  content: requiredString,
+})
+
+export async function submitAssignment(
+  _previousState: AssignmentActionState,
+  formData: FormData
+): Promise<AssignmentActionState> {
+  const student = await requireAnyRole([UserRole.STUDENT])
+  const parsed = submissionSchema.safeParse({
+    assignmentId: formData.get("assignmentId") ?? "",
+    content: formData.get("content") ?? "",
+  })
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Enter a response.",
+    }
+  }
+
+  const prisma = getPrismaClient()
+  const assignment = await prisma.assignment.findUniqueOrThrow({
+    where: { id: parsed.data.assignmentId },
+    select: {
+      id: true,
+      organizationId: true,
+      classSectionId: true,
+      dueAt: true,
+      acceptsLate: true,
+    },
+  })
+
+  if (!(await canViewClassSection(student.id, assignment.classSectionId))) {
+    throw new Error("Forbidden")
+  }
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: {
+      classSectionId_studentId: {
+        classSectionId: assignment.classSectionId,
+        studentId: student.id,
+      },
+    },
+    select: { id: true },
+  })
+
+  if (!enrollment) {
+    throw new Error("Only enrolled students can submit assignments.")
+  }
+
+  if (
+    assignment.dueAt &&
+    assignment.dueAt.getTime() < Date.now() &&
+    !assignment.acceptsLate
+  ) {
+    return {
+      ok: false,
+      message: "This assignment is closed for submissions.",
+    }
+  }
+
+  await prisma.assignmentSubmission.upsert({
+    where: {
+      assignmentId_studentId: {
+        assignmentId: assignment.id,
+        studentId: student.id,
+      },
+    },
+    update: {
+      content: parsed.data.content,
+      submittedAt: new Date(),
+    },
+    create: {
+      organizationId: assignment.organizationId,
+      assignmentId: assignment.id,
+      studentId: student.id,
+      content: parsed.data.content,
+      submittedAt: new Date(),
+    },
+  })
+
+  revalidatePath(`/student/classes/${assignment.classSectionId}`)
+  revalidatePath(`/instructor/classes/${assignment.classSectionId}`)
+  return { ok: true, message: "Submission saved." }
+}
+
+const gradeSchema = z.object({
+  submissionId: requiredString,
+  score: z.coerce.number().min(0),
+  feedback: optionalString,
+})
+
+export async function gradeSubmission(
+  _previousState: AssignmentActionState,
+  formData: FormData
+): Promise<AssignmentActionState> {
+  const instructor = await requireAnyRole([
+    UserRole.SUPER_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.ACADEMIC_STAFF,
+    UserRole.INSTRUCTOR,
+    UserRole.HOMEROOM_TEACHER,
+  ])
+  const parsed = gradeSchema.safeParse({
+    submissionId: formData.get("submissionId") ?? "",
+    score: formData.get("score") ?? "",
+    feedback: formData.get("feedback") ?? "",
+  })
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Check the grading form.",
+    }
+  }
+
+  const prisma = getPrismaClient()
+  const submission = await prisma.assignmentSubmission.findUniqueOrThrow({
+    where: { id: parsed.data.submissionId },
+    include: {
+      assignment: {
+        select: {
+          classSectionId: true,
+          pointsPossible: true,
+        },
+      },
+    },
+  })
+
+  if (!(await canManageClassSection(instructor.id, submission.assignment.classSectionId))) {
+    throw new Error("Forbidden")
+  }
+
+  const maxScore = Number(submission.assignment.pointsPossible ?? 0)
+  if (parsed.data.score > maxScore) {
+    return {
+      ok: false,
+      message: `Score must be ${maxScore} or less.`,
+    }
+  }
+
+  await prisma.assignmentSubmission.update({
+    where: { id: submission.id },
+    data: {
+      score: parsed.data.score.toString(),
+      feedback: parsed.data.feedback,
+      gradedById: instructor.id,
+      gradedAt: new Date(),
+    },
+  })
+
+  revalidatePath(`/instructor/classes/${submission.assignment.classSectionId}`)
+  revalidatePath(`/student/classes/${submission.assignment.classSectionId}`)
+  return { ok: true, message: "Submission graded." }
+}

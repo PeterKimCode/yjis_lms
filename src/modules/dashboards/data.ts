@@ -177,6 +177,14 @@ export async function getClassSectionDetail(
       },
       assignments: {
         orderBy: { dueAt: "asc" },
+        include: {
+          submissions: {
+            include: {
+              student: true,
+            },
+            orderBy: { submittedAt: "desc" },
+          },
+        },
       },
       quizzes: {
         orderBy: { opensAt: "asc" },
@@ -314,6 +322,14 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                 where: {
                   studentId,
                 },
+              },
+              assignments: {
+                include: {
+                  submissions: {
+                    where: { studentId },
+                  },
+                },
+                orderBy: { dueAt: "asc" },
               },
             },
           },

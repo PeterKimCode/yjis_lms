@@ -275,6 +275,7 @@ model User {
   videoProgress            VideoProgress[]
   attendanceRecords        AttendanceRecord[]
   assignmentSubmissions    AssignmentSubmission[]
+  gradedAssignmentSubmissions AssignmentSubmission[] @relation("GradedAssignmentSubmissions")
   quizAttempts             QuizAttempt[]
   quizAnswers              QuizAnswer[]
   gradeScores              GradeScore[]
@@ -850,16 +851,20 @@ model AssignmentSubmission {
   submittedAt    DateTime?
   score          Decimal?     @db.Decimal(8, 2)
   feedback       String?
+  gradedById     String?
+  gradedAt       DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   assignment     Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy       User?        @relation("GradedAssignmentSubmissions", fields: [gradedById], references: [id], onDelete: SetNull)
   attachments    FileAsset[]
 
   @@unique([assignmentId, studentId])
   @@index([organizationId])
   @@index([studentId])
+  @@index([gradedById])
   @@index([createdAt])
 }
 
