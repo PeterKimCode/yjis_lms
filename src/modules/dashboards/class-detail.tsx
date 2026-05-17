@@ -94,7 +94,7 @@ export async function ClassSectionDetail({
         <MetricCard label="Quizzes" value={section.quizzes.length} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="flex flex-col gap-6">
         <SectionBlock title="Lessons">
           <div className="space-y-4">
             {mode === "instructor" ? (
