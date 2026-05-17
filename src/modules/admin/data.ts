@@ -333,6 +333,11 @@ export async function getAdminUserDetail(userId: string) {
                 include: {
                   submissions: {
                     where: { studentId: userId },
+                    include: {
+                      attachments: {
+                        orderBy: { createdAt: "desc" },
+                      },
+                    },
                     take: 1,
                     orderBy: { updatedAt: "desc" },
                   },
@@ -402,6 +407,30 @@ export async function getAdminUserDetail(userId: string) {
     ...admin,
     user,
     studentAcademic: isStudent ? user.enrollments : null,
+  }
+}
+
+export async function getAdminStudentClassRecord(
+  studentId: string,
+  classSectionId: string
+) {
+  const detail = await getAdminUserDetail(studentId)
+
+  if (!detail) return null
+
+  const roles = detail.user.roleAssignments.map((assignment) => assignment.role)
+
+  if (!roles.includes(UserRole.STUDENT)) return null
+
+  const enrollment = detail.user.enrollments.find(
+    (item) => item.classSectionId === classSectionId
+  )
+
+  if (!enrollment) return null
+
+  return {
+    ...detail,
+    enrollment,
   }
 }
 

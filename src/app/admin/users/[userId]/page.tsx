@@ -5,7 +5,7 @@ import { AttendanceStatus, FinalGradeStatus, UserRole } from "@prisma/client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { getAdminUserDetail, formatDateTime } from "@/modules/admin/data"
+import { getAdminUserDetail } from "@/modules/admin/data"
 import {
   ActiveBadge,
   AdminPageHeader,
@@ -178,30 +178,7 @@ function StudentAcademicOverview({ user }: { user: DetailUser }) {
       </DetailsSection>
 
       <DetailsSection title="Enrolled classes" defaultOpen>
-        <EnrolledClassesTable enrollments={user.enrollments} />
-      </DetailsSection>
-
-      <DetailsSection title="Attendance">
-        <AttendanceOverview enrollments={user.enrollments} />
-      </DetailsSection>
-
-      <DetailsSection title="Lesson progress">
-        <LessonProgressTable enrollments={user.enrollments} />
-      </DetailsSection>
-
-      <DetailsSection title="Assignments">
-        <AssignmentsTable enrollments={user.enrollments} />
-      </DetailsSection>
-
-      <DetailsSection title="Quizzes / Exams">
-        <QuizzesTable enrollments={user.enrollments} />
-        <div className="mt-4">
-          <ExamsTable enrollments={user.enrollments} />
-        </div>
-      </DetailsSection>
-
-      <DetailsSection title="Grades" defaultOpen>
-        <GradesTable enrollments={user.enrollments} />
+        <EnrolledClassesTable enrollments={user.enrollments} studentId={user.id} />
       </DetailsSection>
     </div>
   )
@@ -240,8 +217,10 @@ function DetailsSection({
 
 function EnrolledClassesTable({
   enrollments,
+  studentId,
 }: {
   enrollments: StudentEnrollment[]
+  studentId: string
 }) {
   return (
     <DataTable
@@ -253,10 +232,12 @@ function EnrolledClassesTable({
         "Campus",
         "Instructors",
         "Status",
+        "Actions",
       ]}
-      minWidth="min-w-[940px]"
+      minWidth="min-w-[1040px]"
       rows={enrollments.map((enrollment) => {
         const section = enrollment.classSection
+        const recordHref = `/admin/users/${studentId}/classes/${section.id}`
 
         return (
           <TableRow key={enrollment.id}>
@@ -266,7 +247,7 @@ function EnrolledClassesTable({
             <TableCell className="max-w-[220px] truncate">
               <Link
                 className="font-medium underline-offset-4 hover:underline"
-                href={`/admin/class-sections/${section.id}`}
+                href={recordHref}
               >
                 {section.name}
               </Link>
@@ -279,321 +260,14 @@ function EnrolledClassesTable({
             <TableCell>
               <Badge variant="secondary">{enrollment.status}</Badge>
             </TableCell>
+            <TableCell>
+              <Button asChild size="sm" variant="outline">
+                <Link href={recordHref}>View class record</Link>
+              </Button>
+            </TableCell>
           </TableRow>
         )
       })}
-    />
-  )
-}
-
-function AttendanceOverview({
-  enrollments,
-}: {
-  enrollments: StudentEnrollment[]
-}) {
-  const records = getAttendanceRows(enrollments)
-  const summary = getAttendanceSummary(records)
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <SummaryItem label="Total sessions" value={summary.total.toString()} />
-        <SummaryItem label="Present" value={summary.present.toString()} />
-        <SummaryItem label="Late" value={summary.late.toString()} />
-        <SummaryItem label="Absent" value={summary.absent.toString()} />
-        <SummaryItem
-          label="Attendance rate"
-          value={`${summary.rate.toFixed(1)}%`}
-        />
-      </div>
-      <DataTable
-        empty="No attendance records yet."
-        headers={["Class", "Session", "Date", "Status", "Note", "Updated"]}
-        minWidth="min-w-[980px]"
-        rows={records.slice(0, 20).map((row) => (
-          <TableRow key={row.record.id}>
-            <TableCell className="max-w-[220px] truncate">
-              {row.section.course.title} / {row.section.name}
-            </TableCell>
-            <TableCell className="max-w-[220px] truncate">
-              {row.session.title ?? row.classSession?.title ?? "Attendance"}
-            </TableCell>
-            <TableCell>{formatDateTime(row.session.takenAt)}</TableCell>
-            <TableCell>
-              <Badge variant="secondary">{row.record.status}</Badge>
-            </TableCell>
-            <TableCell className="max-w-[240px] truncate">
-              {row.record.note ?? "-"}
-            </TableCell>
-            <TableCell>{formatDateTime(row.record.updatedAt)}</TableCell>
-          </TableRow>
-        ))}
-      />
-    </div>
-  )
-}
-
-function LessonProgressTable({
-  enrollments,
-}: {
-  enrollments: StudentEnrollment[]
-}) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.classSection.lessons.map((lesson) => ({
-      enrollment,
-      lesson,
-      progress: lesson.videoProgress[0],
-    }))
-  )
-
-  return (
-    <DataTable
-      empty="No published lessons yet."
-      headers={[
-        "Class",
-        "Lesson",
-        "Type",
-        "Status",
-        "Progress",
-        "Watched",
-        "Last watched",
-      ]}
-      minWidth="min-w-[980px]"
-      rows={rows.slice(0, 20).map(({ enrollment, lesson, progress }) => {
-        const progressRate = progress ? Number(progress.progressRate) : 0
-        const duration = progress?.durationSeconds ?? lesson.durationSeconds ?? 0
-
-        return (
-          <TableRow key={lesson.id}>
-            <TableCell className="max-w-[220px] truncate">
-              {enrollment.classSection.course.title} /{" "}
-              {enrollment.classSection.name}
-            </TableCell>
-            <TableCell className="max-w-[260px] truncate font-medium">
-              {lesson.title}
-            </TableCell>
-            <TableCell>{lesson.contentType}</TableCell>
-            <TableCell>
-              <Badge variant={progress?.completed ? "default" : "secondary"}>
-                {progress?.completed
-                  ? "Completed"
-                  : progress
-                    ? "In progress"
-                    : "Not started"}
-              </Badge>
-            </TableCell>
-            <TableCell>{progressRate.toFixed(1)}%</TableCell>
-            <TableCell>
-              {progress?.watchedSeconds ?? 0} / {duration || "-"}
-            </TableCell>
-            <TableCell>{formatDateTime(progress?.lastWatchedAt)}</TableCell>
-          </TableRow>
-        )
-      })}
-    />
-  )
-}
-
-function AssignmentsTable({
-  enrollments,
-}: {
-  enrollments: StudentEnrollment[]
-}) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.classSection.assignments.map((assignment) => ({
-      enrollment,
-      assignment,
-      submission: assignment.submissions[0],
-    }))
-  )
-
-  return (
-    <DataTable
-      empty="No assignments yet."
-      headers={[
-        "Class",
-        "Assignment",
-        "Due",
-        "Status",
-        "Submitted",
-        "Score",
-        "Feedback",
-      ]}
-      minWidth="min-w-[1040px]"
-      rows={rows.slice(0, 20).map(({ enrollment, assignment, submission }) => (
-        <TableRow key={assignment.id}>
-          <TableCell className="max-w-[220px] truncate">
-            {enrollment.classSection.course.title} / {enrollment.classSection.name}
-          </TableCell>
-          <TableCell className="max-w-[240px] truncate font-medium">
-            {assignment.title}
-          </TableCell>
-          <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
-          <TableCell>
-            <Badge variant="secondary">
-              {getAssignmentStatus(assignment.dueAt, submission)}
-            </Badge>
-          </TableCell>
-          <TableCell>{formatDateTime(submission?.submittedAt)}</TableCell>
-          <TableCell>
-            {submission?.score
-              ? `${formatDecimal(submission.score)} / ${
-                  assignment.pointsPossible
-                    ? formatDecimal(assignment.pointsPossible)
-                    : "-"
-                }`
-              : "-"}
-          </TableCell>
-          <TableCell className="max-w-[260px] truncate">
-            {submission?.feedback ?? "-"}
-          </TableCell>
-        </TableRow>
-      ))}
-    />
-  )
-}
-
-function QuizzesTable({ enrollments }: { enrollments: StudentEnrollment[] }) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.classSection.quizzes.map((quiz) => ({
-      enrollment,
-      quiz,
-      attempts: quiz.attempts,
-    }))
-  )
-
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">Quizzes</h3>
-      <DataTable
-        empty="No quizzes yet."
-        headers={["Class", "Quiz", "Status", "Attempts", "Best/latest score", "Submitted"]}
-        minWidth="min-w-[940px]"
-        rows={rows.slice(0, 20).map(({ enrollment, quiz, attempts }) => {
-          const submittedAttempts = attempts.filter((attempt) => attempt.submittedAt)
-          const bestAttempt = getBestQuizAttempt(submittedAttempts)
-          const latestAttempt = attempts[0]
-          const possible = getQuizPointsPossible(quiz)
-
-          return (
-            <TableRow key={quiz.id}>
-              <TableCell className="max-w-[220px] truncate">
-                {enrollment.classSection.course.title} /{" "}
-                {enrollment.classSection.name}
-              </TableCell>
-              <TableCell className="max-w-[240px] truncate font-medium">
-                {quiz.title}
-              </TableCell>
-              <TableCell>
-                <Badge variant="secondary">
-                  {latestAttempt
-                    ? latestAttempt.submittedAt
-                      ? "Submitted"
-                      : "In progress"
-                    : "Not started"}
-                </Badge>
-              </TableCell>
-              <TableCell>{attempts.length}</TableCell>
-              <TableCell>
-                {bestAttempt?.score
-                  ? `${formatDecimal(bestAttempt.score)} / ${possible}`
-                  : "-"}
-              </TableCell>
-              <TableCell>{formatDateTime(bestAttempt?.submittedAt)}</TableCell>
-            </TableRow>
-          )
-        })}
-      />
-    </div>
-  )
-}
-
-function ExamsTable({ enrollments }: { enrollments: StudentEnrollment[] }) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.classSection.exams.map((exam) => ({ enrollment, exam }))
-  )
-
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold">Exams</h3>
-      <DataTable
-        empty="No exams yet."
-        headers={["Class", "Exam", "Type", "Date", "Max score", "Location"]}
-        minWidth="min-w-[900px]"
-        rows={rows.slice(0, 20).map(({ enrollment, exam }) => (
-          <TableRow key={exam.id}>
-            <TableCell className="max-w-[220px] truncate">
-              {enrollment.classSection.course.title} / {enrollment.classSection.name}
-            </TableCell>
-            <TableCell className="max-w-[240px] truncate font-medium">
-              {exam.title}
-            </TableCell>
-            <TableCell>{exam.examType ?? "-"}</TableCell>
-            <TableCell>{formatDateTime(exam.startsAt)}</TableCell>
-            <TableCell>
-              {exam.pointsPossible ? formatDecimal(exam.pointsPossible) : "-"}
-            </TableCell>
-            <TableCell className="max-w-[220px] truncate">
-              {exam.location ?? "-"}
-            </TableCell>
-          </TableRow>
-        ))}
-      />
-    </div>
-  )
-}
-
-function GradesTable({ enrollments }: { enrollments: StudentEnrollment[] }) {
-  const rows = enrollments.flatMap((enrollment) =>
-    enrollment.classSection.finalGrades.map((grade) => ({ enrollment, grade }))
-  )
-
-  return (
-    <DataTable
-      empty="No final grades yet."
-      headers={[
-        "Class",
-        "Course",
-        "Total score",
-        "Letter",
-        "Grade point",
-        "Credit",
-        "Earned credit",
-        "Status",
-      ]}
-      minWidth="min-w-[980px]"
-      rows={rows.map(({ enrollment, grade }) => (
-        <TableRow key={grade.id}>
-          <TableCell className="max-w-[220px] truncate">
-            {enrollment.classSection.name}
-          </TableCell>
-          <TableCell className="max-w-[220px] truncate">
-            {enrollment.classSection.course.title}
-          </TableCell>
-          <TableCell>
-            {grade.percentage
-              ? `${formatDecimal(grade.percentage)}%`
-              : grade.numericScore
-                ? formatDecimal(grade.numericScore)
-                : "-"}
-          </TableCell>
-          <TableCell>{grade.letterGrade ?? "-"}</TableCell>
-          <TableCell>
-            {grade.gradePoint ? formatDecimal(grade.gradePoint) : "-"}
-          </TableCell>
-          <TableCell>
-            {enrollment.classSection.course.credits
-              ? formatDecimal(enrollment.classSection.course.credits)
-              : "-"}
-          </TableCell>
-          <TableCell>
-            {grade.creditsEarned ? formatDecimal(grade.creditsEarned) : "-"}
-          </TableCell>
-          <TableCell>
-            <Badge variant="secondary">{grade.status}</Badge>
-          </TableCell>
-        </TableRow>
-      ))}
     />
   )
 }
@@ -885,54 +559,4 @@ function formatInstructors(
     .map((item) => item.instructor.name)
     .filter(Boolean)
     .join(", ")
-}
-
-function getAssignmentStatus(
-  dueAt: Date | null,
-  submission?: StudentEnrollment["classSection"]["assignments"][number]["submissions"][number]
-) {
-  if (submission?.gradedAt) return "Graded"
-  if (submission?.submittedAt && dueAt && submission.submittedAt > dueAt) {
-    return "Late"
-  }
-  if (submission?.submittedAt) return "Submitted"
-  if (dueAt && dueAt < new Date()) return "Missing"
-  return "Not submitted"
-}
-
-function getQuizPointsPossible(
-  quiz: StudentEnrollment["classSection"]["quizzes"][number]
-) {
-  if (quiz.pointsPossible) return formatDecimal(quiz.pointsPossible)
-
-  const total = quiz.questions.reduce(
-    (sum, question) => sum + Number(question.points),
-    0
-  )
-
-  return total ? total.toFixed(1) : "-"
-}
-
-function getBestQuizAttempt(
-  attempts: StudentEnrollment["classSection"]["quizzes"][number]["attempts"]
-) {
-  return attempts.reduce<(typeof attempts)[number] | undefined>(
-    (best, attempt) => {
-      if (!best) return attempt
-      return Number(attempt.score ?? 0) > Number(best.score ?? 0) ? attempt : best
-    },
-    undefined
-  )
-}
-
-function formatDecimal(value: { toString(): string }) {
-  const numberValue = Number(value)
-
-  if (Number.isFinite(numberValue)) {
-    return Number.isInteger(numberValue)
-      ? numberValue.toString()
-      : numberValue.toFixed(1)
-  }
-
-  return value.toString()
 }
