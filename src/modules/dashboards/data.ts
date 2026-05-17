@@ -209,8 +209,32 @@ export async function getClassSectionDetail(
       exams: {
         orderBy: { startsAt: "asc" },
       },
+      gradeCategories: {
+        orderBy: { sequence: "asc" },
+      },
       gradeItems: {
         orderBy: { createdAt: "desc" },
+        include: {
+          category: true,
+          scores: {
+            include: {
+              student: true,
+            },
+          },
+        },
+      },
+      finalGrades: {
+        where: options.publishedLessonsOnly
+          ? {
+              status: {
+                in: ["PUBLISHED", "FINALIZED"],
+              },
+              studentId: userId,
+            }
+          : undefined,
+        include: {
+          student: true,
+        },
       },
       boards: {
         orderBy: { name: "asc" },
@@ -341,6 +365,9 @@ export async function getParentStudentDetail(parentId: string, studentId: string
               finalGrades: {
                 where: {
                   studentId,
+                  status: {
+                    in: ["PUBLISHED", "FINALIZED"],
+                  },
                 },
               },
               assignments: {

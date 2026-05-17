@@ -81,24 +81,19 @@ export default async function ParentStudentDetailPage({
 
       <SimpleTable
         empty="No enrolled classes yet."
-        headers={["Class", "Course", "Term", "Campus", "Grades"]}
+        headers={[
+          "Class",
+          "Course",
+          "Term",
+          "Campus",
+          "Final score",
+          "Letter",
+          "Grade point",
+          "Credit",
+          "Status",
+        ]}
         rows={student.enrollments.map((enrollment) => (
-          <TableRow key={enrollment.id}>
-            <TableCell className="font-medium">
-              {enrollment.classSection.name}
-            </TableCell>
-            <TableCell>{enrollment.classSection.course.title}</TableCell>
-            <TableCell>{enrollment.classSection.term?.name ?? "No term"}</TableCell>
-            <TableCell>
-              {enrollment.classSection.campus?.name ?? "Organization-wide"}
-            </TableCell>
-            <TableCell>
-              {enrollment.classSection.finalGrades
-                .map((grade) => grade.letterGrade ?? grade.percentage?.toString())
-                .filter(Boolean)
-                .join(", ") || "-"}
-            </TableCell>
-          </TableRow>
+          <ParentClassGradeRow enrollment={enrollment} key={enrollment.id} />
         ))}
       />
 
@@ -221,5 +216,35 @@ export default async function ParentStudentDetailPage({
         )}
       />
     </DashboardPage>
+  )
+}
+
+function ParentClassGradeRow({
+  enrollment,
+}: {
+  enrollment: NonNullable<
+    Awaited<ReturnType<typeof getParentStudentDetail>>
+  >["enrollments"][number]
+}) {
+  const grade = enrollment.classSection.finalGrades[0]
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">
+        {enrollment.classSection.name}
+      </TableCell>
+      <TableCell>{enrollment.classSection.course.title}</TableCell>
+      <TableCell>{enrollment.classSection.term?.name ?? "No term"}</TableCell>
+      <TableCell>
+        {enrollment.classSection.campus?.name ?? "Organization-wide"}
+      </TableCell>
+      <TableCell>
+        {grade?.percentage?.toString() ?? grade?.numericScore?.toString() ?? "-"}
+      </TableCell>
+      <TableCell>{grade?.letterGrade ?? "-"}</TableCell>
+      <TableCell>{grade?.gradePoint?.toString() ?? "-"}</TableCell>
+      <TableCell>{grade?.creditsEarned?.toString() ?? "0"}</TableCell>
+      <TableCell>{grade?.status ?? "Not published"}</TableCell>
+    </TableRow>
   )
 }

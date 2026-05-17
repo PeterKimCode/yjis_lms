@@ -40,6 +40,10 @@ import {
   getAttendanceSummary,
   normalizeAttendancePolicy,
 } from "@/modules/attendance/summary"
+import {
+  GradebookPanel,
+  type GradebookPanelValue,
+} from "@/modules/grades/gradebook-panel"
 
 type ClassSectionDetailMode = "instructor" | "student"
 
@@ -536,16 +540,11 @@ export async function ClassSectionDetail({
         ) : null}
 
         <SectionBlock title="Grades">
-          <SimpleTable
-            empty="No grade items yet."
-            headers={["Title", "Points", "Weight"]}
-            rows={section.gradeItems.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.title}</TableCell>
-                <TableCell>{item.pointsPossible.toString()}</TableCell>
-                <TableCell>{item.weight?.toString() ?? "-"}</TableCell>
-              </TableRow>
-            ))}
+          <GradebookPanel
+            classSectionId={section.id}
+            mode={mode}
+            userId={userId}
+            value={toGradebookPanelValue(section)}
           />
         </SectionBlock>
 
@@ -756,5 +755,66 @@ function toExamPanelValue(
     pointsPossible: exam.pointsPossible?.toString() ?? null,
     weight: exam.weight?.toString() ?? null,
     description: exam.description,
+  }
+}
+
+function toGradebookPanelValue(
+  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>
+): GradebookPanelValue {
+  return {
+    categories: section.gradeCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      weight: category.weight?.toString() ?? null,
+      sequence: category.sequence,
+    })),
+    enrollments: section.enrollments.map((enrollment) => ({
+      id: enrollment.studentId,
+      name: enrollment.student.name,
+      email: enrollment.student.email,
+    })),
+    finalGrades: section.finalGrades.map((grade) => ({
+      id: grade.id,
+      studentId: grade.studentId,
+      numericScore: grade.numericScore?.toString() ?? null,
+      percentage: grade.percentage?.toString() ?? null,
+      letterGrade: grade.letterGrade,
+      gradePoint: grade.gradePoint?.toString() ?? null,
+      creditsEarned: grade.creditsEarned?.toString() ?? null,
+      status: grade.status,
+    })),
+    gradeItems: section.gradeItems.map((item) => ({
+      id: item.id,
+      categoryId: item.categoryId,
+      title: item.title,
+      pointsPossible: item.pointsPossible.toString(),
+      weight: item.weight?.toString() ?? null,
+      dueAt: item.dueAt?.toISOString() ?? null,
+      assignmentId: item.assignmentId,
+      quizId: item.quizId,
+      examId: item.examId,
+      scores: item.scores.map((score) => ({
+        id: score.id,
+        studentId: score.studentId,
+        score: score.score?.toString() ?? null,
+        percentage: score.percentage?.toString() ?? null,
+        feedback: score.feedback,
+        gradedAt: score.gradedAt?.toISOString() ?? null,
+      })),
+    })),
+    sourceOptions: {
+      assignments: section.assignments.map((assignment) => ({
+        id: assignment.id,
+        title: assignment.title,
+      })),
+      quizzes: section.quizzes.map((quiz) => ({
+        id: quiz.id,
+        title: quiz.title,
+      })),
+      exams: section.exams.map((exam) => ({
+        id: exam.id,
+        title: exam.title,
+      })),
+    },
   }
 }

@@ -278,6 +278,7 @@ model User {
   gradedAssignmentSubmissions AssignmentSubmission[]    @relation("GradedAssignmentSubmissions")
   gradedQuizAttempts          QuizAttempt[]             @relation("GradedQuizAttempts")
   gradedQuizAnswers           QuizAnswer[]              @relation("GradedQuizAnswers")
+  gradedGradeScores           GradeScore[]              @relation("GradedGradeScores")
   quizAttempts                QuizAttempt[]
   quizAnswers                 QuizAnswer[]
   gradeScores                 GradeScore[]
@@ -1065,6 +1066,7 @@ model GradeScore {
   organizationId String
   gradeItemId    String
   studentId      String
+  gradedById     String?
   score          Decimal?     @db.Decimal(8, 2)
   percentage     Decimal?     @db.Decimal(5, 2)
   letterGrade    String?
@@ -1075,10 +1077,12 @@ model GradeScore {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   gradeItem      GradeItem    @relation(fields: [gradeItemId], references: [id], onDelete: Cascade)
   student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy       User?        @relation("GradedGradeScores", fields: [gradedById], references: [id], onDelete: SetNull)
 
   @@unique([gradeItemId, studentId])
   @@index([organizationId])
   @@index([studentId])
+  @@index([gradedById])
   @@index([createdAt])
 }
 
