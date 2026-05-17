@@ -107,10 +107,17 @@ export async function ClassSectionDetail({
         <SectionBlock title="Lessons">
           <div className="space-y-4">
             {mode === "instructor" ? (
-              <LessonForm
-                classSectionId={section.id}
-                videoFileOptions={videoFileOptions}
-              />
+              <details className="rounded-md border bg-background p-3">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Create lesson
+                </summary>
+                <div className="pt-3">
+                  <LessonForm
+                    classSectionId={section.id}
+                    videoFileOptions={videoFileOptions}
+                  />
+                </div>
+              </details>
             ) : null}
             <SimpleTable
               empty={
@@ -169,26 +176,30 @@ export async function ClassSectionDetail({
               })}
             />
             {mode === "instructor" && section.lessons.length ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Edit lessons</h3>
-                {section.lessons.map((lesson) => (
-                  <details
-                    className="rounded-md border bg-background p-3"
-                    key={lesson.id}
-                  >
-                    <summary className="cursor-pointer text-sm font-medium">
-                      {lesson.sequence}. {lesson.title}
-                    </summary>
-                    <div className="pt-3">
-                      <LessonForm
-                        classSectionId={section.id}
-                        lesson={toLessonFormValue(lesson)}
-                        videoFileOptions={videoFileOptions}
-                      />
-                    </div>
-                  </details>
-                ))}
-              </div>
+              <details className="rounded-md border bg-background p-3">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Edit lessons
+                </summary>
+                <div className="space-y-3 pt-3">
+                  {section.lessons.map((lesson) => (
+                    <details
+                      className="rounded-md border bg-background p-3"
+                      key={lesson.id}
+                    >
+                      <summary className="cursor-pointer text-sm font-medium">
+                        {lesson.sequence}. {lesson.title}
+                      </summary>
+                      <div className="pt-3">
+                        <LessonForm
+                          classSectionId={section.id}
+                          lesson={toLessonFormValue(lesson)}
+                          videoFileOptions={videoFileOptions}
+                        />
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </details>
             ) : null}
             {mode === "instructor" && selectedLesson ? (
               <div className="space-y-3" id="lesson-progress">
@@ -246,51 +257,56 @@ export async function ClassSectionDetail({
 
         <SectionBlock title="Sessions">
           {mode === "instructor" ? (
-            <form
-              action={createClassSession}
-              className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"
-            >
-              <input name="classSectionId" type="hidden" value={section.id} />
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Title</span>
-                <Input name="title" placeholder="Class meeting" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Starts at</span>
-                <Input name="startsAt" required type="datetime-local" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Ends at</span>
-                <Input name="endsAt" type="datetime-local" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Location</span>
-                <Input name="location" placeholder="Room 101 or online" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Delivery mode</span>
-                <select
-                  className="h-9 rounded-md border bg-background px-3 text-sm"
-                  name="deliveryMode"
-                  defaultValue={DeliveryMode.OFFLINE}
-                >
-                  {Object.values(DeliveryMode).map((modeValue) => (
-                    <option key={modeValue} value={modeValue}>
-                      {modeValue}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">Meeting URL</span>
-                <Input name="meetingUrl" placeholder="Optional online link" />
-              </label>
-              <div className="flex items-end">
-                <Button size="sm" type="submit">
-                  Create session
-                </Button>
-              </div>
-            </form>
+            <details className="mb-4 rounded-md border bg-background p-3">
+              <summary className="cursor-pointer text-sm font-medium">
+                Create session
+              </summary>
+              <form
+                action={createClassSession}
+                className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-3"
+              >
+                <input name="classSectionId" type="hidden" value={section.id} />
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Title</span>
+                  <Input name="title" placeholder="Class meeting" />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Starts at</span>
+                  <Input name="startsAt" required type="datetime-local" />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Ends at</span>
+                  <Input name="endsAt" type="datetime-local" />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Location</span>
+                  <Input name="location" placeholder="Room 101 or online" />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Delivery mode</span>
+                  <select
+                    className="h-9 rounded-md border bg-background px-3 text-sm"
+                    name="deliveryMode"
+                    defaultValue={DeliveryMode.OFFLINE}
+                  >
+                    {Object.values(DeliveryMode).map((modeValue) => (
+                      <option key={modeValue} value={modeValue}>
+                        {modeValue}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">Meeting URL</span>
+                  <Input name="meetingUrl" placeholder="Optional online link" />
+                </label>
+                <div className="flex items-end">
+                  <Button size="sm" type="submit">
+                    Create session
+                  </Button>
+                </div>
+              </form>
+            </details>
           ) : null}
           <SimpleTable
             empty="No class sessions yet."
@@ -379,21 +395,25 @@ export async function ClassSectionDetail({
             ) : null}
             {mode === "instructor" ? (
               section.attendanceSessions.length ? (
-                <div className="space-y-3">
-                  {section.attendanceSessions.map((attendance) => (
-                    <details
-                      className="rounded-md border bg-background p-3"
-                      key={attendance.id}
-                    >
-                      <summary className="cursor-pointer text-sm font-medium">
-                        {attendance.title ?? "Attendance"} -{" "}
-                        {formatDateTime(attendance.takenAt)}
-                      </summary>
-                      <div className="pt-3">
-                        <SimpleTable
-                          empty="No attendance records were created."
-                          headers={["Student", "Email", "Status", "Note", "Save"]}
-                          rows={attendance.records.map((record) => (
+                <details className="rounded-md border bg-background p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Manage attendance
+                  </summary>
+                  <div className="space-y-3 pt-3">
+                    {section.attendanceSessions.map((attendance) => (
+                      <details
+                        className="rounded-md border bg-background p-3"
+                        key={attendance.id}
+                      >
+                        <summary className="cursor-pointer text-sm font-medium">
+                          {attendance.title ?? "Attendance"} -{" "}
+                          {formatDateTime(attendance.takenAt)}
+                        </summary>
+                        <div className="pt-3">
+                          <SimpleTable
+                            empty="No attendance records were created."
+                            headers={["Student", "Email", "Status", "Note", "Save"]}
+                            rows={attendance.records.map((record) => (
                             <TableRow key={record.id}>
                               <TableCell className="font-medium">
                                 {record.student.name}
@@ -449,12 +469,13 @@ export async function ClassSectionDetail({
                                 </Button>
                               </TableCell>
                             </TableRow>
-                          ))}
-                        />
-                      </div>
-                    </details>
-                  ))}
-                </div>
+                            ))}
+                          />
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </details>
               ) : (
                 <EmptyState>
                   Create a class session, then click Take attendance.

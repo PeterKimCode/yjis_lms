@@ -26,6 +26,12 @@ const optionalPositiveInt = z
     return text.length ? text : undefined
   }, z.coerce.number().int().min(1).optional())
   .transform((value) => value ?? null)
+const optionalNonNegativeInt = z
+  .preprocess((value) => {
+    const text = typeof value === "string" ? value.trim() : ""
+    return text.length ? text : undefined
+  }, z.coerce.number().int().min(0).optional())
+  .transform((value) => value ?? null)
 const optionalDecimal = z.preprocess(
   (value) => {
     const text = typeof value === "string" ? value.trim() : ""
@@ -126,9 +132,14 @@ const questionSchema = z.object({
   quizId: requiredString,
   type: z.nativeEnum(QuestionType),
   prompt: requiredString,
-  points: z.coerce.number().min(0),
-  sequence: z.coerce.number().int().min(1),
-  correctOptionIndex: optionalPositiveInt,
+  points: z.coerce
+    .number()
+    .min(0, "Question points must be 0 or greater."),
+  sequence: z.coerce
+    .number()
+    .int("Display order must be a whole number.")
+    .min(1, "Display order must be 1 or greater."),
+  correctOptionIndex: optionalNonNegativeInt,
   trueFalseAnswer: optionalString,
   acceptedAnswers: optionalString,
   explanation: optionalString,
@@ -152,7 +163,11 @@ export async function saveQuestion(
   })
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Check question form." }
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ?? "Check the question form fields.",
+    }
   }
 
   const data = parsed.data
@@ -166,7 +181,7 @@ export async function saveQuestion(
 
   const answerKey = getAnswerKey(data)
   if (data.type !== QuestionType.ESSAY && answerKey === null) {
-    return { ok: false, message: "Provide a correct answer for this question." }
+    return { ok: false, message: "Please select the correct answer." }
   }
   const multipleChoiceOptions =
     data.type === QuestionType.MULTIPLE_CHOICE
@@ -180,11 +195,14 @@ export async function saveQuestion(
 
   if (data.type === QuestionType.MULTIPLE_CHOICE) {
     if (multipleChoiceOptions.length < 2) {
-      return { ok: false, message: "Multiple-choice questions need at least two options." }
+      return {
+        ok: false,
+        message: "Multiple-choice questions need at least two non-empty options.",
+      }
     }
 
     if (!multipleChoiceOptions.some((option) => option.index === data.correctOptionIndex)) {
-      return { ok: false, message: "Select a correct option that has option text." }
+      return { ok: false, message: "Correct answer option is invalid." }
     }
   }
 

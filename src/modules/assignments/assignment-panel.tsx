@@ -60,7 +60,14 @@ export function AssignmentPanel({
     <div className="space-y-4">
       {mode === "instructor" ? (
         <>
-          <AssignmentForm classSectionId={classSectionId} />
+          <details className="rounded-md border bg-background p-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              Create assignment
+            </summary>
+            <div className="pt-3">
+              <AssignmentForm classSectionId={classSectionId} />
+            </div>
+          </details>
           <p className="text-xs text-muted-foreground">
             Instructor-provided assignment attachments are not in the current
             schema yet. Student submission attachments are supported below.
@@ -106,12 +113,26 @@ export function AssignmentPanel({
                         Manage
                       </summary>
                       <div className="mt-3 space-y-4 rounded-md border bg-background p-3">
-                        <AssignmentForm
-                          assignment={assignment}
-                          classSectionId={classSectionId}
-                        />
-                        <DeleteAssignmentForm assignmentId={assignment.id} />
-                        <SubmissionReview assignment={assignment} />
+                        <details className="rounded-md border p-3">
+                          <summary className="cursor-pointer text-sm font-medium">
+                            Edit assignment
+                          </summary>
+                          <div className="pt-3">
+                            <AssignmentForm
+                              assignment={assignment}
+                              classSectionId={classSectionId}
+                            />
+                          </div>
+                        </details>
+                        <details className="rounded-md border p-3">
+                          <summary className="cursor-pointer text-sm font-medium">
+                            Review submissions
+                          </summary>
+                          <div className="space-y-3 pt-3">
+                            <DeleteAssignmentForm assignmentId={assignment.id} />
+                            <SubmissionReview assignment={assignment} />
+                          </div>
+                        </details>
                       </div>
                     </details>
                   </TableCell>

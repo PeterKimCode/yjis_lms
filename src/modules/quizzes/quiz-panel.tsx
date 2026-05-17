@@ -229,10 +229,14 @@ export function QuizManagePanel({
 }) {
   return (
     <div className="space-y-6">
-      <section className="space-y-3 rounded-lg border bg-background p-4">
-        <h2 className="text-lg font-semibold">Quiz settings</h2>
-        <QuizForm classSectionId={classSectionId} quiz={quiz} />
-      </section>
+      <details className="rounded-lg border bg-background p-4">
+        <summary className="cursor-pointer text-lg font-semibold">
+          Quiz settings/edit
+        </summary>
+        <div className="pt-4">
+          <QuizForm classSectionId={classSectionId} quiz={quiz} />
+        </div>
+      </details>
 
       <section className="space-y-4 rounded-lg border bg-background p-4">
         <div>
@@ -242,20 +246,36 @@ export function QuizManagePanel({
             questions, or use essay questions for manual grading.
           </p>
         </div>
-        <QuestionForm quizId={quiz.id} />
-        <QuestionList quiz={quiz} />
+        <details className="rounded-md border p-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            Add question
+          </summary>
+          <div className="pt-3">
+            <QuestionForm quizId={quiz.id} />
+          </div>
+        </details>
+        <details className="rounded-md border p-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            Existing questions / edit questions
+          </summary>
+          <div className="pt-3">
+            <QuestionList quiz={quiz} />
+          </div>
+        </details>
       </section>
 
-      <section className="space-y-4 rounded-lg border bg-background p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Attempts / submissions</h2>
+      <details className="rounded-lg border bg-background p-4">
+        <summary className="cursor-pointer text-lg font-semibold">
+          Review attempts
+        </summary>
+        <div className="space-y-4 pt-4">
           <p className="text-sm text-muted-foreground">
             Review student submissions and manually grade short-answer or essay
             responses when needed.
           </p>
+          <AttemptReview quiz={quiz} />
         </div>
-        <AttemptReview quiz={quiz} />
-      </section>
+      </details>
     </div>
   )
 }
@@ -482,11 +502,16 @@ function QuestionForm({
             Select the correct option. For now, at least one correct answer is
             required.
           </p>
-          {[0, 1, 2, 3].map((index) => (
+          {[
+            "Example: VideoProgress",
+            "Example: User",
+            "Example: Course",
+            "Example: AttendanceRecord",
+          ].map((placeholder, index) => (
             <Input
               key={index}
               name={`option${index}`}
-              placeholder="Example: VideoProgress"
+              placeholder={placeholder}
               defaultValue={question?.options[index]?.text ?? ""}
             />
           ))}
@@ -778,7 +803,14 @@ export function ExamPanel({
 }) {
   return (
     <div className="space-y-4">
-      <ExamForm classSectionId={classSectionId} />
+      <details className="rounded-md border bg-background p-3">
+        <summary className="cursor-pointer text-sm font-medium">
+          Create exam
+        </summary>
+        <div className="pt-3">
+          <ExamForm classSectionId={classSectionId} />
+        </div>
+      </details>
       <SimpleTable
         empty="No exams yet."
         headers={["Title", "Type", "Starts", "Ends", "Max score", "Location"]}
