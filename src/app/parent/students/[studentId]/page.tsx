@@ -123,7 +123,15 @@ export default async function ParentStudentDetailPage({
 
       <SimpleTable
         empty="No assignments yet."
-        headers={["Class", "Assignment", "Due", "Status", "Submitted", "Score"]}
+        headers={[
+          "Class",
+          "Assignment",
+          "Due",
+          "Status",
+          "Submitted",
+          "Attachment",
+          "Score",
+        ]}
         rows={student.enrollments.flatMap((enrollment) =>
           enrollment.classSection.assignments.map((assignment) => {
             const submission = assignment.submissions[0]
@@ -143,6 +151,20 @@ export default async function ParentStudentDetailPage({
                   })}
                 </TableCell>
                 <TableCell>{formatDateTime(submission?.submittedAt)}</TableCell>
+                <TableCell>
+                  {submission?.attachments.length
+                    ? submission.attachments.map((attachment) => (
+                        <a
+                          className="block max-w-[220px] truncate text-primary underline-offset-4 hover:underline"
+                          href={`/api/files/${attachment.id}/download`}
+                          key={attachment.id}
+                          title={attachment.originalName}
+                        >
+                          {attachment.originalName}
+                        </a>
+                      ))
+                    : "-"}
+                </TableCell>
                 <TableCell>
                   {submission?.score
                     ? `${submission.score.toString()}/${

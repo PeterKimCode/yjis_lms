@@ -617,6 +617,10 @@ function toAssignmentPanelValue(
       score: submission.score?.toString() ?? null,
       feedback: submission.feedback,
       gradedAt: submission.gradedAt?.toISOString() ?? null,
+      attachments: submission.attachments.map((attachment) => ({
+        id: attachment.id,
+        name: attachment.originalName,
+      })),
     })),
   }
 }

@@ -181,6 +181,9 @@ export async function getClassSectionDetail(
           submissions: {
             include: {
               student: true,
+              attachments: {
+                orderBy: { createdAt: "desc" },
+              },
             },
             orderBy: { submittedAt: "desc" },
           },
@@ -327,6 +330,11 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                 include: {
                   submissions: {
                     where: { studentId },
+                    include: {
+                      attachments: {
+                        orderBy: { createdAt: "desc" },
+                      },
+                    },
                   },
                 },
                 orderBy: { dueAt: "asc" },

@@ -40,6 +40,7 @@ type AssignmentSubmissionValue = {
   score: string | null
   feedback: string | null
   gradedAt: string | null
+  attachments: { id: string; name: string }[]
 }
 
 export function AssignmentPanel({
@@ -61,7 +62,8 @@ export function AssignmentPanel({
         <>
           <AssignmentForm classSectionId={classSectionId} />
           <p className="text-xs text-muted-foreground">
-            File attachments will be finalized after MinIO upload debugging.
+            Instructor-provided assignment attachments are not in the current
+            schema yet. Student submission attachments are supported below.
           </p>
         </>
       ) : null}
@@ -146,6 +148,9 @@ export function AssignmentPanel({
                               {ownSubmission.feedback}
                             </p>
                           </div>
+                        ) : null}
+                        {ownSubmission?.attachments.length ? (
+                          <AttachmentLinks attachments={ownSubmission.attachments} />
                         ) : null}
                         <SubmissionForm
                           assignment={assignment}
@@ -292,8 +297,17 @@ function SubmissionForm({
           disabled={Boolean(isClosed)}
         />
       </label>
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium">Attachment</span>
+        <Input
+          name="attachmentFile"
+          type="file"
+          disabled={Boolean(isClosed)}
+        />
+      </label>
       <p className="text-xs text-muted-foreground">
-        File attachments will be finalized after MinIO upload debugging.
+        Allowed: PDF, Office files, text, images, CSV, ZIP. Max 20 MB.
+        Executable/script files are blocked.
       </p>
       {submission?.submittedAt ? (
         <p className="text-xs text-muted-foreground">
@@ -328,6 +342,7 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
         "Submitted",
         "Status",
         "Response",
+        "Attachment",
         "Score",
         "Feedback",
         "Grade",
@@ -352,6 +367,13 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
             {submission.content ?? "-"}
           </TableCell>
           <TableCell>
+            {submission.attachments.length ? (
+              <AttachmentLinks attachments={submission.attachments} />
+            ) : (
+              "-"
+            )}
+          </TableCell>
+          <TableCell>
             {submission.score
               ? `${submission.score}/${assignment.pointsPossible ?? "-"}`
               : "-"}
@@ -365,6 +387,27 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
         </TableRow>
       ))}
     />
+  )
+}
+
+function AttachmentLinks({
+  attachments,
+}: {
+  attachments: { id: string; name: string }[]
+}) {
+  return (
+    <div className="space-y-1">
+      {attachments.map((attachment) => (
+        <a
+          className="block max-w-[220px] truncate text-primary underline-offset-4 hover:underline"
+          href={`/api/files/${attachment.id}/download`}
+          key={attachment.id}
+          title={attachment.name}
+        >
+          {attachment.name}
+        </a>
+      ))}
+    </div>
   )
 }
 

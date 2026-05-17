@@ -1,7 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { UserRole } from "@prisma/client"
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { FileVisibility, Prisma, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -11,6 +12,7 @@ import {
   requireAnyRole,
 } from "@/modules/auth/permissions"
 import type { AssignmentActionState } from "@/modules/assignments/action-state"
+import { validateAssignmentAttachment } from "@/modules/files/upload-validation"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -87,7 +89,7 @@ export async function saveAssignment(
       where: { id },
       data: {
         ...values,
-        pointsPossible: values.pointsPossible.toString(),
+        pointsPossible: new Prisma.Decimal(values.pointsPossible),
       },
     })
   } else {
@@ -95,7 +97,7 @@ export async function saveAssignment(
       data: {
         ...values,
         organizationId: classSection.organizationId,
-        pointsPossible: values.pointsPossible.toString(),
+        pointsPossible: new Prisma.Decimal(values.pointsPossible),
       },
     })
   }
@@ -153,6 +155,7 @@ export async function submitAssignment(
     assignmentId: formData.get("assignmentId") ?? "",
     content: formData.get("content") ?? "",
   })
+  const file = formData.get("attachmentFile")
 
   if (!parsed.success) {
     return {
@@ -202,7 +205,15 @@ export async function submitAssignment(
     }
   }
 
-  await prisma.assignmentSubmission.upsert({
+  if (file instanceof File && file.size > 0) {
+    const validatedFile = validateAssignmentAttachment(file)
+
+    if (!validatedFile.ok) {
+      return { ok: false, message: validatedFile.message }
+    }
+  }
+
+  const submission = await prisma.assignmentSubmission.upsert({
     where: {
       assignmentId_studentId: {
         assignmentId: assignment.id,
@@ -222,6 +233,57 @@ export async function submitAssignment(
     },
   })
 
+  if (file instanceof File && file.size > 0) {
+    const upload = validateAssignmentAttachment(file)
+
+    if (!upload.ok) {
+      return { ok: false, message: upload.message }
+    }
+
+    const bucket = process.env.S3_BUCKET_NAME ?? "lms-files"
+    const objectKey = [
+      "assignments",
+      assignment.organizationId,
+      assignment.classSectionId,
+      assignment.id,
+      student.id,
+      `${crypto.randomUUID()}-${upload.safeName}`,
+    ].join("/")
+
+    await createS3Client().send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: objectKey,
+        Body: Buffer.from(await file.arrayBuffer()),
+        ContentType: upload.contentType,
+      })
+    )
+
+    await prisma.fileAsset.updateMany({
+      where: { assignmentSubmissionId: submission.id },
+      data: { assignmentSubmissionId: null },
+    })
+
+    await prisma.fileAsset.create({
+      data: {
+        organizationId: assignment.organizationId,
+        classSectionId: assignment.classSectionId,
+        uploadedById: student.id,
+        bucket,
+        objectKey,
+        originalName: upload.safeName,
+        contentType: upload.contentType,
+        byteSize: BigInt(file.size),
+        visibility: FileVisibility.CLASS_SECTION,
+        assignmentSubmissionId: submission.id,
+        metadata: {
+          source: "assignment-submission",
+          assignmentId: assignment.id,
+        },
+      },
+    })
+  }
+
   revalidatePath(`/student/classes/${assignment.classSectionId}`)
   revalidatePath(`/instructor/classes/${assignment.classSectionId}`)
   return { ok: true, message: "Submission saved." }
@@ -229,7 +291,11 @@ export async function submitAssignment(
 
 const gradeSchema = z.object({
   submissionId: requiredString,
-  score: z.coerce.number().min(0),
+  score: z.preprocess(
+    (value) =>
+      typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.coerce.number({ error: "Score is required." }).min(0)
+  ),
   feedback: optionalString,
 })
 
@@ -286,7 +352,7 @@ export async function gradeSubmission(
   await prisma.assignmentSubmission.update({
     where: { id: submission.id },
     data: {
-      score: parsed.data.score.toString(),
+      score: new Prisma.Decimal(parsed.data.score),
       feedback: parsed.data.feedback,
       gradedById: instructor.id,
       gradedAt: new Date(),
@@ -296,4 +362,16 @@ export async function gradeSubmission(
   revalidatePath(`/instructor/classes/${submission.assignment.classSectionId}`)
   revalidatePath(`/student/classes/${submission.assignment.classSectionId}`)
   return { ok: true, message: "Submission graded." }
+}
+
+function createS3Client() {
+  return new S3Client({
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION ?? "us-east-1",
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+    },
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== "false",
+  })
 }
