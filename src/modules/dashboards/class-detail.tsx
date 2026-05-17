@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import { AttendanceStatus, DeliveryMode } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   DashboardPage,
   EmptyState,
@@ -15,10 +17,20 @@ import {
 import {
   formatDate,
   formatDateTime,
+  getAttendancePolicyForOrganization,
   getClassSectionDetail,
   getVideoFileOptionsForClassSection,
 } from "@/modules/dashboards/data"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
+import {
+  createAttendanceSession,
+  createClassSession,
+  saveAttendanceRecord,
+} from "@/modules/attendance/actions"
+import {
+  getAttendanceSummary,
+  normalizeAttendancePolicy,
+} from "@/modules/attendance/summary"
 
 type ClassSectionDetailMode = "instructor" | "student"
 
@@ -42,6 +54,19 @@ export async function ClassSectionDetail({
   }
 
   const enrollmentCount = section.enrollments.length
+  const attendancePolicy = normalizeAttendancePolicy(
+    await getAttendancePolicyForOrganization(section.organizationId)
+  )
+  const visibleAttendanceRecords =
+    mode === "student"
+      ? section.attendanceSessions.flatMap((session) =>
+          session.records.filter((record) => record.studentId === userId)
+        )
+      : section.attendanceSessions.flatMap((session) => session.records)
+  const attendanceSummary = getAttendanceSummary(
+    visibleAttendanceRecords,
+    attendancePolicy
+  )
   const selectedLesson =
     mode === "instructor" && selectedLessonId
       ? section.lessons.find((lesson) => lesson.id === selectedLessonId)
@@ -211,35 +236,244 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         <SectionBlock title="Sessions">
+          {mode === "instructor" ? (
+            <form
+              action={createClassSession}
+              className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"
+            >
+              <input name="classSectionId" type="hidden" value={section.id} />
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Title</span>
+                <Input name="title" placeholder="Class meeting" />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Starts at</span>
+                <Input name="startsAt" required type="datetime-local" />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Ends at</span>
+                <Input name="endsAt" type="datetime-local" />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Location</span>
+                <Input name="location" placeholder="Room 101 or online" />
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Delivery mode</span>
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  name="deliveryMode"
+                  defaultValue={DeliveryMode.OFFLINE}
+                >
+                  {Object.values(DeliveryMode).map((modeValue) => (
+                    <option key={modeValue} value={modeValue}>
+                      {modeValue}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm">
+                <span className="font-medium">Meeting URL</span>
+                <Input name="meetingUrl" placeholder="Optional online link" />
+              </label>
+              <div className="flex items-end">
+                <Button size="sm" type="submit">
+                  Create session
+                </Button>
+              </div>
+            </form>
+          ) : null}
           <SimpleTable
             empty="No class sessions yet."
-            headers={["Title", "Starts", "Mode"]}
+            headers={
+              mode === "instructor"
+                ? ["Title", "Starts", "Ends", "Mode", "Location", "Attendance"]
+                : ["Title", "Starts", "Mode", "Location"]
+            }
             rows={section.sessions.map((session) => (
               <TableRow key={session.id}>
                 <TableCell className="font-medium">
                   {session.title ?? "Class session"}
                 </TableCell>
                 <TableCell>{formatDateTime(session.startsAt)}</TableCell>
+                {mode === "instructor" ? (
+                  <TableCell>{formatDateTime(session.endsAt)}</TableCell>
+                ) : null}
                 <TableCell>{session.deliveryMode}</TableCell>
+                <TableCell>{session.location ?? "-"}</TableCell>
+                {mode === "instructor" ? (
+                  <TableCell>
+                    {session.attendanceSession ? (
+                      "Created"
+                    ) : (
+                      <form action={createAttendanceSession}>
+                        <input
+                          name="classSectionId"
+                          type="hidden"
+                          value={section.id}
+                        />
+                        <input
+                          name="classSessionId"
+                          type="hidden"
+                          value={session.id}
+                        />
+                        <input
+                          name="title"
+                          type="hidden"
+                          value={session.title ?? "Attendance"}
+                        />
+                        <Button size="sm" type="submit" variant="outline">
+                          Take attendance
+                        </Button>
+                      </form>
+                    )}
+                  </TableCell>
+                ) : null}
               </TableRow>
             ))}
           />
         </SectionBlock>
 
         <SectionBlock title="Attendance">
-          <SimpleTable
-            empty="No attendance sessions yet."
-            headers={["Title", "Taken", "Records"]}
-            rows={section.attendanceSessions.map((attendance) => (
-              <TableRow key={attendance.id}>
-                <TableCell className="font-medium">
-                  {attendance.title ?? "Attendance"}
-                </TableCell>
-                <TableCell>{formatDateTime(attendance.takenAt)}</TableCell>
-                <TableCell>{attendance.records.length}</TableCell>
-              </TableRow>
-            ))}
-          />
+          <div className="space-y-4">
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+              <AttendanceStat
+                label="Total sessions"
+                value={attendanceSummary.totalSessions}
+              />
+              <AttendanceStat
+                label="Present"
+                value={attendanceSummary.presentCount}
+              />
+              <AttendanceStat label="Late" value={attendanceSummary.lateCount} />
+              <AttendanceStat
+                label="Absent"
+                value={attendanceSummary.absentCount}
+              />
+              <AttendanceStat
+                label="Attendance rate"
+                value={`${attendanceSummary.attendanceRate.toFixed(1)}%`}
+              />
+            </div>
+            {mode === "instructor" ? (
+              <p className="text-xs text-muted-foreground">
+                Policy: late after{" "}
+                {attendancePolicy.lateThresholdMinutes ?? "not set"} minutes,
+                late counts as absence:{" "}
+                {attendancePolicy.countLateAsAbsence ? "yes" : "no"}, override:{" "}
+                {attendancePolicy.allowInstructorOverride ? "allowed" : "blocked"},
+                absence fail threshold:{" "}
+                {attendancePolicy.absenceFailThresholdRate
+                  ? `${attendancePolicy.absenceFailThresholdRate}%`
+                  : "not set"}.
+              </p>
+            ) : null}
+            {mode === "instructor" ? (
+              section.attendanceSessions.length ? (
+                <div className="space-y-3">
+                  {section.attendanceSessions.map((attendance) => (
+                    <details
+                      className="rounded-md border bg-background p-3"
+                      key={attendance.id}
+                    >
+                      <summary className="cursor-pointer text-sm font-medium">
+                        {attendance.title ?? "Attendance"} -{" "}
+                        {formatDateTime(attendance.takenAt)}
+                      </summary>
+                      <div className="pt-3">
+                        <SimpleTable
+                          empty="No attendance records were created."
+                          headers={["Student", "Email", "Status", "Note", "Save"]}
+                          rows={attendance.records.map((record) => (
+                            <TableRow key={record.id}>
+                              <TableCell className="font-medium">
+                                {record.student.name}
+                              </TableCell>
+                              <TableCell>{record.student.email ?? "-"}</TableCell>
+                              <TableCell>
+                                <form
+                                  action={saveAttendanceRecord}
+                                  className="contents"
+                                  id={`attendance-${record.id}`}
+                                >
+                                  <input
+                                    name="attendanceSessionId"
+                                    type="hidden"
+                                    value={attendance.id}
+                                  />
+                                  <input
+                                    name="studentId"
+                                    type="hidden"
+                                    value={record.studentId}
+                                  />
+                                  <select
+                                    className="h-8 rounded-md border bg-background px-2 text-sm"
+                                    name="status"
+                                    defaultValue={record.status}
+                                  >
+                                    {Object.values(AttendanceStatus).map(
+                                      (status) => (
+                                        <option key={status} value={status}>
+                                          {status}
+                                        </option>
+                                      )
+                                    )}
+                                  </select>
+                                </form>
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  form={`attendance-${record.id}`}
+                                  name="note"
+                                  defaultValue={record.note ?? ""}
+                                  placeholder="Optional"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  form={`attendance-${record.id}`}
+                                  size="sm"
+                                  type="submit"
+                                  variant="outline"
+                                >
+                                  Save
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        />
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState>
+                  Create a class session, then click Take attendance.
+                </EmptyState>
+              )
+            ) : (
+              <SimpleTable
+                empty="No attendance records yet."
+                headers={["Session", "Date", "Status", "Note"]}
+                rows={section.attendanceSessions.flatMap((attendance) =>
+                  attendance.records
+                    .filter((record) => record.studentId === userId)
+                    .map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="font-medium">
+                          {attendance.title ??
+                            attendance.classSession?.title ??
+                            "Attendance"}
+                        </TableCell>
+                        <TableCell>{formatDateTime(attendance.takenAt)}</TableCell>
+                        <TableCell>{record.status}</TableCell>
+                        <TableCell>{record.note ?? "-"}</TableCell>
+                      </TableRow>
+                    ))
+                )}
+              />
+            )}
+          </div>
         </SectionBlock>
 
         <SectionBlock title="Assignments">
@@ -347,6 +581,21 @@ function getLessonProgressRows(
         left.statusOrder - right.statusOrder ||
         left.name.localeCompare(right.name)
     )
+}
+
+function AttendanceStat({
+  label,
+  value,
+}: {
+  label: string
+  value: string | number
+}) {
+  return (
+    <div className="rounded-md border bg-background p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-semibold">{value}</div>
+    </div>
+  )
 }
 
 function toLessonFormValue(

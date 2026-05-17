@@ -12,8 +12,13 @@ import {
 import {
   formatDate,
   formatDateTime,
+  getAttendancePolicyForOrganization,
   getParentStudentDetail,
 } from "@/modules/dashboards/data"
+import {
+  getAttendanceSummary,
+  normalizeAttendancePolicy,
+} from "@/modules/attendance/summary"
 
 export default async function ParentStudentDetailPage({
   params,
@@ -27,6 +32,13 @@ export default async function ParentStudentDetailPage({
   if (!student) {
     notFound()
   }
+  const attendancePolicy = normalizeAttendancePolicy(
+    await getAttendancePolicyForOrganization(student.organizationId)
+  )
+  const attendanceSummary = getAttendanceSummary(
+    student.attendanceRecords,
+    attendancePolicy
+  )
 
   return (
     <DashboardPage
@@ -35,11 +47,23 @@ export default async function ParentStudentDetailPage({
         student.studentProfile?.campus?.name ?? "Organization-wide"
       }`}
     >
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <MetricCard label="Classes" value={student.enrollments.length} />
         <MetricCard
-          label="Recent attendance"
-          value={student.attendanceRecords.length}
+          label="Attendance rate"
+          value={`${attendanceSummary.attendanceRate.toFixed(1)}%`}
+        />
+        <MetricCard
+          label="Present"
+          value={attendanceSummary.presentCount}
+        />
+        <MetricCard
+          label="Late"
+          value={attendanceSummary.lateCount}
+        />
+        <MetricCard
+          label="Absent"
+          value={attendanceSummary.absentCount}
         />
         <MetricCard
           label="Final grades"
@@ -75,11 +99,18 @@ export default async function ParentStudentDetailPage({
 
       <SimpleTable
         empty="No attendance records yet."
-        headers={["Class", "Status", "Date"]}
+        headers={["Class", "Term", "Campus", "Status", "Date"]}
         rows={student.attendanceRecords.map((record) => (
           <TableRow key={record.id}>
             <TableCell className="font-medium">
               {record.attendanceSession.classSection.course.title}
+            </TableCell>
+            <TableCell>
+              {record.attendanceSession.classSection.term?.name ?? "No term"}
+            </TableCell>
+            <TableCell>
+              {record.attendanceSession.classSection.campus?.name ??
+                "Organization-wide"}
             </TableCell>
             <TableCell>{record.status}</TableCell>
             <TableCell>

@@ -25,6 +25,7 @@ export const adminLinks = [
   ["/admin/departments", "Departments"],
   ["/admin/courses", "Courses"],
   ["/admin/class-sections", "Class Sections"],
+  ["/admin/attendance", "Attendance"],
   ["/admin/users", "Users"],
 ] as const
 

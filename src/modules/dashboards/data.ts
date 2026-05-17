@@ -155,11 +155,24 @@ export async function getClassSectionDetail(
       },
       sessions: {
         orderBy: { startsAt: "asc" },
+        include: {
+          attendanceSession: true,
+        },
       },
       attendanceSessions: {
         orderBy: { takenAt: "desc" },
         include: {
-          records: true,
+          classSession: true,
+          records: {
+            include: {
+              student: true,
+            },
+            orderBy: {
+              student: {
+                name: "asc",
+              },
+            },
+          },
         },
       },
       assignments: {
@@ -179,6 +192,18 @@ export async function getClassSectionDetail(
           enrollments: true,
         },
       },
+    },
+  })
+}
+
+export async function getAttendancePolicyForOrganization(organizationId: string) {
+  return getPrismaClient().attendancePolicy.findFirst({
+    where: { organizationId },
+    orderBy: { createdAt: "desc" },
+    select: {
+      lateAfterMinutes: true,
+      absenceAfterMinutes: true,
+      settings: true,
     },
   })
 }
@@ -299,9 +324,12 @@ export async function getParentStudentDetail(parentId: string, studentId: string
         include: {
           attendanceSession: {
             include: {
+              classSession: true,
               classSection: {
                 include: {
+                  campus: true,
                   course: true,
+                  term: true,
                 },
               },
             },
