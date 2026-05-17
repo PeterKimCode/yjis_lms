@@ -76,6 +76,7 @@ export default async function StudentLessonPage({
               initialCompleted={progress?.completed ?? false}
               initialLastPositionSeconds={progress?.lastPositionSeconds ?? 0}
               initialProgressRate={Number(progress?.progressRate ?? 0)}
+              initialWatchedSeconds={progress?.watchedSeconds ?? 0}
               lessonId={lesson.id}
               videoUrl={html5VideoUrl}
             />

@@ -1,9 +1,22 @@
 "use client"
 
-import { useCallback, useEffect, useId, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react"
 
 import { saveVideoProgress } from "@/modules/learning/actions"
 import { getYouTubeWatchUrl } from "@/modules/learning/video"
+import {
+  addWatchedInterval,
+  getWatchedSeconds,
+  isLikelySeek,
+  type WatchedInterval,
+} from "@/modules/learning/watch-intervals"
 
 type YouTubePlayerInstance = {
   destroy: () => void
@@ -61,7 +74,9 @@ export function YouTubePlayer({
 }) {
   const elementId = `youtube-player-${useId().replace(/:/g, "")}`
   const playerRef = useRef<YouTubePlayerInstance | null>(null)
-  const watchedRef = useRef(Math.max(initialWatchedSeconds, initialPositionSeconds))
+  const intervalsRef = useRef<WatchedInterval[]>([])
+  const watchedRef = useRef(Math.max(0, initialWatchedSeconds))
+  const lastSampleRef = useRef<number | null>(null)
   const durationRef = useRef(initialDurationSeconds)
   const playingRef = useRef(false)
   const [error, setError] = useState("")
@@ -74,18 +89,22 @@ export function YouTubePlayer({
   const [completed, setCompleted] = useState(initialCompleted)
 
   const persist = useCallback(
-    async (forceComplete = false) => {
+    async () => {
       const player = playerRef.current
       if (!player) return
 
+      samplePlaybackPosition(player, {
+        intervalsRef,
+        lastSampleRef,
+        watchedRef,
+      })
       const measuredPosition = Math.max(0, Math.floor(player.getCurrentTime() || 0))
       const measuredDuration = Math.max(
         0,
         Math.floor(player.getDuration() || durationRef.current || 0)
       )
-      const nextWatched = forceComplete && measuredDuration
-        ? measuredDuration
-        : Math.max(watchedRef.current, measuredPosition)
+      const sessionWatchedSeconds = getWatchedSeconds(intervalsRef.current)
+      const nextWatched = Math.max(watchedRef.current, sessionWatchedSeconds)
 
       if (nextWatched <= 0 && measuredPosition <= 0) return
 
@@ -144,11 +163,14 @@ export function YouTubePlayer({
             onStateChange: (event) => {
               if (!window.YT) return
               playingRef.current = event.data === window.YT.PlayerState.PLAYING
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                lastSampleRef.current = event.target.getCurrentTime() || 0
+              }
               if (event.data === window.YT.PlayerState.PAUSED) {
                 void persist()
               }
               if (event.data === window.YT.PlayerState.ENDED) {
-                void persist(true)
+                void persist()
               }
             },
             onError: () => {
@@ -174,9 +196,14 @@ export function YouTubePlayer({
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       if (playingRef.current) {
+        samplePlaybackPosition(playerRef.current, {
+          intervalsRef,
+          lastSampleRef,
+          watchedRef,
+        })
         void persist()
       }
-    }, 15000)
+    }, 2000)
 
     return () => window.clearInterval(intervalId)
   }, [persist])
@@ -211,6 +238,38 @@ export function YouTubePlayer({
       </div>
     </div>
   )
+}
+
+function samplePlaybackPosition(
+  player: YouTubePlayerInstance | null,
+  refs: {
+    intervalsRef: MutableRefObject<WatchedInterval[]>
+    lastSampleRef: MutableRefObject<number | null>
+    watchedRef: MutableRefObject<number>
+  }
+) {
+  if (!player) return
+
+  const currentTime = player.getCurrentTime() || 0
+  const previousTime = refs.lastSampleRef.current
+
+  if (
+    previousTime !== null &&
+    currentTime > previousTime &&
+    !isLikelySeek(previousTime, currentTime, 5)
+  ) {
+    refs.intervalsRef.current = addWatchedInterval(
+      refs.intervalsRef.current,
+      previousTime,
+      currentTime
+    )
+    refs.watchedRef.current = Math.max(
+      refs.watchedRef.current,
+      getWatchedSeconds(refs.intervalsRef.current)
+    )
+  }
+
+  refs.lastSampleRef.current = currentTime
 }
 
 function loadYouTubeApi() {

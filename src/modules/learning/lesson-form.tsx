@@ -227,8 +227,6 @@ export function LessonForm({
         <form
           action={uploadAction}
           className="space-y-2 rounded-md border p-3"
-          encType="multipart/form-data"
-          method="post"
         >
           <input name="classSectionId" type="hidden" value={classSectionId} />
           <label className="space-y-1 text-sm">

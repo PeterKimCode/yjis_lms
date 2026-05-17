@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 
+import { Button } from "@/components/ui/button"
 import {
   DashboardPage,
   EmptyState,
@@ -24,10 +26,12 @@ export async function ClassSectionDetail({
   userId,
   classSectionId,
   mode = "student",
+  selectedLessonId,
 }: {
   userId: string
   classSectionId: string
   mode?: ClassSectionDetailMode
+  selectedLessonId?: string
 }) {
   const section = await getClassSectionDetail(userId, classSectionId, {
     publishedLessonsOnly: mode === "student",
@@ -38,6 +42,10 @@ export async function ClassSectionDetail({
   }
 
   const enrollmentCount = section.enrollments.length
+  const selectedLesson =
+    mode === "instructor" && selectedLessonId
+      ? section.lessons.find((lesson) => lesson.id === selectedLessonId)
+      : null
   const videoFileOptions =
     mode === "instructor"
       ? await getVideoFileOptionsForClassSection({
@@ -100,7 +108,12 @@ export async function ClassSectionDetail({
                         </TableCell>
                         <TableCell>{lesson.isPublished ? "Yes" : "No"}</TableCell>
                         <TableCell>
-                          {completedCount}/{enrollmentCount}
+                          <Link
+                            className="text-primary underline-offset-4 hover:underline"
+                            href={`/instructor/classes/${section.id}?lessonId=${lesson.id}#lesson-progress`}
+                          >
+                            {completedCount}/{enrollmentCount}
+                          </Link>
                         </TableCell>
                       </>
                     ) : (
@@ -141,6 +154,57 @@ export async function ClassSectionDetail({
                     </div>
                   </details>
                 ))}
+              </div>
+            ) : null}
+            {mode === "instructor" && selectedLesson ? (
+              <div className="space-y-3" id="lesson-progress">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">
+                      Completion detail: {selectedLesson.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      All enrolled students are shown, including students who
+                      have not started.
+                    </p>
+                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/instructor/classes/${section.id}`}>
+                      Close
+                    </Link>
+                  </Button>
+                </div>
+                <SimpleTable
+                  empty="No students are enrolled in this class section."
+                  headers={[
+                    "Student",
+                    "Email",
+                    "Status",
+                    "Watched",
+                    "Duration",
+                    "Progress",
+                    "Last position",
+                    "Last watched",
+                    "Completed at",
+                  ]}
+                  rows={getLessonProgressRows(section, selectedLesson.id).map(
+                    (item) => (
+                      <TableRow key={item.studentId}>
+                        <TableCell className="font-medium">
+                          {item.name}
+                        </TableCell>
+                        <TableCell>{item.email}</TableCell>
+                        <TableCell>{item.status}</TableCell>
+                        <TableCell>{item.watchedSeconds}s</TableCell>
+                        <TableCell>{item.durationSeconds}s</TableCell>
+                        <TableCell>{item.progressRate.toFixed(1)}%</TableCell>
+                        <TableCell>{item.lastPositionSeconds}s</TableCell>
+                        <TableCell>{formatDateTime(item.lastWatchedAt)}</TableCell>
+                        <TableCell>{formatDateTime(item.completedAt)}</TableCell>
+                      </TableRow>
+                    )
+                  )}
+                />
               </div>
             ) : null}
           </div>
@@ -241,6 +305,48 @@ export async function ClassSectionDetail({
       </div>
     </DashboardPage>
   )
+}
+
+function getLessonProgressRows(
+  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>,
+  lessonId: string
+) {
+  const lesson = section.lessons.find((item) => item.id === lessonId)
+  const progressByStudentId = new Map(
+    (lesson?.videoProgress ?? []).map((progress) => [progress.studentId, progress])
+  )
+
+  return section.enrollments
+    .map((enrollment) => {
+      const progress = progressByStudentId.get(enrollment.studentId)
+      const progressRate = Number(progress?.progressRate ?? 0)
+      const status = progress?.completed
+        ? "Completed"
+        : progress
+          ? "In progress"
+          : "Not started"
+
+      return {
+        studentId: enrollment.studentId,
+        name: enrollment.student.name,
+        email: enrollment.student.email ?? "-",
+        status,
+        statusOrder:
+          status === "Completed" ? 0 : status === "In progress" ? 1 : 2,
+        watchedSeconds: progress?.watchedSeconds ?? 0,
+        durationSeconds:
+          progress?.durationSeconds ?? lesson?.durationSeconds ?? 0,
+        progressRate,
+        lastPositionSeconds: progress?.lastPositionSeconds ?? 0,
+        lastWatchedAt: progress?.lastWatchedAt,
+        completedAt: progress?.completedAt,
+      }
+    })
+    .sort(
+      (left, right) =>
+        left.statusOrder - right.statusOrder ||
+        left.name.localeCompare(right.name)
+    )
 }
 
 function toLessonFormValue(

@@ -54,6 +54,9 @@ npx prisma db seed
 ```
 
 The seed creates demo users for local development only. Do not reuse these credentials outside your PC.
+`npx prisma migrate reset` deletes manually created local test users and reloads
+only what is in `prisma/seed.ts`. Add persistent demo accounts or test students
+to `prisma/seed.ts` before relying on them across resets.
 
 | Role | Email | Password |
 | --- | --- | --- |
