@@ -209,6 +209,7 @@ export async function getClassSectionDetail(
       exams: {
         orderBy: { startsAt: "asc" },
       },
+      gradingConfig: true,
       gradeCategories: {
         orderBy: { sequence: "asc" },
       },

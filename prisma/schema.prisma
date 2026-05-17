@@ -572,7 +572,7 @@ model Course {
 }
 
 model ClassSection {
-  id                 String                   @id @default(cuid())
+  id                 String                     @id @default(cuid())
   organizationId     String
   campusId           String?
   academicYearId     String
@@ -582,19 +582,19 @@ model ClassSection {
   homeroomId         String?
   name               String
   sectionCode        String?
-  deliveryMode       DeliveryMode             @default(OFFLINE)
+  deliveryMode       DeliveryMode               @default(OFFLINE)
   capacity           Int?
   startsAt           DateTime?
   endsAt             DateTime?
-  createdAt          DateTime                 @default(now())
-  updatedAt          DateTime                 @updatedAt
-  organization       Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  campus             Campus?                  @relation(fields: [campusId], references: [id], onDelete: SetNull)
-  academicYear       AcademicYear             @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  term               Term?                    @relation(fields: [termId], references: [id], onDelete: SetNull)
-  course             Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  gradeLevel         GradeLevel?              @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
-  homeroom           Homeroom?                @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  organization       Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus             Campus?                    @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear       AcademicYear               @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term               Term?                      @relation(fields: [termId], references: [id], onDelete: SetNull)
+  course             Course                     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  gradeLevel         GradeLevel?                @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  homeroom           Homeroom?                  @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
   instructors        ClassSectionInstructor[]
   enrollments        Enrollment[]
   sessions           ClassSession[]
@@ -603,6 +603,7 @@ model ClassSection {
   assignments        Assignment[]
   quizzes            Quiz[]
   exams              Exam[]
+  gradingConfig      ClassSectionGradingConfig?
   gradeCategories    GradeCategory[]
   gradeItems         GradeItem[]
   finalGrades        FinalGrade[]
@@ -617,6 +618,21 @@ model ClassSection {
   @@index([courseId])
   @@index([gradeLevelId])
   @@index([homeroomId])
+  @@index([createdAt])
+}
+
+model ClassSectionGradingConfig {
+  id                String       @id @default(cuid())
+  classSectionId    String       @unique
+  lessonsWeight     Decimal      @default(10) @db.Decimal(5, 2)
+  attendanceWeight  Decimal      @default(20) @db.Decimal(5, 2)
+  assignmentsWeight Decimal      @default(30) @db.Decimal(5, 2)
+  quizzesWeight     Decimal      @default(20) @db.Decimal(5, 2)
+  examsWeight       Decimal      @default(20) @db.Decimal(5, 2)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  classSection      ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+
   @@index([createdAt])
 }
 

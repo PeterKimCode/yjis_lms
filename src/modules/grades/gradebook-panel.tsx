@@ -19,6 +19,7 @@ import {
   finalizeFinalGrades,
   generateTranscriptsForClassSection,
   publishFinalGrades,
+  saveModuleGradingConfig,
   saveGradeCategory,
   saveGradeItem,
   saveGradeScore,
@@ -30,7 +31,32 @@ export type GradebookPanelValue = {
   enrollments: GradebookStudentValue[]
   finalGrades: FinalGradeValue[]
   gradeItems: GradeItemValue[]
+  moduleBreakdowns: ModuleGradeBreakdown[]
+  moduleWeights: ModuleGradeWeights
   sourceOptions: GradeSourceOptions
+}
+
+export type ModuleGradeWeights = {
+  lessonsWeight: string
+  attendanceWeight: string
+  assignmentsWeight: string
+  quizzesWeight: string
+  examsWeight: string
+}
+
+export type ModuleGradeBreakdown = {
+  studentId: string
+  lessonsScore: string
+  lessonsContribution: string
+  attendanceScore: string
+  attendanceContribution: string
+  assignmentsScore: string
+  assignmentsContribution: string
+  quizzesScore: string
+  quizzesContribution: string
+  examsScore: string
+  examsContribution: string
+  totalScore: string
 }
 
 export type GradeCategoryValue = {
@@ -120,29 +146,120 @@ export function GradebookPanel({
     )
   }
 
-  const totalWeight = value.categories.reduce(
-    (total, category) => total + Number(category.weight ?? 0),
-    0
-  )
+  const totalWeight = getModuleWeightTotal(value.moduleWeights)
 
   return (
     <div className="space-y-4">
       <div className="rounded-md border bg-background p-3 text-sm">
-        <span className="font-medium">Category weight total:</span>{" "}
+        <span className="font-medium">Total weight:</span>{" "}
         {totalWeight.toFixed(1)}%
         {Math.round(totalWeight * 10) / 10 !== 100 ? (
           <p className="mt-1 text-xs text-destructive">
-            Category weights total {totalWeight.toFixed(1)}%. Final grade
-            calculation expects 100%.
+            Weights total {totalWeight.toFixed(1)}%. Final grade calculation
+            expects 100%.
           </p>
         ) : null}
       </div>
 
       <details className="rounded-md border bg-background p-3">
         <summary className="cursor-pointer text-sm font-medium">
-          Grade categories
+          Grade weights
         </summary>
         <div className="space-y-4 pt-3">
+          <ModuleWeightForm classSectionId={classSectionId} weights={value.moduleWeights} />
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            <WeightBadge label="Lessons" value={value.moduleWeights.lessonsWeight} />
+            <WeightBadge label="Attendance" value={value.moduleWeights.attendanceWeight} />
+            <WeightBadge label="Assignments" value={value.moduleWeights.assignmentsWeight} />
+            <WeightBadge label="Quizzes" value={value.moduleWeights.quizzesWeight} />
+            <WeightBadge label="Exams" value={value.moduleWeights.examsWeight} />
+          </div>
+        </div>
+      </details>
+
+      <details className="rounded-md border bg-background p-3">
+        <summary className="cursor-pointer text-sm font-medium">
+          Final grade calculation
+        </summary>
+        <div className="space-y-4 pt-3">
+          <FinalGradeActions classSectionId={classSectionId} />
+          <p className="text-xs text-muted-foreground">
+            MVP behavior: lesson score uses published lesson completion;
+            attendance uses Present 100, Late 50, excused/sick/official absence
+            100; due assignments without submissions count as 0; quizzes use
+            the best submitted attempt; exams currently count as 0 until exam
+            scoring is added.
+          </p>
+          <SimpleTable
+            empty="No enrolled students."
+            headers={[
+              "Student",
+              "Lessons",
+              "Attendance",
+              "Assignments",
+              "Quizzes",
+              "Exams",
+              "Total",
+              "Letter",
+              "Status",
+            ]}
+            rows={value.moduleBreakdowns.map((breakdown) => {
+              const student = value.enrollments.find(
+                (entry) => entry.id === breakdown.studentId
+              )
+              const finalGrade = value.finalGrades.find(
+                (grade) => grade.studentId === breakdown.studentId
+              )
+
+              return (
+                <TableRow key={breakdown.studentId}>
+                  <TableCell className="font-medium">
+                    {student?.name ?? "Unknown student"}
+                  </TableCell>
+                  <ModuleScoreCell
+                    contribution={breakdown.lessonsContribution}
+                    score={breakdown.lessonsScore}
+                  />
+                  <ModuleScoreCell
+                    contribution={breakdown.attendanceContribution}
+                    score={breakdown.attendanceScore}
+                  />
+                  <ModuleScoreCell
+                    contribution={breakdown.assignmentsContribution}
+                    score={breakdown.assignmentsScore}
+                  />
+                  <ModuleScoreCell
+                    contribution={breakdown.quizzesContribution}
+                    score={breakdown.quizzesScore}
+                  />
+                  <ModuleScoreCell
+                    contribution={breakdown.examsContribution}
+                    score={breakdown.examsScore}
+                  />
+                  <TableCell>{breakdown.totalScore}</TableCell>
+                  <TableCell>{finalGrade?.letterGrade ?? "-"}</TableCell>
+                  <TableCell>{finalGrade?.status ?? "DRAFT"}</TableCell>
+                </TableRow>
+              )
+            })}
+          />
+        </div>
+      </details>
+
+      <details className="rounded-md border bg-background p-3">
+        <summary className="cursor-pointer text-sm font-medium">
+          Advanced gradebook
+        </summary>
+        <div className="space-y-4 pt-3">
+          <p className="text-sm text-muted-foreground">
+            TODO: Advanced GradeCategory/GradeItem workflows can be expanded
+            later. The MVP flow above does not require these manual structures.
+          </p>
+          <details className="rounded-md border bg-background p-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              Grade categories
+            </summary>
+            <div className="space-y-4 pt-3">
           <GradeCategoryForm classSectionId={classSectionId} />
           <SimpleTable
             empty="No grade categories yet."
@@ -169,14 +286,14 @@ export function GradebookPanel({
               </TableRow>
             ))}
           />
-        </div>
-      </details>
+            </div>
+          </details>
 
-      <details className="rounded-md border bg-background p-3">
-        <summary className="cursor-pointer text-sm font-medium">
-          Grade items
-        </summary>
-        <div className="space-y-4 pt-3">
+          <details className="rounded-md border bg-background p-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              Grade items
+            </summary>
+            <div className="space-y-4 pt-3">
           <GradeItemForm
             categories={value.categories}
             classSectionId={classSectionId}
@@ -188,14 +305,14 @@ export function GradebookPanel({
             sourceOptions={value.sourceOptions}
             classSectionId={classSectionId}
           />
-        </div>
-      </details>
+            </div>
+          </details>
 
-      <details className="rounded-md border bg-background p-3">
-        <summary className="cursor-pointer text-sm font-medium">
-          Score entry
-        </summary>
-        <div className="space-y-4 pt-3">
+          <details className="rounded-md border bg-background p-3">
+            <summary className="cursor-pointer text-sm font-medium">
+              Score entry
+            </summary>
+            <div className="space-y-4 pt-3">
           {value.gradeItems.length ? (
             value.gradeItems.map((item) => (
               <details className="rounded-md border p-3" key={item.id}>
@@ -210,15 +327,16 @@ export function GradebookPanel({
           ) : (
             <EmptyState>Create grade items before entering scores.</EmptyState>
           )}
+            </div>
+          </details>
         </div>
       </details>
 
       <details className="rounded-md border bg-background p-3">
         <summary className="cursor-pointer text-sm font-medium">
-          Final grades
+          Published/finalized records
         </summary>
         <div className="space-y-4 pt-3">
-          <FinalGradeActions classSectionId={classSectionId} />
           <SimpleTable
             empty="No final grades calculated yet."
             headers={[
@@ -264,6 +382,113 @@ export function GradebookPanel({
         </div>
       </details>
     </div>
+  )
+}
+
+function ModuleWeightForm({
+  classSectionId,
+  weights,
+}: {
+  classSectionId: string
+  weights: ModuleGradeWeights
+}) {
+  const [state, formAction, pending] = useActionState(
+    saveModuleGradingConfig,
+    initialGradebookActionState
+  )
+
+  return (
+    <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <input name="classSectionId" type="hidden" value={classSectionId} />
+      <WeightInput
+        name="lessonsWeight"
+        label="Lessons weight"
+        placeholder="Example: 10 for 10%"
+        value={weights.lessonsWeight}
+      />
+      <WeightInput
+        name="attendanceWeight"
+        label="Attendance weight"
+        placeholder="Example: 20 for 20%"
+        value={weights.attendanceWeight}
+      />
+      <WeightInput
+        name="assignmentsWeight"
+        label="Assignments weight"
+        placeholder="Example: 30 for 30%"
+        value={weights.assignmentsWeight}
+      />
+      <WeightInput
+        name="quizzesWeight"
+        label="Quizzes weight"
+        placeholder="Example: 20 for 20%"
+        value={weights.quizzesWeight}
+      />
+      <WeightInput
+        name="examsWeight"
+        label="Exams weight"
+        placeholder="Example: 20 for 20%"
+        value={weights.examsWeight}
+      />
+      <ActionMessage state={state} />
+      <div className="flex items-end">
+        <Button size="sm" type="submit" disabled={pending}>
+          {pending ? "Saving..." : "Save weights"}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+function WeightInput({
+  label,
+  name,
+  placeholder,
+  value,
+}: {
+  label: string
+  name: string
+  placeholder: string
+  value: string
+}) {
+  return (
+    <label className="grid gap-1 text-sm">
+      <span className="font-medium">{label}</span>
+      <Input
+        inputMode="decimal"
+        max="100"
+        min="0"
+        name={name}
+        placeholder={placeholder}
+        step="0.1"
+        type="number"
+        defaultValue={value}
+      />
+    </label>
+  )
+}
+
+function WeightBadge({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border p-3 text-sm">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="font-semibold">{value}%</div>
+    </div>
+  )
+}
+
+function ModuleScoreCell({
+  contribution,
+  score,
+}: {
+  contribution: string
+  score: string
+}) {
+  return (
+    <TableCell>
+      <div>{score}%</div>
+      <div className="text-xs text-muted-foreground">+{contribution}</div>
+    </TableCell>
   )
 }
 
@@ -724,4 +949,14 @@ function toLocalInputDate(value: string | null | undefined) {
   const date = new Date(value)
   const offset = date.getTimezoneOffset() * 60 * 1000
   return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
+function getModuleWeightTotal(weights: ModuleGradeWeights) {
+  return (
+    Number(weights.lessonsWeight) +
+    Number(weights.attendanceWeight) +
+    Number(weights.assignmentsWeight) +
+    Number(weights.quizzesWeight) +
+    Number(weights.examsWeight)
+  )
 }

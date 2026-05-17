@@ -42,6 +42,7 @@ import {
 } from "@/modules/attendance/summary"
 import {
   GradebookPanel,
+  type ModuleGradeWeights,
   type GradebookPanelValue,
 } from "@/modules/grades/gradebook-panel"
 
@@ -92,6 +93,7 @@ export async function ClassSectionDetail({
           campusId: section.campusId,
         })
       : []
+  const gradeWeights = getModuleWeights(section.gradingConfig)
 
   return (
     <DashboardPage
@@ -108,7 +110,7 @@ export async function ClassSectionDetail({
       </div>
 
       <div className="flex flex-col gap-6">
-        <SectionBlock title="Lessons">
+        <SectionBlock title={`Lessons · ${gradeWeights.lessonsWeight}%`}>
           <div className="space-y-4">
             {mode === "instructor" ? (
               <details className="rounded-md border bg-background p-3">
@@ -363,7 +365,7 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        <SectionBlock title="Attendance">
+        <SectionBlock title={`Attendance · ${gradeWeights.attendanceWeight}%`}>
           <div className="space-y-4">
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <AttendanceStat
@@ -510,7 +512,7 @@ export async function ClassSectionDetail({
           </div>
         </SectionBlock>
 
-        <SectionBlock title="Assignments">
+        <SectionBlock title={`Assignments · ${gradeWeights.assignmentsWeight}%`}>
           <AssignmentPanel
             assignments={section.assignments.map(toAssignmentPanelValue)}
             classSectionId={section.id}
@@ -520,7 +522,7 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        <SectionBlock title="Quizzes">
+        <SectionBlock title={`Quizzes · ${gradeWeights.quizzesWeight}%`}>
           <QuizPanel
             classSectionId={section.id}
             mode={mode}
@@ -531,7 +533,7 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         {mode === "instructor" ? (
-          <SectionBlock title="Exams">
+          <SectionBlock title={`Exams · ${gradeWeights.examsWeight}%`}>
             <ExamPanel
               classSectionId={section.id}
               exams={section.exams.map(toExamPanelValue)}
@@ -802,6 +804,8 @@ function toGradebookPanelValue(
         gradedAt: score.gradedAt?.toISOString() ?? null,
       })),
     })),
+    moduleBreakdowns: getModuleBreakdowns(section),
+    moduleWeights: getModuleWeights(section.gradingConfig),
     sourceOptions: {
       assignments: section.assignments.map((assignment) => ({
         id: assignment.id,
@@ -817,4 +821,154 @@ function toGradebookPanelValue(
       })),
     },
   }
+}
+
+function getModuleWeights(
+  config: NonNullable<
+    Awaited<ReturnType<typeof getClassSectionDetail>>
+  >["gradingConfig"]
+): ModuleGradeWeights {
+  return {
+    lessonsWeight: config?.lessonsWeight.toString() ?? "10",
+    attendanceWeight: config?.attendanceWeight.toString() ?? "20",
+    assignmentsWeight: config?.assignmentsWeight.toString() ?? "30",
+    quizzesWeight: config?.quizzesWeight.toString() ?? "20",
+    examsWeight: config?.examsWeight.toString() ?? "20",
+  }
+}
+
+function getModuleBreakdowns(
+  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>
+) {
+  const weights = getModuleWeights(section.gradingConfig)
+
+  return section.enrollments.map((enrollment) => {
+    const scores = getStudentModuleScores(section, enrollment.studentId)
+    const contributions = {
+      lessonsContribution: (scores.lessonsScore * Number(weights.lessonsWeight)) / 100,
+      attendanceContribution:
+        (scores.attendanceScore * Number(weights.attendanceWeight)) / 100,
+      assignmentsContribution:
+        (scores.assignmentsScore * Number(weights.assignmentsWeight)) / 100,
+      quizzesContribution: (scores.quizzesScore * Number(weights.quizzesWeight)) / 100,
+      examsContribution: (scores.examsScore * Number(weights.examsWeight)) / 100,
+    }
+    const totalScore = Object.values(contributions).reduce(
+      (total, value) => total + value,
+      0
+    )
+
+    return {
+      studentId: enrollment.studentId,
+      lessonsScore: formatPercent(scores.lessonsScore),
+      lessonsContribution: formatPercent(contributions.lessonsContribution),
+      attendanceScore: formatPercent(scores.attendanceScore),
+      attendanceContribution: formatPercent(contributions.attendanceContribution),
+      assignmentsScore: formatPercent(scores.assignmentsScore),
+      assignmentsContribution: formatPercent(contributions.assignmentsContribution),
+      quizzesScore: formatPercent(scores.quizzesScore),
+      quizzesContribution: formatPercent(contributions.quizzesContribution),
+      examsScore: formatPercent(scores.examsScore),
+      examsContribution: formatPercent(contributions.examsContribution),
+      totalScore: formatPercent(totalScore),
+    }
+  })
+}
+
+function getStudentModuleScores(
+  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>,
+  studentId: string
+) {
+  const now = new Date()
+  const publishedLessons = section.lessons.filter((lesson) => lesson.isPublished)
+  const completedLessons = publishedLessons.filter((lesson) =>
+    lesson.videoProgress.some(
+      (progress) => progress.studentId === studentId && progress.completed
+    )
+  ).length
+  const lessonsScore = publishedLessons.length
+    ? (completedLessons / publishedLessons.length) * 100
+    : 0
+
+  const attendanceRecords = section.attendanceSessions.flatMap((session) =>
+    session.records.filter((record) => record.studentId === studentId)
+  )
+  const countedAttendance = attendanceRecords.filter(
+    (record) => record.status !== AttendanceStatus.PENDING
+  )
+  const attendanceScore = countedAttendance.length
+    ? countedAttendance.reduce((sum, record) => sum + attendanceStatusPoints(record.status), 0) /
+      countedAttendance.length
+    : 0
+
+  const gradedAssignments = section.assignments.filter(
+    (assignment) =>
+      assignment.dueAt === null ||
+      assignment.dueAt <= now ||
+      assignment.submissions.some((submission) => submission.studentId === studentId)
+  )
+  const assignmentTotals = gradedAssignments.reduce(
+    (totals, assignment) => {
+      const possible = Number(assignment.pointsPossible ?? 100)
+      const submission = assignment.submissions.find(
+        (entry) => entry.studentId === studentId
+      )
+      return {
+        earned: totals.earned + Number(submission?.score ?? 0),
+        possible: totals.possible + possible,
+      }
+    },
+    { earned: 0, possible: 0 }
+  )
+  const assignmentsScore = assignmentTotals.possible
+    ? (assignmentTotals.earned / assignmentTotals.possible) * 100
+    : 0
+
+  const quizTotals = section.quizzes.reduce(
+    (totals, quiz) => {
+      const possible =
+        Number(quiz.pointsPossible ?? 0) ||
+        quiz.questions.reduce((sum, question) => sum + Number(question.points), 0)
+      if (!possible) return totals
+      const best = quiz.attempts
+        .filter((attempt) => attempt.studentId === studentId && attempt.submittedAt)
+        .reduce((current, attempt) => {
+          const score = Number(attempt.score ?? 0)
+          return Math.max(current, score)
+        }, 0)
+      return {
+        earned: totals.earned + best,
+        possible: totals.possible + possible,
+      }
+    },
+    { earned: 0, possible: 0 }
+  )
+  const quizzesScore = quizTotals.possible
+    ? (quizTotals.earned / quizTotals.possible) * 100
+    : 0
+
+  return {
+    lessonsScore,
+    attendanceScore,
+    assignmentsScore,
+    quizzesScore,
+    examsScore: 0,
+  }
+}
+
+function attendanceStatusPoints(status: AttendanceStatus) {
+  if (status === AttendanceStatus.PRESENT) return 100
+  if (status === AttendanceStatus.LATE) return 50
+  if (
+    status === AttendanceStatus.EXCUSED ||
+    status === AttendanceStatus.SICK_LEAVE ||
+    status === AttendanceStatus.OFFICIAL_ABSENCE
+  ) {
+    return 100
+  }
+  return 0
+}
+
+function formatPercent(value: number) {
+  return value.toFixed(1)
 }

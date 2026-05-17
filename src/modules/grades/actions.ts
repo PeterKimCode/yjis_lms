@@ -1,7 +1,12 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { FinalGradeStatus, Prisma, UserRole } from "@prisma/client"
+import {
+  AttendanceStatus,
+  FinalGradeStatus,
+  Prisma,
+  UserRole,
+} from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -30,6 +35,48 @@ const optionalDecimal = z.preprocess(
     .optional()
     .transform((value) => (value === undefined ? null : new Prisma.Decimal(value)))
 )
+const weightSchema = z.object({
+  classSectionId: requiredString,
+  lessonsWeight: z.coerce.number().min(0).max(100),
+  attendanceWeight: z.coerce.number().min(0).max(100),
+  assignmentsWeight: z.coerce.number().min(0).max(100),
+  quizzesWeight: z.coerce.number().min(0).max(100),
+  examsWeight: z.coerce.number().min(0).max(100),
+})
+
+export async function saveModuleGradingConfig(
+  _previousState: GradebookActionState,
+  formData: FormData
+): Promise<GradebookActionState> {
+  const parsed = weightSchema.safeParse({
+    classSectionId: formData.get("classSectionId") ?? "",
+    lessonsWeight: formData.get("lessonsWeight") ?? "10",
+    attendanceWeight: formData.get("attendanceWeight") ?? "20",
+    assignmentsWeight: formData.get("assignmentsWeight") ?? "30",
+    quizzesWeight: formData.get("quizzesWeight") ?? "20",
+    examsWeight: formData.get("examsWeight") ?? "20",
+  })
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Weights must be numbers from 0 to 100.",
+    }
+  }
+
+  await requireGradebookManager(parsed.data.classSectionId)
+  await getPrismaClient().classSectionGradingConfig.upsert({
+    where: { classSectionId: parsed.data.classSectionId },
+    update: toWeightData(parsed.data),
+    create: {
+      classSectionId: parsed.data.classSectionId,
+      ...toWeightData(parsed.data),
+    },
+  })
+
+  revalidateGradebookPaths(parsed.data.classSectionId)
+  return { ok: true, message: "Grade weights saved." }
+}
 
 const categorySchema = z.object({
   id: optionalString,
@@ -301,14 +348,25 @@ export async function calculateFinalGrades(
     where: { id: classSectionId },
     include: {
       course: true,
+      gradingConfig: true,
+      lessons: {
+        where: { isPublished: true },
+        include: { videoProgress: true },
+      },
       enrollments: true,
-      gradeCategories: {
+      attendanceSessions: {
+        include: { records: true },
+      },
+      assignments: {
+        include: { submissions: true },
+      },
+      quizzes: {
         include: {
-          gradeItems: {
-            include: { scores: true },
-          },
+          questions: true,
+          attempts: true,
         },
       },
+      exams: true,
     },
   })
   const scale = await prisma.gradingScale.findFirst({
@@ -328,51 +386,18 @@ export async function calculateFinalGrades(
     }
   }
 
-  let missingScores = 0
+  const weights = getWeights(section.gradingConfig)
   const credit = section.course.credits ?? new Prisma.Decimal(0)
 
   for (const enrollment of section.enrollments) {
-    let total = new Prisma.Decimal(0)
-
-    for (const category of section.gradeCategories) {
-      const items = category.gradeItems
-      if (!items.length) continue
-
-      const itemWeightSum = items.reduce(
-        (sum, item) => sum.plus(item.weight ?? 0),
-        new Prisma.Decimal(0)
-      )
-      let categoryAverage = new Prisma.Decimal(0)
-
-      if (itemWeightSum.gt(0)) {
-        const weighted = items.reduce((sum, item) => {
-          const score = item.scores.find(
-            (entry) => entry.studentId === enrollment.studentId
-          )
-          if (!score?.score) missingScores += 1
-          const percent = score?.score
-            ? score.score.div(item.pointsPossible).mul(100)
-            : new Prisma.Decimal(0)
-          return sum.plus(percent.mul(item.weight ?? 0))
-        }, new Prisma.Decimal(0))
-        categoryAverage = weighted.div(itemWeightSum)
-      } else {
-        const sum = items.reduce((itemSum, item) => {
-          const score = item.scores.find(
-            (entry) => entry.studentId === enrollment.studentId
-          )
-          if (!score?.score) missingScores += 1
-          return itemSum.plus(
-            score?.score
-              ? score.score.div(item.pointsPossible).mul(100)
-              : new Prisma.Decimal(0)
-          )
-        }, new Prisma.Decimal(0))
-        categoryAverage = sum.div(items.length)
-      }
-
-      total = total.plus(categoryAverage.mul(category.weight ?? 0).div(100))
-    }
+    const moduleScores = calculateModuleScores(section, enrollment.studentId)
+    const total = moduleScores.lessonsScore
+      .mul(weights.lessonsWeight)
+      .plus(moduleScores.attendanceScore.mul(weights.attendanceWeight))
+      .plus(moduleScores.assignmentsScore.mul(weights.assignmentsWeight))
+      .plus(moduleScores.quizzesScore.mul(weights.quizzesWeight))
+      .plus(moduleScores.examsScore.mul(weights.examsWeight))
+      .div(100)
 
     const scaleItem = findScaleItem(scale.items, total)
     const isPassed = scaleItem?.gradePoint
@@ -398,9 +423,7 @@ export async function calculateFinalGrades(
   revalidateGradebookPaths(classSectionId)
   return {
     ok: true,
-    message: missingScores
-      ? `Final grades calculated. ${missingScores} missing scores were treated as 0.`
-      : "Final grades calculated.",
+    message: "Final grades calculated from module weights.",
   }
 }
 
@@ -606,6 +629,152 @@ function getSourceFields(sourceType: string, sourceId: string | null) {
     assignmentId: sourceType === "ASSIGNMENT" ? sourceId : null,
     quizId: sourceType === "QUIZ" ? sourceId : null,
     examId: sourceType === "EXAM" ? sourceId : null,
+  }
+}
+
+function toWeightData(data: z.infer<typeof weightSchema>) {
+  return {
+    lessonsWeight: new Prisma.Decimal(data.lessonsWeight),
+    attendanceWeight: new Prisma.Decimal(data.attendanceWeight),
+    assignmentsWeight: new Prisma.Decimal(data.assignmentsWeight),
+    quizzesWeight: new Prisma.Decimal(data.quizzesWeight),
+    examsWeight: new Prisma.Decimal(data.examsWeight),
+  }
+}
+
+function getWeights(config: {
+  lessonsWeight: Prisma.Decimal
+  attendanceWeight: Prisma.Decimal
+  assignmentsWeight: Prisma.Decimal
+  quizzesWeight: Prisma.Decimal
+  examsWeight: Prisma.Decimal
+} | null) {
+  return {
+    lessonsWeight: config?.lessonsWeight ?? new Prisma.Decimal(10),
+    attendanceWeight: config?.attendanceWeight ?? new Prisma.Decimal(20),
+    assignmentsWeight: config?.assignmentsWeight ?? new Prisma.Decimal(30),
+    quizzesWeight: config?.quizzesWeight ?? new Prisma.Decimal(20),
+    examsWeight: config?.examsWeight ?? new Prisma.Decimal(20),
+  }
+}
+
+function calculateModuleScores(
+  section: {
+    lessons: Array<{
+      videoProgress: Array<{ studentId: string; completed: boolean }>
+    }>
+    attendanceSessions: Array<{
+      records: Array<{ studentId: string; status: AttendanceStatus }>
+    }>
+    assignments: Array<{
+      pointsPossible: Prisma.Decimal | null
+      dueAt: Date | null
+      submissions: Array<{ studentId: string; score: Prisma.Decimal | null }>
+    }>
+    quizzes: Array<{
+      pointsPossible: Prisma.Decimal | null
+      questions: Array<{ points: Prisma.Decimal }>
+      attempts: Array<{
+        studentId: string
+        score: Prisma.Decimal | null
+        submittedAt: Date | null
+      }>
+    }>
+    exams: unknown[]
+  },
+  studentId: string
+) {
+  const now = new Date()
+  const publishedLessons = section.lessons
+  const completedLessons = publishedLessons.filter((lesson) =>
+    lesson.videoProgress.some(
+      (progress) => progress.studentId === studentId && progress.completed
+    )
+  ).length
+  const lessonsScore = publishedLessons.length
+    ? new Prisma.Decimal(completedLessons).div(publishedLessons.length).mul(100)
+    : new Prisma.Decimal(0)
+
+  const attendanceRecords = section.attendanceSessions.flatMap((session) =>
+    session.records.filter((record) => record.studentId === studentId)
+  )
+  const attendancePoints = attendanceRecords.reduce((sum, record) => {
+    if (record.status === AttendanceStatus.PRESENT) return sum.plus(100)
+    if (record.status === AttendanceStatus.LATE) return sum.plus(50)
+    if (
+      record.status === AttendanceStatus.EXCUSED ||
+      record.status === AttendanceStatus.SICK_LEAVE ||
+      record.status === AttendanceStatus.OFFICIAL_ABSENCE
+    ) {
+      return sum.plus(100)
+    }
+    if (record.status === AttendanceStatus.PENDING) return sum
+    return sum.plus(0)
+  }, new Prisma.Decimal(0))
+  const countedAttendance = attendanceRecords.filter(
+    (record) => record.status !== AttendanceStatus.PENDING
+  ).length
+  const attendanceScore = countedAttendance
+    ? attendancePoints.div(countedAttendance)
+    : new Prisma.Decimal(0)
+
+  const gradedAssignments = section.assignments.filter(
+    (assignment) =>
+      assignment.dueAt === null ||
+      assignment.dueAt <= now ||
+      assignment.submissions.some((submission) => submission.studentId === studentId)
+  )
+  const assignmentTotals = gradedAssignments.reduce(
+    (total, assignment) => {
+      const possible = assignment.pointsPossible ?? new Prisma.Decimal(100)
+      const submission = assignment.submissions.find(
+        (entry) => entry.studentId === studentId
+      )
+      return {
+        earned: total.earned.plus(submission?.score ?? 0),
+        possible: total.possible.plus(possible),
+      }
+    },
+    { earned: new Prisma.Decimal(0), possible: new Prisma.Decimal(0) }
+  )
+  const assignmentsScore = assignmentTotals.possible.gt(0)
+    ? assignmentTotals.earned.div(assignmentTotals.possible).mul(100)
+    : new Prisma.Decimal(0)
+
+  const quizTotals = section.quizzes.reduce(
+    (total, quiz) => {
+      const possible =
+        quiz.pointsPossible ??
+        quiz.questions.reduce(
+          (sum, question) => sum.plus(question.points),
+          new Prisma.Decimal(0)
+        )
+      if (possible.lte(0)) return total
+      const best = quiz.attempts
+        .filter((attempt) => attempt.studentId === studentId && attempt.submittedAt)
+        .reduce<Prisma.Decimal | null>((current, attempt) => {
+          if (!attempt.score) return current
+          return current === null || attempt.score.gt(current)
+            ? attempt.score
+            : current
+        }, null)
+      return {
+        earned: total.earned.plus(best ?? 0),
+        possible: total.possible.plus(possible),
+      }
+    },
+    { earned: new Prisma.Decimal(0), possible: new Prisma.Decimal(0) }
+  )
+  const quizzesScore = quizTotals.possible.gt(0)
+    ? quizTotals.earned.div(quizTotals.possible).mul(100)
+    : new Prisma.Decimal(0)
+
+  return {
+    lessonsScore,
+    attendanceScore,
+    assignmentsScore,
+    quizzesScore,
+    examsScore: section.exams.length ? new Prisma.Decimal(0) : new Prisma.Decimal(0),
   }
 }
 
