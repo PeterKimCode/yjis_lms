@@ -69,7 +69,7 @@ export async function GET(
 
     const bytes = await readS3Body(object.Body)
     const headers = new Headers({
-      "Content-Disposition": `attachment; filename="${encodeHeaderFileName(file.originalName)}"`,
+      "Content-Disposition": getContentDisposition(file.originalName),
       "Content-Type": file.contentType ?? "application/octet-stream",
       "Content-Length": String(file.byteSize ?? bytes.byteLength),
     })
@@ -132,8 +132,20 @@ async function canDownloadFile(
   return false
 }
 
-function encodeHeaderFileName(name: string) {
-  return name.replace(/["\r\n]/g, "_")
+function getContentDisposition(name: string) {
+  const extension = getSafeExtension(name)
+  const asciiFallback = `download${extension}`.replace(/["\r\n]/g, "_")
+  const encodedName = encodeURIComponent(name).replace(/['()]/g, (value) =>
+    `%${value.charCodeAt(0).toString(16).toUpperCase()}`
+  )
+
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedName}`
+}
+
+function getSafeExtension(name: string) {
+  const match = /\.[A-Za-z0-9]{1,12}$/.exec(name)
+
+  return match?.[0] ?? ""
 }
 
 async function readS3Body(body: unknown) {
