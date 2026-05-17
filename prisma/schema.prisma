@@ -250,48 +250,50 @@ model Campus {
 }
 
 model User {
-  id                       String                    @id @default(cuid())
-  organizationId           String
-  email                    String?
-  username                 String?
-  passwordHash             String?
-  name                     String
-  phone                    String?
-  avatarFileAssetId        String?
-  isActive                 Boolean                   @default(true)
-  lastLoginAt              DateTime?
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  avatarFileAsset          FileAsset?                @relation("UserAvatar", fields: [avatarFileAssetId], references: [id], onDelete: SetNull)
-  roleAssignments          UserRoleAssignment[]
-  studentProfile           StudentProfile?
-  instructorProfile        InstructorProfile?
-  parentRelations          ParentStudentRelation[]   @relation("ParentRelations")
-  studentParentRelations   ParentStudentRelation[]   @relation("StudentRelations")
-  sectionInstructors       ClassSectionInstructor[]
-  enrollments              Enrollment[]
-  createdLessons           Lesson[]                  @relation("LessonCreator")
-  videoProgress            VideoProgress[]
-  attendanceRecords        AttendanceRecord[]
-  assignmentSubmissions    AssignmentSubmission[]
-  gradedAssignmentSubmissions AssignmentSubmission[] @relation("GradedAssignmentSubmissions")
-  quizAttempts             QuizAttempt[]
-  quizAnswers              QuizAnswer[]
-  gradeScores              GradeScore[]
-  finalGrades              FinalGrade[]
-  transcripts              Transcript[]
-  reportCards              ReportCard[]
-  generatedDocuments       GeneratedDocument[]
-  posts                    Post[]
-  comments                 Comment[]
-  conversationParticipants ConversationParticipant[]
-  sentMessages             Message[]                 @relation("SentMessages")
-  readReceipts             MessageReadReceipt[]
-  notifications            Notification[]
-  notificationPreferences  NotificationPreference[]
-  uploadedFiles            FileAsset[]               @relation("UploadedFiles")
-  homerooms                Homeroom[]
+  id                          String                    @id @default(cuid())
+  organizationId              String
+  email                       String?
+  username                    String?
+  passwordHash                String?
+  name                        String
+  phone                       String?
+  avatarFileAssetId           String?
+  isActive                    Boolean                   @default(true)
+  lastLoginAt                 DateTime?
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+  organization                Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  avatarFileAsset             FileAsset?                @relation("UserAvatar", fields: [avatarFileAssetId], references: [id], onDelete: SetNull)
+  roleAssignments             UserRoleAssignment[]
+  studentProfile              StudentProfile?
+  instructorProfile           InstructorProfile?
+  parentRelations             ParentStudentRelation[]   @relation("ParentRelations")
+  studentParentRelations      ParentStudentRelation[]   @relation("StudentRelations")
+  sectionInstructors          ClassSectionInstructor[]
+  enrollments                 Enrollment[]
+  createdLessons              Lesson[]                  @relation("LessonCreator")
+  videoProgress               VideoProgress[]
+  attendanceRecords           AttendanceRecord[]
+  assignmentSubmissions       AssignmentSubmission[]
+  gradedAssignmentSubmissions AssignmentSubmission[]    @relation("GradedAssignmentSubmissions")
+  gradedQuizAttempts          QuizAttempt[]             @relation("GradedQuizAttempts")
+  gradedQuizAnswers           QuizAnswer[]              @relation("GradedQuizAnswers")
+  quizAttempts                QuizAttempt[]
+  quizAnswers                 QuizAnswer[]
+  gradeScores                 GradeScore[]
+  finalGrades                 FinalGrade[]
+  transcripts                 Transcript[]
+  reportCards                 ReportCard[]
+  generatedDocuments          GeneratedDocument[]
+  posts                       Post[]
+  comments                    Comment[]
+  conversationParticipants    ConversationParticipant[]
+  sentMessages                Message[]                 @relation("SentMessages")
+  readReceipts                MessageReadReceipt[]
+  notifications               Notification[]
+  notificationPreferences     NotificationPreference[]
+  uploadedFiles               FileAsset[]               @relation("UploadedFiles")
+  homerooms                   Homeroom[]
 
   @@unique([organizationId, email])
   @@unique([organizationId, username])
@@ -869,26 +871,29 @@ model AssignmentSubmission {
 }
 
 model Quiz {
-  id               String        @id @default(cuid())
-  organizationId   String
-  classSectionId   String
-  lessonId         String?
-  title            String
-  description      String?
-  opensAt          DateTime?
-  closesAt         DateTime?
-  timeLimitMinutes Int?
-  maxAttempts      Int?
-  pointsPossible   Decimal?      @db.Decimal(8, 2)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  classSection     ClassSection  @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
-  lesson           Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
-  questions        Question[]
-  attempts         QuizAttempt[]
-  gradeItems       GradeItem[]
-  exams            Exam[]
+  id                    String        @id @default(cuid())
+  organizationId        String
+  classSectionId        String
+  lessonId              String?
+  title                 String
+  description           String?
+  opensAt               DateTime?
+  closesAt              DateTime?
+  timeLimitMinutes      Int?
+  maxAttempts           Int?
+  pointsPossible        Decimal?      @db.Decimal(8, 2)
+  isPublished           Boolean       @default(false)
+  showResultsToStudents Boolean       @default(true)
+  shuffleQuestions      Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  classSection          ClassSection  @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  lesson                Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  questions             Question[]
+  attempts              QuizAttempt[]
+  gradeItems            GradeItem[]
+  exams                 Exam[]
 
   @@index([organizationId])
   @@index([classSectionId])
@@ -938,16 +943,20 @@ model QuizAttempt {
   startedAt      DateTime     @default(now())
   submittedAt    DateTime?
   score          Decimal?     @db.Decimal(8, 2)
+  gradedById     String?
+  gradedAt       DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   quiz           Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
   student        User         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy       User?        @relation("GradedQuizAttempts", fields: [gradedById], references: [id], onDelete: SetNull)
   answers        QuizAnswer[]
 
   @@unique([quizId, studentId, attemptNumber])
   @@index([organizationId])
   @@index([studentId])
+  @@index([gradedById])
   @@index([createdAt])
 }
 
@@ -960,14 +969,18 @@ model QuizAnswer {
   answerText       String?
   score            Decimal?        @db.Decimal(8, 2)
   feedback         String?
+  gradedById       String?
+  gradedAt         DateTime?
   createdAt        DateTime        @default(now())
   attempt          QuizAttempt     @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
   student          User            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  gradedBy         User?           @relation("GradedQuizAnswers", fields: [gradedById], references: [id], onDelete: SetNull)
 
   @@unique([attemptId, questionId])
   @@index([studentId])
+  @@index([gradedById])
   @@index([createdAt])
 }
 
@@ -980,6 +993,8 @@ model Exam {
   examType       String?
   startsAt       DateTime?
   endsAt         DateTime?
+  location       String?
+  description    String?
   pointsPossible Decimal?     @db.Decimal(8, 2)
   weight         Decimal?     @db.Decimal(5, 2)
   createdAt      DateTime     @default(now())

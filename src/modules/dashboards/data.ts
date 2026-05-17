@@ -190,7 +190,24 @@ export async function getClassSectionDetail(
         },
       },
       quizzes: {
+        where: options.publishedLessonsOnly ? { isPublished: true } : undefined,
         orderBy: { opensAt: "asc" },
+        include: {
+          questions: {
+            include: { options: { orderBy: { sequence: "asc" } } },
+            orderBy: { sequence: "asc" },
+          },
+          attempts: {
+            include: {
+              student: true,
+              answers: { include: { question: true, selectedOption: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
+      exams: {
+        orderBy: { startsAt: "asc" },
       },
       gradeItems: {
         orderBy: { createdAt: "desc" },
@@ -338,6 +355,21 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                   },
                 },
                 orderBy: { dueAt: "asc" },
+              },
+              quizzes: {
+                include: {
+                  questions: {
+                    orderBy: { sequence: "asc" },
+                  },
+                  attempts: {
+                    where: { studentId },
+                    include: {
+                      answers: { include: { question: true, selectedOption: true } },
+                    },
+                    orderBy: { createdAt: "desc" },
+                  },
+                },
+                orderBy: { opensAt: "asc" },
               },
             },
           },

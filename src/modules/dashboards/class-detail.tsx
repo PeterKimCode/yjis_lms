@@ -24,6 +24,12 @@ import {
   AssignmentPanel,
   type AssignmentPanelValue,
 } from "@/modules/assignments/assignment-panel"
+import {
+  ExamPanel,
+  QuizPanel,
+  type ExamPanelValue,
+  type QuizPanelValue,
+} from "@/modules/quizzes/quiz-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
 import {
   createAttendanceSession,
@@ -490,18 +496,23 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         <SectionBlock title="Quizzes">
-          <SimpleTable
-            empty="No quizzes yet."
-            headers={["Title", "Opens", "Points"]}
-            rows={section.quizzes.map((quiz) => (
-              <TableRow key={quiz.id}>
-                <TableCell className="font-medium">{quiz.title}</TableCell>
-                <TableCell>{formatDateTime(quiz.opensAt)}</TableCell>
-                <TableCell>{quiz.pointsPossible?.toString() ?? "-"}</TableCell>
-              </TableRow>
-            ))}
+          <QuizPanel
+            classSectionId={section.id}
+            mode={mode}
+            now={new Date().toISOString()}
+            quizzes={section.quizzes.map(toQuizPanelValue)}
+            userId={userId}
           />
         </SectionBlock>
+
+        {mode === "instructor" ? (
+          <SectionBlock title="Exams">
+            <ExamPanel
+              classSectionId={section.id}
+              exams={section.exams.map(toExamPanelValue)}
+            />
+          </SectionBlock>
+        ) : null}
 
         <SectionBlock title="Grades">
           <SimpleTable
@@ -641,5 +652,78 @@ function toLessonFormValue(
     videoFileAssetId: lesson.videoFileAssetId,
     durationSeconds: lesson.durationSeconds,
     isPublished: lesson.isPublished,
+  }
+}
+
+function toQuizPanelValue(
+  quiz: NonNullable<
+    Awaited<ReturnType<typeof getClassSectionDetail>>
+  >["quizzes"][number]
+): QuizPanelValue {
+  return {
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    opensAt: quiz.opensAt?.toISOString() ?? null,
+    closesAt: quiz.closesAt?.toISOString() ?? null,
+    timeLimitMinutes: quiz.timeLimitMinutes,
+    maxAttempts: quiz.maxAttempts,
+    pointsPossible: quiz.pointsPossible?.toString() ?? null,
+    isPublished: quiz.isPublished,
+    showResultsToStudents: quiz.showResultsToStudents,
+    shuffleQuestions: quiz.shuffleQuestions,
+    questions: quiz.questions.map((question) => ({
+      id: question.id,
+      type: question.type,
+      prompt: question.prompt,
+      points: question.points.toString(),
+      sequence: question.sequence,
+      answerKey: question.answerKey,
+      options: question.options.map((option) => ({
+        id: option.id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+        sequence: option.sequence,
+      })),
+    })),
+    attempts: quiz.attempts.map((attempt) => ({
+      id: attempt.id,
+      studentId: attempt.studentId,
+      studentName: attempt.student.name,
+      studentEmail: attempt.student.email,
+      attemptNumber: attempt.attemptNumber,
+      submittedAt: attempt.submittedAt?.toISOString() ?? null,
+      score: attempt.score?.toString() ?? null,
+      gradedAt: attempt.gradedAt?.toISOString() ?? null,
+      answers: attempt.answers.map((answer) => ({
+        id: answer.id,
+        questionId: answer.questionId,
+        questionPrompt: answer.question.prompt,
+        questionType: answer.question.type,
+        questionPoints: answer.question.points.toString(),
+        answerText: answer.answerText,
+        selectedOptionText: answer.selectedOption?.text ?? null,
+        score: answer.score?.toString() ?? null,
+        feedback: answer.feedback,
+      })),
+    })),
+  }
+}
+
+function toExamPanelValue(
+  exam: NonNullable<
+    Awaited<ReturnType<typeof getClassSectionDetail>>
+  >["exams"][number]
+): ExamPanelValue {
+  return {
+    id: exam.id,
+    title: exam.title,
+    examType: exam.examType,
+    startsAt: exam.startsAt?.toISOString() ?? null,
+    endsAt: exam.endsAt?.toISOString() ?? null,
+    location: exam.location,
+    pointsPossible: exam.pointsPossible?.toString() ?? null,
+    weight: exam.weight?.toString() ?? null,
+    description: exam.description,
   }
 }

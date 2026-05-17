@@ -20,6 +20,10 @@ import {
   normalizeAttendancePolicy,
 } from "@/modules/attendance/summary"
 import { getSubmissionStatus } from "@/modules/assignments/status"
+import {
+  getQuizAttemptStatus,
+  shouldShowQuizResults,
+} from "@/modules/quizzes/status"
 
 export default async function ParentStudentDetailPage({
   params,
@@ -171,6 +175,45 @@ export default async function ParentStudentDetailPage({
                         assignment.pointsPossible?.toString() ?? "-"
                       }`
                     : "-"}
+                </TableCell>
+              </TableRow>
+            )
+          })
+        )}
+      />
+
+      <SimpleTable
+        empty="No quizzes yet."
+        headers={["Class", "Quiz", "Close", "Status", "Score"]}
+        rows={student.enrollments.flatMap((enrollment) =>
+          enrollment.classSection.quizzes.map((quiz) => {
+            const attempt = quiz.attempts[0]
+            const showResults = shouldShowQuizResults(quiz)
+
+            return (
+              <TableRow key={quiz.id}>
+                <TableCell className="font-medium">
+                  {enrollment.classSection.name}
+                </TableCell>
+                <TableCell>{quiz.title}</TableCell>
+                <TableCell>{formatDateTime(quiz.closesAt)}</TableCell>
+                <TableCell>
+                  {attempt ? getQuizAttemptStatus(attempt) : "Not started"}
+                </TableCell>
+                <TableCell>
+                  {attempt && showResults
+                    ? `${attempt.score?.toString() ?? "0"}/${
+                        quiz.pointsPossible?.toString() ??
+                        quiz.questions
+                          .reduce(
+                            (total, question) => total + Number(question.points),
+                            0
+                          )
+                          .toFixed(2)
+                      }`
+                    : attempt
+                      ? "Results hidden"
+                      : "-"}
                 </TableCell>
               </TableRow>
             )
