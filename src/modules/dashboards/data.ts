@@ -402,6 +402,10 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                 },
                 orderBy: { opensAt: "asc" },
               },
+              boards: {
+                where: { isActive: true },
+                orderBy: { name: "asc" },
+              },
             },
           },
         },

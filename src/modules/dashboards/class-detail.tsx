@@ -35,6 +35,13 @@ import {
   createClassSession,
   saveAttendanceRecord,
 } from "@/modules/attendance/actions"
+import { createClassBoard } from "@/modules/boards/actions"
+import {
+  BOARD_KIND_OPTIONS,
+  boardKindHelp,
+  boardKindLabel,
+  getBoardSettings,
+} from "@/modules/boards/constants"
 import { getAttendanceSummary } from "@/modules/attendance/summary"
 import {
   GradebookPanel,
@@ -551,20 +558,111 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         <SectionBlock title="Boards">
-          {section.boards.length ? (
-            <div className="flex flex-wrap gap-2">
-              {section.boards.map((board) => (
-                <span
-                  className="rounded-md border bg-background px-3 py-2 text-sm"
-                  key={board.id}
+          <div className="space-y-4">
+            {mode === "instructor" ? (
+              <details className="rounded-md border bg-background p-3">
+                <summary className="cursor-pointer text-sm font-medium">
+                  Create class board
+                </summary>
+                <form
+                  action={createClassBoard}
+                  className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4"
                 >
-                  {board.name} - {board.type}
-                </span>
-              ))}
+                  <input name="classSectionId" type="hidden" value={section.id} />
+                  <label className="grid gap-1 text-sm">
+                    <span className="font-medium">Board type</span>
+                    <select
+                      className="h-9 rounded-md border bg-background px-3 text-sm"
+                      name="boardKind"
+                      defaultValue="CLASS_ANNOUNCEMENTS"
+                    >
+                      {BOARD_KIND_OPTIONS.filter(
+                        (kind) => kind !== "SCHOOL_ANNOUNCEMENTS"
+                      ).map((kind) => (
+                        <option key={kind} value={kind}>
+                          {boardKindLabel(kind)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-1 text-sm">
+                    <span className="font-medium">Title</span>
+                    <Input
+                      name="name"
+                      placeholder="Example: Class Q&A"
+                      required
+                    />
+                  </label>
+                  <label className="grid gap-1 text-sm md:col-span-2">
+                    <span className="font-medium">Description</span>
+                    <Input
+                      name="description"
+                      placeholder="How students and parents should use this board."
+                    />
+                  </label>
+                  <label className="flex items-end gap-2 text-sm">
+                    <input name="allowStudentPosts" type="checkbox" />
+                    Allow student posts
+                  </label>
+                  <label className="flex items-end gap-2 text-sm">
+                    <input name="allowParentPosts" type="checkbox" />
+                    Allow parent posts
+                  </label>
+                  <label className="flex items-end gap-2 text-sm">
+                    <input name="allowComments" type="checkbox" defaultChecked />
+                    Allow comments
+                  </label>
+                  <div className="flex items-end">
+                    <Button size="sm" type="submit">
+                      Create board
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground md:col-span-2 xl:col-span-4">
+                    Attachments will be enabled after file storage
+                    stabilization.
+                  </p>
+                </form>
+              </details>
+            ) : null}
+            {section.boards.length ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {section.boards.map((board) => {
+                  const settings = getBoardSettings(board.settings)
+                  const href =
+                    mode === "instructor"
+                      ? `/instructor/classes/${section.id}/boards/${board.id}`
+                      : `/student/classes/${section.id}/boards/${board.id}`
+
+                  return (
+                    <div className="rounded-md border bg-background p-3" key={board.id}>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <h3 className="font-medium">{board.name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {boardKindLabel(settings.boardKind)} ·{" "}
+                            {board.description ||
+                              boardKindHelp(settings.boardKind)}
+                          </p>
+                        </div>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={href}>Open</Link>
+                        </Button>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Student posts:{" "}
+                        {settings.allowStudentPosts ? "enabled" : "read-only"} ·
+                        Parent posts:{" "}
+                        {settings.allowParentPosts ? "enabled" : "read-only"} ·
+                        Comments: {settings.allowComments ? "enabled" : "off"}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <EmptyState>No boards yet.</EmptyState>
+            )}
             </div>
-          ) : (
-            <EmptyState>No boards yet.</EmptyState>
-          )}
         </SectionBlock>
       </div>
     </DashboardPage>

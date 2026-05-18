@@ -130,6 +130,7 @@ export default async function ParentStudentDetailPage({
           "Letter",
           "Grade point",
           "Credit",
+          "Boards",
           "Status",
         ]}
         rows={student.enrollments.map((enrollment) => (
@@ -284,6 +285,23 @@ function ParentClassGradeRow({
       <TableCell>{grade?.letterGrade ?? "-"}</TableCell>
       <TableCell>{grade?.gradePoint?.toString() ?? "-"}</TableCell>
       <TableCell>{grade?.creditsEarned?.toString() ?? "0"}</TableCell>
+      <TableCell>
+        {enrollment.classSection.boards.length ? (
+          <div className="flex flex-col gap-1">
+            {enrollment.classSection.boards.map((board) => (
+              <Link
+                className="text-primary underline-offset-4 hover:underline"
+                href={`/parent/students/${enrollment.studentId}/classes/${enrollment.classSectionId}/boards/${board.id}`}
+                key={board.id}
+              >
+                {board.name}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          "-"
+        )}
+      </TableCell>
       <TableCell>{grade?.status ?? "Not published"}</TableCell>
     </TableRow>
   )

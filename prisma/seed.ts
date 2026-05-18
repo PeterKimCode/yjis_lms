@@ -2,12 +2,19 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import bcrypt from "bcryptjs"
 
 import {
+  BoardScopeType,
+  BoardType,
   DeliveryMode,
   EnrollmentStatus,
   InstitutionType,
   PrismaClient,
   UserRole,
 } from "@prisma/client"
+import {
+  getBoardScopeTypeForKind,
+  getBoardTypeForKind,
+  type BoardKind,
+} from "../src/modules/boards/constants"
 import {
   ensureDefaultGradingScaleForOrganization,
   ensureDefaultPoliciesForCampus,
@@ -217,6 +224,13 @@ async function main() {
     { organizationId: organization.id, campusId: campus.id },
     prisma
   )
+  await ensureDemoBoards({
+    organizationId: organization.id,
+    campusId: campus.id,
+    classSectionId: classSection.id,
+    adminId: schoolAdmin.id,
+    instructorId: instructor.id,
+  })
 
   console.log("Seed completed.")
   console.log(`Demo users use password: ${demoPassword}`)
@@ -504,6 +518,174 @@ async function ensureDefaultPolicies(organizationId: string) {
 
 async function ensureDefaultGradingScale(organizationId: string) {
   await ensureDefaultGradingScaleForOrganization({ organizationId }, prisma)
+}
+
+async function ensureDemoBoards(input: {
+  organizationId: string
+  campusId: string
+  classSectionId: string
+  adminId: string
+  instructorId: string
+}) {
+  const schoolBoard = await upsertBoard({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: null,
+    name: "School Announcements",
+    description: "Official campus-wide announcements for students and parents.",
+    boardKind: "SCHOOL_ANNOUNCEMENTS",
+    allowStudentPosts: false,
+    allowParentPosts: false,
+    allowComments: false,
+  })
+  const classAnnouncements = await upsertBoard({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    name: "Introduction to Learning - Announcements",
+    description: "Instructor announcements for this class section.",
+    boardKind: "CLASS_ANNOUNCEMENTS",
+    allowStudentPosts: false,
+    allowParentPosts: false,
+    allowComments: true,
+  })
+  const qaBoard = await upsertBoard({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    name: "Introduction to Learning - Q&A",
+    description: "Students can ask class questions here.",
+    boardKind: "CLASS_QA",
+    allowStudentPosts: true,
+    allowParentPosts: false,
+    allowComments: true,
+  })
+  await upsertBoard({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    name: "Introduction to Learning - Resources",
+    description: "Resources and reference links for this class.",
+    boardKind: "CLASS_RESOURCES",
+    allowStudentPosts: false,
+    allowParentPosts: false,
+    allowComments: true,
+  })
+
+  await upsertPost({
+    organizationId: input.organizationId,
+    boardId: schoolBoard.id,
+    authorId: input.adminId,
+    title: "Welcome to Demo Education Organization",
+    body: "Welcome to the LMS demo. School-wide announcements will appear here.",
+    isPinned: true,
+  })
+  await upsertPost({
+    organizationId: input.organizationId,
+    boardId: classAnnouncements.id,
+    authorId: input.instructorId,
+    title: "Welcome to Introduction to Learning",
+    body: "This board is where class announcements will be posted.",
+    isPinned: true,
+  })
+  await upsertPost({
+    organizationId: input.organizationId,
+    boardId: qaBoard.id,
+    authorId: input.instructorId,
+    title: "Class Q&A is open",
+    body: "Use this board to ask questions about lessons, assignments, and quizzes.",
+    isPinned: true,
+  })
+}
+
+async function upsertBoard(input: {
+  organizationId: string
+  campusId: string | null
+  classSectionId: string | null
+  name: string
+  description: string
+  boardKind: BoardKind
+  allowStudentPosts: boolean
+  allowParentPosts: boolean
+  allowComments: boolean
+}) {
+  const existing = await prisma.board.findFirst({
+    where: {
+      organizationId: input.organizationId,
+      classSectionId: input.classSectionId,
+      name: input.name,
+    },
+  })
+  const data = {
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    description: input.description,
+    isActive: true,
+    name: input.name,
+    scopeType: getBoardScopeTypeForKind(
+      input.boardKind,
+      Boolean(input.classSectionId)
+    ) as BoardScopeType,
+    settings: {
+      boardKind: input.boardKind,
+      allowStudentPosts: input.allowStudentPosts,
+      allowParentPosts: input.allowParentPosts,
+      allowComments: input.allowComments,
+    },
+    type: getBoardTypeForKind(input.boardKind) as BoardType,
+  }
+
+  if (existing) {
+    return prisma.board.update({
+      where: { id: existing.id },
+      data,
+    })
+  }
+
+  return prisma.board.create({
+    data: {
+      organizationId: input.organizationId,
+      ...data,
+    },
+  })
+}
+
+async function upsertPost(input: {
+  organizationId: string
+  boardId: string
+  authorId: string
+  title: string
+  body: string
+  isPinned: boolean
+}) {
+  const existing = await prisma.post.findFirst({
+    where: {
+      boardId: input.boardId,
+      title: input.title,
+    },
+  })
+  const data = {
+    authorId: input.authorId,
+    body: input.body,
+    isPinned: input.isPinned,
+    publishedAt: new Date(),
+  }
+
+  if (existing) {
+    await prisma.post.update({
+      where: { id: existing.id },
+      data,
+    })
+  } else {
+    await prisma.post.create({
+      data: {
+        organizationId: input.organizationId,
+        boardId: input.boardId,
+        title: input.title,
+        ...data,
+      },
+    })
+  }
 }
 
 main()
