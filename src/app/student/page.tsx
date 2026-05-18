@@ -29,6 +29,7 @@ export default async function StudentPage() {
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard href="/student/classes" label="Classes" value={enrollments.length} />
+        <MetricCard href="/messages" label="Messages" value="Open" />
         <MetricCard
           label="Lessons"
           value={enrollments.reduce(

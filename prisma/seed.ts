@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import {
   BoardScopeType,
   BoardType,
+  ConversationType,
   DeliveryMode,
   EnrollmentStatus,
   InstitutionType,
@@ -230,6 +231,13 @@ async function main() {
     classSectionId: classSection.id,
     adminId: schoolAdmin.id,
     instructorId: instructor.id,
+  })
+  await ensureDemoConversations({
+    organizationId: organization.id,
+    campusId: campus.id,
+    classSectionId: classSection.id,
+    instructorId: instructor.id,
+    studentId: student.id,
   })
 
   console.log("Seed completed.")
@@ -686,6 +694,113 @@ async function upsertPost(input: {
       },
     })
   }
+}
+
+async function ensureDemoConversations(input: {
+  organizationId: string
+  campusId: string
+  classSectionId: string
+  instructorId: string
+  studentId: string
+}) {
+  const classGroup = await upsertConversation({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    title: "Introduction to Learning class group",
+    type: ConversationType.CLASS_SECTION,
+    participantIds: [input.instructorId, input.studentId],
+  })
+  await upsertMessage({
+    organizationId: input.organizationId,
+    conversationId: classGroup.id,
+    senderId: input.instructorId,
+    body: "Welcome to the class group. This messenger is text-only for now.",
+  })
+
+  const direct = await upsertConversation({
+    organizationId: input.organizationId,
+    campusId: input.campusId,
+    classSectionId: input.classSectionId,
+    title: null,
+    type: ConversationType.DIRECT,
+    participantIds: [input.instructorId, input.studentId],
+  })
+  await upsertMessage({
+    organizationId: input.organizationId,
+    conversationId: direct.id,
+    senderId: input.instructorId,
+    body: "Welcome. You can send me class questions here.",
+  })
+}
+
+async function upsertConversation(input: {
+  organizationId: string
+  campusId: string
+  classSectionId: string
+  title: string | null
+  type: ConversationType
+  participantIds: string[]
+}) {
+  const existing = await prisma.conversation.findFirst({
+    where: {
+      classSectionId: input.classSectionId,
+      type: input.type,
+      ...(input.title ? { title: input.title } : {}),
+      AND: input.participantIds.map((userId) => ({
+        participants: { some: { userId } },
+      })),
+    },
+  })
+  const conversation =
+    existing ??
+    (await prisma.conversation.create({
+      data: {
+        organizationId: input.organizationId,
+        campusId: input.campusId,
+        classSectionId: input.classSectionId,
+        title: input.title,
+        type: input.type,
+      },
+    }))
+
+  for (const userId of input.participantIds) {
+    await prisma.conversationParticipant.upsert({
+      where: {
+        conversationId_userId: {
+          conversationId: conversation.id,
+          userId,
+        },
+      },
+      update: {},
+      create: {
+        conversationId: conversation.id,
+        userId,
+      },
+    })
+  }
+
+  return conversation
+}
+
+async function upsertMessage(input: {
+  organizationId: string
+  conversationId: string
+  senderId: string
+  body: string
+}) {
+  const existing = await prisma.message.findFirst({
+    where: {
+      conversationId: input.conversationId,
+      body: input.body,
+    },
+  })
+
+  if (existing) return existing
+
+  return prisma.message.create({
+    data: input,
+  })
 }
 
 main()

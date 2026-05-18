@@ -18,6 +18,7 @@ export default async function ParentPage() {
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard href="/parent/students" label="Students" value={relations.length} />
+        <MetricCard href="/messages" label="Messages" value="Open" />
         <MetricCard
           label="Classes"
           value={relations.reduce(

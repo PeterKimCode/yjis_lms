@@ -36,6 +36,7 @@ import {
   saveAttendanceRecord,
 } from "@/modules/attendance/actions"
 import { createClassBoard } from "@/modules/boards/actions"
+import { openClassConversation } from "@/modules/messages/actions"
 import {
   BOARD_KIND_OPTIONS,
   boardKindHelp,
@@ -113,6 +114,24 @@ export async function ClassSectionDetail({
         <MetricCard label="Lessons" value={section.lessons.length} />
         <MetricCard label="Assignments" value={section.assignments.length} />
         <MetricCard label="Quizzes" value={section.quizzes.length} />
+      </div>
+
+      <div className="flex flex-wrap gap-2 rounded-lg border bg-background p-3">
+        <Button asChild size="sm" variant="outline">
+          <Link href="/messages">Messages</Link>
+        </Button>
+        {mode === "instructor" ? (
+          <form action={openClassConversation}>
+            <input name="classSectionId" type="hidden" value={section.id} />
+            <Button size="sm" type="submit" variant="outline">
+              Open class conversation
+            </Button>
+          </form>
+        ) : (
+          <Button asChild size="sm" variant="outline">
+            <Link href="/messages">Message teacher</Link>
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-6">

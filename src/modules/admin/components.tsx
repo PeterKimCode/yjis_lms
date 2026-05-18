@@ -28,6 +28,7 @@ export const adminLinks = [
   ["/admin/users", "Users"],
   ["/admin/policies", "Policies"],
   ["/admin/boards", "Boards"],
+  ["/messages", "Messages"],
 ] as const
 
 export function AdminPageHeader({
