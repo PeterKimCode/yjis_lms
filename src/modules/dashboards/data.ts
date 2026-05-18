@@ -239,6 +239,7 @@ export async function getClassSectionDetail(
         },
       },
       boards: {
+        where: options.publishedLessonsOnly ? { isActive: true } : undefined,
         orderBy: { name: "asc" },
       },
       _count: {

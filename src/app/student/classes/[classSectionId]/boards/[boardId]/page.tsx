@@ -14,6 +14,7 @@ export default async function StudentBoardPage({
     <BoardDetailPage
       backHref={`/student/classes/${classSectionId}`}
       boardId={boardId}
+      expectedClassSectionId={classSectionId}
       query={query}
     />
   )

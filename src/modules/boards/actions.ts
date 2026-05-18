@@ -108,28 +108,52 @@ export async function saveBoard(formData: FormData) {
   }
 
   await assertAdminScope(scope)
-  const values = {
-    ...scope,
-    classSectionId: data.classSectionId,
+  const settings = {
+    boardKind: data.boardKind,
+    allowStudentPosts: data.allowStudentPosts,
+    allowParentPosts: data.allowParentPosts,
+    allowComments: data.allowComments,
+  }
+  const type = getBoardTypeForKind(data.boardKind)
+  const scopeType = getBoardScopeTypeForKind(
+    data.boardKind,
+    Boolean(data.classSectionId)
+  )
+
+  const createValues: Prisma.BoardCreateInput = {
+    organization: { connect: { id: scope.organizationId } },
+    ...(scope.campusId
+      ? { campus: { connect: { id: scope.campusId } } }
+      : {}),
+    ...(data.classSectionId
+      ? { classSection: { connect: { id: data.classSectionId } } }
+      : {}),
     description: data.description,
     isActive: data.isActive,
     name: data.name,
-    scopeType: getBoardScopeTypeForKind(
-      data.boardKind,
-      Boolean(data.classSectionId)
-    ),
-    settings: {
-      boardKind: data.boardKind,
-      allowStudentPosts: data.allowStudentPosts,
-      allowParentPosts: data.allowParentPosts,
-      allowComments: data.allowComments,
-    },
-    type: getBoardTypeForKind(data.boardKind),
+    scopeType,
+    settings,
+    type,
+  }
+  const updateValues: Prisma.BoardUpdateInput = {
+    organization: { connect: { id: scope.organizationId } },
+    campus: scope.campusId
+      ? { connect: { id: scope.campusId } }
+      : { disconnect: true },
+    classSection: data.classSectionId
+      ? { connect: { id: data.classSectionId } }
+      : { disconnect: true },
+    description: data.description,
+    isActive: data.isActive,
+    name: data.name,
+    scopeType,
+    settings,
+    type,
   }
 
   const board = data.id
-    ? await updateExistingBoard(data.id, values)
-    : await prisma.board.create({ data: values })
+    ? await updateExistingBoard(data.id, updateValues)
+    : await prisma.board.create({ data: createValues })
 
   revalidatePath("/admin/boards")
   revalidatePath("/admin")
@@ -139,7 +163,7 @@ export async function saveBoard(formData: FormData) {
 
 async function updateExistingBoard(
   boardId: string,
-  data: Prisma.BoardUncheckedUpdateInput
+  data: Prisma.BoardUpdateInput
 ) {
   const access = await getBoardAccess(boardId)
 
@@ -193,9 +217,11 @@ export async function createClassBoard(formData: FormData) {
   })
   await prisma.board.create({
     data: {
-      organizationId: classSection.organizationId,
-      campusId: classSection.campusId,
-      classSectionId: data.classSectionId,
+      organization: { connect: { id: classSection.organizationId } },
+      ...(classSection.campusId
+        ? { campus: { connect: { id: classSection.campusId } } }
+        : {}),
+      classSection: { connect: { id: data.classSectionId } },
       description: data.description,
       isActive: true,
       name: data.name,

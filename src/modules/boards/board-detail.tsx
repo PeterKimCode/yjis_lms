@@ -18,15 +18,21 @@ import { EmptyState, SectionBlock } from "@/modules/dashboards/components"
 export async function BoardDetailPage({
   backHref,
   boardId,
+  expectedClassSectionId,
   query = {},
 }: {
   backHref: string
   boardId: string
+  expectedClassSectionId?: string
   query?: { pinned?: string; q?: string; status?: string }
 }) {
   const data = await getBoardDetail(boardId, query)
 
-  if (!data) {
+  if (
+    !data ||
+    (expectedClassSectionId &&
+      data.board.classSectionId !== expectedClassSectionId)
+  ) {
     notFound()
   }
 
