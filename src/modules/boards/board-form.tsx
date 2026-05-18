@@ -38,12 +38,16 @@ export function BoardForm({
   board,
   campusOptions,
   classSectionOptions,
+  formId,
+  hideSubmitButton = false,
   organizationOptions,
   submitLabel = "Save board",
 }: {
   board?: BoardFormValue
   campusOptions: CampusOption[]
   classSectionOptions: ClassSectionOption[]
+  formId?: string
+  hideSubmitButton?: boolean
   organizationOptions: OrganizationOption[]
   submitLabel?: string
 }) {
@@ -101,7 +105,7 @@ export function BoardForm({
   }
 
   return (
-    <form action={saveBoard} className="space-y-4">
+    <form action={saveBoard} className="space-y-4" id={formId}>
       <input name="id" type="hidden" value={board?.id ?? ""} />
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <label className="grid min-w-0 gap-1 text-sm">
@@ -250,11 +254,13 @@ export function BoardForm({
       <p className="rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
         {permissionSummary}
       </p>
-      <div>
-        <Button size="sm" type="submit">
-          {submitLabel}
-        </Button>
-      </div>
+      {hideSubmitButton ? null : (
+        <div>
+          <Button size="sm" type="submit">
+            {submitLabel}
+          </Button>
+        </div>
+      )}
     </form>
   )
 }

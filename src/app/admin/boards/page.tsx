@@ -24,6 +24,7 @@ export default async function AdminBoardsPage({
   searchParams,
 }: {
   searchParams: Promise<{
+    boardDeleted?: string
     boardType?: string
     campusId?: string
     organizationId?: string
@@ -85,6 +86,11 @@ export default async function AdminBoardsPage({
         title="Boards"
         description="Manage school announcements, class boards, Q&A, resources, and discussions."
       />
+      {params.boardDeleted ? (
+        <p className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
+          Board deleted.
+        </p>
+      ) : null}
       <BoardFilters admin={admin} params={params} q={q} />
       <details className="rounded-lg border bg-background p-4" open>
         <summary className="cursor-pointer font-medium">Create board</summary>

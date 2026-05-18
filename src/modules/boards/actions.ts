@@ -1,6 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
+import type { Prisma } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -77,11 +79,28 @@ export async function saveBoard(formData: FormData) {
     campusId: data.campusId,
   }
 
+  if (data.campusId) {
+    const campus = await prisma.campus.findFirst({
+      where: { id: data.campusId, organizationId: data.organizationId },
+      select: { id: true },
+    })
+
+    if (!campus) {
+      throw new Error("Selected campus does not belong to this organization.")
+    }
+  }
+
   if (data.classSectionId) {
     const classSection = await prisma.classSection.findUniqueOrThrow({
       where: { id: data.classSectionId },
       select: { organizationId: true, campusId: true },
     })
+    if (classSection.organizationId !== data.organizationId) {
+      throw new Error("Selected class section does not belong to this organization.")
+    }
+    if (data.campusId && classSection.campusId !== data.campusId) {
+      throw new Error("Selected class section does not belong to this campus.")
+    }
     scope = {
       organizationId: classSection.organizationId,
       campusId: classSection.campusId,
@@ -89,49 +108,49 @@ export async function saveBoard(formData: FormData) {
   }
 
   await assertAdminScope(scope)
+  const values = {
+    ...scope,
+    classSectionId: data.classSectionId,
+    description: data.description,
+    isActive: data.isActive,
+    name: data.name,
+    scopeType: getBoardScopeTypeForKind(
+      data.boardKind,
+      Boolean(data.classSectionId)
+    ),
+    settings: {
+      boardKind: data.boardKind,
+      allowStudentPosts: data.allowStudentPosts,
+      allowParentPosts: data.allowParentPosts,
+      allowComments: data.allowComments,
+    },
+    type: getBoardTypeForKind(data.boardKind),
+  }
 
-  await prisma.board.upsert({
-    where: { id: data.id ?? "__new_board__" },
-    update: {
-      ...scope,
-      classSectionId: data.classSectionId,
-      description: data.description,
-      isActive: data.isActive,
-      name: data.name,
-      scopeType: getBoardScopeTypeForKind(
-        data.boardKind,
-        Boolean(data.classSectionId)
-      ),
-      settings: {
-        boardKind: data.boardKind,
-        allowStudentPosts: data.allowStudentPosts,
-        allowParentPosts: data.allowParentPosts,
-        allowComments: data.allowComments,
-      },
-      type: getBoardTypeForKind(data.boardKind),
-    },
-    create: {
-      ...scope,
-      classSectionId: data.classSectionId,
-      description: data.description,
-      isActive: data.isActive,
-      name: data.name,
-      scopeType: getBoardScopeTypeForKind(
-        data.boardKind,
-        Boolean(data.classSectionId)
-      ),
-      settings: {
-        boardKind: data.boardKind,
-        allowStudentPosts: data.allowStudentPosts,
-        allowParentPosts: data.allowParentPosts,
-        allowComments: data.allowComments,
-      },
-      type: getBoardTypeForKind(data.boardKind),
-    },
-  })
+  const board = data.id
+    ? await updateExistingBoard(data.id, values)
+    : await prisma.board.create({ data: values })
 
   revalidatePath("/admin/boards")
   revalidatePath("/admin")
+  revalidateBoard(board.id, board.classSectionId)
+  redirect(`/admin/boards/${board.id}?boardSaved=1`)
+}
+
+async function updateExistingBoard(
+  boardId: string,
+  data: Prisma.BoardUncheckedUpdateInput
+) {
+  const access = await getBoardAccess(boardId)
+
+  if (!access.board || !access.canManage) {
+    throw new Error("You do not have permission to update this board.")
+  }
+
+  return getPrismaClient().board.update({
+    where: { id: boardId },
+    data,
+  })
 }
 
 const classBoardSchema = z.object({
@@ -206,12 +225,17 @@ export async function deactivateBoard(formData: FormData) {
     throw new Error("You do not have permission to deactivate this board.")
   }
 
+  if (!access.board.isActive) {
+    redirect(`/admin/boards/${access.board.id}?boardStatus=alreadyInactive`)
+  }
+
   await getPrismaClient().board.update({
     where: { id: access.board.id },
     data: { isActive: false },
   })
   revalidateBoard(access.board.id, access.board.classSectionId)
   revalidatePath("/admin/boards")
+  redirect(`/admin/boards/${access.board.id}?boardStatus=deactivated`)
 }
 
 export async function deleteBoard(formData: FormData) {
@@ -227,19 +251,16 @@ export async function deleteBoard(formData: FormData) {
   })
 
   if (postCount > 0) {
-    await getPrismaClient().board.update({
-      where: { id: access.board.id },
-      data: { isActive: false },
-    })
-  } else {
-    await getPrismaClient().board.delete({ where: { id: access.board.id } })
+    redirect(`/admin/boards/${access.board.id}?boardDeleteError=hasPosts`)
   }
 
+  await getPrismaClient().board.delete({ where: { id: access.board.id } })
   revalidatePath("/admin/boards")
   if (access.board.classSectionId) {
     revalidatePath(`/instructor/classes/${access.board.classSectionId}`)
     revalidatePath(`/student/classes/${access.board.classSectionId}`)
   }
+  redirect("/admin/boards?boardDeleted=1")
 }
 
 const postSchema = z.object({
