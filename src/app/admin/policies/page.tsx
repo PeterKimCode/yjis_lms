@@ -158,10 +158,32 @@ function GradingScaleSection({
         Grading scale / GPA policy
       </summary>
       <div className="space-y-4 pt-4">
-        <p className="text-sm text-muted-foreground">
-          Final numeric scores are converted to letter grades and GPA points
-          using this table.
-        </p>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>
+            Final numeric scores are converted to letter grades and GPA points
+            using this table.
+          </p>
+          <p>
+            Example: if A is 90-94.99 with grade point 4.0, then a final score
+            of 92 becomes A and contributes 4.0 points to GPA.
+          </p>
+          <p className="font-medium text-amber-700 dark:text-amber-300">
+            Make sure score ranges do not overlap and cover 0-100.
+          </p>
+          {data.selectedCampusId ? (
+            <p>
+              This scale is inherited from the organization default. Create a
+              campus override if this campus uses a different scale.
+            </p>
+          ) : null}
+        </div>
+        {!data.gradingScales.length ? (
+          <p className="rounded-md border p-3 text-sm text-muted-foreground">
+            No grading scale is configured. Final grades can be calculated as
+            numeric scores, but letter grades and GPA points require a grading
+            scale.
+          </p>
+        ) : null}
         {data.gradingScales.map((scale) => (
           <div className="space-y-2" key={scale.id}>
             <div>
@@ -194,4 +216,3 @@ function getMaxGradePoint(scale: SerializedGradingScale | undefined) {
     }, 0)
     .toFixed(1)
 }
-
