@@ -1,6 +1,14 @@
 import "server-only"
 
 import { DocumentStatus, DocumentType, FinalGradeStatus, UserRole } from "@prisma/client"
+import {
+  PDFDocument,
+  PDFPage,
+  PDFFont,
+  StandardFonts,
+  rgb,
+  type RGB,
+} from "pdf-lib"
 
 import { getPrismaClient } from "@/lib/prisma"
 import type { SessionRoleAssignment } from "@/modules/auth/auth"
@@ -11,12 +19,38 @@ type DocumentAccess = {
   userId: string
 }
 
+type PdfFonts = {
+  bold: PDFFont
+  regular: PDFFont
+}
+
+type PdfContext = {
+  doc: PDFDocument
+  fonts: PdfFonts
+  page: PDFPage
+  y: number
+}
+
+type TableColumn<T> = {
+  header: string
+  value: (row: T) => string
+  width: number
+}
+
 type GradeStatus = FinalGradeStatus
 
 const publishedStatuses: GradeStatus[] = [
   FinalGradeStatus.PUBLISHED,
   FinalGradeStatus.FINALIZED,
 ]
+
+const pageSize: [number, number] = [595.28, 841.89]
+const margin = 42
+const rowLineHeight = 11
+const textColor = rgb(0.08, 0.1, 0.16)
+const mutedColor = rgb(0.38, 0.42, 0.5)
+const borderColor = rgb(0.82, 0.85, 0.9)
+const headerFill = rgb(0.95, 0.96, 0.98)
 
 export async function assertStudentDocumentAccess(input: {
   currentUserId: string
@@ -154,74 +188,46 @@ export async function generateReportCardPdf(input: {
   const rows = student.enrollments.map((enrollment) => {
     const section = enrollment.classSection
     const finalGrade = section.finalGrades[0]
-    const attendance = getAttendanceRate(
-      section.attendanceSessions.flatMap((session) => session.records)
-    )
-    const lessonCompletion = getLessonCompletion(section.lessons)
-    const assignmentSummary = getAssignmentSummary(section.assignments)
-    const quizSummary = getQuizSummary(section.quizzes)
 
     return {
-      attendance,
-      assignmentSummary,
-      finalGrade,
-      instructorNames: section.instructors
+      assignments: getAssignmentSummary(section.assignments),
+      attendance: `${getAttendanceRate(
+        section.attendanceSessions.flatMap((session) => session.records)
+      ).toFixed(1)}%`,
+      course: `${section.course.title} / ${section.name}`,
+      finalScore: formatGradeScore(finalGrade),
+      gradePoint: formatDecimal(finalGrade?.gradePoint),
+      instructor: section.instructors
         .map((instructor) => instructor.instructor.name)
-        .join(", "),
-      lessonCompletion,
-      quizSummary,
-      section,
+        .join(", ") || "Unassigned",
+      letter: finalGrade?.letterGrade ?? "No final grade calculated",
+      lessons: getLessonCompletion(section.lessons),
+      quizzes: getQuizSummary(section.quizzes),
+      status: finalGrade?.status ?? "-",
     }
   })
 
-  const html = pageShell({
-    title: "Report Card",
-    body: `
-      ${studentInfoHtml({ generatedAt, student, subtitle: termName })}
-      <h2>Term Summary</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Course</th>
-            <th>Instructor</th>
-            <th>Attendance</th>
-            <th>Lessons</th>
-            <th>Assignments</th>
-            <th>Quizzes</th>
-            <th>Final Score</th>
-            <th>Grade</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            rows.length
-              ? rows
-                  .map(
-                    (row) => `
-              <tr>
-                <td>${escapeHtml(row.section.course.title)}<br /><span>${escapeHtml(row.section.name)}</span></td>
-                <td>${escapeHtml(row.instructorNames || "Unassigned")}</td>
-                <td>${row.attendance.toFixed(1)}%</td>
-                <td>${row.lessonCompletion}</td>
-                <td>${row.assignmentSummary}</td>
-                <td>${row.quizSummary}</td>
-                <td>${formatGradeScore(row.finalGrade)}</td>
-                <td>${escapeHtml(row.finalGrade?.letterGrade ?? "No final grade calculated")}</td>
-                <td>${escapeHtml(row.finalGrade?.status ?? "-")}</td>
-              </tr>
-            `
-                  )
-                  .join("")
-              : `<tr><td colspan="9">No enrolled class sections for this term.</td></tr>`
-          }
-        </tbody>
-      </table>
-      <p class="note">Student and parent downloads include published/finalized grades only. Administrative previews may include draft grades.</p>
-    `,
-  })
-
-  const pdf = toArrayBuffer(await renderPdfFromHtml(html))
+  const ctx = await createPdfContext()
+  drawDocumentHeader(ctx, "Report Card", termName)
+  drawStudentInfo(ctx, student, generatedAt)
+  drawSectionHeading(ctx, "Term Summary")
+  drawTable(ctx, rows, [
+    { header: "Course / Class", value: (row) => row.course, width: 96 },
+    { header: "Instructor", value: (row) => row.instructor, width: 66 },
+    { header: "Attendance", value: (row) => row.attendance, width: 56 },
+    { header: "Lessons", value: (row) => row.lessons, width: 46 },
+    { header: "Assignments", value: (row) => row.assignments, width: 66 },
+    { header: "Quizzes", value: (row) => row.quizzes, width: 58 },
+    { header: "Final", value: (row) => row.finalScore, width: 54 },
+    { header: "Grade", value: (row) => row.letter, width: 44 },
+    { header: "Status", value: (row) => row.status, width: 58 },
+  ])
+  drawNote(
+    ctx,
+    "Student and parent downloads include published/finalized grades only. Administrative previews may include draft grades."
+  )
+  drawNote(ctx, "TODO: Embed Korean fonts later for production-quality Korean PDF output.")
+  drawFooter(ctx, generatedAt)
 
   await createGeneratedDocumentMetadata({
     documentType: DocumentType.REPORT_CARD,
@@ -231,7 +237,7 @@ export async function generateReportCardPdf(input: {
 
   return {
     filename: safePdfFilename(`report-card-${student.name}-${termName}`),
-    pdf,
+    pdf: await savePdf(ctx.doc),
   }
 }
 
@@ -276,57 +282,54 @@ export async function generateTranscriptPdf(input: {
   const generatedAt = new Date()
   const terms = groupTranscriptGradesByTerm(student.finalGrades)
   const cumulative = calculateGpa(student.finalGrades)
-  const html = pageShell({
-    title: "Official Transcript",
-    body: `
-      ${studentInfoHtml({ generatedAt, student, subtitle: "University-style credit and GPA record" })}
-      ${terms
-        .map(
-          (term) => `
-            <h2>${escapeHtml(term.name)}</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Course Code</th>
-                  <th>Course Title</th>
-                  <th>Credit</th>
-                  <th>Letter</th>
-                  <th>Grade Point</th>
-                  <th>Earned Credit</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${term.grades
-                  .map(
-                    (grade) => `
-                      <tr>
-                        <td>${escapeHtml(grade.classSection.course.code ?? "-")}</td>
-                        <td>${escapeHtml(grade.classSection.course.title)}</td>
-                        <td>${formatDecimal(grade.classSection.course.credits)}</td>
-                        <td>${escapeHtml(grade.letterGrade ?? "-")}</td>
-                        <td>${formatDecimal(grade.gradePoint)}</td>
-                        <td>${formatDecimal(grade.creditsEarned)}</td>
-                        <td>${escapeHtml(grade.status)}</td>
-                      </tr>
-                    `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-            <div class="summary">Term GPA: ${term.gpa.toFixed(2)} · Attempted credits: ${term.attempted.toFixed(1)} · Earned credits: ${term.earned.toFixed(1)}</div>
-          `
-        )
-        .join("")}
-      ${
-        terms.length
-          ? `<div class="summary total">Cumulative GPA: ${cumulative.gpa.toFixed(2)} · Attempted credits: ${cumulative.attempted.toFixed(1)} · Earned credits: ${cumulative.earned.toFixed(1)}</div>`
-          : `<p>No transcript grades are available yet.</p>`
-      }
-    `,
-  })
+  const ctx = await createPdfContext()
+  drawDocumentHeader(ctx, "Official Transcript", "University-style credit and GPA record")
+  drawStudentInfo(ctx, student, generatedAt)
 
-  const pdf = toArrayBuffer(await renderPdfFromHtml(html))
+  for (const term of terms) {
+    drawSectionHeading(ctx, term.name)
+    drawTable(
+      ctx,
+      term.grades.map((grade) => ({
+        code: grade.classSection.course.code ?? "-",
+        credit: formatDecimal(grade.classSection.course.credits),
+        earned: formatDecimal(grade.creditsEarned),
+        gradePoint: formatDecimal(grade.gradePoint),
+        letter: grade.letterGrade ?? "-",
+        status: grade.status,
+        title: grade.classSection.course.title,
+      })),
+      [
+        { header: "Code", value: (row) => row.code, width: 60 },
+        { header: "Course Title", value: (row) => row.title, width: 190 },
+        { header: "Credit", value: (row) => row.credit, width: 50 },
+        { header: "Letter", value: (row) => row.letter, width: 50 },
+        { header: "Point", value: (row) => row.gradePoint, width: 50 },
+        { header: "Earned", value: (row) => row.earned, width: 55 },
+        { header: "Status", value: (row) => row.status, width: 72 },
+      ]
+    )
+    drawNote(
+      ctx,
+      `Term GPA: ${term.gpa.toFixed(2)} | Attempted credits: ${term.attempted.toFixed(
+        1
+      )} | Earned credits: ${term.earned.toFixed(1)}`
+    )
+  }
+
+  if (!terms.length) {
+    drawNote(ctx, "No transcript grades are available yet.")
+  }
+
+  drawSectionHeading(ctx, "Cumulative Summary")
+  drawKeyValueGrid(ctx, [
+    ["Cumulative GPA", cumulative.gpa.toFixed(2)],
+    ["Attempted credits", cumulative.attempted.toFixed(1)],
+    ["Earned credits", cumulative.earned.toFixed(1)],
+  ])
+  drawNote(ctx, "TODO: Store generated PDFs in MinIO/FileAsset after storage is stabilized.")
+  drawNote(ctx, "TODO: Embed Korean fonts later for production-quality Korean PDF output.")
+  drawFooter(ctx, generatedAt)
 
   await createGeneratedDocumentMetadata({
     documentType: DocumentType.TRANSCRIPT,
@@ -336,7 +339,7 @@ export async function generateTranscriptPdf(input: {
 
   return {
     filename: safePdfFilename(`transcript-${student.name}`),
-    pdf,
+    pdf: await savePdf(ctx.doc),
   }
 }
 
@@ -351,64 +354,37 @@ function hasAdminRole(assignments: SessionRoleAssignment[]) {
   )
 }
 
-async function renderPdfFromHtml(html: string) {
-  const { default: puppeteer } = await import("puppeteer")
-  const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    headless: true,
-  })
+async function createPdfContext(): Promise<PdfContext> {
+  const doc = await PDFDocument.create()
+  const regular = await doc.embedFont(StandardFonts.Helvetica)
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold)
+  const page = doc.addPage(pageSize)
 
-  try {
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: "domcontentloaded" })
-    return page.pdf({
-      format: "A4",
-      margin: {
-        bottom: "16mm",
-        left: "12mm",
-        right: "12mm",
-        top: "16mm",
-      },
-      printBackground: true,
-    })
-  } finally {
-    await browser.close()
+  return {
+    doc,
+    fonts: { bold, regular },
+    page,
+    y: pageSize[1] - margin,
   }
 }
 
-function pageShell({ body, title }: { body: string; title: string }) {
-  return `<!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>${escapeHtml(title)}</title>
-        <style>
-          body { color: #111827; font-family: Arial, "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 12px; line-height: 1.45; }
-          h1 { font-size: 24px; margin: 0 0 8px; }
-          h2 { border-bottom: 1px solid #d1d5db; font-size: 16px; margin: 24px 0 10px; padding-bottom: 4px; }
-          .meta { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; margin-top: 12px; padding: 12px; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
-          .label { color: #6b7280; font-size: 10px; text-transform: uppercase; }
-          .value { font-weight: 600; }
-          table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-          th, td { border: 1px solid #e5e7eb; padding: 6px; text-align: left; vertical-align: top; }
-          th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; }
-          td span, .note { color: #6b7280; font-size: 10px; }
-          .summary { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 8px 0 18px; padding: 8px; }
-          .total { font-size: 14px; font-weight: 700; }
-          .footer { color: #6b7280; font-size: 10px; margin-top: 28px; }
-        </style>
-      </head>
-      <body>${body}</body>
-    </html>`
+function drawDocumentHeader(ctx: PdfContext, title: string, subtitle: string) {
+  drawText(ctx, title, margin, ctx.y, {
+    font: ctx.fonts.bold,
+    size: 22,
+  })
+  ctx.y -= 18
+  drawText(ctx, subtitle, margin, ctx.y, {
+    color: mutedColor,
+    size: 10,
+  })
+  ctx.y -= 20
+  drawLine(ctx, margin, ctx.y, pageSize[0] - margin)
+  ctx.y -= 18
 }
 
-function studentInfoHtml({
-  generatedAt,
-  student,
-  subtitle,
-}: {
-  generatedAt: Date
+function drawStudentInfo(
+  ctx: PdfContext,
   student: {
     email: string | null
     name: string
@@ -419,30 +395,243 @@ function studentInfoHtml({
       homeroom: { name: string } | null
       studentNumber: string | null
     } | null
-  }
-  subtitle: string
-}) {
-  return `
-    <h1>${escapeHtml(subtitle)}</h1>
-    <div class="meta">
-      <div class="grid">
-        ${infoItem("School", student.organization.name)}
-        ${infoItem("Campus", student.studentProfile?.campus?.name ?? "Organization-wide")}
-        ${infoItem("Student", student.name)}
-        ${infoItem("Email", student.email ?? "-")}
-        ${infoItem("Student number", student.studentProfile?.studentNumber ?? "-")}
-        ${infoItem("Grade / Homeroom", [
-          student.studentProfile?.currentGradeLevel?.name,
-          student.studentProfile?.homeroom?.name,
-        ].filter(Boolean).join(" / ") || "-")}
-        ${infoItem("Generated at", generatedAt.toLocaleString("en-US"))}
-      </div>
-    </div>
-  `
+  },
+  generatedAt: Date
+) {
+  drawKeyValueGrid(ctx, [
+    ["School", student.organization.name],
+    ["Campus", student.studentProfile?.campus?.name ?? "Organization-wide"],
+    ["Student", student.name],
+    ["Email", student.email ?? "-"],
+    ["Student number", student.studentProfile?.studentNumber ?? "-"],
+    [
+      "Grade / Homeroom",
+      [
+        student.studentProfile?.currentGradeLevel?.name,
+        student.studentProfile?.homeroom?.name,
+      ]
+        .filter(Boolean)
+        .join(" / ") || "-",
+    ],
+    ["Generated at", generatedAt.toLocaleString("en-US")],
+  ])
+  ctx.y -= 8
 }
 
-function infoItem(label: string, value: string) {
-  return `<div><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div></div>`
+function drawKeyValueGrid(ctx: PdfContext, items: Array<[string, string]>) {
+  ensureSpace(ctx, 70)
+  const x1 = margin
+  const x2 = margin + 260
+  let x = x1
+  let rowY = ctx.y
+
+  for (const [index, [label, value]] of items.entries()) {
+    if (index > 0 && index % 2 === 0) {
+      rowY -= 28
+      x = x1
+    }
+
+    drawText(ctx, label.toUpperCase(), x, rowY, {
+      color: mutedColor,
+      font: ctx.fonts.bold,
+      size: 7,
+    })
+    drawText(ctx, value, x, rowY - 11, {
+      font: ctx.fonts.bold,
+      maxWidth: 230,
+      size: 9,
+    })
+    x = x === x1 ? x2 : x1
+  }
+
+  ctx.y = rowY - 34
+}
+
+function drawSectionHeading(ctx: PdfContext, title: string) {
+  ensureSpace(ctx, 40)
+  ctx.y -= 8
+  drawText(ctx, title, margin, ctx.y, {
+    font: ctx.fonts.bold,
+    size: 14,
+  })
+  ctx.y -= 10
+  drawLine(ctx, margin, ctx.y, pageSize[0] - margin)
+  ctx.y -= 12
+}
+
+function drawTable<T>(ctx: PdfContext, rows: T[], columns: Array<TableColumn<T>>) {
+  const tableWidth = columns.reduce((sum, column) => sum + column.width, 0)
+  const startX = margin
+
+  ensureSpace(ctx, 44)
+  drawRect(ctx, startX, ctx.y - 18, tableWidth, 18, headerFill)
+
+  let headerX = startX
+  for (const column of columns) {
+    drawText(ctx, column.header, headerX + 4, ctx.y - 12, {
+      font: ctx.fonts.bold,
+      maxWidth: column.width - 8,
+      size: 7,
+    })
+    headerX += column.width
+  }
+
+  drawLine(ctx, startX, ctx.y - 18, startX + tableWidth)
+  ctx.y -= 18
+
+  if (!rows.length) {
+    drawTableRow(ctx, columns, startX, tableWidth, columns.map(() => "-"))
+    return
+  }
+
+  for (const row of rows) {
+    const values = columns.map((column) => column.value(row))
+    drawTableRow(ctx, columns, startX, tableWidth, values)
+  }
+}
+
+function drawTableRow(
+  ctx: PdfContext,
+  columns: Array<{ width: number }>,
+  startX: number,
+  tableWidth: number,
+  values: string[]
+) {
+  const wrapped = values.map((value, index) =>
+    wrapText(value, columns[index].width - 8, ctx.fonts.regular, 8, 2)
+  )
+  const lineCount = Math.max(...wrapped.map((lines) => lines.length), 1)
+  const rowHeight = Math.max(22, lineCount * rowLineHeight + 8)
+
+  ensureSpace(ctx, rowHeight + 8)
+
+  let x = startX
+  for (const [index, column] of columns.entries()) {
+    for (const [lineIndex, line] of wrapped[index].entries()) {
+      drawText(ctx, line, x + 4, ctx.y - 12 - lineIndex * rowLineHeight, {
+        maxWidth: column.width - 8,
+        size: 8,
+      })
+    }
+    x += column.width
+  }
+
+  drawLine(ctx, startX, ctx.y - rowHeight, startX + tableWidth)
+  ctx.y -= rowHeight
+}
+
+function drawNote(ctx: PdfContext, note: string) {
+  ensureSpace(ctx, 28)
+  for (const line of wrapText(note, pageSize[0] - margin * 2, ctx.fonts.regular, 8, 3)) {
+    drawText(ctx, line, margin, ctx.y, {
+      color: mutedColor,
+      size: 8,
+    })
+    ctx.y -= 10
+  }
+  ctx.y -= 4
+}
+
+function drawFooter(ctx: PdfContext, generatedAt: Date) {
+  drawText(ctx, `Generated ${generatedAt.toLocaleString("en-US")}`, margin, 24, {
+    color: mutedColor,
+    size: 8,
+  })
+}
+
+function ensureSpace(ctx: PdfContext, neededHeight: number) {
+  if (ctx.y - neededHeight > margin) return
+
+  ctx.page = ctx.doc.addPage(pageSize)
+  ctx.y = pageSize[1] - margin
+}
+
+function drawText(
+  ctx: PdfContext,
+  text: string,
+  x: number,
+  y: number,
+  options: {
+    color?: RGB
+    font?: PDFFont
+    maxWidth?: number
+    size?: number
+  } = {}
+) {
+  const font = options.font ?? ctx.fonts.regular
+  const size = options.size ?? 9
+  ctx.page.drawText(toPdfSafeText(text), {
+    color: options.color ?? textColor,
+    font,
+    maxWidth: options.maxWidth,
+    size,
+    x,
+    y,
+  })
+}
+
+function drawLine(ctx: PdfContext, x: number, y: number, endX: number) {
+  ctx.page.drawLine({
+    color: borderColor,
+    end: { x: endX, y },
+    start: { x, y },
+    thickness: 0.6,
+  })
+}
+
+function drawRect(ctx: PdfContext, x: number, y: number, width: number, height: number, color: RGB) {
+  ctx.page.drawRectangle({
+    color,
+    height,
+    width,
+    x,
+    y,
+  })
+}
+
+function wrapText(
+  value: string,
+  maxWidth: number,
+  font: PDFFont,
+  size: number,
+  maxLines: number
+) {
+  const safe = toPdfSafeText(value)
+  const words = safe.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let current = ""
+
+  for (const word of words.length ? words : ["-"]) {
+    const candidate = current ? `${current} ${word}` : word
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+      current = candidate
+      continue
+    }
+
+    if (current) lines.push(current)
+    current = word
+
+    if (lines.length === maxLines - 1) break
+  }
+
+  if (current && lines.length < maxLines) lines.push(current)
+  if (!lines.length) lines.push("-")
+
+  if (lines.length === maxLines && words.join(" ") !== lines.join(" ")) {
+    const last = lines[lines.length - 1]
+    lines[lines.length - 1] = last.length > 3 ? `${last.slice(0, -3)}...` : last
+  }
+
+  return lines
+}
+
+function toPdfSafeText(value: string) {
+  // pdf-lib built-in StandardFonts use WinAnsi encoding. Replace unsupported
+  // characters for MVP reliability. TODO: embed a Korean font for production PDFs.
+  return value
+    .replace(/[^\u0020-\u00ff]/g, "?")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function getAttendanceRate(records: Array<{ status: string }>) {
@@ -492,7 +681,9 @@ function getAssignmentSummary(
     0
   )
 
-  return possible ? `${earned.toFixed(1)}/${possible.toFixed(1)}` : `${submitted}/${assignments.length}`
+  return possible
+    ? `${earned.toFixed(1)}/${possible.toFixed(1)}`
+    : `${submitted}/${assignments.length}`
 }
 
 function getQuizSummary(
@@ -601,15 +792,6 @@ async function createGeneratedDocumentMetadata(input: {
   })
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;")
-}
-
 export function safePdfFilename(value: string) {
   const normalized = value
     .normalize("NFKD")
@@ -636,7 +818,8 @@ function formatDecimal(value: { toString(): string } | null | undefined) {
   return value.toString()
 }
 
-function toArrayBuffer(bytes: Uint8Array) {
+async function savePdf(doc: PDFDocument) {
+  const bytes = await doc.save()
   const copy = new Uint8Array(bytes.byteLength)
   copy.set(bytes)
   return copy.buffer
