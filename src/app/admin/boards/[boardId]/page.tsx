@@ -18,6 +18,7 @@ export default async function AdminBoardDetailPage({
     boardDeleteError?: string
     boardSaved?: string
     boardStatus?: string
+    page?: string
     pinned?: string
     q?: string
     status?: string

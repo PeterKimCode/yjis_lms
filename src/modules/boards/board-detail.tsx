@@ -26,7 +26,7 @@ export async function BoardDetailPage({
   backHref: string
   boardId: string
   expectedClassSectionId?: string
-  query?: { pinned?: string; q?: string; status?: string }
+  query?: { page?: string; pinned?: string; q?: string; status?: string }
 }) {
   const data = await getBoardDetail(boardId, query)
 
@@ -280,7 +280,7 @@ export async function BoardDetailPage({
                       </form>
                     </details>
                   ) : null}
-                  <details className="mt-4 rounded-md border p-3" open>
+                  <details className="mt-4 rounded-md border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
                       Comments
                     </summary>
@@ -414,6 +414,7 @@ export async function BoardDetailPage({
           ) : (
             <EmptyState>No posts yet.</EmptyState>
           )}
+          <PostPagination pagination={data.postPagination} query={query} />
         </div>
       </SectionBlock>
     </main>
@@ -425,6 +426,93 @@ function formatDate(value: Date) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(value)
+}
+
+function PostPagination({
+  pagination,
+  query,
+}: {
+  pagination: {
+    currentPage: number
+    pageCount: number
+    pageSize: number
+    totalCount: number
+  }
+  query: { page?: string; pinned?: string; q?: string; status?: string }
+}) {
+  if (pagination.totalCount <= pagination.pageSize) return null
+
+  return (
+    <nav className="flex flex-col gap-2 rounded-lg border bg-background p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-muted-foreground">
+        Posts {pagination.currentPage} / {pagination.pageCount} ·{" "}
+        {pagination.totalCount} total
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          asChild={pagination.currentPage > 1}
+          disabled={pagination.currentPage <= 1}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {pagination.currentPage > 1 ? (
+            <Link href={getPageHref(query, pagination.currentPage - 1)}>
+              Previous
+            </Link>
+          ) : (
+            <span>Previous</span>
+          )}
+        </Button>
+        {Array.from({ length: pagination.pageCount }, (_, index) => index + 1).map(
+          (page) => (
+            <Button
+              asChild={page !== pagination.currentPage}
+              key={page}
+              size="sm"
+              type="button"
+              variant={page === pagination.currentPage ? "default" : "outline"}
+            >
+              {page === pagination.currentPage ? (
+                <span>{page}</span>
+              ) : (
+                <Link href={getPageHref(query, page)}>{page}</Link>
+              )}
+            </Button>
+          )
+        )}
+        <Button
+          asChild={pagination.currentPage < pagination.pageCount}
+          disabled={pagination.currentPage >= pagination.pageCount}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {pagination.currentPage < pagination.pageCount ? (
+            <Link href={getPageHref(query, pagination.currentPage + 1)}>
+              Next
+            </Link>
+          ) : (
+            <span>Next</span>
+          )}
+        </Button>
+      </div>
+    </nav>
+  )
+}
+
+function getPageHref(
+  query: { page?: string; pinned?: string; q?: string; status?: string },
+  page: number
+) {
+  const params = new URLSearchParams()
+  if (query.q) params.set("q", query.q)
+  if (query.pinned) params.set("pinned", query.pinned)
+  if (query.status) params.set("status", query.status)
+  if (page > 1) params.set("page", String(page))
+  const value = params.toString()
+
+  return value ? `?${value}` : "?"
 }
 
 function ImageGrid({

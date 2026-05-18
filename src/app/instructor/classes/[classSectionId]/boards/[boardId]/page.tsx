@@ -5,7 +5,7 @@ export default async function InstructorBoardPage({
   searchParams,
 }: {
   params: Promise<{ boardId: string; classSectionId: string }>
-  searchParams: Promise<{ pinned?: string; q?: string; status?: string }>
+  searchParams: Promise<{ page?: string; pinned?: string; q?: string; status?: string }>
 }) {
   const { boardId, classSectionId } = await params
   const query = await searchParams
