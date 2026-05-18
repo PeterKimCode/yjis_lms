@@ -404,8 +404,8 @@ export async function calculateFinalGrades(
       .div(100)
 
     const scaleItem = findScaleItem(scale.items, total)
-    const isPassed = scaleItem?.gradePoint
-      ? scaleItem.gradePoint.gt(0)
+  const isPassed = scaleItem?.gradePoint
+      ? (scaleItem.isPassing ?? scaleItem.gradePoint.gt(0))
       : total.gte(60)
 
     await upsertFinalGrade({
@@ -772,6 +772,7 @@ function findScaleItem(
     minPercentage: Prisma.Decimal
     maxPercentage: Prisma.Decimal
     gradePoint: Prisma.Decimal | null
+    isPassing?: boolean
   }>,
   percentage: Prisma.Decimal
 ) {

@@ -680,14 +680,14 @@ async function ensureDefaultGradingScale(organizationId: string) {
 
   await prisma.gradingScaleItem.createMany({
     data: [
-      gradeBand(gradingScale.id, "A+", "95.00", "100.00", "4.50"),
-      gradeBand(gradingScale.id, "A", "90.00", "94.99", "4.00"),
-      gradeBand(gradingScale.id, "B+", "85.00", "89.99", "3.50"),
-      gradeBand(gradingScale.id, "B", "80.00", "84.99", "3.00"),
-      gradeBand(gradingScale.id, "C+", "75.00", "79.99", "2.50"),
-      gradeBand(gradingScale.id, "C", "70.00", "74.99", "2.00"),
-      gradeBand(gradingScale.id, "D", "60.00", "69.99", "1.00"),
-      gradeBand(gradingScale.id, "F", "0.00", "59.99", "0.00"),
+      gradeBand(gradingScale.id, "A+", "95.00", "100.00", "4.50", true),
+      gradeBand(gradingScale.id, "A", "90.00", "94.99", "4.00", true),
+      gradeBand(gradingScale.id, "B+", "85.00", "89.99", "3.50", true),
+      gradeBand(gradingScale.id, "B", "80.00", "84.99", "3.00", true),
+      gradeBand(gradingScale.id, "C+", "75.00", "79.99", "2.50", true),
+      gradeBand(gradingScale.id, "C", "70.00", "74.99", "2.00", true),
+      gradeBand(gradingScale.id, "D", "60.00", "69.99", "1.00", true),
+      gradeBand(gradingScale.id, "F", "0.00", "59.99", "0.00", false),
     ],
   })
 }
@@ -697,7 +697,8 @@ function gradeBand(
   label: string,
   minPercentage: string,
   maxPercentage: string,
-  gradePoint: string
+  gradePoint: string,
+  isPassing: boolean
 ) {
   return {
     gradingScaleId,
@@ -705,6 +706,7 @@ function gradeBand(
     minPercentage,
     maxPercentage,
     gradePoint,
+    isPassing,
   }
 }
 

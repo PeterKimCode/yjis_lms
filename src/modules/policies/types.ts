@@ -27,3 +27,24 @@ export type ResolvedPolicies = {
       })
     | null
 }
+
+export type PolicyFormValue = Omit<ResolvedPolicies, "gradingScale"> & {
+  gradingScale: null
+}
+
+export type SerializedGradingScale = {
+  id: string
+  name: string
+  description: string | null
+  isDefault: boolean
+  items: SerializedGradingScaleItem[]
+}
+
+export type SerializedGradingScaleItem = {
+  id: string
+  label: string
+  minPercentage: string
+  maxPercentage: string
+  gradePoint: string
+  isPassing: boolean
+}

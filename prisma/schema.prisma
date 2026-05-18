@@ -1133,6 +1133,7 @@ model GradingScaleItem {
   minPercentage  Decimal      @db.Decimal(5, 2)
   maxPercentage  Decimal      @db.Decimal(5, 2)
   gradePoint     Decimal?     @db.Decimal(4, 2)
+  isPassing      Boolean      @default(true)
   createdAt      DateTime     @default(now())
   gradingScale   GradingScale @relation(fields: [gradingScaleId], references: [id], onDelete: Cascade)
 

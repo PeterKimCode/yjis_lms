@@ -122,6 +122,60 @@ const gradingPolicySchema = contextSchema.extend({
   gpaScale: z.coerce.number().min(0).max(10),
 })
 
+const gradingScaleSchema = z
+  .object({
+    id: requiredString,
+    organizationId: requiredString,
+    name: requiredString,
+    description: optionalString,
+    rows: z
+      .array(
+        z.object({
+          id: optionalString,
+          label: requiredString,
+          minPercentage: z.coerce.number().min(0).max(100),
+          maxPercentage: z.coerce.number().min(0).max(100),
+          gradePoint: z.coerce.number().min(0),
+          isPassing: z.boolean(),
+        })
+      )
+      .min(1),
+  })
+  .superRefine((data, context) => {
+    const sorted = [...data.rows].sort(
+      (a, b) => a.minPercentage - b.minPercentage
+    )
+
+    for (const [index, row] of data.rows.entries()) {
+      if (row.minPercentage > row.maxPercentage) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Min score must be less than or equal to max score.",
+          path: ["rows", index, "minPercentage"],
+        })
+      }
+    }
+
+    for (let index = 1; index < sorted.length; index += 1) {
+      if (sorted[index - 1].maxPercentage >= sorted[index].minPercentage) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Scale ranges cannot overlap.",
+          path: ["rows"],
+        })
+        break
+      }
+    }
+
+    if (sorted[0]?.minPercentage > 0 || sorted[sorted.length - 1]?.maxPercentage < 100) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Scale should cover scores from 0 to 100.",
+        path: ["rows"],
+      })
+    }
+  })
+
 export async function saveGradingAndDocumentPolicy(
   _previousState: PolicyActionState,
   formData: FormData
@@ -163,6 +217,100 @@ export async function saveGradingAndDocumentPolicy(
   await upsertGradingPolicy(data)
   revalidatePath("/admin/policies")
   return { ok: true, message: "Policy saved." }
+}
+
+export async function saveGradingScale(
+  _previousState: PolicyActionState,
+  formData: FormData
+): Promise<PolicyActionState> {
+  const rowIndexes = new Set(
+    [...formData.keys()]
+      .map((key) => /^rows\[(\d+)]\[label]$/.exec(key)?.[1])
+      .filter((value): value is string => Boolean(value))
+  )
+  const parsed = gradingScaleSchema.safeParse({
+    id: formData.get("id") ?? "",
+    organizationId: formData.get("organizationId") ?? "",
+    name: formData.get("name") ?? "",
+    description: formData.get("description") ?? "",
+    rows: [...rowIndexes].map((index) => ({
+      id: formData.get(`rows[${index}][id]`) ?? "",
+      label: formData.get(`rows[${index}][label]`) ?? "",
+      minPercentage: formData.get(`rows[${index}][minPercentage]`) ?? "",
+      maxPercentage: formData.get(`rows[${index}][maxPercentage]`) ?? "",
+      gradePoint: formData.get(`rows[${index}][gradePoint]`) ?? "",
+      isPassing: formData.get(`rows[${index}][isPassing]`) === "on",
+    })),
+  })
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message:
+        parsed.error.issues[0]?.message ??
+        "Letter grade is required and score ranges must be valid.",
+    }
+  }
+
+  const data = parsed.data
+  await assertAdminScope({ organizationId: data.organizationId })
+
+  const prisma = getPrismaClient()
+  const scale = await prisma.gradingScale.findFirst({
+    where: { id: data.id, organizationId: data.organizationId },
+    include: { items: true },
+  })
+
+  if (!scale) {
+    return { ok: false, message: "Grading scale not found." }
+  }
+
+  await prisma.gradingScale.update({
+    where: { id: scale.id },
+    data: {
+      name: data.name,
+      description: data.description,
+    },
+  })
+
+  const submittedIds = new Set(
+    data.rows
+      .map((row) => row.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0)
+  )
+  await prisma.gradingScaleItem.deleteMany({
+    where: {
+      gradingScaleId: scale.id,
+      id: { notIn: [...submittedIds] },
+    },
+  })
+
+  for (const row of data.rows) {
+    const values = {
+      label: row.label,
+      minPercentage: new Prisma.Decimal(row.minPercentage),
+      maxPercentage: new Prisma.Decimal(row.maxPercentage),
+      gradePoint: new Prisma.Decimal(row.gradePoint),
+      isPassing: row.isPassing,
+    }
+
+    if (row.id) {
+      await prisma.gradingScaleItem.update({
+        where: { id: row.id },
+        data: values,
+      })
+    } else {
+      await prisma.gradingScaleItem.create({
+        data: {
+          gradingScaleId: scale.id,
+          ...values,
+        },
+      })
+    }
+  }
+
+  revalidatePath("/admin/policies")
+  return { ok: true, message: "Grading scale saved." }
 }
 
 async function verifyCampusBelongsToOrganization(
