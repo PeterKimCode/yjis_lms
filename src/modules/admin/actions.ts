@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import {
   DeliveryMode,
   EnrollmentStatus,
@@ -12,6 +13,7 @@ import { z } from "zod"
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
 import { hashPassword } from "@/modules/auth/password"
+import { ensureDefaultPoliciesForCampus } from "@/modules/policies/initialize"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value : ""),
@@ -113,12 +115,39 @@ export async function saveCampus(formData: FormData) {
   const { id, ...values } = data
 
   await assertAdminScope({ organizationId: values.organizationId })
-  await getPrismaClient().campus.upsert({
-    where: { id: maybeId(id) ?? "__new_campus__" },
-    update: values,
-    create: values,
-  })
+  const prisma = getPrismaClient()
+  try {
+    await prisma.$transaction(async (tx) => {
+      const campus = id
+        ? await tx.campus.update({
+            where: { id },
+            data: values,
+          })
+        : await tx.campus.create({
+            data: values,
+          })
+
+      await ensureDefaultPoliciesForCampus(
+        {
+          organizationId: campus.organizationId,
+          campusId: campus.id,
+        },
+        tx
+      )
+    })
+  } catch (error) {
+    console.error("Campus policy initialization failed", {
+      organizationId: values.organizationId,
+      campusId: id,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    redirect("/admin/campuses?policyInitFailed=1")
+  }
   await revalidateAdmin("/admin/campuses")
+  await revalidateAdmin("/admin/policies")
+  if (!id) {
+    redirect("/admin/campuses?createdWithPolicies=1")
+  }
 }
 
 const userSchema = z.object({

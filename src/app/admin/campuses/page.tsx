@@ -17,10 +17,15 @@ import { getAdminData } from "@/modules/admin/data"
 export default async function CampusesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{
+    createdWithPolicies?: string
+    policyInitFailed?: string
+    q?: string
+  }>
 }) {
   const { campuses, organizationOptions } = await getAdminData()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const filteredCampuses = campuses.filter((campus) =>
     matchesSearch(q, [
       campus.name,
@@ -37,6 +42,17 @@ export default async function CampusesPage({
         title="Campuses"
         description="Campus records in your assigned organization or campus scope."
       />
+      {params.createdWithPolicies ? (
+        <p className="rounded-md border bg-background p-3 text-sm text-muted-foreground">
+          Campus created with default policies.
+        </p>
+      ) : null}
+      {params.policyInitFailed ? (
+        <p className="rounded-md border border-destructive/40 bg-background p-3 text-sm text-destructive">
+          Campus was not saved because default policy initialization failed. You
+          can try again or initialize policies from Admin &gt; Policies.
+        </p>
+      ) : null}
       <SearchForm q={q} placeholder="Search campuses..." />
       <CampusForm organizationOptions={organizationOptions} />
       <DataTable

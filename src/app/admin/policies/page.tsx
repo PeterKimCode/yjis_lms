@@ -1,6 +1,7 @@
 import { AdminPageHeader } from "@/modules/admin/components"
 import { getPolicyAdminData } from "@/modules/policies/admin-data"
 import { GradingScaleEditor } from "@/modules/policies/grading-scale-editor"
+import { InitializeDefaultsForm } from "@/modules/policies/initialize-defaults-form"
 import { PolicyForms } from "@/modules/policies/policy-forms"
 import { PolicyScopeSelector } from "@/modules/policies/scope-selector"
 import type { SerializedGradingScale } from "@/modules/policies/types"
@@ -57,6 +58,10 @@ export default async function PoliciesPage({
           ? `Editing campus policies: ${campus.name} (${campus.organization.name})`
           : `Editing organization default policies: ${organization?.name ?? "Unknown organization"}`}
       </p>
+      <InitializeDefaultsForm
+        campusId={data.selectedCampusId}
+        organizationId={data.selectedOrganizationId}
+      />
       <PolicySummary data={data} />
       <PolicyForms
         campusId={data.selectedCampusId}

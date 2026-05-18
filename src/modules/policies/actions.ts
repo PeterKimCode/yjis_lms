@@ -7,7 +7,11 @@ import { z } from "zod"
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope } from "@/modules/admin/access"
 import type { PolicyActionState } from "@/modules/policies/action-state"
-import { POLICY_NAMES } from "@/modules/policies/defaults"
+import { DEFAULT_DOCUMENT_POLICY, POLICY_NAMES } from "@/modules/policies/defaults"
+import {
+  ensureDefaultPoliciesForCampus,
+  ensureDefaultPoliciesForOrganization,
+} from "@/modules/policies/initialize"
 
 const requiredString = z.string().trim().min(1)
 const optionalString = z.preprocess(
@@ -313,6 +317,53 @@ export async function saveGradingScale(
   return { ok: true, message: "Grading scale saved." }
 }
 
+export async function initializeMissingPolicyDefaults(
+  _previousState: PolicyActionState,
+  formData: FormData
+): Promise<PolicyActionState> {
+  const parsed = contextSchema.safeParse({
+    organizationId: formData.get("organizationId") ?? "",
+    campusId: formData.get("campusId") ?? "",
+  })
+
+  if (!parsed.success) {
+    return { ok: false, message: "Select a valid organization or campus." }
+  }
+
+  const data = parsed.data
+
+  try {
+    await assertAdminScope(data)
+    await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
+
+    if (data.campusId) {
+      await ensureDefaultPoliciesForCampus({
+        organizationId: data.organizationId,
+        campusId: data.campusId,
+      })
+    } else {
+      await ensureDefaultPoliciesForOrganization({
+        organizationId: data.organizationId,
+      })
+    }
+
+    revalidatePath("/admin/policies")
+    return { ok: true, message: "Missing default policies initialized." }
+  } catch (error) {
+    console.error("Default policy initialization failed", {
+      organizationId: data.organizationId,
+      campusId: data.campusId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+
+    return {
+      ok: false,
+      message:
+        "Default policy initialization failed. Check the server logs and try again.",
+    }
+  }
+}
+
 async function verifyCampusBelongsToOrganization(
   organizationId: string,
   campusId: string | null
@@ -413,6 +464,7 @@ async function upsertGradingPolicy(
       showQuizResultsImmediately: data.showQuizResultsImmediately,
       reportCardsRequirePublishedGrades: data.reportCardsRequirePublishedGrades,
       transcriptsRequirePublishedGrades: data.transcriptsRequirePublishedGrades,
+      adminPreviewAllowed: DEFAULT_DOCUMENT_POLICY.adminPreviewAllowed,
     },
   }
 

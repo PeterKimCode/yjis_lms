@@ -8,6 +8,11 @@ import {
   PrismaClient,
   UserRole,
 } from "@prisma/client"
+import {
+  ensureDefaultGradingScaleForOrganization,
+  ensureDefaultPoliciesForCampus,
+  ensureDefaultPoliciesForOrganization,
+} from "../src/modules/policies/initialize"
 
 const databaseUrl = process.env.DATABASE_URL
 
@@ -208,6 +213,10 @@ async function main() {
 
   await ensureDefaultPolicies(organization.id)
   await ensureDefaultGradingScale(organization.id)
+  await ensureDefaultPoliciesForCampus(
+    { organizationId: organization.id, campusId: campus.id },
+    prisma
+  )
 
   console.log("Seed completed.")
   console.log(`Demo users use password: ${demoPassword}`)
@@ -490,224 +499,11 @@ async function findOrCreateClassSection(input: {
 }
 
 async function ensureDefaultPolicies(organizationId: string) {
-  const academicPolicy = await prisma.academicPolicy.findFirst({
-    where: { organizationId, name: "Default Academic Policy" },
-  })
-  const academicPolicyData = {
-    campusId: null,
-    classSectionId: null,
-    settings: {
-      academicCalendar: "semester",
-      supportsK12ReportCards: true,
-      supportsUniversityTranscripts: true,
-    },
-  }
-
-  if (academicPolicy) {
-    await prisma.academicPolicy.update({
-      where: { id: academicPolicy.id },
-      data: academicPolicyData,
-    })
-  } else {
-    await prisma.academicPolicy.create({
-      data: {
-        organizationId,
-        name: "Default Academic Policy",
-        ...academicPolicyData,
-      },
-    })
-  }
-
-  const attendancePolicy = await prisma.attendancePolicy.findFirst({
-    where: { organizationId, name: "Default Attendance Policy" },
-  })
-  const attendancePolicyData = {
-    campusId: null,
-    classSectionId: null,
-    lateAfterMinutes: 10,
-    absenceAfterMinutes: 30,
-    settings: {
-      lateThresholdMinutes: 10,
-      absenceFailThresholdRate: null,
-      countLateAsAbsence: false,
-      lateEquivalentAbsenceCount: 0,
-      excusedCountsAsPresent: false,
-      excusedCountsAgainstAttendance: false,
-      allowInstructorOverride: true,
-      allowInstructorEdits: true,
-      requireAbsenceReason: true,
-    },
-  }
-
-  if (attendancePolicy) {
-    await prisma.attendancePolicy.update({
-      where: { id: attendancePolicy.id },
-      data: attendancePolicyData,
-    })
-  } else {
-    await prisma.attendancePolicy.create({
-      data: {
-        organizationId,
-        name: "Default Attendance Policy",
-        ...attendancePolicyData,
-      },
-    })
-  }
-
-  const videoPolicy = await prisma.videoCompletionPolicy.findFirst({
-    where: { organizationId, name: "Default Video Completion Policy" },
-  })
-  const videoPolicyData = {
-    campusId: null,
-    classSectionId: null,
-    requiredPercentage: "90.00",
-    settings: {
-      completionRate: 90,
-      completionThresholdPercent: 90,
-      minimumWatchSeconds: null,
-      requireActualWatchedCoverage: true,
-    },
-  }
-
-  if (videoPolicy) {
-    await prisma.videoCompletionPolicy.update({
-      where: { id: videoPolicy.id },
-      data: videoPolicyData,
-    })
-  } else {
-    await prisma.videoCompletionPolicy.create({
-      data: {
-        organizationId,
-        name: "Default Video Completion Policy",
-        ...videoPolicyData,
-      },
-    })
-  }
-
-  const gradingPolicy = await prisma.gradingPolicy.findFirst({
-    where: { organizationId, name: "Default Grading Policy" },
-  })
-  const gradingPolicyData = {
-    campusId: null,
-    classSectionId: null,
-    gpaScale: "4.50",
-    settings: {
-      allowLateSubmissionDefault: false,
-      allowResubmissionBeforeDue: true,
-      latePenaltyPercent: 0,
-      maxLateDays: null,
-      studentsCanSeeDraftGrades: false,
-      parentsCanSeeDraftGrades: false,
-      showAssignmentFeedbackBeforeFinalGrade: true,
-      showQuizResultsImmediately: true,
-      reportCardsRequirePublishedGrades: true,
-      transcriptsRequirePublishedGrades: true,
-      rounding: "half-up",
-      publishFinalGradesAfterReview: true,
-    },
-  }
-
-  if (gradingPolicy) {
-    await prisma.gradingPolicy.update({
-      where: { id: gradingPolicy.id },
-      data: gradingPolicyData,
-    })
-  } else {
-    await prisma.gradingPolicy.create({
-      data: {
-        organizationId,
-        name: "Default Grading Policy",
-        ...gradingPolicyData,
-      },
-    })
-  }
-
-  const messagingPolicy = await prisma.messagingPolicy.findFirst({
-    where: { organizationId, name: "Default Messaging Policy" },
-  })
-  const messagingPolicyData = {
-    allowStudentDirectMessages: false,
-    settings: {
-      allowParentInstructorMessages: true,
-      retainMessages: true,
-    },
-  }
-
-  if (messagingPolicy) {
-    await prisma.messagingPolicy.update({
-      where: { id: messagingPolicy.id },
-      data: messagingPolicyData,
-    })
-  } else {
-    await prisma.messagingPolicy.create({
-      data: {
-      organizationId,
-        name: "Default Messaging Policy",
-        ...messagingPolicyData,
-      },
-    })
-  }
+  await ensureDefaultPoliciesForOrganization({ organizationId }, prisma)
 }
 
 async function ensureDefaultGradingScale(organizationId: string) {
-  const scaleName = "Default A-F Grading Scale"
-  const existing = await prisma.gradingScale.findFirst({
-    where: { organizationId, name: scaleName },
-  })
-
-  const gradingScale =
-    existing ??
-    (await prisma.gradingScale.create({
-      data: {
-        organizationId,
-        name: scaleName,
-        description: "Default local development grading scale.",
-        isDefault: true,
-      },
-    }))
-
-  await prisma.gradingScale.update({
-    where: { id: gradingScale.id },
-    data: {
-      description: "Default local development grading scale.",
-      isDefault: true,
-    },
-  })
-
-  await prisma.gradingScaleItem.deleteMany({
-    where: { gradingScaleId: gradingScale.id },
-  })
-
-  await prisma.gradingScaleItem.createMany({
-    data: [
-      gradeBand(gradingScale.id, "A+", "95.00", "100.00", "4.50", true),
-      gradeBand(gradingScale.id, "A", "90.00", "94.99", "4.00", true),
-      gradeBand(gradingScale.id, "B+", "85.00", "89.99", "3.50", true),
-      gradeBand(gradingScale.id, "B", "80.00", "84.99", "3.00", true),
-      gradeBand(gradingScale.id, "C+", "75.00", "79.99", "2.50", true),
-      gradeBand(gradingScale.id, "C", "70.00", "74.99", "2.00", true),
-      gradeBand(gradingScale.id, "D", "60.00", "69.99", "1.00", true),
-      gradeBand(gradingScale.id, "F", "0.00", "59.99", "0.00", false),
-    ],
-  })
-}
-
-function gradeBand(
-  gradingScaleId: string,
-  label: string,
-  minPercentage: string,
-  maxPercentage: string,
-  gradePoint: string,
-  isPassing: boolean
-) {
-  return {
-    gradingScaleId,
-    label,
-    minPercentage,
-    maxPercentage,
-    gradePoint,
-    isPassing,
-  }
+  await ensureDefaultGradingScaleForOrganization({ organizationId }, prisma)
 }
 
 main()
