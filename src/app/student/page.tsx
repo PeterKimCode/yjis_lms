@@ -10,9 +10,13 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import { getStudentClasses } from "@/modules/dashboards/data"
+import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 
 export default async function StudentPage() {
-  const { enrollments, user } = await getStudentClasses()
+  const [{ enrollments, user }, unreadMessages] = await Promise.all([
+    getStudentClasses(),
+    getUnreadMessageCountForCurrentUser(),
+  ])
   const termOptions = [
     ...new Map(
       enrollments
@@ -29,7 +33,11 @@ export default async function StudentPage() {
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard href="/student/classes" label="Classes" value={enrollments.length} />
-        <MetricCard href="/messages" label="Messages" value="Open" />
+        <MetricCard
+          href="/messages"
+          label="Messages"
+          value={unreadMessages ? `${unreadMessages} unread` : "Open"}
+        />
         <MetricCard
           label="Lessons"
           value={enrollments.reduce(

@@ -7,9 +7,13 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import { getParentStudents } from "@/modules/dashboards/data"
+import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 
 export default async function ParentPage() {
-  const { relations } = await getParentStudents()
+  const [{ relations }, unreadMessages] = await Promise.all([
+    getParentStudents(),
+    getUnreadMessageCountForCurrentUser(),
+  ])
 
   return (
     <DashboardPage
@@ -18,7 +22,11 @@ export default async function ParentPage() {
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard href="/parent/students" label="Students" value={relations.length} />
-        <MetricCard href="/messages" label="Messages" value="Open" />
+        <MetricCard
+          href="/messages"
+          label="Messages"
+          value={unreadMessages ? `${unreadMessages} unread` : "Open"}
+        />
         <MetricCard
           label="Classes"
           value={relations.reduce(

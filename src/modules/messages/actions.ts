@@ -44,7 +44,10 @@ export async function startConversation(
   }
 
   const user = await requireAuth()
-  const data = parsed.data
+  const data = {
+    ...parsed.data,
+    recipientUserId: parseRecipientUserId(parsed.data.recipientUserId),
+  }
   let conversationId: string
 
   try {
@@ -407,4 +410,13 @@ function isStaffLike(user: Awaited<ReturnType<typeof requireAuth>>) {
   ])
 
   return user.roleAssignments.some((item) => roles.has(item.role))
+}
+
+function parseRecipientUserId(value: string | null) {
+  if (!value) return null
+
+  const parts = value.split(":")
+  if (parts.length >= 3) return parts[1] ?? null
+
+  return value
 }

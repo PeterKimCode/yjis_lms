@@ -153,6 +153,7 @@ export async function getConversationStartOptions() {
     classSectionId: string
     description: string
     label: string
+    targetKind: "PARENT" | "STAFF" | "STUDENT" | "TEACHER"
     type: "DIRECT" | "PARENT_TEACHER"
     userId: string
   }> = []
@@ -184,6 +185,7 @@ export async function getConversationStartOptions() {
           classSectionId: enrollment.classSectionId,
           description: enrollment.classSection.course.title,
           label: `${instructor.instructor.name ?? instructor.instructor.email} - Teacher`,
+          targetKind: "TEACHER",
           type: "DIRECT",
           userId: instructor.instructorId,
         })
@@ -225,6 +227,7 @@ export async function getConversationStartOptions() {
           classSectionId: section.id,
           description: section.course.title,
           label: `${enrollment.student.name ?? enrollment.student.email} - Student`,
+          targetKind: "STUDENT",
           type: "DIRECT",
           userId: enrollment.studentId,
         })
@@ -233,6 +236,7 @@ export async function getConversationStartOptions() {
             classSectionId: section.id,
             description: `${section.course.title} / ${enrollment.student.name ?? "Student"}`,
             label: `${relation.parent.name ?? relation.parent.email} - Parent`,
+            targetKind: "PARENT",
             type: "PARENT_TEACHER",
             userId: relation.parentId,
           })
@@ -269,6 +273,7 @@ export async function getConversationStartOptions() {
             classSectionId: enrollment.classSectionId,
             description: `${relation.student.name ?? "Linked student"} / ${enrollment.classSection.course.title}`,
             label: `${instructor.instructor.name ?? instructor.instructor.email} - Teacher`,
+            targetKind: "TEACHER",
             type: "PARENT_TEACHER",
             userId: instructor.instructorId,
           })
@@ -298,6 +303,7 @@ export async function getConversationStartOptions() {
         classSectionId: "",
         description: target.roleAssignments.map((role) => role.role).join(", "),
         label: target.name ?? target.email,
+        targetKind: "STAFF",
         type: "DIRECT",
         userId: target.id,
       })
@@ -309,6 +315,38 @@ export async function getConversationStartOptions() {
     directOptions,
     user,
   }
+}
+
+export async function getUnreadMessageCountForCurrentUser() {
+  const user = await requireAuth()
+
+  return getUnreadMessageCount(user.id)
+}
+
+export async function getUnreadMessageCount(userId: string) {
+  const prisma = getPrismaClient()
+  const participants = await prisma.conversationParticipant.findMany({
+    where: { userId },
+    select: {
+      conversationId: true,
+      lastReadAt: true,
+    },
+  })
+  const counts = await Promise.all(
+    participants.map((participant) =>
+      prisma.message.count({
+        where: {
+          conversationId: participant.conversationId,
+          senderId: { not: userId },
+          createdAt: participant.lastReadAt
+            ? { gt: participant.lastReadAt }
+            : undefined,
+        },
+      })
+    )
+  )
+
+  return counts.reduce((total, count) => total + count, 0)
 }
 
 function getConversationTitle(

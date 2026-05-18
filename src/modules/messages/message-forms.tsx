@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -13,22 +13,37 @@ import {
   MESSAGE_BODY_MAX_LENGTH,
 } from "@/modules/messages/types"
 
+type DirectOption = {
+  classSectionId: string
+  description: string
+  label: string
+  targetKind: "PARENT" | "STAFF" | "STUDENT" | "TEACHER"
+  type: "DIRECT" | "PARENT_TEACHER"
+  userId: string
+}
+
 export function NewMessageForm({
   classGroupOptions,
   directOptions,
 }: {
   classGroupOptions: { id: string; label: string }[]
-  directOptions: {
-    classSectionId: string
-    description: string
-    label: string
-    type: "DIRECT" | "PARENT_TEACHER"
-    userId: string
-  }[]
+  directOptions: DirectOption[]
 }) {
   const [state, formAction] = useActionState(
     startConversation,
     initialMessageActionState
+  )
+  const [mode, setMode] = useState<"CLASS_SECTION" | "DIRECT" | "PARENT_TEACHER">(
+    "DIRECT"
+  )
+  const [recipientKey, setRecipientKey] = useState("")
+  const filteredRecipients = useMemo(
+    () => directOptions.filter((option) => option.type === mode),
+    [directOptions, mode]
+  )
+  const selectedRecipient = filteredRecipients.find(
+    (option) =>
+      `${option.type}:${option.userId}:${option.classSectionId}` === recipientKey
   )
 
   return (
@@ -42,49 +57,83 @@ export function NewMessageForm({
           <select
             className="h-9 rounded-md border bg-background px-3 text-sm"
             name="mode"
+            value={mode}
+            onChange={(event) => {
+              setMode(event.target.value as typeof mode)
+              setRecipientKey("")
+            }}
             required
           >
-            <option value="DIRECT">Direct message</option>
-            <option value="PARENT_TEACHER">Parent-teacher message</option>
+            <option value="DIRECT">DM</option>
+            <option value="PARENT_TEACHER">Parent</option>
             <option value="CLASS_SECTION">Class group</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Recipient</span>
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            name="recipientUserId"
-          >
-            <option value="">None for class group</option>
-            {directOptions.map((option) => (
-              <option
-                key={`${option.type}-${option.userId}-${option.classSectionId}`}
-                value={option.userId}
+
+        {mode === "CLASS_SECTION" ? (
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium">Class group</span>
+            <select
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              name="classSectionId"
+              required
+            >
+              {classGroupOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            {!classGroupOptions.length ? (
+              <span className="text-xs text-muted-foreground">
+                No class groups are available.
+              </span>
+            ) : null}
+          </label>
+        ) : (
+          <>
+            <input
+              name="classSectionId"
+              type="hidden"
+              value={selectedRecipient?.classSectionId ?? ""}
+            />
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium">
+                {mode === "PARENT_TEACHER" ? "Parent" : "Recipient"}
+              </span>
+              <select
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                name="recipientUserId"
+                value={recipientKey}
+                onChange={(event) => setRecipientKey(event.target.value)}
+                required
               >
-                {option.label} · {option.description}
-              </option>
-            ))}
-          </select>
-          {!directOptions.length ? (
-            <span className="text-xs text-muted-foreground">
-              No direct recipients are available for your role.
-            </span>
-          ) : null}
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Class section</span>
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            name="classSectionId"
-          >
-            <option value="">No class context</option>
-            {classGroupOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+                <option value="">
+                  {mode === "PARENT_TEACHER"
+                    ? "Select a parent"
+                    : "Select a student or teacher"}
+                </option>
+                {filteredRecipients.map((option) => {
+                  const key = `${option.type}:${option.userId}:${option.classSectionId}`
+
+                  return (
+                    <option key={key} value={key}>
+                      {option.label} - {option.description}
+                    </option>
+                  )
+                })}
+              </select>
+              {!filteredRecipients.length ? (
+                <span className="text-xs text-muted-foreground">
+                  {mode === "PARENT_TEACHER"
+                    ? "No parents are available to message."
+                    : "No direct recipients are available for your role."}
+                </span>
+              ) : null}
+            </label>
+          </>
+        )}
+
         <label className="grid gap-1 text-sm">
           <span className="font-medium">First message</span>
           <textarea

@@ -10,7 +10,7 @@ export default async function MessagesPage({
   searchParams: Promise<{ filter?: string; q?: string }>
 }) {
   const params = await searchParams
-  const [{ conversations, filter, q }, options] = await Promise.all([
+  const [{ conversations, filter, q, user }, options] = await Promise.all([
     getConversationList({ filter: params.filter ?? "all", q: params.q ?? "" }),
     getConversationStartOptions(),
   ])
@@ -18,6 +18,11 @@ export default async function MessagesPage({
   return (
     <main className="flex-1 bg-muted/40 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
+        <Button asChild size="sm" variant="outline">
+          <Link href={getDashboardHref(user.roleAssignments.map((item) => item.role))}>
+            Back
+          </Link>
+        </Button>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
           <p className="text-sm text-muted-foreground">
@@ -110,6 +115,25 @@ export default async function MessagesPage({
       </div>
     </main>
   )
+}
+
+function getDashboardHref(roles: string[]) {
+  if (
+    roles.some((role) =>
+      ["SUPER_ADMIN", "ORG_ADMIN", "SCHOOL_ADMIN", "ACADEMIC_STAFF"].includes(
+        role
+      )
+    )
+  ) {
+    return "/admin"
+  }
+  if (roles.some((role) => ["INSTRUCTOR", "HOMEROOM_TEACHER"].includes(role))) {
+    return "/instructor"
+  }
+  if (roles.includes("STUDENT")) return "/student"
+  if (roles.includes("PARENT")) return "/parent"
+
+  return "/"
 }
 
 function formatDate(value: Date) {

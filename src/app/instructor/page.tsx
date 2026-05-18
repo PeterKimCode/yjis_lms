@@ -7,9 +7,13 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import { getInstructorClasses } from "@/modules/dashboards/data"
+import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 
 export default async function InstructorPage() {
-  const { classSections } = await getInstructorClasses()
+  const [{ classSections }, unreadMessages] = await Promise.all([
+    getInstructorClasses(),
+    getUnreadMessageCountForCurrentUser(),
+  ])
 
   return (
     <DashboardPage
@@ -18,7 +22,11 @@ export default async function InstructorPage() {
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard href="/instructor/classes" label="Classes" value={classSections.length} />
-        <MetricCard href="/messages" label="Messages" value="Open" />
+        <MetricCard
+          href="/messages"
+          label="Messages"
+          value={unreadMessages ? `${unreadMessages} unread` : "Open"}
+        />
         <MetricCard
           label="Students"
           value={classSections.reduce(

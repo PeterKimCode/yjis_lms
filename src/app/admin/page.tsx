@@ -11,6 +11,7 @@ import {
 } from "@/modules/admin/access"
 import { getAdminData } from "@/modules/admin/data"
 import { AdminLinkGrid, AdminPageHeader } from "@/modules/admin/components"
+import { getUnreadMessageCount } from "@/modules/messages/data"
 
 export default async function AdminPage() {
   const admin = await getAdminData()
@@ -21,6 +22,7 @@ export default async function AdminPage() {
     courseCount,
     classSectionCount,
     userCount,
+    unreadMessages,
   ] = await Promise.all([
     prisma.campus.count({ where: getCampusWhereForAdmin(admin.user) }),
     prisma.academicYear.count({
@@ -31,6 +33,7 @@ export default async function AdminPage() {
       where: getClassSectionWhereForAdmin(admin.user),
     }),
     prisma.user.count({ where: getUserWhereForAdmin(admin.user) }),
+    getUnreadMessageCount(admin.user.id),
   ])
 
   const metrics = [
@@ -40,6 +43,7 @@ export default async function AdminPage() {
     ["Courses", courseCount, "/admin/courses"],
     ["Class Sections", classSectionCount, "/admin/class-sections"],
     ["Users", userCount, "/admin/users"],
+    ["Messages", unreadMessages ? `${unreadMessages} unread` : "Open", "/messages"],
   ] as const
 
   return (
