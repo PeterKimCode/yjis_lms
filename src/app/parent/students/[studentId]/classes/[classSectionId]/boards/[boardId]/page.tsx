@@ -5,16 +5,16 @@ export default async function ParentBoardPage({
   searchParams,
 }: {
   params: Promise<{ boardId: string; classSectionId: string; studentId: string }>
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ pinned?: string; q?: string; status?: string }>
 }) {
   const { boardId, studentId } = await params
-  const q = (await searchParams).q ?? ""
+  const query = await searchParams
 
   return (
     <BoardDetailPage
       backHref={`/parent/students/${studentId}`}
       boardId={boardId}
-      q={q}
+      query={query}
     />
   )
 }

@@ -37,14 +37,24 @@ export function boardKindLabel(kind: BoardKind) {
 export function boardKindHelp(kind: BoardKind) {
   return {
     SCHOOL_ANNOUNCEMENTS:
-      "Announcements are read-only for students unless posting is enabled.",
+      "School-wide or campus-wide announcements. Usually admin-managed. Students and parents normally read only.",
     CLASS_ANNOUNCEMENTS:
-      "Class announcements are managed by assigned instructors and admins.",
-    CLASS_QA: "Q&A boards allow students to ask class questions.",
-    CLASS_RESOURCES: "Resources boards are for class materials.",
+      "Announcements for one class section. Usually instructor-managed. Students and parents normally read only.",
+    CLASS_QA:
+      "Question-and-answer board for a class. Students can ask questions if student posting is enabled.",
+    CLASS_RESOURCES:
+      "Resources and learning materials for a class. Usually instructor-managed.",
     GENERAL_DISCUSSION:
-      "General discussion boards support broader community conversations.",
+      "General discussion board. Enable posting carefully because more users may participate.",
   }[kind]
+}
+
+export function isClassBoardKind(kind: BoardKind) {
+  return (
+    kind === "CLASS_ANNOUNCEMENTS" ||
+    kind === "CLASS_QA" ||
+    kind === "CLASS_RESOURCES"
+  )
 }
 
 export function getBoardTypeForKind(kind: BoardKind) {

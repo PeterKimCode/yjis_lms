@@ -5,16 +5,16 @@ export default async function InstructorBoardPage({
   searchParams,
 }: {
   params: Promise<{ boardId: string; classSectionId: string }>
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ pinned?: string; q?: string; status?: string }>
 }) {
   const { boardId, classSectionId } = await params
-  const q = (await searchParams).q ?? ""
+  const query = await searchParams
 
   return (
     <BoardDetailPage
       backHref={`/instructor/classes/${classSectionId}`}
       boardId={boardId}
-      q={q}
+      query={query}
     />
   )
 }

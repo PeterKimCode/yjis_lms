@@ -24,7 +24,7 @@ export async function getBoardAccess(boardId: string) {
     },
   })
 
-  if (!user || !board || !board.isActive) {
+  if (!user || !board) {
     return {
       board,
       canComment: false,
@@ -37,7 +37,8 @@ export async function getBoardAccess(boardId: string) {
 
   const settings = getBoardSettings(board.settings)
   const canManage = await canManageBoard(user.id, board.id)
-  const canView = canManage || (await canUserViewBoard(user.id, board))
+  const canView =
+    canManage || (board.isActive && (await canUserViewBoard(user.id, board)))
   const hasStudentRole = user.roleAssignments.some(
     (assignment) => assignment.role === UserRole.STUDENT
   )

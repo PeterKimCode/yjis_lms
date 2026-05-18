@@ -7,14 +7,20 @@ import {
 } from "@/modules/boards/constants"
 import { getBoardAccess } from "@/modules/boards/permissions"
 
-export async function getBoardDetail(boardId: string, q = "") {
+export async function getBoardDetail(
+  boardId: string,
+  query: string | { pinned?: string; q?: string; status?: string } = ""
+) {
   const access = await getBoardAccess(boardId)
 
   if (!access.canView || !access.board) {
     return null
   }
 
-  const query = q.trim()
+  const q = typeof query === "string" ? query : query.q ?? ""
+  const status = typeof query === "string" ? "published" : query.status ?? "published"
+  const pinned = typeof query === "string" ? "all" : query.pinned ?? "all"
+  const search = q.trim()
   const board = await getPrismaClient().board.findUnique({
     where: { id: boardId },
     include: {
@@ -29,12 +35,23 @@ export async function getBoardDetail(boardId: string, q = "") {
       organization: true,
       posts: {
         where: {
-          publishedAt: { not: null },
-          ...(query
+          ...(access.canManage
+            ? status === "unpublished"
+              ? { publishedAt: null }
+              : status === "all"
+                ? {}
+                : { publishedAt: { not: null } }
+            : { publishedAt: { not: null } }),
+          ...(pinned === "pinned"
+            ? { isPinned: true }
+            : pinned === "normal"
+              ? { isPinned: false }
+              : {}),
+          ...(search
             ? {
                 OR: [
-                  { title: { contains: query, mode: "insensitive" } },
-                  { body: { contains: query, mode: "insensitive" } },
+                  { title: { contains: search, mode: "insensitive" } },
+                  { body: { contains: search, mode: "insensitive" } },
                 ],
               }
             : {}),

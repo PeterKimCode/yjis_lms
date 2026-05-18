@@ -10,6 +10,7 @@ import {
   BOARD_KIND_OPTIONS,
   getBoardScopeTypeForKind,
   getBoardTypeForKind,
+  isClassBoardKind,
 } from "@/modules/boards/constants"
 import { getBoardAccess } from "@/modules/boards/permissions"
 
@@ -22,19 +23,36 @@ const checkboxBoolean = z
   .union([z.literal("on"), z.null()])
   .transform((value) => value === "on")
 
-const boardSchema = z.object({
-  id: optionalString,
-  organizationId: requiredString,
-  campusId: optionalString,
-  classSectionId: optionalString,
-  boardKind: z.enum(BOARD_KIND_OPTIONS),
-  name: requiredString.max(200),
-  description: optionalString,
-  allowStudentPosts: checkboxBoolean,
-  allowParentPosts: checkboxBoolean,
-  allowComments: checkboxBoolean,
-  isActive: checkboxBoolean,
-})
+const boardSchema = z
+  .object({
+    id: optionalString,
+    organizationId: requiredString,
+    campusId: optionalString,
+    classSectionId: optionalString,
+    boardKind: z.enum(BOARD_KIND_OPTIONS),
+    name: requiredString.max(200),
+    description: optionalString,
+    allowStudentPosts: checkboxBoolean,
+    allowParentPosts: checkboxBoolean,
+    allowComments: checkboxBoolean,
+    isActive: checkboxBoolean,
+  })
+  .superRefine((data, context) => {
+    if (isClassBoardKind(data.boardKind) && !data.classSectionId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Class boards require a class section.",
+        path: ["classSectionId"],
+      })
+    }
+    if (data.boardKind === "SCHOOL_ANNOUNCEMENTS" && data.classSectionId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "School announcements should not be attached to a class section.",
+        path: ["classSectionId"],
+      })
+    }
+  })
 
 export async function saveBoard(formData: FormData) {
   const parsed = boardSchema.safeParse({
@@ -46,7 +64,10 @@ export async function saveBoard(formData: FormData) {
   })
 
   if (!parsed.success) {
-    throw new Error("Board title, type, and scope are required.")
+    throw new Error(
+      parsed.error.issues[0]?.message ??
+        "Board title, type, and scope are required."
+    )
   }
 
   const data = parsed.data
@@ -115,7 +136,12 @@ export async function saveBoard(formData: FormData) {
 
 const classBoardSchema = z.object({
   classSectionId: requiredString,
-  boardKind: z.enum(BOARD_KIND_OPTIONS),
+  boardKind: z.enum([
+    "CLASS_ANNOUNCEMENTS",
+    "CLASS_QA",
+    "CLASS_RESOURCES",
+    "GENERAL_DISCUSSION",
+  ]),
   name: requiredString.max(200),
   description: optionalString,
   allowStudentPosts: checkboxBoolean,
@@ -168,17 +194,68 @@ export async function createClassBoard(formData: FormData) {
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
 }
 
+const boardIdSchema = z.object({
+  boardId: requiredString,
+})
+
+export async function deactivateBoard(formData: FormData) {
+  const data = boardIdSchema.parse(Object.fromEntries(formData.entries()))
+  const access = await getBoardAccess(data.boardId)
+
+  if (!access.board || !access.canManage) {
+    throw new Error("You do not have permission to deactivate this board.")
+  }
+
+  await getPrismaClient().board.update({
+    where: { id: access.board.id },
+    data: { isActive: false },
+  })
+  revalidateBoard(access.board.id, access.board.classSectionId)
+  revalidatePath("/admin/boards")
+}
+
+export async function deleteBoard(formData: FormData) {
+  const data = boardIdSchema.parse(Object.fromEntries(formData.entries()))
+  const access = await getBoardAccess(data.boardId)
+
+  if (!access.board || !access.canManage) {
+    throw new Error("You do not have permission to delete this board.")
+  }
+
+  const postCount = await getPrismaClient().post.count({
+    where: { boardId: access.board.id },
+  })
+
+  if (postCount > 0) {
+    await getPrismaClient().board.update({
+      where: { id: access.board.id },
+      data: { isActive: false },
+    })
+  } else {
+    await getPrismaClient().board.delete({ where: { id: access.board.id } })
+  }
+
+  revalidatePath("/admin/boards")
+  if (access.board.classSectionId) {
+    revalidatePath(`/instructor/classes/${access.board.classSectionId}`)
+    revalidatePath(`/student/classes/${access.board.classSectionId}`)
+  }
+}
+
 const postSchema = z.object({
   boardId: requiredString,
+  postId: optionalString,
   title: requiredString.max(200),
   body: requiredString.max(10000),
   isPinned: checkboxBoolean,
+  isPublished: checkboxBoolean,
 })
 
 export async function createPost(formData: FormData) {
   const parsed = postSchema.safeParse({
     ...Object.fromEntries(formData.entries()),
     isPinned: formData.get("isPinned"),
+    isPublished: "on",
   })
 
   if (!parsed.success) {
@@ -207,8 +284,74 @@ export async function createPost(formData: FormData) {
   revalidateBoard(access.board.id, access.board.classSectionId)
 }
 
+export async function updatePost(formData: FormData) {
+  const parsed = postSchema.safeParse({
+    ...Object.fromEntries(formData.entries()),
+    isPinned: formData.get("isPinned"),
+    isPublished: formData.get("isPublished"),
+  })
+
+  if (!parsed.success || !parsed.data.postId) {
+    throw new Error("Post title and content are required.")
+  }
+
+  const data = parsed.data
+  const postId = data.postId as string
+  const access = await getBoardAccess(data.boardId)
+  const post = await getPrismaClient().post.findUniqueOrThrow({
+    where: { id: postId },
+    select: { authorId: true, boardId: true },
+  })
+
+  if (
+    !access.user ||
+    post.boardId !== data.boardId ||
+    (!access.canManage && post.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to edit this post.")
+  }
+
+  await getPrismaClient().post.update({
+    where: { id: postId },
+    data: {
+      body: data.body,
+      isPinned: access.canManage ? data.isPinned : false,
+      publishedAt: access.canManage && !data.isPublished ? null : new Date(),
+      title: data.title,
+    },
+  })
+
+  if (access.board) revalidateBoard(access.board.id, access.board.classSectionId)
+}
+
+const postDeleteSchema = z.object({
+  boardId: requiredString,
+  postId: requiredString,
+})
+
+export async function deletePost(formData: FormData) {
+  const data = postDeleteSchema.parse(Object.fromEntries(formData.entries()))
+  const access = await getBoardAccess(data.boardId)
+  const post = await getPrismaClient().post.findUniqueOrThrow({
+    where: { id: data.postId },
+    select: { authorId: true, boardId: true },
+  })
+
+  if (
+    !access.user ||
+    post.boardId !== data.boardId ||
+    (!access.canManage && post.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to delete this post.")
+  }
+
+  await getPrismaClient().post.delete({ where: { id: data.postId } })
+  if (access.board) revalidateBoard(access.board.id, access.board.classSectionId)
+}
+
 const commentSchema = z.object({
   postId: requiredString,
+  commentId: optionalString,
   body: requiredString.max(3000),
 })
 
@@ -240,6 +383,59 @@ export async function createComment(formData: FormData) {
   })
 
   revalidateBoard(post.boardId, post.board.classSectionId)
+}
+
+export async function updateComment(formData: FormData) {
+  const parsed = commentSchema.safeParse(Object.fromEntries(formData.entries()))
+
+  if (!parsed.success || !parsed.data.commentId) {
+    throw new Error("Comment content is required.")
+  }
+
+  const data = parsed.data
+  const commentId = data.commentId as string
+  const comment = await getPrismaClient().comment.findUniqueOrThrow({
+    where: { id: commentId },
+    include: { post: { include: { board: true } } },
+  })
+  const access = await getBoardAccess(comment.post.boardId)
+
+  if (
+    !access.user ||
+    comment.postId !== data.postId ||
+    (!access.canManage && comment.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to edit this comment.")
+  }
+
+  await getPrismaClient().comment.update({
+    where: { id: comment.id },
+    data: { body: data.body },
+  })
+  revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
+}
+
+const commentDeleteSchema = z.object({
+  commentId: requiredString,
+})
+
+export async function deleteComment(formData: FormData) {
+  const data = commentDeleteSchema.parse(Object.fromEntries(formData.entries()))
+  const comment = await getPrismaClient().comment.findUniqueOrThrow({
+    where: { id: data.commentId },
+    include: { post: { include: { board: true } } },
+  })
+  const access = await getBoardAccess(comment.post.boardId)
+
+  if (
+    !access.user ||
+    (!access.canManage && comment.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to delete this comment.")
+  }
+
+  await getPrismaClient().comment.delete({ where: { id: comment.id } })
+  revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
 }
 
 function revalidateBoard(boardId: string, classSectionId: string | null) {

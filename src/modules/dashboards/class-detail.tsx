@@ -119,7 +119,10 @@ export async function ClassSectionDetail({
         <SectionBlock title={`Lessons · ${gradeWeights.lessonsWeight}%`}>
           <div className="space-y-4">
             {mode === "instructor" ? (
-              <details className="rounded-md border bg-background p-3">
+              <details
+                className="rounded-md border bg-background p-3"
+                open={!section.boards.length}
+              >
                 <summary className="cursor-pointer text-sm font-medium">
                   Create lesson
                 </summary>

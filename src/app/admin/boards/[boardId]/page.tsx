@@ -1,139 +1,68 @@
 import { notFound } from "next/navigation"
 
-import { saveBoard } from "@/modules/boards/actions"
+import { deleteBoard, deactivateBoard } from "@/modules/boards/actions"
 import { BoardDetailPage } from "@/modules/boards/board-detail"
-import {
-  BOARD_KIND_OPTIONS,
-  boardKindLabel,
-  getBoardSettings,
-} from "@/modules/boards/constants"
+import { BoardForm } from "@/modules/boards/board-form"
 import { getBoardDetail } from "@/modules/boards/data"
-import {
-  AdminSelect,
-  Field,
-  SubmitButton,
-} from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { Button } from "@/components/ui/button"
 
 export default async function AdminBoardDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ boardId: string }>
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ pinned?: string; q?: string; status?: string }>
 }) {
   const { boardId } = await params
-  const q = (await searchParams).q ?? ""
+  const query = await searchParams
   const [admin, detail] = await Promise.all([
     getAcademicSetupOptions(),
-    getBoardDetail(boardId, q),
+    getBoardDetail(boardId, query),
   ])
 
   if (!detail || !detail.canManage) {
     notFound()
   }
 
-  const settings = getBoardSettings(detail.board.settings)
-
   return (
     <div className="space-y-6">
-      <details className="rounded-lg border bg-background p-4">
+      <details className="rounded-lg border bg-background p-4" open>
         <summary className="cursor-pointer font-medium">Board settings</summary>
-        <form
-          action={saveBoard}
-          className="grid gap-3 pt-4 md:grid-cols-2 xl:grid-cols-4"
-        >
-          <input name="id" type="hidden" value={detail.board.id} />
-          <AdminSelect
-            includeEmpty={false}
-            label="Organization"
-            name="organizationId"
-            options={admin.organizationOptions}
-            defaultValue={detail.board.organizationId}
-            required
-          />
-          <AdminSelect
-            label="Campus"
-            name="campusId"
-            options={admin.campusOptions}
-            defaultValue={detail.board.campusId}
-          />
-          <AdminSelect
-            label="Class section"
-            name="classSectionId"
-            options={admin.classSections.map((section) => ({
+        <div className="pt-4">
+          <BoardForm
+            board={detail.board}
+            campusOptions={admin.campuses.map((campus) => ({
+              id: campus.id,
+              label: `${campus.name} (${campus.organization.name})`,
+              organizationId: campus.organizationId,
+            }))}
+            classSectionOptions={admin.classSections.map((section) => ({
               id: section.id,
               label: `${section.name} (${section.course.title})`,
+              organizationId: section.organizationId,
+              campusId: section.campusId,
             }))}
-            defaultValue={detail.board.classSectionId}
+            organizationOptions={admin.organizationOptions}
+            submitLabel="Save board"
           />
-          <label className="grid min-w-0 gap-1 text-sm">
-            <span className="font-medium">Board type</span>
-            <select
-              className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
-              name="boardKind"
-              defaultValue={settings.boardKind}
-              required
-            >
-              {BOARD_KIND_OPTIONS.map((kind) => (
-                <option key={kind} value={kind}>
-                  {boardKindLabel(kind)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Field
-            label="Title"
-            name="name"
-            defaultValue={detail.board.name}
-            required
-          />
-          <label className="grid min-w-0 gap-1 text-sm md:col-span-2">
-            <span className="font-medium">Description</span>
-            <textarea
-              className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm"
-              name="description"
-              defaultValue={detail.board.description ?? ""}
-            />
-          </label>
-          <label className="flex items-end gap-2 text-sm">
-            <input
-              name="allowStudentPosts"
-              type="checkbox"
-              defaultChecked={settings.allowStudentPosts}
-            />
-            Allow student posts
-          </label>
-          <label className="flex items-end gap-2 text-sm">
-            <input
-              name="allowParentPosts"
-              type="checkbox"
-              defaultChecked={settings.allowParentPosts}
-            />
-            Allow parent posts
-          </label>
-          <label className="flex items-end gap-2 text-sm">
-            <input
-              name="allowComments"
-              type="checkbox"
-              defaultChecked={settings.allowComments}
-            />
-            Allow comments
-          </label>
-          <label className="flex items-end gap-2 text-sm">
-            <input
-              name="isActive"
-              type="checkbox"
-              defaultChecked={detail.board.isActive}
-            />
-            Active
-          </label>
-          <div className="flex items-end">
-            <SubmitButton />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <form action={deactivateBoard}>
+              <input name="boardId" type="hidden" value={detail.board.id} />
+              <Button size="sm" type="submit" variant="outline">
+                Deactivate board
+              </Button>
+            </form>
+            <form action={deleteBoard}>
+              <input name="boardId" type="hidden" value={detail.board.id} />
+              <Button size="sm" type="submit" variant="destructive">
+                Delete if empty
+              </Button>
+            </form>
           </div>
-        </form>
+        </div>
       </details>
-      <BoardDetailPage boardId={boardId} backHref="/admin/boards" q={q} />
+      <BoardDetailPage boardId={boardId} backHref="/admin/boards" query={query} />
     </div>
   )
 }
