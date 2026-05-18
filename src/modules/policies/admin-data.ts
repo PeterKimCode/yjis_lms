@@ -4,10 +4,24 @@ import { getPrismaClient } from "@/lib/prisma"
 import { getAdminData } from "@/modules/admin/data"
 import { resolvePolicies } from "@/modules/policies/resolve"
 
-export async function getPolicyAdminData() {
+export async function getPolicyAdminData(input: {
+  campusId?: string | null
+  organizationId?: string | null
+} = {}) {
   const admin = await getAdminData()
-  const organizationId = admin.organizations[0]?.id ?? null
-  const campusId = admin.campuses[0]?.id ?? null
+  const requestedOrganization = admin.organizations.find(
+    (organization) => organization.id === input.organizationId
+  )
+  const organizationId =
+    requestedOrganization?.id ?? admin.organizations[0]?.id ?? null
+  const campusOptions = admin.campuses
+    .filter((campus) => !organizationId || campus.organizationId === organizationId)
+    .map((campus) => ({
+      id: campus.id,
+      label: `${campus.name} (${campus.organization.name})`,
+    }))
+  const campusId =
+    campusOptions.find((campus) => campus.id === input.campusId)?.id ?? null
   const policies = organizationId
     ? await resolvePolicies({ organizationId, campusId })
     : null
@@ -25,10 +39,10 @@ export async function getPolicyAdminData() {
 
   return {
     ...admin,
+    scopedCampusOptions: campusOptions,
     selectedOrganizationId: organizationId,
     selectedCampusId: campusId,
     policies,
     gradingScales,
   }
 }
-

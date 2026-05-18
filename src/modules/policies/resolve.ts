@@ -30,6 +30,7 @@ type VideoPolicyRecord = {
 } | null
 
 type GradingPolicyRecord = {
+  gpaScale: Prisma.Decimal | null
   settings: Prisma.JsonValue | null
 } | null
 
@@ -65,6 +66,7 @@ export async function resolvePolicies(
           where,
           orderBy: { createdAt: "desc" },
           select: {
+            gpaScale: true,
             settings: true,
           },
         })
@@ -82,6 +84,7 @@ export async function resolvePolicies(
     assignment: normalizeAssignmentPolicy(gradingPolicy),
     gradeVisibility: normalizeGradeVisibilityPolicy(gradingPolicy),
     document: normalizeDocumentPolicy(gradingPolicy),
+    gpaScale: gradingPolicy?.gpaScale?.toString() ?? "4.50",
     gradingScale,
   }
 }
@@ -271,4 +274,3 @@ function toBoolean(value: unknown, fallback: boolean) {
   if (value === "false") return false
   return fallback
 }
-

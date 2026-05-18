@@ -15,19 +15,13 @@ import {
 } from "@/modules/policies/actions"
 import type { ResolvedPolicies } from "@/modules/policies/types"
 
-type Option = { id: string; label: string }
-
 export function PolicyForms({
   campusId,
-  campusOptions,
   organizationId,
-  organizationOptions,
   policies,
 }: {
   campusId: string | null
-  campusOptions: Option[]
   organizationId: string
-  organizationOptions: Option[]
   policies: ResolvedPolicies
 }) {
   return (
@@ -37,37 +31,31 @@ export function PolicyForms({
         <div className="pt-4">
           <AttendancePolicyForm
             campusId={campusId}
-            campusOptions={campusOptions}
             organizationId={organizationId}
-            organizationOptions={organizationOptions}
             policies={policies}
           />
         </div>
       </details>
-      <details className="rounded-lg border bg-background p-4">
+      <details className="rounded-lg border bg-background p-4" open>
         <summary className="cursor-pointer font-medium">
           Video completion policy
         </summary>
         <div className="pt-4">
           <VideoPolicyForm
             campusId={campusId}
-            campusOptions={campusOptions}
             organizationId={organizationId}
-            organizationOptions={organizationOptions}
             policies={policies}
           />
         </div>
       </details>
-      <details className="rounded-lg border bg-background p-4">
+      <details className="rounded-lg border bg-background p-4" open>
         <summary className="cursor-pointer font-medium">
           Assignments, grades, GPA, and documents
         </summary>
         <div className="pt-4">
           <GradingPolicyForm
             campusId={campusId}
-            campusOptions={campusOptions}
             organizationId={organizationId}
-            organizationOptions={organizationOptions}
             policies={policies}
           />
         </div>
@@ -78,9 +66,7 @@ export function PolicyForms({
 
 function AttendancePolicyForm({
   campusId,
-  campusOptions,
   organizationId,
-  organizationOptions,
   policies,
 }: SharedProps) {
   const [state, formAction, pending] = useActionState(
@@ -90,14 +76,9 @@ function AttendancePolicyForm({
 
   return (
     <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <ContextFields
-        campusId={campusId}
-        campusOptions={campusOptions}
-        organizationId={organizationId}
-        organizationOptions={organizationOptions}
-      />
+      <ContextFields campusId={campusId} organizationId={organizationId} />
       <NumberField
-        help="Minutes after session start before a student is marked late."
+        help="A student is late if they are marked after this many minutes from class start. Default: 10 minutes."
         label="Late threshold (minutes)"
         min="0"
         name="lateThresholdMinutes"
@@ -105,7 +86,7 @@ function AttendancePolicyForm({
         value={policies.attendance.lateThresholdMinutes}
       />
       <NumberField
-        help="Optional attendance danger threshold for reporting."
+        help="Optional warning/fail threshold based on absence rate. Example: 30 means a student is flagged if absences reach 30% of attendance-counted sessions."
         label="Absence fail threshold (%)"
         max="100"
         min="0"
@@ -114,8 +95,8 @@ function AttendancePolicyForm({
         value={policies.attendance.absenceFailThresholdRate ?? ""}
       />
       <NumberField
-        help="If late counts as absence, this controls how much one late record reduces attendance."
-        label="Late absence equivalent"
+        help="How much one late record counts as an absence when Late counts as absence is enabled. Example: 0.5 means two late records count as one absence. 0 means lates do not count as absences."
+        label="Late-to-absence conversion"
         max="1"
         min="0"
         name="lateEquivalentAbsenceCount"
@@ -124,25 +105,25 @@ function AttendancePolicyForm({
       />
       <CheckField
         checked={policies.attendance.countLateAsAbsence}
-        help="If enabled, late records can reduce attendance like absences."
+        help="If enabled, late records reduce attendance like absences according to the conversion value. Default: off."
         label="Late counts as absence"
         name="countLateAsAbsence"
       />
       <CheckField
         checked={policies.attendance.excusedCountsAsPresent}
-        help="Excused, sick, and official absences count as full attendance credit."
+        help="If enabled, excused/sick/official absences count as full attendance credit. Default: off or school policy."
         label="Excused counts as present"
         name="excusedCountsAsPresent"
       />
       <CheckField
         checked={policies.attendance.excusedCountsAgainstAttendance}
-        help="If disabled, excused records are ignored in the attendance denominator."
+        help="If enabled, excused records are included in the attendance denominator. If disabled, they are ignored when calculating the attendance rate."
         label="Excused counts in attendance rate"
         name="excusedCountsAgainstAttendance"
       />
       <CheckField
         checked={policies.attendance.allowInstructorOverride}
-        help="Allow instructors to manually edit attendance records."
+        help="If enabled, instructors can manually edit attendance records. Default: on."
         label="Allow instructor override"
         name="allowInstructorOverride"
       />
@@ -153,9 +134,7 @@ function AttendancePolicyForm({
 
 function VideoPolicyForm({
   campusId,
-  campusOptions,
   organizationId,
-  organizationOptions,
   policies,
 }: SharedProps) {
   const [state, formAction, pending] = useActionState(
@@ -165,14 +144,9 @@ function VideoPolicyForm({
 
   return (
     <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <ContextFields
-        campusId={campusId}
-        campusOptions={campusOptions}
-        organizationId={organizationId}
-        organizationOptions={organizationOptions}
-      />
+      <ContextFields campusId={campusId} organizationId={organizationId} />
       <NumberField
-        help="Percentage of actual watched video required to mark a lesson complete."
+        help="Students must watch this percentage of the lesson video to complete it. Default: 90%."
         label="Completion threshold (%)"
         max="100"
         min="1"
@@ -181,7 +155,7 @@ function VideoPolicyForm({
         value={policies.videoCompletion.completionThresholdPercent}
       />
       <NumberField
-        help="Optional minimum watch time before completion can be granted."
+        help="Optional minimum number of seconds required, even if the percentage threshold is met."
         label="Minimum watch seconds"
         min="0"
         name="minimumWatchSeconds"
@@ -190,20 +164,22 @@ function VideoPolicyForm({
       />
       <CheckField
         checked={policies.videoCompletion.requireActualWatchedCoverage}
-        help="Seeking to the end does not count as completion."
+        help="If enabled, skipping to the end does not count. The system tracks actual watched intervals."
         label="Require actual watched coverage"
         name="requireActualWatchedCoverage"
       />
       <FormFooter pending={pending} state={state} />
+      <p className="text-xs text-muted-foreground md:col-span-2 xl:col-span-4">
+        YouTube progress depends on the YouTube IFrame Player API and may not
+        work for videos that block embedding.
+      </p>
     </form>
   )
 }
 
 function GradingPolicyForm({
   campusId,
-  campusOptions,
   organizationId,
-  organizationOptions,
   policies,
 }: SharedProps) {
   const [state, formAction, pending] = useActionState(
@@ -212,87 +188,116 @@ function GradingPolicyForm({
   )
 
   return (
-    <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <ContextFields
-        campusId={campusId}
-        campusOptions={campusOptions}
-        organizationId={organizationId}
-        organizationOptions={organizationOptions}
-      />
-      <CheckField
-        checked={policies.assignment.allowLateSubmissionDefault}
-        help="Default for new assignments. Instructors can still override per assignment."
-        label="Allow late submissions by default"
-        name="allowLateSubmissionDefault"
-      />
-      <CheckField
-        checked={policies.assignment.allowResubmissionBeforeDue}
-        help="Students can update submissions before the due date."
-        label="Allow resubmission before due"
-        name="allowResubmissionBeforeDue"
-      />
-      <NumberField
-        help="MVP stores this setting; automatic penalty application can be expanded later."
-        label="Late penalty (%)"
-        max="100"
-        min="0"
-        name="latePenaltyPercent"
-        step="1"
-        value={policies.assignment.latePenaltyPercent}
-      />
-      <NumberField
-        help="Optional maximum number of late days."
-        label="Maximum late days"
-        min="0"
-        name="maxLateDays"
-        step="1"
-        value={policies.assignment.maxLateDays ?? ""}
-      />
-      <CheckField
-        checked={policies.gradeVisibility.studentsCanSeeDraftGrades}
-        help="Keep disabled for MVP unless draft grade previews are intentional."
-        label="Students can see draft grades"
-        name="studentsCanSeeDraftGrades"
-      />
-      <CheckField
-        checked={policies.gradeVisibility.parentsCanSeeDraftGrades}
-        help="Keep disabled for MVP unless draft grade previews are intentional."
-        label="Parents can see draft grades"
-        name="parentsCanSeeDraftGrades"
-      />
-      <CheckField
-        checked={policies.gradeVisibility.showAssignmentFeedbackBeforeFinalGrade}
-        help="Allow graded assignment feedback before final grades are published."
-        label="Show assignment feedback before final grade"
-        name="showAssignmentFeedbackBeforeFinalGrade"
-      />
-      <CheckField
-        checked={policies.gradeVisibility.showQuizResultsImmediately}
-        help="Allow quiz results when the quiz itself allows results."
-        label="Show quiz results immediately"
-        name="showQuizResultsImmediately"
-      />
-      <CheckField
-        checked={policies.document.reportCardsRequirePublishedGrades}
-        help="Student and parent report card downloads require published/finalized grades."
-        label="Report cards require published grades"
-        name="reportCardsRequirePublishedGrades"
-      />
-      <CheckField
-        checked={policies.document.transcriptsRequirePublishedGrades}
-        help="Student and parent transcript downloads require published/finalized grades."
-        label="Transcripts require published grades"
-        name="transcriptsRequirePublishedGrades"
-      />
-      <NumberField
-        help="Used as the displayed GPA scale policy. Grade conversion uses the selected grading scale below."
-        label="GPA scale"
-        max="10"
-        min="0"
-        name="gpaScale"
-        step="0.1"
-        value="4.5"
-      />
+    <form action={formAction} className="space-y-4">
+      <ContextFields campusId={campusId} organizationId={organizationId} />
+      <details className="rounded-md border p-3" open>
+        <summary className="cursor-pointer text-sm font-medium">
+          Assignment policy
+        </summary>
+        <div className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4">
+          <CheckField
+            checked={policies.assignment.allowLateSubmissionDefault}
+            help="Default setting for new assignments. Instructors can still override per assignment if allowed."
+            label="Allow late submissions by default"
+            name="allowLateSubmissionDefault"
+          />
+          <CheckField
+            checked={policies.assignment.allowResubmissionBeforeDue}
+            help="If enabled, students can update their submission until the due date."
+            label="Allow resubmission before due date"
+            name="allowResubmissionBeforeDue"
+          />
+          <NumberField
+            help="Optional percentage penalty for late submissions. Leave 0 for no automatic penalty."
+            label="Late penalty (%)"
+            max="100"
+            min="0"
+            name="latePenaltyPercent"
+            step="1"
+            value={policies.assignment.latePenaltyPercent}
+          />
+          <NumberField
+            help="Optional number of days after due date when late submissions are still accepted."
+            label="Maximum late days"
+            min="0"
+            name="maxLateDays"
+            step="1"
+            value={policies.assignment.maxLateDays ?? ""}
+          />
+        </div>
+      </details>
+      <details className="rounded-md border p-3" open>
+        <summary className="cursor-pointer text-sm font-medium">
+          Grade visibility policy
+        </summary>
+        <div className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4">
+          <CheckField
+            checked={policies.gradeVisibility.studentsCanSeeDraftGrades}
+            help="Usually off. If off, students only see grades after they are published or finalized."
+            label="Students can see draft grades"
+            name="studentsCanSeeDraftGrades"
+          />
+          <CheckField
+            checked={policies.gradeVisibility.parentsCanSeeDraftGrades}
+            help="Usually off. If off, parents only see linked students' grades after publication."
+            label="Parents can see draft grades"
+            name="parentsCanSeeDraftGrades"
+          />
+          <CheckField
+            checked={policies.gradeVisibility.showAssignmentFeedbackBeforeFinalGrade}
+            help="If enabled, students can see assignment feedback once a submission is graded."
+            label="Show assignment feedback before final grade"
+            name="showAssignmentFeedbackBeforeFinalGrade"
+          />
+          <CheckField
+            checked={policies.gradeVisibility.showQuizResultsImmediately}
+            help="If enabled, quiz results can be shown after submission/auto-grading, depending on quiz settings."
+            label="Show quiz results immediately"
+            name="showQuizResultsImmediately"
+          />
+        </div>
+      </details>
+      <details className="rounded-md border p-3" open>
+        <summary className="cursor-pointer text-sm font-medium">
+          Document policy
+        </summary>
+        <div className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4">
+          <CheckField
+            checked={policies.document.reportCardsRequirePublishedGrades}
+            help="Students and parents can download report cards only after grades are published or finalized."
+            label="Report cards visible after published grades"
+            name="reportCardsRequirePublishedGrades"
+          />
+          <CheckField
+            checked={policies.document.transcriptsRequirePublishedGrades}
+            help="Students and parents can download transcripts only after official grades are available."
+            label="Transcripts visible after published/finalized grades"
+            name="transcriptsRequirePublishedGrades"
+          />
+          <div className="rounded-md border p-3 text-sm">
+            <div className="font-medium">Admin preview allowed</div>
+            <p className="text-xs text-muted-foreground">
+              Admins can preview draft documents within their scope.
+            </p>
+          </div>
+        </div>
+      </details>
+      <details className="rounded-md border p-3" open>
+        <summary className="cursor-pointer text-sm font-medium">
+          GPA policy
+        </summary>
+        <div className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4">
+          <NumberField
+            help="Used as the displayed GPA scale policy. Grade conversion uses the selected grading scale table below."
+            label="GPA scale"
+            max="10"
+            min="0"
+            name="gpaScale"
+            step="0.1"
+            value={policies.gpaScale}
+          />
+        </div>
+      </details>
       <FormFooter pending={pending} state={state} />
     </form>
   )
@@ -300,50 +305,18 @@ function GradingPolicyForm({
 
 type SharedProps = {
   campusId: string | null
-  campusOptions: Option[]
   organizationId: string
-  organizationOptions: Option[]
   policies: ResolvedPolicies
 }
 
 function ContextFields({
   campusId,
-  campusOptions,
   organizationId,
-  organizationOptions,
 }: Omit<SharedProps, "policies">) {
   return (
     <>
-      <label className="grid gap-1 text-sm">
-        <span className="font-medium">Organization</span>
-        <select
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          name="organizationId"
-          defaultValue={organizationId}
-          required
-        >
-          {organizationOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="grid gap-1 text-sm">
-        <span className="font-medium">Campus</span>
-        <select
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          name="campusId"
-          defaultValue={campusId ?? ""}
-        >
-          <option value="">Organization default</option>
-          {campusOptions.map((option) => (
-            <option key={option.id} value={option.id}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <input name="organizationId" type="hidden" value={organizationId} />
+      <input name="campusId" type="hidden" value={campusId ?? ""} />
     </>
   )
 }
@@ -432,4 +405,3 @@ function FormFooter({
     </div>
   )
 }
-

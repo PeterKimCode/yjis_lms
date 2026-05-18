@@ -52,7 +52,11 @@ export async function saveAttendancePolicy(
   })
 
   if (!parsed.success) {
-    return { ok: false, message: "Check attendance policy values." }
+    return {
+      ok: false,
+      message:
+        "Late threshold must be 0 or greater. Percentages must be between 0 and 100.",
+    }
   }
 
   const data = parsed.data
@@ -87,7 +91,10 @@ export async function saveVideoCompletionPolicy(
   })
 
   if (!parsed.success) {
-    return { ok: false, message: "Video completion threshold must be 1-100." }
+    return {
+      ok: false,
+      message: "Completion threshold must be between 1 and 100.",
+    }
   }
 
   const data = parsed.data
@@ -143,7 +150,11 @@ export async function saveGradingAndDocumentPolicy(
   })
 
   if (!parsed.success) {
-    return { ok: false, message: "Check assignment, grade, and document policy values." }
+    return {
+      ok: false,
+      message:
+        "Weights, penalties, and percentages must be between 0 and 100. GPA scale must be 0 or greater.",
+    }
   }
 
   const data = parsed.data
@@ -151,7 +162,7 @@ export async function saveGradingAndDocumentPolicy(
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
   await upsertGradingPolicy(data)
   revalidatePath("/admin/policies")
-  return { ok: true, message: "Assignment, grade, GPA, and document policies saved." }
+  return { ok: true, message: "Policy saved." }
 }
 
 async function verifyCampusBelongsToOrganization(
@@ -282,4 +293,3 @@ function scopedWhere(
     name,
   }
 }
-

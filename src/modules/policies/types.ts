@@ -20,6 +20,7 @@ export type ResolvedPolicies = {
   assignment: AssignmentPolicyValue
   gradeVisibility: GradeVisibilityPolicyValue
   document: DocumentPolicyValue
+  gpaScale: string
   gradingScale:
     | (GradingScale & {
         items: GradingScaleItem[]
