@@ -8,11 +8,15 @@ import {
 } from "@/modules/dashboards/components"
 import { getParentStudents } from "@/modules/dashboards/data"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
+import { getUnreadNotificationCount } from "@/modules/notifications/service"
+import { requireAuth } from "@/modules/auth/permissions"
 
 export default async function ParentPage() {
-  const [{ relations }, unreadMessages] = await Promise.all([
+  const user = await requireAuth()
+  const [{ relations }, unreadMessages, unreadNotifications] = await Promise.all([
     getParentStudents(),
     getUnreadMessageCountForCurrentUser(),
+    getUnreadNotificationCount(user.id),
   ])
 
   return (
@@ -26,6 +30,11 @@ export default async function ParentPage() {
           href="/messages"
           label="Messages"
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
+        />
+        <MetricCard
+          href="/notifications"
+          label="Notifications"
+          value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
           label="Classes"

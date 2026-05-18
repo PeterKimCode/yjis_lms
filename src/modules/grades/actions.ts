@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import {
   AttendanceStatus,
   FinalGradeStatus,
+  NotificationType,
   Prisma,
   UserRole,
 } from "@prisma/client"
@@ -18,6 +19,10 @@ import type { GradebookActionState } from "@/modules/grades/action-state"
 import { getAttendanceSummary } from "@/modules/attendance/summary"
 import { resolvePolicies } from "@/modules/policies/resolve"
 import type { AttendancePolicyValue } from "@/modules/policies/types"
+import {
+  createNotification,
+  notifyLinkedParentsForStudent,
+} from "@/modules/notifications/service"
 
 const requiredString = z.string().trim().min(1)
 const optionalString = z.preprocess(
@@ -436,15 +441,48 @@ export async function publishFinalGrades(
   formData: FormData
 ): Promise<GradebookActionState> {
   const classSectionId = String(formData.get("classSectionId") ?? "")
-  await requireGradebookManager(classSectionId)
+  const manager = await requireGradebookManager(classSectionId)
 
-  await getPrismaClient().finalGrade.updateMany({
+  const prisma = getPrismaClient()
+  await prisma.finalGrade.updateMany({
     where: { classSectionId },
     data: {
       status: FinalGradeStatus.PUBLISHED,
       publishedAt: new Date(),
     },
   })
+  const grades = await prisma.finalGrade.findMany({
+    where: { classSectionId },
+    include: {
+      classSection: {
+        include: { course: true },
+      },
+    },
+  })
+
+  await Promise.all(
+    grades.flatMap((grade) => [
+      createNotification({
+        actionUrl: `/student/classes/${classSectionId}`,
+        actorUserId: manager.id,
+        entityId: grade.id,
+        entityType: "FinalGrade",
+        title: "Final grade published",
+        body: grade.classSection.course.title,
+        type: NotificationType.FINAL_GRADE_PUBLISHED,
+        userId: grade.studentId,
+      }),
+      notifyLinkedParentsForStudent(grade.studentId, {
+        actionUrl: `/parent/students/${grade.studentId}`,
+        actorUserId: manager.id,
+        entityId: grade.id,
+        entityType: "FinalGrade",
+        title: "Final grade published",
+        body: grade.classSection.course.title,
+        type: NotificationType.FINAL_GRADE_PUBLISHED,
+      }),
+    ])
+  )
 
   revalidateGradebookPaths(classSectionId)
   return { ok: true, message: "Final grades published." }

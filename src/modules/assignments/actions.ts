@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
-import { FileVisibility, Prisma, UserRole } from "@prisma/client"
+import { FileVisibility, NotificationType, Prisma, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -13,6 +13,12 @@ import {
 } from "@/modules/auth/permissions"
 import type { AssignmentActionState } from "@/modules/assignments/action-state"
 import { validateAssignmentAttachment } from "@/modules/files/upload-validation"
+import {
+  createNotification,
+  notifyClassInstructors,
+  notifyClassStudents,
+  notifyLinkedParentsForStudent,
+} from "@/modules/notifications/service"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -93,12 +99,21 @@ export async function saveAssignment(
       },
     })
   } else {
-    await prisma.assignment.create({
+    const assignment = await prisma.assignment.create({
       data: {
         ...values,
         organizationId: classSection.organizationId,
         pointsPossible: new Prisma.Decimal(values.pointsPossible),
       },
+    })
+    await notifyClassStudents(data.classSectionId, {
+      actionUrl: `/student/classes/${data.classSectionId}`,
+      actorUserId: user.id,
+      body: data.description ?? undefined,
+      entityId: assignment.id,
+      entityType: "Assignment",
+      title: `New assignment: ${data.title}`,
+      type: NotificationType.NEW_ASSIGNMENT,
     })
   }
 
@@ -171,6 +186,7 @@ export async function submitAssignment(
       id: true,
       organizationId: true,
       classSectionId: true,
+      title: true,
       dueAt: true,
       acceptsLate: true,
     },
@@ -284,6 +300,16 @@ export async function submitAssignment(
     })
   }
 
+  await notifyClassInstructors(assignment.classSectionId, {
+    actionUrl: `/instructor/classes/${assignment.classSectionId}`,
+    actorUserId: student.id,
+    body: parsed.data.content,
+    entityId: submission.id,
+    entityType: "AssignmentSubmission",
+    title: `${student.name ?? student.email ?? "A student"} submitted ${assignment.title}`,
+    type: NotificationType.ASSIGNMENT_SUBMITTED,
+  })
+
   revalidatePath(`/student/classes/${assignment.classSectionId}`)
   revalidatePath(`/instructor/classes/${assignment.classSectionId}`)
   return { ok: true, message: "Submission saved." }
@@ -332,6 +358,7 @@ export async function gradeSubmission(
         select: {
           classSectionId: true,
           pointsPossible: true,
+          title: true,
         },
       },
     },
@@ -358,6 +385,26 @@ export async function gradeSubmission(
       gradedAt: new Date(),
     },
   })
+
+  await Promise.all([
+    createNotification({
+      actionUrl: `/student/classes/${submission.assignment.classSectionId}`,
+      actorUserId: instructor.id,
+      entityId: submission.id,
+      entityType: "AssignmentSubmission",
+      title: `Assignment graded: ${submission.assignment.title}`,
+      type: NotificationType.ASSIGNMENT_GRADED,
+      userId: submission.studentId,
+    }),
+    notifyLinkedParentsForStudent(submission.studentId, {
+      actionUrl: `/parent/students/${submission.studentId}`,
+      actorUserId: instructor.id,
+      entityId: submission.id,
+      entityType: "AssignmentSubmission",
+      title: `Assignment graded: ${submission.assignment.title}`,
+      type: NotificationType.ASSIGNMENT_GRADED,
+    }),
+  ])
 
   revalidatePath(`/instructor/classes/${submission.assignment.classSectionId}`)
   revalidatePath(`/student/classes/${submission.assignment.classSectionId}`)

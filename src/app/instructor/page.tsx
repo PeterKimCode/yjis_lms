@@ -8,11 +8,15 @@ import {
 } from "@/modules/dashboards/components"
 import { getInstructorClasses } from "@/modules/dashboards/data"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
+import { getUnreadNotificationCount } from "@/modules/notifications/service"
+import { requireAuth } from "@/modules/auth/permissions"
 
 export default async function InstructorPage() {
-  const [{ classSections }, unreadMessages] = await Promise.all([
+  const user = await requireAuth()
+  const [{ classSections }, unreadMessages, unreadNotifications] = await Promise.all([
     getInstructorClasses(),
     getUnreadMessageCountForCurrentUser(),
+    getUnreadNotificationCount(user.id),
   ])
 
   return (
@@ -26,6 +30,11 @@ export default async function InstructorPage() {
           href="/messages"
           label="Messages"
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
+        />
+        <MetricCard
+          href="/notifications"
+          label="Notifications"
+          value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
           label="Students"

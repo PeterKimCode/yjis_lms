@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import type { Prisma } from "@prisma/client"
+import { NotificationType, type Prisma } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -20,6 +20,11 @@ import {
   validateImageUpload,
 } from "@/modules/files/image-validation"
 import { uploadImageFile } from "@/modules/files/upload"
+import {
+  createNotification,
+  notifyClassInstructors,
+  notifyClassStudents,
+} from "@/modules/notifications/service"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -340,6 +345,14 @@ export async function createPost(formData: FormData) {
   })
 
   await attachImagesToPost(post.id, images, access.board, access.user.id)
+  await notifyBoardPostCreated({
+    authorId: access.user.id,
+    boardId: access.board.id,
+    body: data.body,
+    classSectionId: access.board.classSectionId,
+    postId: post.id,
+    title: data.title,
+  })
   revalidateBoard(access.board.id, access.board.classSectionId)
 }
 
@@ -464,6 +477,17 @@ export async function createComment(formData: FormData) {
   })
 
   await attachImagesToComment(comment.id, images, post.board, access.user.id)
+  if (post.authorId && post.authorId !== access.user.id) {
+    await createNotification({
+      actionUrl: "/notifications",
+      body: truncatePreview(data.body),
+      entityId: comment.id,
+      entityType: "Comment",
+      title: "New comment on your post",
+      type: NotificationType.NEW_BOARD_COMMENT,
+      userId: post.authorId,
+    })
+  }
   revalidateBoard(post.boardId, post.board.classSectionId)
 }
 
@@ -706,4 +730,47 @@ async function attachImagesToComment(
       },
     })
   }
+}
+
+async function notifyBoardPostCreated({
+  authorId,
+  boardId,
+  body,
+  classSectionId,
+  postId,
+  title,
+}: {
+  authorId: string
+  boardId: string
+  body: string
+  classSectionId: string | null
+  postId: string
+  title: string
+}) {
+  if (!classSectionId) return
+
+  await Promise.all([
+    notifyClassStudents(classSectionId, {
+      actionUrl: `/student/classes/${classSectionId}/boards/${boardId}`,
+      actorUserId: authorId,
+      body: truncatePreview(body),
+      entityId: postId,
+      entityType: "Post",
+      title: `New board post: ${title}`,
+      type: NotificationType.NEW_BOARD_POST,
+    }),
+    notifyClassInstructors(classSectionId, {
+      actionUrl: `/instructor/classes/${classSectionId}/boards/${boardId}`,
+      actorUserId: authorId,
+      body: truncatePreview(body),
+      entityId: postId,
+      entityType: "Post",
+      title: `New board post: ${title}`,
+      type: NotificationType.NEW_BOARD_POST,
+    }),
+  ])
+}
+
+function truncatePreview(value: string) {
+  return value.length > 120 ? `${value.slice(0, 117)}...` : value
 }

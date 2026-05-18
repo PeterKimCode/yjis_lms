@@ -4,9 +4,13 @@ import { LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LogoutButton } from "@/modules/auth/logout-button"
 import { getCurrentSession } from "@/modules/auth/session"
+import { getUnreadNotificationCount } from "@/modules/notifications/service"
 
 export async function AppNavigation() {
   const session = await getCurrentSession()
+  const unreadNotifications = session?.user
+    ? await getUnreadNotificationCount(session.user.id)
+    : 0
   const roleSummary =
     session?.user.roleAssignments.map((assignment) => assignment.role).join(", ") ??
     ""
@@ -24,6 +28,16 @@ export async function AppNavigation() {
                 <p className="text-sm font-medium">{session.user.name}</p>
                 <p className="text-xs text-muted-foreground">{roleSummary}</p>
               </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/notifications">
+                  Notifications
+                  {unreadNotifications ? (
+                    <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      {unreadNotifications}
+                    </span>
+                  ) : null}
+                </Link>
+              </Button>
               <LogoutButton size="sm" />
             </>
           ) : (

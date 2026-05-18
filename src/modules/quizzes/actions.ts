@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { Prisma, QuestionType, UserRole } from "@prisma/client"
+import { NotificationType, Prisma, QuestionType, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -11,6 +11,11 @@ import {
   requireAnyRole,
 } from "@/modules/auth/permissions"
 import type { QuizActionState } from "@/modules/quizzes/action-state"
+import {
+  createNotification,
+  notifyClassStudents,
+  notifyLinkedParentsForStudent,
+} from "@/modules/notifications/service"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -100,22 +105,51 @@ export async function saveQuiz(
   }
 
   const data = parsed.data
-  await requireQuizManager(data.classSectionId)
+  const manager = await requireQuizManager(data.classSectionId)
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
     where: { id: data.classSectionId },
     select: { organizationId: true },
   })
   const { id, ...values } = data
+  const previous = id
+    ? await prisma.quiz.findUnique({
+        where: { id },
+        select: { isPublished: true },
+      })
+    : null
 
   if (id) {
     await prisma.quiz.update({ where: { id }, data: values })
   } else {
-    await prisma.quiz.create({
+    const quiz = await prisma.quiz.create({
       data: {
         ...values,
         organizationId: classSection.organizationId,
       },
+    })
+    if (data.isPublished) {
+      await notifyClassStudents(data.classSectionId, {
+        actionUrl: `/student/classes/${data.classSectionId}`,
+        actorUserId: manager.id,
+        body: data.description ?? undefined,
+        entityId: quiz.id,
+        entityType: "Quiz",
+        title: `New quiz: ${data.title}`,
+        type: NotificationType.NEW_QUIZ,
+      })
+    }
+  }
+
+  if (id && data.isPublished && previous && !previous.isPublished) {
+    await notifyClassStudents(data.classSectionId, {
+      actionUrl: `/student/classes/${data.classSectionId}`,
+      actorUserId: manager.id,
+      body: data.description ?? undefined,
+      entityId: id,
+      entityType: "Quiz",
+      title: `New quiz: ${data.title}`,
+      type: NotificationType.NEW_QUIZ,
     })
   }
 
@@ -383,7 +417,7 @@ export async function gradeQuizAnswer(
       question: true,
       attempt: {
         include: {
-          quiz: { select: { classSectionId: true } },
+          quiz: { select: { classSectionId: true, title: true } },
           answers: true,
         },
       },
@@ -432,6 +466,28 @@ export async function gradeQuizAnswer(
       gradedAt: hasPendingManual ? null : new Date(),
     },
   })
+
+  if (!hasPendingManual) {
+    await Promise.all([
+      createNotification({
+        actionUrl: `/student/classes/${answer.attempt.quiz.classSectionId}`,
+        actorUserId: instructor.id,
+        entityId: answer.attemptId,
+        entityType: "QuizAttempt",
+        title: `Quiz result available: ${answer.attempt.quiz.title}`,
+        type: NotificationType.QUIZ_GRADED,
+        userId: answer.attempt.studentId,
+      }),
+      notifyLinkedParentsForStudent(answer.attempt.studentId, {
+        actionUrl: `/parent/students/${answer.attempt.studentId}`,
+        actorUserId: instructor.id,
+        entityId: answer.attemptId,
+        entityType: "QuizAttempt",
+        title: `Quiz result available: ${answer.attempt.quiz.title}`,
+        type: NotificationType.QUIZ_GRADED,
+      }),
+    ])
+  }
 
   revalidatePath(`/instructor/classes/${answer.attempt.quiz.classSectionId}`)
   revalidatePath(

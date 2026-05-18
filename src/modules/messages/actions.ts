@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { ConversationType, UserRole } from "@prisma/client"
+import { ConversationType, NotificationType, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -17,6 +17,7 @@ import {
   MESSAGE_BODY_MAX_LENGTH,
   type MessageActionState,
 } from "@/modules/messages/types"
+import { createNotificationsForUsers } from "@/modules/notifications/service"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -102,19 +103,7 @@ export async function sendMessage(
     select: { organizationId: true },
   })
 
-  await prisma.message.create({
-    data: {
-      organizationId: conversation.organizationId,
-      conversationId: data.conversationId,
-      senderId: user.id,
-      body: data.body,
-    },
-  })
-  await prisma.conversation.update({
-    where: { id: data.conversationId },
-    data: { updatedAt: new Date() },
-  })
-  await markConversationRead(data.conversationId, user.id)
+  await addMessage(data.conversationId, conversation.organizationId, user.id, data.body)
 
   revalidatePath("/messages")
   revalidatePath(`/messages/${data.conversationId}`)
@@ -368,14 +357,39 @@ async function addMessage(
   senderId: string,
   body: string
 ) {
-  await getPrismaClient().message.create({
+  const prisma = getPrismaClient()
+  await prisma.message.create({
     data: { conversationId, organizationId, senderId, body },
   })
-  await getPrismaClient().conversation.update({
+  await prisma.conversation.update({
     where: { id: conversationId },
     data: { updatedAt: new Date() },
   })
   await markConversationRead(conversationId, senderId)
+
+  const [sender, participants] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: senderId },
+      select: { email: true, name: true },
+    }),
+    prisma.conversationParticipant.findMany({
+      where: { conversationId },
+      select: { userId: true },
+    }),
+  ])
+
+  await createNotificationsForUsers(
+    participants.map((participant) => participant.userId),
+    {
+      actionUrl: `/messages/${conversationId}`,
+      actorUserId: senderId,
+      body: truncatePreview(body),
+      entityId: conversationId,
+      entityType: "Conversation",
+      title: `New message from ${sender?.name ?? sender?.email ?? "Someone"}`,
+      type: NotificationType.NEW_MESSAGE,
+    }
+  )
 }
 
 async function markConversationRead(conversationId: string, userId: string) {
@@ -419,4 +433,8 @@ function parseRecipientUserId(value: string | null) {
   if (parts.length >= 3) return parts[1] ?? null
 
   return value
+}
+
+function truncatePreview(value: string) {
+  return value.length > 120 ? `${value.slice(0, 117)}...` : value
 }

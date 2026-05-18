@@ -124,11 +124,23 @@ enum ConversationType {
 enum NotificationType {
   NEW_POST
   NEW_COMMENT
+  NEW_BOARD_POST
+  NEW_BOARD_COMMENT
   NEW_MESSAGE
   ASSIGNMENT_DUE
+  NEW_ASSIGNMENT
+  ASSIGNMENT_SUBMITTED
+  ASSIGNMENT_GRADED
   QUIZ_OPENED
+  NEW_QUIZ
+  QUIZ_GRADED
   GRADE_PUBLISHED
+  FINAL_GRADE_PUBLISHED
+  REPORT_CARD_AVAILABLE
+  TRANSCRIPT_AVAILABLE
   ATTENDANCE_CHANGED
+  ATTENDANCE_UPDATED
+  SYSTEM_NOTICE
 }
 
 enum NotificationChannel {
@@ -1482,9 +1494,14 @@ model Notification {
   channel        NotificationChannel @default(IN_APP)
   title          String
   body           String?
+  actionUrl      String?
+  entityType     String?
+  entityId       String?
   data           Json?
   readAt         DateTime?
+  archivedAt     DateTime?
   createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @default(now()) @updatedAt
   organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
