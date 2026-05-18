@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { canManageClassSection, requireAnyRole } from "@/modules/auth/permissions"
-import { normalizeAttendancePolicy } from "@/modules/attendance/summary"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 const requiredString = z.string().trim().min(1)
 const optionalString = z.preprocess(
@@ -178,17 +178,11 @@ export async function saveAttendanceRecord(formData: FormData) {
     throw new Error("Forbidden")
   }
 
-  const policy = normalizeAttendancePolicy(
-    await prisma.attendancePolicy.findFirst({
-      where: { organizationId: attendanceSession.organizationId },
-      orderBy: { createdAt: "desc" },
-      select: {
-        lateAfterMinutes: true,
-        absenceAfterMinutes: true,
-        settings: true,
-      },
-    })
-  )
+  const { attendance: policy } = await resolvePolicies({
+    organizationId: attendanceSession.organizationId,
+    campusId: attendanceSession.campusId,
+    classSectionId: attendanceSession.classSectionId,
+  })
 
   if (!policy.allowInstructorOverride) {
     throw new Error("Attendance policy does not allow instructor overrides.")

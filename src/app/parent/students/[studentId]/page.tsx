@@ -19,7 +19,6 @@ import {
 } from "@/modules/dashboards/data"
 import {
   getAttendanceSummary,
-  normalizeAttendancePolicy,
 } from "@/modules/attendance/summary"
 import { getSubmissionStatus } from "@/modules/assignments/status"
 import {
@@ -39,9 +38,7 @@ export default async function ParentStudentDetailPage({
   if (!student) {
     notFound()
   }
-  const attendancePolicy = normalizeAttendancePolicy(
-    await getAttendancePolicyForOrganization(student.organizationId)
-  )
+  const attendancePolicy = await getAttendancePolicyForOrganization(student.organizationId)
   const attendanceSummary = getAttendanceSummary(
     student.attendanceRecords,
     attendancePolicy

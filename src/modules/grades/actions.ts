@@ -15,6 +15,9 @@ import {
   requireAnyRole,
 } from "@/modules/auth/permissions"
 import type { GradebookActionState } from "@/modules/grades/action-state"
+import { getAttendanceSummary } from "@/modules/attendance/summary"
+import { resolvePolicies } from "@/modules/policies/resolve"
+import type { AttendancePolicyValue } from "@/modules/policies/types"
 
 const requiredString = z.string().trim().min(1)
 const optionalString = z.preprocess(
@@ -369,15 +372,12 @@ export async function calculateFinalGrades(
       exams: true,
     },
   })
-  const scale = await prisma.gradingScale.findFirst({
-    where: { organizationId: section.organizationId },
-    include: {
-      items: {
-        orderBy: { minPercentage: "desc" },
-      },
-    },
-    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+  const policies = await resolvePolicies({
+    organizationId: section.organizationId,
+    campusId: section.campusId,
+    classSectionId: section.id,
   })
+  const scale = policies.gradingScale
 
   if (!scale) {
     return {
@@ -390,7 +390,11 @@ export async function calculateFinalGrades(
   const credit = section.course.credits ?? new Prisma.Decimal(0)
 
   for (const enrollment of section.enrollments) {
-    const moduleScores = calculateModuleScores(section, enrollment.studentId)
+    const moduleScores = calculateModuleScores(
+      section,
+      enrollment.studentId,
+      policies.attendance
+    )
     const total = moduleScores.lessonsScore
       .mul(weights.lessonsWeight)
       .plus(moduleScores.attendanceScore.mul(weights.attendanceWeight))
@@ -682,7 +686,8 @@ function calculateModuleScores(
     }>
     exams: unknown[]
   },
-  studentId: string
+  studentId: string,
+  attendancePolicy: AttendancePolicyValue
 ) {
   const now = new Date()
   const publishedLessons = section.lessons
@@ -698,25 +703,8 @@ function calculateModuleScores(
   const attendanceRecords = section.attendanceSessions.flatMap((session) =>
     session.records.filter((record) => record.studentId === studentId)
   )
-  const attendancePoints = attendanceRecords.reduce((sum, record) => {
-    if (record.status === AttendanceStatus.PRESENT) return sum.plus(100)
-    if (record.status === AttendanceStatus.LATE) return sum.plus(50)
-    if (
-      record.status === AttendanceStatus.EXCUSED ||
-      record.status === AttendanceStatus.SICK_LEAVE ||
-      record.status === AttendanceStatus.OFFICIAL_ABSENCE
-    ) {
-      return sum.plus(100)
-    }
-    if (record.status === AttendanceStatus.PENDING) return sum
-    return sum.plus(0)
-  }, new Prisma.Decimal(0))
-  const countedAttendance = attendanceRecords.filter(
-    (record) => record.status !== AttendanceStatus.PENDING
-  ).length
-  const attendanceScore = countedAttendance
-    ? attendancePoints.div(countedAttendance)
-    : new Prisma.Decimal(0)
+  const attendanceSummary = getAttendanceSummary(attendanceRecords, attendancePolicy)
+  const attendanceScore = new Prisma.Decimal(attendanceSummary.attendanceRate)
 
   const gradedAssignments = section.assignments.filter(
     (assignment) =>

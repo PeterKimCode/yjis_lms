@@ -13,6 +13,7 @@ import {
 } from "@/modules/auth/permissions"
 import type { LessonActionState } from "@/modules/learning/action-state"
 import { isYouTubeUrl } from "@/modules/learning/video"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -282,9 +283,19 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
     select: {
       organizationId: true,
       durationSeconds: true,
+      classSection: {
+        select: {
+          id: true,
+          campusId: true,
+        },
+      },
     },
   })
-  const threshold = await getCompletionThreshold(lesson.organizationId)
+  const threshold = await getCompletionThreshold({
+    organizationId: lesson.organizationId,
+    campusId: lesson.classSection.campusId,
+    classSectionId: lesson.classSection.id,
+  })
   const durationSeconds =
     data.durationSeconds || lesson.durationSeconds || data.lastPositionSeconds || 0
   const existing = await getPrismaClient().videoProgress.findFirst({
@@ -332,14 +343,13 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
   return { progressRate, completed }
 }
 
-async function getCompletionThreshold(organizationId: string) {
-  const policy = await getPrismaClient().videoCompletionPolicy.findFirst({
-    where: { organizationId },
-    orderBy: { createdAt: "desc" },
-    select: { requiredPercentage: true },
-  })
-
-  return Number(policy?.requiredPercentage ?? 90)
+async function getCompletionThreshold(input: {
+  organizationId: string
+  campusId?: string | null
+  classSectionId?: string | null
+}) {
+  const policies = await resolvePolicies(input)
+  return policies.videoCompletion.completionThresholdPercent
 }
 
 function createS3Client() {

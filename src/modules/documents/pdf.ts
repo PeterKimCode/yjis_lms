@@ -13,6 +13,7 @@ import {
 import { getPrismaClient } from "@/lib/prisma"
 import type { SessionRoleAssignment } from "@/modules/auth/auth"
 import { canManageStudentData } from "@/modules/auth/permissions"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 type DocumentAccess = {
   canPreviewDrafts: boolean
@@ -99,6 +100,7 @@ export async function generateReportCardPdf(input: {
   termId?: string | null
 }) {
   const prisma = getPrismaClient()
+  const accessWhere = await getDocumentGradeWhere(input.studentId, input.access, "report-card")
   const student = await prisma.user.findUnique({
     where: { id: input.studentId },
     include: {
@@ -164,9 +166,7 @@ export async function generateReportCardPdf(input: {
               finalGrades: {
                 where: {
                   studentId: input.studentId,
-                  ...(input.access.canPreviewDrafts
-                    ? {}
-                    : { status: { in: publishedStatuses } }),
+                  ...accessWhere,
                 },
               },
             },
@@ -246,6 +246,7 @@ export async function generateTranscriptPdf(input: {
   studentId: string
 }) {
   const prisma = getPrismaClient()
+  const accessWhere = await getDocumentGradeWhere(input.studentId, input.access, "transcript")
   const student = await prisma.user.findUnique({
     where: { id: input.studentId },
     include: {
@@ -258,9 +259,7 @@ export async function generateTranscriptPdf(input: {
         },
       },
       finalGrades: {
-        where: input.access.canPreviewDrafts
-          ? undefined
-          : { status: { in: publishedStatuses } },
+        where: accessWhere,
         include: {
           classSection: {
             include: {
@@ -341,6 +340,39 @@ export async function generateTranscriptPdf(input: {
     filename: safePdfFilename(`transcript-${student.name}`),
     pdf: await savePdf(ctx.doc),
   }
+}
+
+async function getDocumentGradeWhere(
+  studentId: string,
+  access: DocumentAccess,
+  documentType: "report-card" | "transcript"
+) {
+  if (access.canPreviewDrafts) return {}
+
+  const student = await getPrismaClient().user.findUnique({
+    where: { id: studentId },
+    select: {
+      organizationId: true,
+      studentProfile: {
+        select: { campusId: true },
+      },
+    },
+  })
+
+  if (!student) {
+    return { status: { in: publishedStatuses } }
+  }
+
+  const policies = await resolvePolicies({
+    organizationId: student.organizationId,
+    campusId: student.studentProfile?.campusId,
+  })
+  const requiresPublished =
+    documentType === "report-card"
+      ? policies.document.reportCardsRequirePublishedGrades
+      : policies.document.transcriptsRequirePublishedGrades
+
+  return requiresPublished ? { status: { in: publishedStatuses } } : {}
 }
 
 function hasAdminRole(assignments: SessionRoleAssignment[]) {

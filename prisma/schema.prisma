@@ -215,34 +215,38 @@ model Organization {
 }
 
 model Campus {
-  id                 String               @id @default(cuid())
-  organizationId     String
-  name               String
-  code               String?
-  address            String?
-  phone              String?
-  isActive           Boolean              @default(true)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  roleAssignments    UserRoleAssignment[]
-  studentProfiles    StudentProfile[]
-  instructorProfiles InstructorProfile[]
-  academicYears      AcademicYear[]
-  terms              Term[]
-  gradeLevels        GradeLevel[]
-  homerooms          Homeroom[]
-  departments        Department[]
-  programs           Program[]
-  courses            Course[]
-  classSections      ClassSection[]
-  classSessions      ClassSession[]
-  enrollments        Enrollment[]
-  attendanceSessions AttendanceSession[]
-  attendanceRecords  AttendanceRecord[]
-  boards             Board[]
-  conversations      Conversation[]
-  fileAssets         FileAsset[]
+  id                      String                  @id @default(cuid())
+  organizationId          String
+  name                    String
+  code                    String?
+  address                 String?
+  phone                   String?
+  isActive                Boolean                 @default(true)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  organization            Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleAssignments         UserRoleAssignment[]
+  studentProfiles         StudentProfile[]
+  instructorProfiles      InstructorProfile[]
+  academicYears           AcademicYear[]
+  terms                   Term[]
+  gradeLevels             GradeLevel[]
+  homerooms               Homeroom[]
+  departments             Department[]
+  programs                Program[]
+  courses                 Course[]
+  classSections           ClassSection[]
+  classSessions           ClassSession[]
+  enrollments             Enrollment[]
+  attendanceSessions      AttendanceSession[]
+  attendanceRecords       AttendanceRecord[]
+  academicPolicies        AcademicPolicy[]
+  attendancePolicies      AttendancePolicy[]
+  videoCompletionPolicies VideoCompletionPolicy[]
+  gradingPolicies         GradingPolicy[]
+  boards                  Board[]
+  conversations           Conversation[]
+  fileAssets              FileAsset[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -572,44 +576,48 @@ model Course {
 }
 
 model ClassSection {
-  id                 String                     @id @default(cuid())
-  organizationId     String
-  campusId           String?
-  academicYearId     String
-  termId             String?
-  courseId           String
-  gradeLevelId       String?
-  homeroomId         String?
-  name               String
-  sectionCode        String?
-  deliveryMode       DeliveryMode               @default(OFFLINE)
-  capacity           Int?
-  startsAt           DateTime?
-  endsAt             DateTime?
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-  organization       Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  campus             Campus?                    @relation(fields: [campusId], references: [id], onDelete: SetNull)
-  academicYear       AcademicYear               @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  term               Term?                      @relation(fields: [termId], references: [id], onDelete: SetNull)
-  course             Course                     @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  gradeLevel         GradeLevel?                @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
-  homeroom           Homeroom?                  @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
-  instructors        ClassSectionInstructor[]
-  enrollments        Enrollment[]
-  sessions           ClassSession[]
-  lessons            Lesson[]
-  attendanceSessions AttendanceSession[]
-  assignments        Assignment[]
-  quizzes            Quiz[]
-  exams              Exam[]
-  gradingConfig      ClassSectionGradingConfig?
-  gradeCategories    GradeCategory[]
-  gradeItems         GradeItem[]
-  finalGrades        FinalGrade[]
-  boards             Board[]
-  conversations      Conversation[]
-  fileAssets         FileAsset[]
+  id                      String                     @id @default(cuid())
+  organizationId          String
+  campusId                String?
+  academicYearId          String
+  termId                  String?
+  courseId                String
+  gradeLevelId            String?
+  homeroomId              String?
+  name                    String
+  sectionCode             String?
+  deliveryMode            DeliveryMode               @default(OFFLINE)
+  capacity                Int?
+  startsAt                DateTime?
+  endsAt                  DateTime?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  organization            Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus                  Campus?                    @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  academicYear            AcademicYear               @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term                    Term?                      @relation(fields: [termId], references: [id], onDelete: SetNull)
+  course                  Course                     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  gradeLevel              GradeLevel?                @relation(fields: [gradeLevelId], references: [id], onDelete: SetNull)
+  homeroom                Homeroom?                  @relation(fields: [homeroomId], references: [id], onDelete: SetNull)
+  instructors             ClassSectionInstructor[]
+  enrollments             Enrollment[]
+  sessions                ClassSession[]
+  lessons                 Lesson[]
+  attendanceSessions      AttendanceSession[]
+  assignments             Assignment[]
+  quizzes                 Quiz[]
+  exams                   Exam[]
+  gradingConfig           ClassSectionGradingConfig?
+  academicPolicies        AcademicPolicy[]
+  attendancePolicies      AttendancePolicy[]
+  videoCompletionPolicies VideoCompletionPolicy[]
+  gradingPolicies         GradingPolicy[]
+  gradeCategories         GradeCategory[]
+  gradeItems              GradeItem[]
+  finalGrades             FinalGrade[]
+  boards                  Board[]
+  conversations           Conversation[]
+  fileAssets              FileAsset[]
 
   @@index([organizationId])
   @@index([campusId])
@@ -1488,60 +1496,84 @@ model NotificationPreference {
 }
 
 model AcademicPolicy {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
+  campusId       String?
+  classSectionId String?
   name           String
   effectiveFrom  DateTime?
   effectiveUntil DateTime?
   settings       Json
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?       @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection? @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
   @@index([createdAt])
 }
 
 model AttendancePolicy {
-  id                  String       @id @default(cuid())
+  id                  String        @id @default(cuid())
   organizationId      String
+  campusId            String?
+  classSectionId      String?
   name                String
   lateAfterMinutes    Int?
   absenceAfterMinutes Int?
   settings            Json?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  organization        Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus              Campus?       @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection        ClassSection? @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
   @@index([createdAt])
 }
 
 model VideoCompletionPolicy {
-  id                 String       @id @default(cuid())
+  id                 String        @id @default(cuid())
   organizationId     String
+  campusId           String?
+  classSectionId     String?
   name               String
-  requiredPercentage Decimal      @default(90) @db.Decimal(5, 2)
+  requiredPercentage Decimal       @default(90) @db.Decimal(5, 2)
   settings           Json?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  organization       Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus             Campus?       @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection       ClassSection? @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
   @@index([createdAt])
 }
 
 model GradingPolicy {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
+  campusId       String?
+  classSectionId String?
   name           String
-  gpaScale       Decimal?     @db.Decimal(4, 2)
+  gpaScale       Decimal?      @db.Decimal(4, 2)
   settings       Json?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?       @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  classSection   ClassSection? @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([campusId])
+  @@index([classSectionId])
   @@index([createdAt])
 }
 

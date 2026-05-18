@@ -26,6 +26,7 @@ export const adminLinks = [
   ["/admin/courses", "Courses"],
   ["/admin/class-sections", "Class Sections"],
   ["/admin/users", "Users"],
+  ["/admin/policies", "Policies"],
 ] as const
 
 export function AdminPageHeader({

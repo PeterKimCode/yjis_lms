@@ -8,6 +8,7 @@ import {
   canViewStudentData,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 export async function getInstructorClasses() {
   const user = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
@@ -250,15 +251,17 @@ export async function getClassSectionDetail(
 }
 
 export async function getAttendancePolicyForOrganization(organizationId: string) {
-  return getPrismaClient().attendancePolicy.findFirst({
-    where: { organizationId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      lateAfterMinutes: true,
-      absenceAfterMinutes: true,
-      settings: true,
-    },
-  })
+  const policies = await resolvePolicies({ organizationId })
+  return policies.attendance
+}
+
+export async function getAttendancePolicyForClassSection(input: {
+  organizationId: string
+  campusId?: string | null
+  classSectionId: string
+}) {
+  const policies = await resolvePolicies(input)
+  return policies.attendance
 }
 
 export async function getPublishedLessonForStudent({

@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
-import { AttendanceStatus } from "@prisma/client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +14,10 @@ import {
   formatDateTime,
   getAdminStudentClassRecord,
 } from "@/modules/admin/data"
+import {
+  getAttendanceSummary as getPolicyAttendanceSummary,
+} from "@/modules/attendance/summary"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 type StudentClassRecord = NonNullable<
   Awaited<ReturnType<typeof getAdminStudentClassRecord>>
@@ -37,7 +40,15 @@ export default async function AdminStudentClassRecordPage({
   const { user, enrollment } = record
   const section = enrollment.classSection
   const attendanceRows = getAttendanceRows(enrollment)
-  const attendanceSummary = getAttendanceSummary(attendanceRows)
+  const policies = await resolvePolicies({
+    organizationId: user.organizationId,
+    campusId: section.campusId,
+    classSectionId: section.id,
+  })
+  const attendanceSummary = getPolicyAttendanceSummary(
+    attendanceRows.map((row) => row.record),
+    policies.attendance
+  )
 
   return (
     <div className="space-y-6">
@@ -75,14 +86,14 @@ export default async function AdminStudentClassRecordPage({
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             <SummaryItem
               label="Total sessions"
-              value={attendanceSummary.total.toString()}
+              value={attendanceSummary.totalSessions.toString()}
             />
-            <SummaryItem label="Present" value={attendanceSummary.present.toString()} />
-            <SummaryItem label="Late" value={attendanceSummary.late.toString()} />
-            <SummaryItem label="Absent" value={attendanceSummary.absent.toString()} />
+            <SummaryItem label="Present" value={attendanceSummary.presentCount.toString()} />
+            <SummaryItem label="Late" value={attendanceSummary.lateCount.toString()} />
+            <SummaryItem label="Absent" value={attendanceSummary.absentCount.toString()} />
             <SummaryItem
               label="Attendance rate"
-              value={`${attendanceSummary.rate.toFixed(1)}%`}
+              value={`${attendanceSummary.attendanceRate.toFixed(1)}%`}
             />
           </div>
           <AttendanceTable rows={attendanceRows} />
@@ -412,52 +423,6 @@ function getAttendanceRows(enrollment: Enrollment) {
       record,
     }))
   )
-}
-
-function getAttendanceSummary(records: ReturnType<typeof getAttendanceRows>) {
-  const counted = records.filter(
-    (row) => row.record.status !== AttendanceStatus.PENDING
-  )
-  const present = counted.filter(
-    (row) => row.record.status === AttendanceStatus.PRESENT
-  ).length
-  const late = counted.filter(
-    (row) => row.record.status === AttendanceStatus.LATE
-  ).length
-  const absent = counted.filter((row) =>
-    ([
-      AttendanceStatus.ABSENT,
-      AttendanceStatus.SICK_LEAVE,
-      AttendanceStatus.OFFICIAL_ABSENCE,
-    ] as AttendanceStatus[]).includes(row.record.status)
-  ).length
-  const rate = counted.length
-    ? (counted.reduce((sum, row) => sum + attendanceCredit(row.record.status), 0) /
-        counted.length) *
-      100
-    : 0
-
-  return {
-    total: counted.length,
-    present,
-    late,
-    absent,
-    rate,
-  }
-}
-
-function attendanceCredit(status: AttendanceStatus) {
-  if (status === AttendanceStatus.PRESENT) return 1
-  if (status === AttendanceStatus.LATE) return 0.5
-  if (
-    status === AttendanceStatus.EXCUSED ||
-    status === AttendanceStatus.SICK_LEAVE ||
-    status === AttendanceStatus.OFFICIAL_ABSENCE
-  ) {
-    return 1
-  }
-  if (status === AttendanceStatus.EARLY_LEAVE) return 0.75
-  return 0
 }
 
 function formatInstructors(section: ClassSection) {

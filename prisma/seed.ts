@@ -494,6 +494,8 @@ async function ensureDefaultPolicies(organizationId: string) {
     where: { organizationId, name: "Default Academic Policy" },
   })
   const academicPolicyData = {
+    campusId: null,
+    classSectionId: null,
     settings: {
       academicCalendar: "semester",
       supportsK12ReportCards: true,
@@ -520,9 +522,18 @@ async function ensureDefaultPolicies(organizationId: string) {
     where: { organizationId, name: "Default Attendance Policy" },
   })
   const attendancePolicyData = {
+    campusId: null,
+    classSectionId: null,
     lateAfterMinutes: 10,
     absenceAfterMinutes: 30,
     settings: {
+      lateThresholdMinutes: 10,
+      absenceFailThresholdRate: null,
+      countLateAsAbsence: false,
+      lateEquivalentAbsenceCount: 0,
+      excusedCountsAsPresent: false,
+      excusedCountsAgainstAttendance: false,
+      allowInstructorOverride: true,
       allowInstructorEdits: true,
       requireAbsenceReason: true,
     },
@@ -547,9 +558,14 @@ async function ensureDefaultPolicies(organizationId: string) {
     where: { organizationId, name: "Default Video Completion Policy" },
   })
   const videoPolicyData = {
+    campusId: null,
+    classSectionId: null,
     requiredPercentage: "90.00",
     settings: {
       completionRate: 90,
+      completionThresholdPercent: 90,
+      minimumWatchSeconds: null,
+      requireActualWatchedCoverage: true,
     },
   }
 
@@ -572,8 +588,20 @@ async function ensureDefaultPolicies(organizationId: string) {
     where: { organizationId, name: "Default Grading Policy" },
   })
   const gradingPolicyData = {
+    campusId: null,
+    classSectionId: null,
     gpaScale: "4.50",
     settings: {
+      allowLateSubmissionDefault: false,
+      allowResubmissionBeforeDue: true,
+      latePenaltyPercent: 0,
+      maxLateDays: null,
+      studentsCanSeeDraftGrades: false,
+      parentsCanSeeDraftGrades: false,
+      showAssignmentFeedbackBeforeFinalGrade: true,
+      showQuizResultsImmediately: true,
+      reportCardsRequirePublishedGrades: true,
+      transcriptsRequirePublishedGrades: true,
       rounding: "half-up",
       publishFinalGradesAfterReview: true,
     },

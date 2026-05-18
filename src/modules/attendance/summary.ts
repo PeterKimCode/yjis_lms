@@ -1,18 +1,9 @@
 import { AttendanceStatus } from "@prisma/client"
 
-type AttendancePolicySettings = {
-  absenceFailThresholdRate?: number
-  allowInstructorOverride?: boolean
-  countLateAsAbsence?: boolean
-  lateThresholdMinutes?: number
-}
+import { normalizeAttendancePolicy as normalizeResolvedAttendancePolicy } from "@/modules/policies/resolve"
+import type { AttendancePolicyValue } from "@/modules/policies/types"
 
-export type AttendancePolicyView = {
-  lateThresholdMinutes: number | null
-  absenceFailThresholdRate: number | null
-  countLateAsAbsence: boolean
-  allowInstructorOverride: boolean
-}
+export type AttendancePolicyView = AttendancePolicyValue
 
 export type AttendanceSummaryRecord = {
   status: AttendanceStatus
@@ -23,25 +14,23 @@ export function normalizeAttendancePolicy(policy?: {
   absenceAfterMinutes?: number | null
   settings?: unknown
 } | null): AttendancePolicyView {
-  const settings =
-    policy?.settings && typeof policy.settings === "object"
-      ? (policy.settings as AttendancePolicySettings)
-      : {}
-
-  return {
-    lateThresholdMinutes:
-      settings.lateThresholdMinutes ?? policy?.lateAfterMinutes ?? null,
-    absenceFailThresholdRate: settings.absenceFailThresholdRate ?? null,
-    countLateAsAbsence: settings.countLateAsAbsence ?? false,
-    allowInstructorOverride: settings.allowInstructorOverride ?? true,
-  }
+  return normalizeResolvedAttendancePolicy(
+    policy
+      ? {
+          lateAfterMinutes: policy.lateAfterMinutes ?? null,
+          absenceAfterMinutes: policy.absenceAfterMinutes ?? null,
+          settings: (policy.settings ?? null) as never,
+        }
+      : null
+  )
 }
 
 export function getAttendanceSummary(
   records: AttendanceSummaryRecord[],
   policy: AttendancePolicyView
 ) {
-  const totalSessions = records.length
+  const countedRecords = records.filter((record) => isCounted(record.status, policy))
+  const totalSessions = countedRecords.length
   const presentCount = records.filter(
     (record) => record.status === AttendanceStatus.PRESENT
   ).length
@@ -60,11 +49,7 @@ export function getAttendanceSummary(
     (record) => record.status === AttendanceStatus.EXCUSED
   ).length
   const creditedPresentCount =
-    presentCount +
-    (policy.countLateAsAbsence ? 0 : lateCount) +
-    excusedCount +
-    records.filter((record) => record.status === AttendanceStatus.EARLY_LEAVE)
-      .length
+    countedRecords.reduce((total, record) => total + attendanceCredit(record.status, policy), 0)
   const attendanceRate =
     totalSessions > 0 ? (creditedPresentCount / totalSessions) * 100 : 0
 
@@ -73,6 +58,41 @@ export function getAttendanceSummary(
     presentCount,
     lateCount,
     absentCount,
+    excusedCount,
     attendanceRate,
   }
+}
+
+function isCounted(status: AttendanceStatus, policy: AttendancePolicyView) {
+  if (status === AttendanceStatus.PENDING) return false
+
+  if (
+    status === AttendanceStatus.EXCUSED ||
+    status === AttendanceStatus.SICK_LEAVE ||
+    status === AttendanceStatus.OFFICIAL_ABSENCE
+  ) {
+    return policy.excusedCountsAsPresent || policy.excusedCountsAgainstAttendance
+  }
+
+  return true
+}
+
+function attendanceCredit(status: AttendanceStatus, policy: AttendancePolicyView) {
+  if (status === AttendanceStatus.PRESENT) return 1
+  if (status === AttendanceStatus.LATE) {
+    if (policy.countLateAsAbsence) {
+      return Math.max(0, 1 - policy.lateEquivalentAbsenceCount)
+    }
+    return 0.5
+  }
+  if (status === AttendanceStatus.EARLY_LEAVE) return 0.75
+  if (
+    status === AttendanceStatus.EXCUSED ||
+    status === AttendanceStatus.SICK_LEAVE ||
+    status === AttendanceStatus.OFFICIAL_ABSENCE
+  ) {
+    return policy.excusedCountsAsPresent ? 1 : 0
+  }
+
+  return 0
 }

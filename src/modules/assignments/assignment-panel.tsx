@@ -46,12 +46,14 @@ type AssignmentSubmissionValue = {
 export function AssignmentPanel({
   assignments,
   classSectionId,
+  defaultAcceptsLate,
   mode,
   now,
   userId,
 }: {
   assignments: AssignmentPanelValue[]
   classSectionId: string
+  defaultAcceptsLate: boolean
   mode: "instructor" | "student"
   now: string
   userId: string
@@ -65,7 +67,10 @@ export function AssignmentPanel({
               Create assignment
             </summary>
             <div className="pt-3">
-              <AssignmentForm classSectionId={classSectionId} />
+              <AssignmentForm
+                classSectionId={classSectionId}
+                defaultAcceptsLate={defaultAcceptsLate}
+              />
             </div>
           </details>
           <p className="text-xs text-muted-foreground">
@@ -121,6 +126,7 @@ export function AssignmentPanel({
                             <AssignmentForm
                               assignment={assignment}
                               classSectionId={classSectionId}
+                              defaultAcceptsLate={defaultAcceptsLate}
                             />
                           </div>
                         </details>
@@ -194,9 +200,11 @@ export function AssignmentPanel({
 function AssignmentForm({
   assignment,
   classSectionId,
+  defaultAcceptsLate,
 }: {
   assignment?: AssignmentPanelValue
   classSectionId: string
+  defaultAcceptsLate: boolean
 }) {
   const [state, formAction, pending] = useActionState(
     saveAssignment,
@@ -234,7 +242,7 @@ function AssignmentForm({
         <input
           name="acceptsLate"
           type="checkbox"
-          defaultChecked={assignment?.acceptsLate ?? false}
+          defaultChecked={assignment?.acceptsLate ?? defaultAcceptsLate}
         />
         Allow late submission
       </label>

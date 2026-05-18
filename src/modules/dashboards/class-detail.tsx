@@ -16,7 +16,6 @@ import {
 } from "@/modules/dashboards/components"
 import {
   formatDateTime,
-  getAttendancePolicyForOrganization,
   getClassSectionDetail,
   getVideoFileOptionsForClassSection,
 } from "@/modules/dashboards/data"
@@ -36,15 +35,13 @@ import {
   createClassSession,
   saveAttendanceRecord,
 } from "@/modules/attendance/actions"
-import {
-  getAttendanceSummary,
-  normalizeAttendancePolicy,
-} from "@/modules/attendance/summary"
+import { getAttendanceSummary } from "@/modules/attendance/summary"
 import {
   GradebookPanel,
   type ModuleGradeWeights,
   type GradebookPanelValue,
 } from "@/modules/grades/gradebook-panel"
+import { resolvePolicies } from "@/modules/policies/resolve"
 
 type ClassSectionDetailMode = "instructor" | "student"
 
@@ -68,9 +65,11 @@ export async function ClassSectionDetail({
   }
 
   const enrollmentCount = section.enrollments.length
-  const attendancePolicy = normalizeAttendancePolicy(
-    await getAttendancePolicyForOrganization(section.organizationId)
-  )
+  const policies = await resolvePolicies({
+    organizationId: section.organizationId,
+    campusId: section.campusId,
+    classSectionId: section.id,
+  })
   const visibleAttendanceRecords =
     mode === "student"
       ? section.attendanceSessions.flatMap((session) =>
@@ -79,7 +78,7 @@ export async function ClassSectionDetail({
       : section.attendanceSessions.flatMap((session) => session.records)
   const attendanceSummary = getAttendanceSummary(
     visibleAttendanceRecords,
-    attendancePolicy
+    policies.attendance
   )
   const selectedLesson =
     mode === "instructor" && selectedLessonId
@@ -389,13 +388,13 @@ export async function ClassSectionDetail({
             {mode === "instructor" ? (
               <p className="text-xs text-muted-foreground">
                 Policy: late after{" "}
-                {attendancePolicy.lateThresholdMinutes ?? "not set"} minutes,
+                {policies.attendance.lateThresholdMinutes ?? "not set"} minutes,
                 late counts as absence:{" "}
-                {attendancePolicy.countLateAsAbsence ? "yes" : "no"}, override:{" "}
-                {attendancePolicy.allowInstructorOverride ? "allowed" : "blocked"},
+                {policies.attendance.countLateAsAbsence ? "yes" : "no"}, override:{" "}
+                {policies.attendance.allowInstructorOverride ? "allowed" : "blocked"},
                 absence fail threshold:{" "}
-                {attendancePolicy.absenceFailThresholdRate
-                  ? `${attendancePolicy.absenceFailThresholdRate}%`
+                {policies.attendance.absenceFailThresholdRate
+                  ? `${policies.attendance.absenceFailThresholdRate}%`
                   : "not set"}.
               </p>
             ) : null}
@@ -516,6 +515,7 @@ export async function ClassSectionDetail({
           <AssignmentPanel
             assignments={section.assignments.map(toAssignmentPanelValue)}
             classSectionId={section.id}
+            defaultAcceptsLate={policies.assignment.allowLateSubmissionDefault}
             mode={mode}
             now={new Date().toISOString()}
             userId={userId}
