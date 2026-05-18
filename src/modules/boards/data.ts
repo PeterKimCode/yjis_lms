@@ -62,12 +62,24 @@ export async function getBoardDetail(
               roleAssignments: true,
             },
           },
+          attachments: {
+            include: {
+              fileAsset: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
           comments: {
             include: {
               author: {
                 include: {
                   roleAssignments: true,
                 },
+              },
+              attachments: {
+                include: {
+                  fileAsset: true,
+                },
+                orderBy: { createdAt: "asc" },
               },
             },
             orderBy: { createdAt: "asc" },

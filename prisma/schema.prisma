@@ -1376,10 +1376,23 @@ model Comment {
   author         User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
   parent         Comment?     @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
   replies        Comment[]    @relation("CommentThread")
+  attachments    CommentAttachment[]
 
   @@index([organizationId])
   @@index([postId])
   @@index([createdAt])
+}
+
+model CommentAttachment {
+  id          String    @id @default(cuid())
+  commentId   String
+  fileAssetId String
+  createdAt   DateTime  @default(now())
+  comment     Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, fileAssetId])
+  @@index([commentId])
 }
 
 model Conversation {
@@ -1619,6 +1632,7 @@ model FileAsset {
   assignmentSubmission   AssignmentSubmission? @relation(fields: [assignmentSubmissionId], references: [id], onDelete: SetNull)
   assignmentSubmissionId String?
   postAttachments        PostAttachment[]
+  commentAttachments     CommentAttachment[]
   messageAttachments     MessageAttachment[]
   generatedDocuments     GeneratedDocument[]
 

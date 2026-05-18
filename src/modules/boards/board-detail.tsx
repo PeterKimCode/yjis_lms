@@ -7,7 +7,9 @@ import {
   createComment,
   createPost,
   deleteComment,
+  deleteCommentAttachment,
   deletePost,
+  deletePostAttachment,
   updateComment,
   updatePost,
 } from "@/modules/boards/actions"
@@ -105,6 +107,18 @@ export async function BoardDetailPage({
                 Pin post
               </label>
             ) : null}
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium">Images</span>
+              <input
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                name="images"
+                type="file"
+              />
+              <span className="text-xs text-muted-foreground">
+                Upload JPG, PNG, WEBP, or GIF images. Maximum 10MB per image.
+              </span>
+            </label>
             <div>
               <Button size="sm" type="submit">
                 Publish post
@@ -180,6 +194,12 @@ export async function BoardDetailPage({
                     </span>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm">{post.body}</p>
+                  <ImageGrid
+                    attachments={post.attachments}
+                    boardId={board.id}
+                    canRemove={data.canManage || post.authorId === data.user?.id}
+                    type="post"
+                  />
                   {data.canManage || post.authorId === data.user?.id ? (
                     <details className="mt-4 rounded-md border p-3">
                       <summary className="cursor-pointer text-sm font-medium">
@@ -227,6 +247,19 @@ export async function BoardDetailPage({
                             </label>
                           </div>
                         ) : null}
+                        <label className="grid gap-1 text-sm">
+                          <span className="font-medium">Add images</span>
+                          <input
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            multiple
+                            name="images"
+                            type="file"
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            Up to 5 images per post. JPG, PNG, WEBP, or GIF
+                            only. Maximum 10MB per image.
+                          </span>
+                        </label>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" type="submit">
                             Save post
@@ -267,6 +300,14 @@ export async function BoardDetailPage({
                               {comment.author?.name ?? "Unknown author"} ·{" "}
                               {formatDate(comment.createdAt)}
                             </p>
+                            <ImageGrid
+                              attachments={comment.attachments}
+                              canRemove={
+                                data.canManage ||
+                                comment.authorId === data.user?.id
+                              }
+                              type="comment"
+                            />
                             {data.canManage || comment.authorId === data.user?.id ? (
                               <details className="mt-2">
                                 <summary className="cursor-pointer text-xs font-medium">
@@ -293,6 +334,18 @@ export async function BoardDetailPage({
                                     defaultValue={comment.body}
                                     required
                                   />
+                                  <label className="grid gap-1 text-xs text-muted-foreground">
+                                    <span className="font-medium text-foreground">
+                                      Replace image
+                                    </span>
+                                    <input
+                                      accept="image/jpeg,image/png,image/webp,image/gif"
+                                      name="image"
+                                      type="file"
+                                    />
+                                    Optional image. JPG, PNG, WEBP, or GIF.
+                                    Maximum 10MB.
+                                  </label>
                                   <div className="flex flex-wrap gap-2">
                                     <Button size="sm" type="submit" variant="outline">
                                       Save comment
@@ -334,6 +387,18 @@ export async function BoardDetailPage({
                             placeholder="Add a comment."
                             required
                           />
+                          <label className="grid gap-1 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              Image
+                            </span>
+                            <input
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              name="image"
+                              type="file"
+                            />
+                            Optional image. JPG, PNG, WEBP, or GIF. Maximum
+                            10MB.
+                          </label>
                           <div>
                             <Button size="sm" type="submit" variant="outline">
                               Add comment
@@ -360,4 +425,69 @@ function formatDate(value: Date) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(value)
+}
+
+function ImageGrid({
+  attachments,
+  boardId,
+  canRemove,
+  type,
+}: {
+  attachments: {
+    id: string
+    fileAsset: {
+      id: string
+      originalName: string
+    }
+  }[]
+  boardId?: string
+  canRemove: boolean
+  type: "comment" | "post"
+}) {
+  if (!attachments.length) return null
+
+  return (
+    <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {attachments.map((attachment) => (
+        <figure className="rounded-md border bg-muted/30 p-2" key={attachment.id}>
+          <a
+            href={`/api/files/${attachment.fileAsset.id}/download?disposition=inline`}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt={attachment.fileAsset.originalName}
+              className="h-40 w-full rounded object-cover"
+              src={`/api/files/${attachment.fileAsset.id}/download?disposition=inline`}
+            />
+          </a>
+          <figcaption className="mt-2 flex flex-col gap-2 text-xs text-muted-foreground">
+            <span className="truncate" title={attachment.fileAsset.originalName}>
+              {attachment.fileAsset.originalName}
+            </span>
+            {canRemove ? (
+              <form
+                action={
+                  type === "post" ? deletePostAttachment : deleteCommentAttachment
+                }
+              >
+                {type === "post" && boardId ? (
+                  <input name="boardId" type="hidden" value={boardId} />
+                ) : null}
+                <input
+                  name="attachmentId"
+                  type="hidden"
+                  value={attachment.id}
+                />
+                <Button size="sm" type="submit" variant="outline">
+                  Remove image
+                </Button>
+              </form>
+            ) : null}
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  )
 }

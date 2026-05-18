@@ -9,9 +9,10 @@ import {
   canViewStudentData,
 } from "@/modules/auth/permissions"
 import { getCurrentSession } from "@/modules/auth/session"
+import { getBoardAccess } from "@/modules/boards/permissions"
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
   const session = await getCurrentSession()
@@ -41,6 +42,28 @@ export async function GET(
           },
         },
       },
+      postAttachments: {
+        select: {
+          post: {
+            select: {
+              boardId: true,
+            },
+          },
+        },
+      },
+      commentAttachments: {
+        select: {
+          comment: {
+            select: {
+              post: {
+                select: {
+                  boardId: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   })
 
@@ -53,6 +76,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    const disposition =
+      new URL(request.url).searchParams.get("disposition") === "inline"
+        ? "inline"
+        : "attachment"
     const object = await createS3Client().send(
       new GetObjectCommand({
         Bucket: file.bucket,
@@ -69,7 +96,10 @@ export async function GET(
 
     const bytes = await readS3Body(object.Body)
     const headers = new Headers({
-      "Content-Disposition": getContentDisposition(file.originalName),
+      "Content-Disposition": getContentDisposition(
+        file.originalName,
+        disposition
+      ),
       "Content-Type": file.contentType ?? "application/octet-stream",
       "Content-Length": String(file.byteSize ?? bytes.byteLength),
     })
@@ -108,6 +138,18 @@ async function canDownloadFile(
         classSectionId: string
       }
     } | null
+    postAttachments: {
+      post: {
+        boardId: string
+      }
+    }[]
+    commentAttachments: {
+      comment: {
+        post: {
+          boardId: string
+        }
+      }
+    }[]
   }
 ) {
   if (file.uploadedById === userId) {
@@ -125,6 +167,16 @@ async function canDownloadFile(
     )
   }
 
+  for (const attachment of file.postAttachments) {
+    const access = await getBoardAccess(attachment.post.boardId)
+    if (access.canView) return true
+  }
+
+  for (const attachment of file.commentAttachments) {
+    const access = await getBoardAccess(attachment.comment.post.boardId)
+    if (access.canView) return true
+  }
+
   if (file.classSectionId) {
     return canViewClassSection(userId, file.classSectionId)
   }
@@ -132,14 +184,14 @@ async function canDownloadFile(
   return false
 }
 
-function getContentDisposition(name: string) {
+function getContentDisposition(name: string, disposition: "attachment" | "inline") {
   const extension = getSafeExtension(name)
   const asciiFallback = `download${extension}`.replace(/["\r\n]/g, "_")
   const encodedName = encodeURIComponent(name).replace(/['()]/g, (value) =>
     `%${value.charCodeAt(0).toString(16).toUpperCase()}`
   )
 
-  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedName}`
+  return `${disposition}; filename="${asciiFallback}"; filename*=UTF-8''${encodedName}`
 }
 
 function getSafeExtension(name: string) {

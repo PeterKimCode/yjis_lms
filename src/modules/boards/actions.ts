@@ -15,6 +15,11 @@ import {
   isClassBoardKind,
 } from "@/modules/boards/constants"
 import { getBoardAccess } from "@/modules/boards/permissions"
+import {
+  imageUploadPolicy,
+  validateImageUpload,
+} from "@/modules/files/image-validation"
+import { uploadImageFile } from "@/modules/files/upload"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -316,7 +321,13 @@ export async function createPost(formData: FormData) {
     throw new Error("You do not have permission to post on this board.")
   }
 
-  await getPrismaClient().post.create({
+  const images = getImageFiles(formData, "images")
+  const imageValidation = await validateImageFiles(images, imageUploadPolicy.maxPostImages)
+  if (!imageValidation.ok) {
+    throw new Error(imageValidation.message)
+  }
+
+  const post = await getPrismaClient().post.create({
     data: {
       organizationId: access.board.organizationId,
       authorId: access.user.id,
@@ -328,6 +339,7 @@ export async function createPost(formData: FormData) {
     },
   })
 
+  await attachImagesToPost(post.id, images, access.board, access.user.id)
   revalidateBoard(access.board.id, access.board.classSectionId)
 }
 
@@ -358,6 +370,16 @@ export async function updatePost(formData: FormData) {
     throw new Error("You do not have permission to edit this post.")
   }
 
+  const images = getImageFiles(formData, "images")
+  const existingImageCount = await getPrismaClient().postAttachment.count({
+    where: { postId },
+  })
+  const remainingSlots = imageUploadPolicy.maxPostImages - existingImageCount
+  const imageValidation = await validateImageFiles(images, remainingSlots)
+  if (!imageValidation.ok) {
+    throw new Error(imageValidation.message)
+  }
+
   await getPrismaClient().post.update({
     where: { id: postId },
     data: {
@@ -368,6 +390,9 @@ export async function updatePost(formData: FormData) {
     },
   })
 
+  if (access.board) {
+    await attachImagesToPost(postId, images, access.board, access.user.id)
+  }
   if (access.board) revalidateBoard(access.board.id, access.board.classSectionId)
 }
 
@@ -420,7 +445,16 @@ export async function createComment(formData: FormData) {
     throw new Error("Comments are not allowed on this board.")
   }
 
-  await getPrismaClient().comment.create({
+  const images = getImageFiles(formData, "image")
+  const imageValidation = await validateImageFiles(
+    images,
+    imageUploadPolicy.maxCommentImages
+  )
+  if (!imageValidation.ok) {
+    throw new Error(imageValidation.message)
+  }
+
+  const comment = await getPrismaClient().comment.create({
     data: {
       organizationId: post.organizationId,
       authorId: access.user.id,
@@ -429,6 +463,7 @@ export async function createComment(formData: FormData) {
     },
   })
 
+  await attachImagesToComment(comment.id, images, post.board, access.user.id)
   revalidateBoard(post.boardId, post.board.classSectionId)
 }
 
@@ -455,10 +490,30 @@ export async function updateComment(formData: FormData) {
     throw new Error("You do not have permission to edit this comment.")
   }
 
+  const images = getImageFiles(formData, "image")
+  const imageValidation = await validateImageFiles(
+    images,
+    imageUploadPolicy.maxCommentImages
+  )
+  if (!imageValidation.ok) {
+    throw new Error(imageValidation.message)
+  }
+
   await getPrismaClient().comment.update({
     where: { id: comment.id },
     data: { body: data.body },
   })
+  if (images.length) {
+    await getPrismaClient().commentAttachment.deleteMany({
+      where: { commentId: comment.id },
+    })
+    await attachImagesToComment(
+      comment.id,
+      images,
+      comment.post.board,
+      access.user.id
+    )
+  }
   revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
 }
 
@@ -485,6 +540,69 @@ export async function deleteComment(formData: FormData) {
   revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
 }
 
+const postAttachmentDeleteSchema = z.object({
+  boardId: requiredString,
+  attachmentId: requiredString,
+})
+
+export async function deletePostAttachment(formData: FormData) {
+  const data = postAttachmentDeleteSchema.parse(Object.fromEntries(formData.entries()))
+  const attachment = await getPrismaClient().postAttachment.findUniqueOrThrow({
+    where: { id: data.attachmentId },
+    include: { post: { include: { board: true } } },
+  })
+  const access = await getBoardAccess(attachment.post.boardId)
+
+  if (
+    !access.user ||
+    attachment.post.boardId !== data.boardId ||
+    (!access.canManage && attachment.post.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to remove this image.")
+  }
+
+  await getPrismaClient().postAttachment.delete({
+    where: { id: attachment.id },
+  })
+  revalidateBoard(attachment.post.boardId, attachment.post.board.classSectionId)
+}
+
+const commentAttachmentDeleteSchema = z.object({
+  attachmentId: requiredString,
+})
+
+export async function deleteCommentAttachment(formData: FormData) {
+  const data = commentAttachmentDeleteSchema.parse(
+    Object.fromEntries(formData.entries())
+  )
+  const attachment = await getPrismaClient().commentAttachment.findUniqueOrThrow({
+    where: { id: data.attachmentId },
+    include: {
+      comment: {
+        include: {
+          post: { include: { board: true } },
+        },
+      },
+    },
+  })
+  const access = await getBoardAccess(attachment.comment.post.boardId)
+
+  if (
+    !access.user ||
+    (!access.canManage && attachment.comment.authorId !== access.user.id)
+  ) {
+    throw new Error("You do not have permission to remove this image.")
+  }
+
+  await getPrismaClient().commentAttachment.delete({
+    where: { id: attachment.id },
+  })
+  revalidateBoard(
+    attachment.comment.post.boardId,
+    attachment.comment.post.board.classSectionId
+  )
+}
+
 function revalidateBoard(boardId: string, classSectionId: string | null) {
   revalidatePath(`/admin/boards/${boardId}`)
   if (classSectionId) {
@@ -492,5 +610,100 @@ function revalidateBoard(boardId: string, classSectionId: string | null) {
     revalidatePath(`/student/classes/${classSectionId}/boards/${boardId}`)
     revalidatePath(`/instructor/classes/${classSectionId}`)
     revalidatePath(`/student/classes/${classSectionId}`)
+  }
+}
+
+function getImageFiles(formData: FormData, fieldName: string) {
+  return formData
+    .getAll(fieldName)
+    .filter((value): value is File => value instanceof File && value.size > 0)
+}
+
+async function validateImageFiles(files: File[], maxCount: number) {
+  if (files.length > maxCount) {
+    return {
+      ok: false as const,
+      message:
+        maxCount === imageUploadPolicy.maxPostImages
+          ? "You can attach up to 5 images per post."
+          : "You can attach one image per comment.",
+    }
+  }
+
+  for (const file of files) {
+    const validation = await validateImageUpload(file)
+    if (!validation.ok) return validation
+  }
+
+  return { ok: true as const }
+}
+
+async function attachImagesToPost(
+  postId: string,
+  images: File[],
+  board: {
+    campusId: string | null
+    classSectionId: string | null
+    organizationId: string
+  },
+  ownerId: string
+) {
+  for (const image of images) {
+    const upload = await uploadImageFile({
+      file: image,
+      ownerId,
+      organizationId: board.organizationId,
+      campusId: board.campusId,
+      classSectionId: board.classSectionId,
+      prefix: `boards/posts/${postId}`,
+      metadata: {
+        source: "board-post-image",
+        postId,
+      },
+    })
+
+    if (!upload.ok) throw new Error(upload.message)
+
+    await getPrismaClient().postAttachment.create({
+      data: {
+        postId,
+        fileAssetId: upload.fileAsset.id,
+      },
+    })
+  }
+}
+
+async function attachImagesToComment(
+  commentId: string,
+  images: File[],
+  board: {
+    campusId: string | null
+    classSectionId: string | null
+    organizationId: string
+  },
+  ownerId: string
+) {
+  for (const image of images) {
+    const upload = await uploadImageFile({
+      file: image,
+      ownerId,
+      organizationId: board.organizationId,
+      campusId: board.campusId,
+      classSectionId: board.classSectionId,
+      prefix: `boards/comments/${commentId}`,
+      metadata: {
+        source: "board-comment-image",
+        commentId,
+      },
+    })
+
+    if (!upload.ok) throw new Error(upload.message)
+
+    await getPrismaClient().commentAttachment.create({
+      data: {
+        commentId,
+        fileAssetId: upload.fileAsset.id,
+      },
+    })
   }
 }
