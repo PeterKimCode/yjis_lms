@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   EmptyState,
   SimpleTable,
+  StatusBadge,
   TableCell,
   TableRow,
 } from "@/modules/dashboards/components"
@@ -157,7 +158,12 @@ export function QuizPanel({
                       : "No limit"}
                   </TableCell>
                   <TableCell>{quiz.maxAttempts ?? 1}</TableCell>
-                  <TableCell>{quiz.isPublished ? "Published" : "Draft"}</TableCell>
+                  <TableCell>
+                    <StatusBadge
+                      label={quiz.isPublished ? "Published" : "Draft"}
+                      value={quiz.isPublished ? "PUBLISHED" : "DRAFT"}
+                    />
+                  </TableCell>
                   <TableCell>{quiz.questions.length}</TableCell>
                   <TableCell>{quiz.attempts.length}</TableCell>
                   <TableCell>{gradedCount}</TableCell>
@@ -174,9 +180,22 @@ export function QuizPanel({
               ) : (
                 <>
                   <TableCell>
-                    {latestAttempt
-                      ? getQuizAttemptStatus(latestAttempt)
-                      : availabilityLabel(quiz, now)}
+                    <StatusBadge
+                      label={
+                        latestAttempt
+                          ? getQuizAttemptStatus(latestAttempt)
+                          : availabilityLabel(quiz, now)
+                      }
+                      value={
+                        latestAttempt
+                          ? getQuizAttemptStatus(latestAttempt)
+                              .toUpperCase()
+                              .replaceAll(" ", "_")
+                          : availabilityLabel(quiz, now)
+                              .toUpperCase()
+                              .replaceAll(" ", "_")
+                      }
+                    />
                   </TableCell>
                   <TableCell>
                     {latestAttempt && shouldShowQuizResults(quiz)

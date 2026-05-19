@@ -8,8 +8,7 @@ server-side routes:
 
 PDF generation uses `pdf-lib` and does not launch Chromium or Puppeteer. This
 keeps report card and transcript downloads working even while MinIO file
-download, browser-based rendering, and long-term document storage are still
-being stabilized.
+download and long-term document storage are still being stabilized.
 
 Current controls:
 
@@ -20,8 +19,8 @@ Current controls:
 - Administrative previews can include draft grades within scope.
 - Filenames are sanitized and do not include raw internal IDs.
 - PDFs do not include password hashes, storage keys, secrets, or raw file URLs.
-- Browser-based HTML-to-PDF is disabled for MVP due to local Chromium
-  instability.
+- Browser-based HTML-to-PDF was removed from the MVP path; document PDFs should
+  not require Chromium or Puppeteer.
 
 TODO:
 

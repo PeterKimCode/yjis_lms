@@ -1,4 +1,6 @@
 import {
+  ActionCard,
+  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
@@ -25,15 +27,24 @@ export default async function ParentPage() {
       description="Linked students and their current learning activity."
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard href="/parent/students" label="Students" value={relations.length} />
         <MetricCard
+          description="Linked to your account"
+          href="/parent/students"
+          label="Students"
+          value={relations.length}
+        />
+        <MetricCard
+          description="Teacher conversations"
           href="/messages"
           label="Messages"
+          tone={unreadMessages ? "attention" : "default"}
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
         />
         <MetricCard
+          description="Student activity alerts"
           href="/notifications"
           label="Notifications"
+          tone={unreadNotifications ? "attention" : "default"}
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
@@ -48,6 +59,32 @@ export default async function ParentPage() {
           value={relations.filter((relation) => relation.isPrimary).length}
         />
       </div>
+      <ActionPanel
+        description="Follow each linked student's class activity from one place."
+        title="Parent focus"
+      >
+        <ActionCard
+          actionLabel="View students"
+          badge={relations.length}
+          description="Open linked student profiles, classes, documents, and progress."
+          href="/parent/students"
+          title="Linked students"
+        />
+        <ActionCard
+          actionLabel="Open inbox"
+          badge={unreadMessages || undefined}
+          description="Continue parent-teacher conversations."
+          href="/messages"
+          title="Messages"
+        />
+        <ActionCard
+          actionLabel="Review alerts"
+          badge={unreadNotifications || undefined}
+          description="See class, assignment, grade, and document updates."
+          href="/notifications"
+          title="Notifications"
+        />
+      </ActionPanel>
       <ParentStudentsTable relations={relations} />
     </DashboardPage>
   )

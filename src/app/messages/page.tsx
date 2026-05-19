@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/modules/dashboards/components"
 import { getConversationList, getConversationStartOptions } from "@/modules/messages/data"
 import { NewMessageForm } from "@/modules/messages/message-forms"
 
@@ -79,13 +80,15 @@ export default async function MessagesPage({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="font-semibold">{conversation.displayTitle}</h2>
-                        <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
-                          {conversation.typeLabel}
-                        </span>
+                        <StatusBadge
+                          label={conversation.typeLabel}
+                          value={conversation.type}
+                        />
                         {conversation.unreadCount ? (
-                          <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                            {conversation.unreadCount} unread
-                          </span>
+                          <StatusBadge
+                            label={`${conversation.unreadCount} unread`}
+                            value="PENDING"
+                          />
                         ) : null}
                       </div>
                       <p className="mt-1 truncate text-sm text-muted-foreground">

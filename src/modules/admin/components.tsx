@@ -1,7 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,9 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { StatusBadge } from "@/modules/dashboards/components"
 
-export const adminLinks = [
+export const adminPrimaryLinks = [
   ["/admin", "Overview"],
+  ["/admin/class-sections", "Class Sections"],
+  ["/admin/courses", "Courses"],
+  ["/admin/users", "Users"],
+  ["/admin/boards", "Boards"],
+] as const
+
+export const adminSetupLinks = [
   ["/admin/organizations", "Organizations"],
   ["/admin/campuses", "Campuses"],
   ["/admin/academic-years", "Academic Years"],
@@ -23,13 +30,18 @@ export const adminLinks = [
   ["/admin/grade-levels", "Grade Levels"],
   ["/admin/homerooms", "Homerooms"],
   ["/admin/departments", "Departments"],
-  ["/admin/courses", "Courses"],
-  ["/admin/class-sections", "Class Sections"],
-  ["/admin/users", "Users"],
   ["/admin/policies", "Policies"],
-  ["/admin/boards", "Boards"],
+] as const
+
+export const adminCommunicationLinks = [
   ["/messages", "Messages"],
   ["/notifications", "Notifications"],
+] as const
+
+export const adminLinks = [
+  ...adminPrimaryLinks,
+  ...adminSetupLinks,
+  ...adminCommunicationLinks,
 ] as const
 
 export function AdminPageHeader({
@@ -108,28 +120,35 @@ export function DataTable({
 export function SearchForm({
   q,
   placeholder = "Search...",
+  resultSummary,
 }: {
   q: string
   placeholder?: string
+  resultSummary?: string
 }) {
   return (
-    <form className="flex flex-col gap-2 sm:flex-row" action="">
-      <Input
-        className="sm:max-w-sm"
-        name="q"
-        placeholder={placeholder}
-        defaultValue={q}
-      />
-      <div className="flex gap-2">
-        <Button type="submit" variant="outline">
-          Search
-        </Button>
-        {q ? (
-          <Button asChild type="button" variant="ghost">
-            <Link href="?">Clear</Link>
+    <form className="rounded-lg border bg-background p-3" action="">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input
+          className="sm:max-w-sm"
+          name="q"
+          placeholder={placeholder}
+          defaultValue={q}
+        />
+        <div className="flex gap-2">
+          <Button type="submit" variant="outline">
+            Search
           </Button>
-        ) : null}
+          {q ? (
+            <Button asChild type="button" variant="ghost">
+              <Link href="?">Clear</Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
+      {resultSummary ? (
+        <p className="mt-2 text-xs text-muted-foreground">{resultSummary}</p>
+      ) : null}
     </form>
   )
 }
@@ -205,9 +224,10 @@ export function Field({
 
 export function ActiveBadge({ active }: { active: boolean }) {
   return (
-    <Badge variant={active ? "default" : "secondary"}>
-      {active ? "Active" : "Inactive"}
-    </Badge>
+    <StatusBadge
+      label={active ? "Active" : "Inactive"}
+      value={active ? "ACTIVE" : "INACTIVE"}
+    />
   )
 }
 
@@ -221,13 +241,38 @@ export function SubmitButton({ label = "Save" }: { label?: string }) {
 
 export function AdminLinkGrid() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {adminLinks.slice(1).map(([href, label]) => (
-        <Button key={href} asChild variant="outline">
-          <Link href={href}>{label}</Link>
-        </Button>
-      ))}
+    <div className="space-y-4">
+      <AdminLinkSection
+        links={adminPrimaryLinks.filter(([href]) => href !== "/admin")}
+        title="Core admin"
+      />
+      <AdminLinkSection links={adminSetupLinks} title="Academic setup" />
+      <AdminLinkSection
+        links={adminCommunicationLinks}
+        title="Communication"
+      />
     </div>
+  )
+}
+
+function AdminLinkSection({
+  links,
+  title,
+}: {
+  links: readonly (readonly [string, string])[]
+  title: string
+}) {
+  return (
+    <section className="space-y-2">
+      <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {links.map(([href, label]) => (
+          <Button key={href} asChild variant="outline">
+            <Link href={href}>{label}</Link>
+          </Button>
+        ))}
+      </div>
+    </section>
   )
 }
 

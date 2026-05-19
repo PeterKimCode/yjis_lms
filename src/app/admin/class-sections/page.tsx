@@ -37,7 +37,11 @@ export default async function ClassSectionsPage({
         title="Class sections"
         description="Open course sections, assigned instructors, and enrollment counts."
       />
-      <SearchForm q={q} placeholder="Search sections, courses, terms..." />
+      <SearchForm
+        q={q}
+        placeholder="Search sections, courses, terms..."
+        resultSummary={`${classSections.length} of ${data.classSections.length} class sections shown`}
+      />
       <ClassSectionForm data={data} />
       <DataTable
         empty="No class sections match your search."

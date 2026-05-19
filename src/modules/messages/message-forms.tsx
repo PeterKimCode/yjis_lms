@@ -45,6 +45,18 @@ export function NewMessageForm({
     (option) =>
       `${option.type}:${option.userId}:${option.classSectionId}` === recipientKey
   )
+  const recipientLabel =
+    mode === "PARENT_TEACHER"
+      ? filteredRecipients.some((option) => option.targetKind === "PARENT")
+        ? "Parent"
+        : "Teacher"
+      : "Recipient"
+  const recipientPlaceholder =
+    mode === "PARENT_TEACHER"
+      ? filteredRecipients.some((option) => option.targetKind === "PARENT")
+        ? "Select a parent"
+        : "Select a teacher"
+      : "Select a student or teacher"
 
   return (
     <details className="rounded-lg border bg-background p-4" open>
@@ -98,9 +110,7 @@ export function NewMessageForm({
               value={selectedRecipient?.classSectionId ?? ""}
             />
             <label className="grid gap-1 text-sm">
-              <span className="font-medium">
-                {mode === "PARENT_TEACHER" ? "Parent" : "Recipient"}
-              </span>
+              <span className="font-medium">{recipientLabel}</span>
               <select
                 className="h-9 rounded-md border bg-background px-3 text-sm"
                 name="recipientUserId"
@@ -109,9 +119,7 @@ export function NewMessageForm({
                 required
               >
                 <option value="">
-                  {mode === "PARENT_TEACHER"
-                    ? "Select a parent"
-                    : "Select a student or teacher"}
+                  {recipientPlaceholder}
                 </option>
                 {filteredRecipients.map((option) => {
                   const key = `${option.type}:${option.userId}:${option.classSectionId}`

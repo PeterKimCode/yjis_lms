@@ -64,6 +64,16 @@ export async function getStudentClasses() {
           campus: true,
           course: true,
           term: true,
+          finalGrades: {
+            where: {
+              studentId: user.id,
+              status: { in: ["PUBLISHED", "FINALIZED"] },
+            },
+            select: {
+              id: true,
+              termId: true,
+            },
+          },
           _count: {
             select: {
               lessons: true,
@@ -241,6 +251,9 @@ export async function getClassSectionDetail(
       boards: {
         where: options.publishedLessonsOnly ? { isActive: true } : undefined,
         orderBy: { name: "asc" },
+        include: {
+          _count: { select: { posts: true } },
+        },
       },
       _count: {
         select: {

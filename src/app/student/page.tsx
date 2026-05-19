@@ -2,10 +2,13 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
+  ActionCard,
+  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
   SimpleTable,
+  StatusBadge,
   TableCell,
   TableRow,
 } from "@/modules/dashboards/components"
@@ -21,14 +24,29 @@ export default async function StudentPage() {
     getUnreadMessageCountForCurrentUser(),
     getUnreadNotificationCount(authUser.id),
   ])
+  const publishedGradeClassSections = enrollments.filter(
+    (enrollment) => enrollment.classSection.finalGrades.length > 0
+  )
   const termOptions = [
     ...new Map(
-      enrollments
-        .map((enrollment) => enrollment.classSection.term)
+      publishedGradeClassSections
+        .flatMap((enrollment) =>
+          enrollment.classSection.finalGrades.map(
+            (grade) => grade.termId ?? enrollment.classSection.term?.id ?? ""
+          )
+        )
+        .filter(Boolean)
+        .map((termId) => {
+          const enrollment = enrollments.find(
+            (item) => item.classSection.term?.id === termId
+          )
+          return enrollment?.classSection.term ?? null
+        })
         .filter((term): term is NonNullable<typeof term> => Boolean(term))
         .map((term) => [term.id, term])
     ).values(),
   ]
+  const hasPublishedDocuments = publishedGradeClassSections.length > 0
 
   return (
     <DashboardPage
@@ -36,15 +54,24 @@ export default async function StudentPage() {
       description="Your enrolled classes, coursework, and learning progress."
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard href="/student/classes" label="Classes" value={enrollments.length} />
         <MetricCard
+          description="Currently enrolled"
+          href="/student/classes"
+          label="Classes"
+          value={enrollments.length}
+        />
+        <MetricCard
+          description="Teachers and class groups"
           href="/messages"
           label="Messages"
+          tone={unreadMessages ? "attention" : "default"}
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
         />
         <MetricCard
+          description="Coursework and grade alerts"
           href="/notifications"
           label="Notifications"
+          tone={unreadNotifications ? "attention" : "default"}
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
@@ -62,6 +89,32 @@ export default async function StudentPage() {
           )}
         />
       </div>
+      <ActionPanel
+        description="Your quickest paths for classwork and school updates."
+        title="Student focus"
+      >
+        <ActionCard
+          actionLabel="Open classes"
+          badge={enrollments.length}
+          description="Continue lessons, assignments, quizzes, boards, and grades."
+          href="/student/classes"
+          title="My classes"
+        />
+        <ActionCard
+          actionLabel="Open inbox"
+          badge={unreadMessages || undefined}
+          description="Message teachers and follow class group conversations."
+          href="/messages"
+          title="Messages"
+        />
+        <ActionCard
+          actionLabel="Review alerts"
+          badge={unreadNotifications || undefined}
+          description="See new assignments, quizzes, grades, and board activity."
+          href="/notifications"
+          title="Notifications"
+        />
+      </ActionPanel>
       <div className="rounded-lg border bg-background p-4">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold">Documents</h2>
@@ -69,30 +122,36 @@ export default async function StudentPage() {
             Download published or finalized report cards and transcripts.
           </p>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/api/documents/transcript?studentId=${user.id}`}>
-              Download transcript
-            </Link>
-          </Button>
-          {termOptions.length ? (
-            termOptions.map((term) => (
-              <Button asChild key={term.id} size="sm" variant="outline">
-                <Link
-                  href={`/api/documents/report-card?studentId=${user.id}&termId=${term.id}`}
-                >
-                  Report card: {term.name}
-                </Link>
-              </Button>
-            ))
-          ) : (
+        {hasPublishedDocuments ? (
+          <div className="mt-3 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
-              <Link href={`/api/documents/report-card?studentId=${user.id}`}>
-                Download report card
+              <Link href={`/api/documents/transcript?studentId=${user.id}`}>
+                Download transcript
               </Link>
             </Button>
-          )}
-        </div>
+            {termOptions.length ? (
+              termOptions.map((term) => (
+                <Button asChild key={term.id} size="sm" variant="outline">
+                  <Link
+                    href={`/api/documents/report-card?studentId=${user.id}&termId=${term.id}`}
+                  >
+                    Report card: {term.name}
+                  </Link>
+                </Button>
+              ))
+            ) : (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/api/documents/report-card?studentId=${user.id}`}>
+                  Download report card
+                </Link>
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="mt-3 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+            No published documents available yet.
+          </p>
+        )}
       </div>
       <StudentClassTable enrollments={enrollments} />
     </DashboardPage>
@@ -118,7 +177,9 @@ function StudentClassTable({
           <TableCell>
             {enrollment.classSection.campus?.name ?? "Organization-wide"}
           </TableCell>
-          <TableCell>{enrollment.status}</TableCell>
+          <TableCell>
+            <StatusBadge value={enrollment.status} />
+          </TableCell>
           <TableCell>
             <OpenButton href={`/student/classes/${enrollment.classSectionId}`} />
           </TableCell>

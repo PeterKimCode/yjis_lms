@@ -40,7 +40,11 @@ export default async function CoursesPage({
         title="Courses"
         description="Create reusable course records with credits and delivery defaults."
       />
-      <SearchForm q={q} placeholder="Search courses..." />
+      <SearchForm
+        q={q}
+        placeholder="Search courses..."
+        resultSummary={`${courses.length} of ${data.courses.length} courses shown`}
+      />
       <CourseForm data={data} />
       <DataTable
         empty="No courses yet."

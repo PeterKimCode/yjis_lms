@@ -5,10 +5,12 @@ import {
   archiveNotificationAction,
   markNotificationReadAction,
   markNotificationUnreadAction,
+  openNotificationAction,
 } from "@/modules/notifications/actions"
 import { getNotificationCenter } from "@/modules/notifications/data"
 import { MarkAllNotificationsReadButton } from "@/modules/notifications/notification-actions"
 import { notificationFilters } from "@/modules/notifications/types"
+import { StatusBadge } from "@/modules/dashboards/components"
 
 export default async function NotificationsPage({
   searchParams,
@@ -20,6 +22,10 @@ export default async function NotificationsPage({
     filter: params.filter ?? "all",
     q: params.q ?? "",
   })
+  const unreadNotifications = notifications.filter(
+    (notification) => !notification.readAt
+  )
+  const readNotifications = notifications.filter((notification) => notification.readAt)
 
   return (
     <main className="flex-1 bg-muted/40 px-4 py-8">
@@ -70,72 +76,19 @@ export default async function NotificationsPage({
         </div>
 
         {notifications.length ? (
-          <div className="grid gap-3">
-            {notifications.map((notification) => (
-              <article
-                className={`rounded-lg border bg-background p-4 ${
-                  notification.readAt ? "" : "border-primary/50 bg-primary/5"
-                }`}
-                key={notification.id}
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
-                        {notification.typeLabel}
-                      </span>
-                      {!notification.readAt ? (
-                        <span className="rounded-md bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                          Unread
-                        </span>
-                      ) : null}
-                    </div>
-                    <h2 className="font-semibold">{notification.title}</h2>
-                    {notification.body ? (
-                      <p className="text-sm text-muted-foreground">
-                        {notification.body}
-                      </p>
-                    ) : null}
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(notification.createdAt)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {notification.actionUrl ? (
-                      <Button asChild size="sm">
-                        <Link href={notification.actionUrl}>Open</Link>
-                      </Button>
-                    ) : null}
-                    <form
-                      action={
-                        notification.readAt
-                          ? markNotificationUnreadAction
-                          : markNotificationReadAction
-                      }
-                    >
-                      <input
-                        name="notificationId"
-                        type="hidden"
-                        value={notification.id}
-                      />
-                      <Button size="sm" type="submit" variant="outline">
-                        {notification.readAt ? "Mark unread" : "Mark read"}
-                      </Button>
-                    </form>
-                    <form action={archiveNotificationAction}>
-                      <input
-                        name="notificationId"
-                        type="hidden"
-                        value={notification.id}
-                      />
-                      <Button size="sm" type="submit" variant="destructive">
-                        Archive
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-              </article>
-            ))}
+          <div className="space-y-6">
+            {unreadNotifications.length ? (
+              <NotificationGroup
+                notifications={unreadNotifications}
+                title={`Unread (${unreadNotifications.length})`}
+              />
+            ) : null}
+            {readNotifications.length ? (
+              <NotificationGroup
+                notifications={readNotifications}
+                title={unreadNotifications.length ? "Earlier" : "All notifications"}
+              />
+            ) : null}
           </div>
         ) : (
           <div className="rounded-lg border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
@@ -144,6 +97,90 @@ export default async function NotificationsPage({
         )}
       </div>
     </main>
+  )
+}
+
+function NotificationGroup({
+  notifications,
+  title,
+}: {
+  notifications: Awaited<ReturnType<typeof getNotificationCenter>>["notifications"]
+  title: string
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold text-muted-foreground">{title}</h2>
+      <div className="grid gap-3">
+        {notifications.map((notification) => (
+          <article
+            className={`rounded-lg border bg-background p-4 ${
+              notification.readAt ? "" : "border-primary/50 bg-primary/5"
+            }`}
+            key={notification.id}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge label={notification.typeLabel} value={notification.type} />
+                  {!notification.readAt ? (
+                    <StatusBadge label="Unread" value="PENDING" />
+                  ) : null}
+                </div>
+                <h3 className="font-semibold">{notification.title}</h3>
+                {notification.body ? (
+                  <p className="text-sm text-muted-foreground">
+                    {notification.body}
+                  </p>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(notification.createdAt)}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {notification.actionUrl ? (
+                  <form action={openNotificationAction}>
+                    <input
+                      name="notificationId"
+                      type="hidden"
+                      value={notification.id}
+                    />
+                    <Button size="sm" type="submit">
+                      Open
+                    </Button>
+                  </form>
+                ) : null}
+                <form
+                  action={
+                    notification.readAt
+                      ? markNotificationUnreadAction
+                      : markNotificationReadAction
+                  }
+                >
+                  <input
+                    name="notificationId"
+                    type="hidden"
+                    value={notification.id}
+                  />
+                  <Button size="sm" type="submit" variant="outline">
+                    {notification.readAt ? "Mark unread" : "Mark read"}
+                  </Button>
+                </form>
+                <form action={archiveNotificationAction}>
+                  <input
+                    name="notificationId"
+                    type="hidden"
+                    value={notification.id}
+                  />
+                  <Button size="sm" type="submit" variant="destructive">
+                    Archive
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 

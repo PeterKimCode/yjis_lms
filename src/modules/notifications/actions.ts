@@ -1,8 +1,10 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import { z } from "zod"
 
+import { getPrismaClient } from "@/lib/prisma"
 import { requireAuth } from "@/modules/auth/permissions"
 import {
   archiveNotification,
@@ -35,6 +37,23 @@ export async function archiveNotificationAction(formData: FormData) {
   const data = notificationSchema.parse(Object.fromEntries(formData.entries()))
   await archiveNotification(data.notificationId, user.id)
   revalidateNotifications()
+}
+
+export async function openNotificationAction(formData: FormData) {
+  const user = await requireAuth()
+  const data = notificationSchema.parse(Object.fromEntries(formData.entries()))
+  const notification = await getPrismaClient().notification.findFirst({
+    where: { id: data.notificationId, userId: user.id, archivedAt: null },
+    select: { actionUrl: true },
+  })
+
+  if (!notification?.actionUrl) {
+    redirect("/notifications")
+  }
+
+  await markNotificationRead(data.notificationId, user.id)
+  revalidateNotifications()
+  redirect(notification.actionUrl)
 }
 
 export async function markAllNotificationsReadAction(): Promise<NotificationActionState> {

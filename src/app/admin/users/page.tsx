@@ -58,7 +58,11 @@ export default async function UsersPage({
         title="Users"
         description="School-managed users. Public registration is intentionally unavailable."
       />
-      <SearchForm q={q} placeholder="Search users, emails, roles..." />
+      <SearchForm
+        q={q}
+        placeholder="Search users, emails, roles..."
+        resultSummary={`${filteredUsers.length} of ${users.length} users shown`}
+      />
       <UserForm
         campusOptions={admin.campusOptions}
         gradeLevelOptions={admin.gradeLevelOptions}

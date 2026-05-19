@@ -1,4 +1,6 @@
 import {
+  ActionCard,
+  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
@@ -25,15 +27,24 @@ export default async function InstructorPage() {
       description="Assigned class sections, learning activity, and teaching setup."
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard href="/instructor/classes" label="Classes" value={classSections.length} />
         <MetricCard
+          description="Assigned to you"
+          href="/instructor/classes"
+          label="Classes"
+          value={classSections.length}
+        />
+        <MetricCard
+          description="Direct and class conversations"
           href="/messages"
           label="Messages"
+          tone={unreadMessages ? "attention" : "default"}
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
         />
         <MetricCard
+          description="LMS activity alerts"
           href="/notifications"
           label="Notifications"
+          tone={unreadNotifications ? "attention" : "default"}
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
@@ -52,6 +63,32 @@ export default async function InstructorPage() {
           )}
         />
       </div>
+      <ActionPanel
+        description="Jump straight into the highest-frequency teaching tasks."
+        title="Teaching focus"
+      >
+        <ActionCard
+          actionLabel="Review classes"
+          badge={classSections.length}
+          description="Open lessons, attendance, assignments, quizzes, boards, and grades."
+          href="/instructor/classes"
+          title="Class management"
+        />
+        <ActionCard
+          actionLabel="Open inbox"
+          badge={unreadMessages || undefined}
+          description="Reply to student, parent, and class group messages."
+          href="/messages"
+          title="Messages"
+        />
+        <ActionCard
+          actionLabel="Review alerts"
+          badge={unreadNotifications || undefined}
+          description="See new submissions, board activity, grades, and system updates."
+          href="/notifications"
+          title="Notifications"
+        />
+      </ActionPanel>
       <InstructorClassTable classSections={classSections} />
     </DashboardPage>
   )

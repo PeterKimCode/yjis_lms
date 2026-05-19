@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   EmptyState,
   SimpleTable,
+  StatusBadge,
   TableCell,
   TableRow,
 } from "@/modules/dashboards/components"
@@ -137,7 +138,9 @@ export function GradebookPanel({
             <TableCell className="font-medium">{grade.letterGrade ?? "-"}</TableCell>
             <TableCell>{grade.gradePoint ?? "-"}</TableCell>
             <TableCell>{grade.creditsEarned ?? "0"}</TableCell>
-            <TableCell>{grade.status}</TableCell>
+            <TableCell>
+              <StatusBadge value={grade.status} />
+            </TableCell>
           </TableRow>
         ))}
       />
@@ -238,7 +241,9 @@ export function GradebookPanel({
                   />
                   <TableCell>{breakdown.totalScore}</TableCell>
                   <TableCell>{finalGrade?.letterGrade ?? "-"}</TableCell>
-                  <TableCell>{finalGrade?.status ?? "DRAFT"}</TableCell>
+                  <TableCell>
+                    <StatusBadge value={finalGrade?.status ?? "DRAFT"} />
+                  </TableCell>
                 </TableRow>
               )
             })}

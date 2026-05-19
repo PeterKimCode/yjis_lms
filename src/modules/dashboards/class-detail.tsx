@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { AttendanceStatus, DeliveryMode } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import {
   DashboardPage,
   EmptyState,
@@ -11,6 +13,7 @@ import {
   OpenButton,
   SectionBlock,
   SimpleTable,
+  StatusBadge,
   TableCell,
   TableRow,
 } from "@/modules/dashboards/components"
@@ -135,12 +138,16 @@ export async function ClassSectionDetail({
       </div>
 
       <div className="flex flex-col gap-6">
-        <SectionBlock title={`Lessons · ${gradeWeights.lessonsWeight}%`}>
+        <SectionBlock
+          description="Create, publish, and review lesson completion."
+          meta={<SectionBadge>{section.lessons.length} lessons</SectionBadge>}
+          title={`Lessons · ${gradeWeights.lessonsWeight}%`}
+        >
           <div className="space-y-4">
             {mode === "instructor" ? (
               <details
                 className="rounded-md border bg-background p-3"
-                open={!section.boards.length}
+                open={!section.lessons.length}
               >
                 <summary className="cursor-pointer text-sm font-medium">
                   Create lesson
@@ -181,7 +188,12 @@ export async function ClassSectionDetail({
                             ? lesson.videoProvider
                             : "-"}
                         </TableCell>
-                        <TableCell>{lesson.isPublished ? "Yes" : "No"}</TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            label={lesson.isPublished ? "Published" : "Draft"}
+                            value={lesson.isPublished ? "PUBLISHED" : "DRAFT"}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Link
                             className="text-primary underline-offset-4 hover:underline"
@@ -210,7 +222,7 @@ export async function ClassSectionDetail({
               })}
             />
             {mode === "instructor" && section.lessons.length ? (
-              <details className="rounded-md border bg-background p-3">
+              <details className="rounded-md border bg-background p-3" open={!section.boards.length}>
                 <summary className="cursor-pointer text-sm font-medium">
                   Edit lessons
                 </summary>
@@ -289,7 +301,11 @@ export async function ClassSectionDetail({
           </div>
         </SectionBlock>
 
-        <SectionBlock title="Sessions">
+        <SectionBlock
+          description="Scheduled class meetings and attendance setup."
+          meta={<SectionBadge>{section.sessions.length} sessions</SectionBadge>}
+          title="Sessions"
+        >
           {mode === "instructor" ? (
             <details className="mb-4 rounded-md border bg-background p-3">
               <summary className="cursor-pointer text-sm font-medium">
@@ -393,7 +409,15 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        <SectionBlock title={`Attendance · ${gradeWeights.attendanceWeight}%`}>
+        <SectionBlock
+          description="Attendance summaries use the active school attendance policy."
+          meta={
+            <SectionBadge>
+              {attendanceSummary.attendanceRate.toFixed(1)}% rate
+            </SectionBadge>
+          }
+          title={`Attendance · ${gradeWeights.attendanceWeight}%`}
+        >
           <div className="space-y-4">
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <AttendanceStat
@@ -530,7 +554,9 @@ export async function ClassSectionDetail({
                             "Attendance"}
                         </TableCell>
                         <TableCell>{formatDateTime(attendance.takenAt)}</TableCell>
-                        <TableCell>{record.status}</TableCell>
+                        <TableCell>
+                          <StatusBadge value={record.status} />
+                        </TableCell>
                         <TableCell>{record.note ?? "-"}</TableCell>
                       </TableRow>
                     ))
@@ -540,7 +566,11 @@ export async function ClassSectionDetail({
           </div>
         </SectionBlock>
 
-        <SectionBlock title={`Assignments · ${gradeWeights.assignmentsWeight}%`}>
+        <SectionBlock
+          description="Manage assignments, student submissions, and grading feedback."
+          meta={<SectionBadge>{section.assignments.length} assignments</SectionBadge>}
+          title={`Assignments · ${gradeWeights.assignmentsWeight}%`}
+        >
           <AssignmentPanel
             assignments={section.assignments.map(toAssignmentPanelValue)}
             classSectionId={section.id}
@@ -551,7 +581,11 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        <SectionBlock title={`Quizzes · ${gradeWeights.quizzesWeight}%`}>
+        <SectionBlock
+          description="Create quizzes, review attempts, and handle manual grading."
+          meta={<SectionBadge>{section.quizzes.length} quizzes</SectionBadge>}
+          title={`Quizzes · ${gradeWeights.quizzesWeight}%`}
+        >
           <QuizPanel
             classSectionId={section.id}
             mode={mode}
@@ -562,7 +596,11 @@ export async function ClassSectionDetail({
         </SectionBlock>
 
         {mode === "instructor" ? (
-          <SectionBlock title={`Exams · ${gradeWeights.examsWeight}%`}>
+          <SectionBlock
+            description="Scheduled exams for this class section."
+            meta={<SectionBadge>{section.exams.length} exams</SectionBadge>}
+            title={`Exams · ${gradeWeights.examsWeight}%`}
+          >
             <ExamPanel
               classSectionId={section.id}
               exams={section.exams.map(toExamPanelValue)}
@@ -570,7 +608,11 @@ export async function ClassSectionDetail({
           </SectionBlock>
         ) : null}
 
-        <SectionBlock title="Grades">
+        <SectionBlock
+          description="Set module weights, calculate final grades, and publish results."
+          meta={<SectionBadge>{section.finalGrades.length} final grades</SectionBadge>}
+          title="Grades"
+        >
           <GradebookPanel
             classSectionId={section.id}
             mode={mode}
@@ -579,7 +621,11 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        <SectionBlock title="Boards">
+        <SectionBlock
+          description="Class announcements, Q&A, resources, and discussion spaces."
+          meta={<SectionBadge>{section.boards.length} boards</SectionBadge>}
+          title="Boards"
+        >
           <div className="space-y-4">
             {mode === "instructor" ? (
               <details className="rounded-md border bg-background p-3">
@@ -647,8 +693,10 @@ export async function ClassSectionDetail({
               </details>
             ) : null}
             {section.boards.length ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {section.boards.map((board) => {
+              <SimpleTable
+                empty="No boards yet."
+                headers={["Board", "Type", "Posts", "Open"]}
+                rows={section.boards.map((board) => {
                   const settings = getBoardSettings(board.settings)
                   const href =
                     mode === "instructor"
@@ -656,31 +704,22 @@ export async function ClassSectionDetail({
                       : `/student/classes/${section.id}/boards/${board.id}`
 
                   return (
-                    <div className="rounded-md border bg-background p-3" key={board.id}>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0">
-                          <h3 className="font-medium">{board.name}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {boardKindLabel(settings.boardKind)} ·{" "}
-                            {board.description ||
-                              boardKindHelp(settings.boardKind)}
-                          </p>
+                    <TableRow key={board.id}>
+                      <TableCell className="font-medium">
+                        <div>{board.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {board.description ?? boardKindHelp(settings.boardKind)}
                         </div>
-                        <Button asChild size="sm" variant="outline">
-                          <Link href={href}>Open</Link>
-                        </Button>
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Student posts:{" "}
-                        {settings.allowStudentPosts ? "enabled" : "read-only"} ·
-                        Parent posts:{" "}
-                        {settings.allowParentPosts ? "enabled" : "read-only"} ·
-                        Comments: {settings.allowComments ? "enabled" : "off"}
-                      </p>
-                    </div>
+                      </TableCell>
+                      <TableCell>{boardKindLabel(settings.boardKind)}</TableCell>
+                      <TableCell>{board._count.posts}</TableCell>
+                      <TableCell>
+                        <OpenButton href={href} />
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </div>
+              />
             ) : (
               <EmptyState>No boards yet.</EmptyState>
             )}
@@ -746,6 +785,10 @@ function AttendanceStat({
       <div className="mt-1 text-lg font-semibold">{value}</div>
     </div>
   )
+}
+
+function SectionBadge({ children }: { children: ReactNode }) {
+  return <Badge variant="secondary">{children}</Badge>
 }
 
 function toAssignmentPanelValue(

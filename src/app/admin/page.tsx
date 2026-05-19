@@ -13,6 +13,7 @@ import { getAdminData } from "@/modules/admin/data"
 import { AdminLinkGrid, AdminPageHeader } from "@/modules/admin/components"
 import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
+import { ActionCard, ActionPanel } from "@/modules/dashboards/components"
 
 export default async function AdminPage() {
   const admin = await getAdminData()
@@ -76,6 +77,32 @@ export default async function AdminPage() {
           </Link>
         ))}
       </div>
+      <ActionPanel
+        description="Common admin workflows and activity queues."
+        title="Admin focus"
+      >
+        <ActionCard
+          actionLabel="Manage users"
+          badge={userCount}
+          description="Review students, parents, instructors, roles, and academic records."
+          href="/admin/users"
+          title="Users and student records"
+        />
+        <ActionCard
+          actionLabel="Open inbox"
+          badge={unreadMessages || undefined}
+          description="Read and respond to school conversations."
+          href="/messages"
+          title="Messages"
+        />
+        <ActionCard
+          actionLabel="Review alerts"
+          badge={unreadNotifications || undefined}
+          description="See new submissions, board activity, grades, and system notices."
+          href="/notifications"
+          title="Notifications"
+        />
+      </ActionPanel>
       <AdminLinkGrid />
     </div>
   )

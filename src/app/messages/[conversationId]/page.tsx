@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/modules/dashboards/components"
 import { deleteMessage } from "@/modules/messages/actions"
 import { getConversationDetail } from "@/modules/messages/data"
 import {
@@ -32,8 +33,8 @@ export default async function ConversationPage({
             <h1 className="text-2xl font-semibold tracking-tight">
               {displayTitle}
             </h1>
-            <p className="text-sm text-muted-foreground">
-              {typeLabel}
+            <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <StatusBadge label={typeLabel} value={conversation.type} />
               {conversation.classSection
                 ? ` · ${conversation.classSection.course.title} · ${conversation.classSection.name}`
                 : ""}
@@ -62,8 +63,10 @@ export default async function ConversationPage({
                   key={message.id}
                 >
                   <article
-                    className={`max-w-[80%] rounded-lg border p-3 ${
-                      own ? "bg-primary text-primary-foreground" : "bg-muted/50"
+                    className={`max-w-[80%] rounded-lg border p-3 shadow-sm ${
+                      own
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "bg-muted/50"
                     }`}
                   >
                     <p className="text-xs opacity-80">

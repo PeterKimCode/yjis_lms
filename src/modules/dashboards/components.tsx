@@ -16,18 +16,23 @@ import {
 export function DashboardPage({
   title,
   description,
+  actions,
   children,
 }: {
   title: string
   description: string
+  actions?: ReactNode
   children: ReactNode
 }) {
   return (
     <main className="flex-1 bg-muted/40 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="text-sm text-muted-foreground">{description}</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
         {children}
       </div>
@@ -39,17 +44,30 @@ export function MetricCard({
   label,
   value,
   href,
+  description,
+  tone = "default",
 }: {
   label: string
   value: string | number
   href?: string
+  description?: string
+  tone?: "default" | "attention"
 }) {
   const card = (
-    <Card className={href ? "transition-colors hover:bg-muted/60" : ""}>
-      <CardHeader>
+    <Card
+      className={`${href ? "transition-colors hover:bg-muted/60" : ""} ${
+        tone === "attention" ? "border-primary/40 bg-primary/5" : ""
+      }`}
+    >
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
       </CardHeader>
-      <CardContent className="text-2xl font-semibold">{value}</CardContent>
+      <CardContent className="space-y-1">
+        <div className="text-2xl font-semibold">{value}</div>
+        {description ? (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </CardContent>
     </Card>
   )
 
@@ -61,6 +79,58 @@ export function EmptyState({ children }: { children: ReactNode }) {
     <div className="rounded-lg border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
       {children}
     </div>
+  )
+}
+
+export function ActionPanel({
+  title = "Today at a glance",
+  description,
+  children,
+}: {
+  title?: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="rounded-lg border bg-background p-4">
+      <div className="mb-3 space-y-1">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {description ? (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">{children}</div>
+    </section>
+  )
+}
+
+export function ActionCard({
+  title,
+  description,
+  href,
+  actionLabel = "Open",
+  badge,
+}: {
+  title: string
+  description: string
+  href: string
+  actionLabel?: string
+  badge?: string | number
+}) {
+  return (
+    <Link
+      className="rounded-md border p-3 transition-colors hover:bg-muted/60"
+      href={href}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+      </div>
+      <p className="mt-3 text-xs font-medium text-primary">{actionLabel}</p>
+    </Link>
   )
 }
 
@@ -95,15 +165,27 @@ export function SimpleTable({
 
 export function SectionBlock({
   title,
+  description,
+  meta,
   children,
 }: {
   title: string
+  description?: string
+  meta?: ReactNode
   children: ReactNode
 }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+      <CardHeader className="gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle>{title}</CardTitle>
+            {description ? (
+              <p className="text-sm text-muted-foreground">{description}</p>
+            ) : null}
+          </div>
+          {meta ? <div className="flex flex-wrap gap-2">{meta}</div> : null}
+        </div>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -112,6 +194,25 @@ export function SectionBlock({
 
 export function ModeBadge({ value }: { value: string }) {
   return <Badge variant="secondary">{value}</Badge>
+}
+
+export function StatusBadge({
+  value,
+  label,
+}: {
+  value: string | boolean | null | undefined
+  label?: string
+}) {
+  const text = label ?? getStatusLabel(value)
+  const tone = getStatusTone(value)
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${tone}`}
+    >
+      {text}
+    </span>
+  )
 }
 
 export function OpenButton({ href }: { href: string }) {
@@ -123,3 +224,61 @@ export function OpenButton({ href }: { href: string }) {
 }
 
 export { TableCell, TableRow }
+
+function getStatusLabel(value: string | boolean | null | undefined) {
+  if (value === true) return "Yes"
+  if (value === false) return "No"
+  if (value === null || value === undefined || value === "") return "-"
+
+  const labels: Record<string, string> = {
+    ABSENT: "Absent",
+    ACTIVE: "Active",
+    COMPLETED: "Completed",
+    DRAFT: "Draft",
+    ENROLLED: "Enrolled",
+    EXCUSED: "Excused",
+    FINALIZED: "Finalized",
+    GRADED: "Graded",
+    IN_PROGRESS: "In progress",
+    LATE: "Late",
+    MISSING: "Missing",
+    NOT_SUBMITTED: "Not submitted",
+    PENDING: "Pending",
+    PRESENT: "Present",
+    PUBLISHED: "Published",
+    SICK_LEAVE: "Sick leave",
+    SUBMITTED: "Submitted",
+  }
+
+  return labels[value] ?? value.replaceAll("_", " ").toLowerCase()
+}
+
+function getStatusTone(value: string | boolean | null | undefined) {
+  if (value === true) return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  if (value === false) return "border-slate-200 bg-slate-50 text-slate-600"
+
+  switch (value) {
+    case "ACTIVE":
+    case "COMPLETED":
+    case "ENROLLED":
+    case "FINALIZED":
+    case "GRADED":
+    case "PRESENT":
+    case "PUBLISHED":
+    case "SUBMITTED":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700"
+    case "DRAFT":
+    case "IN_PROGRESS":
+    case "LATE":
+    case "PENDING":
+      return "border-amber-200 bg-amber-50 text-amber-700"
+    case "ABSENT":
+    case "MISSING":
+      return "border-rose-200 bg-rose-50 text-rose-700"
+    case "EXCUSED":
+    case "SICK_LEAVE":
+      return "border-sky-200 bg-sky-50 text-sky-700"
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600"
+  }
+}

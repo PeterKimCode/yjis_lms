@@ -16,6 +16,7 @@ import { getSubmissionStatus } from "@/modules/assignments/status"
 import {
   EmptyState,
   SimpleTable,
+  StatusBadge,
   TableCell,
   TableRow,
 } from "@/modules/dashboards/components"
@@ -109,7 +110,12 @@ export function AssignmentPanel({
               <TableCell>{assignment.pointsPossible ?? "-"}</TableCell>
               {mode === "instructor" ? (
                 <>
-                  <TableCell>{assignment.acceptsLate ? "Allowed" : "Closed"}</TableCell>
+                  <TableCell>
+                    <StatusBadge
+                      label={assignment.acceptsLate ? "Allowed" : "Closed"}
+                      value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"}
+                    />
+                  </TableCell>
                   <TableCell>{assignment.submissions.length}</TableCell>
                   <TableCell>{gradedCount}</TableCell>
                   <TableCell>
@@ -146,11 +152,18 @@ export function AssignmentPanel({
               ) : (
                 <>
                   <TableCell>
-                    {getSubmissionStatus({
-                      dueAt: assignment.dueAt,
-                      score: ownSubmission?.score,
-                      submittedAt: ownSubmission?.submittedAt,
-                    })}
+                    <StatusBadge
+                      label={getSubmissionStatus({
+                        dueAt: assignment.dueAt,
+                        score: ownSubmission?.score,
+                        submittedAt: ownSubmission?.submittedAt,
+                      })}
+                      value={getSubmissionStatus({
+                        dueAt: assignment.dueAt,
+                        score: ownSubmission?.score,
+                        submittedAt: ownSubmission?.submittedAt,
+                      }).toUpperCase().replaceAll(" ", "_")}
+                    />
                   </TableCell>
                   <TableCell>
                     {ownSubmission?.score
