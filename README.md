@@ -80,6 +80,27 @@ PDF 설명서는 `docs/manuals` 폴더에 있습니다.
 npx tsx scripts/generate-manual-pdfs.ts
 ```
 
+## 설계 문서와 소개 자료
+
+LMS 구조와 기능 설명 문서는 `docs` 폴더에 있습니다.
+
+| 문서 | Markdown | PDF |
+| --- | --- | --- |
+| Information Architecture | [docs/information-architecture.md](docs/information-architecture.md) | [docs/pdfs/information-architecture.pdf](docs/pdfs/information-architecture.pdf) |
+| 앱 기능 정의서 | [docs/app-feature-spec.md](docs/app-feature-spec.md) | [docs/pdfs/app-feature-spec.pdf](docs/pdfs/app-feature-spec.pdf) |
+| 화면 설계서 | [docs/screen-design-spec.md](docs/screen-design-spec.md) | [docs/pdfs/screen-design-spec.pdf](docs/pdfs/screen-design-spec.pdf) |
+| DB 설계도 | [docs/database-design.md](docs/database-design.md) | [docs/pdfs/database-design.pdf](docs/pdfs/database-design.pdf) |
+
+LMS 소개용 PowerPoint:
+
+- [YJIS LMS Introduction PPT](docs/presentations/yjis-lms-introduction.pptx)
+
+설계 PDF와 PPT를 다시 생성하려면 아래 명령을 실행합니다.
+
+```bash
+npx tsx scripts/generate-project-artifacts.ts
+```
+
 ## 현재 구현된 주요 기능
 
 - 역할별 대시보드: 관리자, 강사, 학생, 학부모
