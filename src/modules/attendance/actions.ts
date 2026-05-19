@@ -219,7 +219,6 @@ export async function saveAttendanceRecords(formData: FormData) {
       organizationId: true,
       campusId: true,
       classSectionId: true,
-      takenAt: true,
       title: true,
       classSession: {
         select: {
@@ -263,6 +262,20 @@ export async function saveAttendanceRecords(formData: FormData) {
     AttendanceStatus.EARLY_LEAVE,
   ]
   const now = new Date()
+  const existingRecords = await prisma.attendanceRecord.findMany({
+    where: {
+      attendanceSessionId: attendanceSession.id,
+      studentId: { in: studentIdsToSave },
+    },
+    select: {
+      note: true,
+      status: true,
+      studentId: true,
+    },
+  })
+  const existingRecordByStudentId = new Map(
+    existingRecords.map((record) => [record.studentId, record])
+  )
   const notifications: Array<{
     id: string
     status: AttendanceStatus
@@ -271,6 +284,7 @@ export async function saveAttendanceRecords(formData: FormData) {
 
   for (const record of data.records) {
     const isCheckedIn = checkedInStatuses.includes(record.status)
+    const existingRecord = existingRecordByStudentId.get(record.studentId)
     const saved = await prisma.attendanceRecord.upsert({
       where: {
         attendanceSessionId_studentId: {
@@ -303,7 +317,13 @@ export async function saveAttendanceRecords(formData: FormData) {
       },
     })
 
-    notifications.push(saved)
+    if (
+      !existingRecord ||
+      existingRecord.status !== record.status ||
+      (existingRecord.note ?? null) !== record.note
+    ) {
+      notifications.push(saved)
+    }
   }
 
   await Promise.all(

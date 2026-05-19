@@ -1,4 +1,4 @@
-import { DeliveryMode, EnrollmentStatus } from "@prisma/client"
+import { EnrollmentStatus } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -8,10 +8,10 @@ import {
   removeClassSectionInstructor,
   removeEnrollment,
   removeStudentFromHomeroom,
-  saveClassSection,
   saveEnrollment,
   saveHomeroom,
 } from "@/modules/admin/actions"
+import { ClassSectionClientForm } from "@/modules/admin/class-section-form"
 import {
   AdminSelect,
   DataTable,
@@ -34,92 +34,45 @@ export function ClassSectionForm({
   data: AdminData
   section?: ClassSection
 }) {
+  const sectionValue = section
+    ? {
+        academicYearId: section.academicYearId,
+        campusId: section.campusId,
+        capacity: section.capacity,
+        courseId: section.courseId,
+        deliveryMode: section.deliveryMode,
+        gradeLevelId: section.gradeLevelId,
+        homeroomId: section.homeroomId,
+        id: section.id,
+        name: section.name,
+        organizationId: section.organizationId,
+        sectionCode: section.sectionCode,
+        termId: section.termId,
+      }
+    : undefined
+
   return (
-    <FormCard title={section ? "Edit class section" : "Create class section"}>
-      <form
-        action={saveClassSection}
-        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <input name="id" type="hidden" value={section?.id ?? ""} />
-        <AdminSelect
-          includeEmpty={false}
-          label="Organization"
-          name="organizationId"
-          options={data.organizationOptions}
-          defaultValue={section?.organizationId}
-          required
-        />
-        <AdminSelect
-          label="Campus"
-          name="campusId"
-          options={data.campusOptions}
-          defaultValue={section?.campusId}
-        />
-        <AdminSelect
-          includeEmpty={false}
-          label="Academic year"
-          name="academicYearId"
-          options={data.academicYearOptions}
-          defaultValue={section?.academicYearId}
-          required
-        />
-        <AdminSelect
-          label="Term"
-          name="termId"
-          options={data.termOptions}
-          defaultValue={section?.termId}
-        />
-        <AdminSelect
-          includeEmpty={false}
-          label="Course"
-          name="courseId"
-          options={data.courseOptions}
-          defaultValue={section?.courseId}
-          required
-        />
-        <AdminSelect
-          label="Grade level"
-          name="gradeLevelId"
-          options={data.gradeLevelOptions}
-          defaultValue={section?.gradeLevelId}
-        />
-        <AdminSelect
-          label="Homeroom"
-          name="homeroomId"
-          options={data.homeroomOptions}
-          defaultValue={section?.homeroomId}
-        />
-        <Field label="Title" name="name" defaultValue={section?.name} required />
-        <Field
-          label="Section code"
-          name="sectionCode"
-          defaultValue={section?.sectionCode}
-        />
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Delivery mode</span>
-          <select
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            name="deliveryMode"
-            defaultValue={section?.deliveryMode ?? DeliveryMode.OFFLINE}
-          >
-            {Object.values(DeliveryMode).map((mode) => (
-              <option key={mode} value={mode}>
-                {mode}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Field
-          label="Capacity"
-          name="capacity"
-          type="number"
-          defaultValue={section?.capacity}
-        />
-        <div className="flex items-end">
-          <SubmitButton />
-        </div>
-      </form>
-    </FormCard>
+    <ClassSectionClientForm
+      academicYearOptions={data.academicYearOptions}
+      campusOptions={data.campuses.map((campus) => ({
+        id: campus.id,
+        label: `${campus.name} (${campus.organization.name})`,
+      }))}
+      courseOptions={data.courses.map((course) => ({
+        campusId: course.campusId,
+        code: course.code,
+        defaultDeliveryMode: course.defaultDeliveryMode,
+        id: course.id,
+        label: `${course.title}${course.code ? ` (${course.code})` : ""}`,
+        organizationId: course.organizationId,
+        title: course.title,
+      }))}
+      gradeLevelOptions={data.gradeLevelOptions}
+      homeroomOptions={data.homeroomOptions}
+      organizationOptions={data.organizationOptions}
+      section={sectionValue}
+      termOptions={data.termOptions}
+    />
   )
 }
 
