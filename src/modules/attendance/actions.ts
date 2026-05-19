@@ -1,11 +1,20 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { AttendanceStatus, DeliveryMode, UserRole } from "@prisma/client"
+import {
+  AttendanceStatus,
+  DeliveryMode,
+  NotificationType,
+  UserRole,
+} from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { canManageClassSection, requireAnyRole } from "@/modules/auth/permissions"
+import {
+  createNotification,
+  notifyLinkedParentsForStudent,
+} from "@/modules/notifications/service"
 import { resolvePolicies } from "@/modules/policies/resolve"
 
 const requiredString = z.string().trim().min(1)
@@ -16,6 +25,12 @@ const optionalString = z.preprocess(
 
 function readForm(formData: FormData) {
   return Object.fromEntries(formData.entries())
+}
+
+function readStringArray(formData: FormData, name: string) {
+  return formData
+    .getAll(name)
+    .map((value) => (typeof value === "string" ? value : ""))
 }
 
 function readDate(value: string) {
@@ -137,7 +152,7 @@ export async function createAttendanceSession(formData: FormData) {
         campusId: classSession.campusId,
         attendanceSessionId: attendanceSession.id,
         studentId: enrollment.studentId,
-        status: AttendanceStatus.PENDING,
+        status: AttendanceStatus.PRESENT,
       })),
       skipDuplicates: true,
     })
@@ -146,15 +161,25 @@ export async function createAttendanceSession(formData: FormData) {
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
 }
 
-const attendanceRecordSchema = z.object({
+export async function saveAttendanceRecord(formData: FormData) {
+  await saveAttendanceRecords(formData)
+}
+
+const attendanceRecordBatchSchema = z.object({
   attendanceSessionId: requiredString,
-  studentId: requiredString,
-  status: z.nativeEnum(AttendanceStatus),
-  note: optionalString,
+  records: z
+    .array(
+      z.object({
+        note: optionalString,
+        status: z.nativeEnum(AttendanceStatus),
+        studentId: requiredString,
+      })
+    )
+    .min(1),
 })
 
-export async function saveAttendanceRecord(formData: FormData) {
-  await requireAnyRole([
+export async function saveAttendanceRecords(formData: FormData) {
+  const actor = await requireAnyRole([
     UserRole.SUPER_ADMIN,
     UserRole.ORG_ADMIN,
     UserRole.SCHOOL_ADMIN,
@@ -162,7 +187,30 @@ export async function saveAttendanceRecord(formData: FormData) {
     UserRole.INSTRUCTOR,
     UserRole.HOMEROOM_TEACHER,
   ])
-  const data = attendanceRecordSchema.parse(readForm(formData))
+
+  const rowIndexValue = formData.get("recordIndex")
+  const rowIndex =
+    typeof rowIndexValue === "string" && rowIndexValue.length
+      ? Number(rowIndexValue)
+      : null
+  const studentIds = readStringArray(formData, "studentId")
+  const statuses = readStringArray(formData, "status")
+  const notes = readStringArray(formData, "note")
+  const records = studentIds.map((studentId, index) => ({
+    studentId,
+    status: statuses[index],
+    note: notes[index] ?? "",
+  }))
+  const selectedRecords =
+    rowIndex === null
+      ? records
+      : Number.isInteger(rowIndex) && records[rowIndex]
+        ? [records[rowIndex]]
+        : []
+  const data = attendanceRecordBatchSchema.parse({
+    attendanceSessionId: formData.get("attendanceSessionId"),
+    records: selectedRecords,
+  })
   const prisma = getPrismaClient()
   const attendanceSession = await prisma.attendanceSession.findUniqueOrThrow({
     where: { id: data.attendanceSessionId },
@@ -171,6 +219,13 @@ export async function saveAttendanceRecord(formData: FormData) {
       organizationId: true,
       campusId: true,
       classSectionId: true,
+      takenAt: true,
+      title: true,
+      classSession: {
+        select: {
+          title: true,
+        },
+      },
     },
   })
 
@@ -188,18 +243,18 @@ export async function saveAttendanceRecord(formData: FormData) {
     throw new Error("Attendance policy does not allow instructor overrides.")
   }
 
-  const enrollment = await prisma.enrollment.findUnique({
+  const studentIdsToSave = data.records.map((record) => record.studentId)
+  const enrollments = await prisma.enrollment.findMany({
     where: {
-      classSectionId_studentId: {
-        classSectionId: attendanceSession.classSectionId,
-        studentId: data.studentId,
-      },
+      classSectionId: attendanceSession.classSectionId,
+      studentId: { in: studentIdsToSave },
     },
-    select: { id: true },
+    select: { studentId: true },
   })
+  const enrolledStudentIds = new Set(enrollments.map((item) => item.studentId))
 
-  if (!enrollment) {
-    throw new Error("Student is not enrolled in this class section.")
+  if (enrolledStudentIds.size !== studentIdsToSave.length) {
+    throw new Error("One or more students are not enrolled in this class section.")
   }
 
   const checkedInStatuses: AttendanceStatus[] = [
@@ -207,35 +262,74 @@ export async function saveAttendanceRecord(formData: FormData) {
     AttendanceStatus.LATE,
     AttendanceStatus.EARLY_LEAVE,
   ]
-  const isCheckedIn = checkedInStatuses.includes(data.status)
   const now = new Date()
+  const notifications: Array<{
+    id: string
+    status: AttendanceStatus
+    studentId: string
+  }> = []
 
-  await prisma.attendanceRecord.upsert({
-    where: {
-      attendanceSessionId_studentId: {
-        attendanceSessionId: attendanceSession.id,
-        studentId: data.studentId,
+  for (const record of data.records) {
+    const isCheckedIn = checkedInStatuses.includes(record.status)
+    const saved = await prisma.attendanceRecord.upsert({
+      where: {
+        attendanceSessionId_studentId: {
+          attendanceSessionId: attendanceSession.id,
+          studentId: record.studentId,
+        },
       },
-    },
-    update: {
-      status: data.status,
-      note: data.note,
-      checkedInAt: isCheckedIn ? now : null,
-      checkedOutAt: data.status === AttendanceStatus.EARLY_LEAVE ? now : null,
-    },
-    create: {
-      organizationId: attendanceSession.organizationId,
-      campusId: attendanceSession.campusId,
-      attendanceSessionId: attendanceSession.id,
-      studentId: data.studentId,
-      status: data.status,
-      note: data.note,
-      checkedInAt: isCheckedIn ? now : null,
-      checkedOutAt: data.status === AttendanceStatus.EARLY_LEAVE ? now : null,
-    },
-  })
+      update: {
+        status: record.status,
+        note: record.note,
+        checkedInAt: isCheckedIn ? now : null,
+        checkedOutAt:
+          record.status === AttendanceStatus.EARLY_LEAVE ? now : null,
+      },
+      create: {
+        organizationId: attendanceSession.organizationId,
+        campusId: attendanceSession.campusId,
+        attendanceSessionId: attendanceSession.id,
+        studentId: record.studentId,
+        status: record.status,
+        note: record.note,
+        checkedInAt: isCheckedIn ? now : null,
+        checkedOutAt:
+          record.status === AttendanceStatus.EARLY_LEAVE ? now : null,
+      },
+      select: {
+        id: true,
+        status: true,
+        studentId: true,
+      },
+    })
+
+    notifications.push(saved)
+  }
+
+  await Promise.all(
+    notifications.flatMap((record) => {
+      const payload = {
+        actorUserId: actor.id,
+        actionUrl: `/student/classes/${attendanceSession.classSectionId}`,
+        body: `${attendanceSession.title ?? attendanceSession.classSession?.title ?? "Attendance"}: ${record.status}`,
+        entityId: record.id,
+        entityType: "AttendanceRecord",
+        title: "Attendance updated",
+        type: NotificationType.ATTENDANCE_UPDATED,
+      }
+
+      return [
+        createNotification({ ...payload, userId: record.studentId }),
+        notifyLinkedParentsForStudent(record.studentId, {
+          ...payload,
+          actionUrl: `/parent/students/${record.studentId}`,
+        }),
+      ]
+    })
+  )
 
   revalidatePath(`/instructor/classes/${attendanceSession.classSectionId}`)
+  revalidatePath("/notifications")
 }
 
 async function canManageClassSectionForAttendance(classSectionId: string) {

@@ -36,7 +36,7 @@ import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form
 import {
   createAttendanceSession,
   createClassSession,
-  saveAttendanceRecord,
+  saveAttendanceRecords,
 } from "@/modules/attendance/actions"
 import { createClassBoard } from "@/modules/boards/actions"
 import { openClassConversation } from "@/modules/messages/actions"
@@ -468,67 +468,76 @@ export async function ClassSectionDetail({
                           {formatDateTime(attendance.takenAt)}
                         </summary>
                         <div className="pt-3">
-                          <SimpleTable
-                            empty="No attendance records were created."
-                            headers={["Student", "Email", "Status", "Note", "Save"]}
-                            rows={attendance.records.map((record) => (
-                            <TableRow key={record.id}>
-                              <TableCell className="font-medium">
-                                {record.student.name}
-                              </TableCell>
-                              <TableCell>{record.student.email ?? "-"}</TableCell>
-                              <TableCell>
-                                <form
-                                  action={saveAttendanceRecord}
-                                  className="contents"
-                                  id={`attendance-${record.id}`}
-                                >
-                                  <input
-                                    name="attendanceSessionId"
-                                    type="hidden"
-                                    value={attendance.id}
-                                  />
+                          <form action={saveAttendanceRecords} className="space-y-3">
+                            <input
+                              name="attendanceSessionId"
+                              type="hidden"
+                              value={attendance.id}
+                            />
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="text-xs text-muted-foreground">
+                                Default is Present. Change only students who are
+                                late, absent, excused, or pending.
+                              </p>
+                              <Button size="sm" type="submit">
+                                Save all
+                              </Button>
+                            </div>
+                            <SimpleTable
+                              empty="No attendance records were created."
+                              headers={["Student", "Email", "Status", "Note", "Save"]}
+                              rows={attendance.records.map((record, index) => (
+                              <TableRow key={record.id}>
+                                <TableCell className="font-medium">
                                   <input
                                     name="studentId"
                                     type="hidden"
                                     value={record.studentId}
                                   />
-                                  <select
-                                    className="h-8 rounded-md border bg-background px-2 text-sm"
-                                    name="status"
-                                    defaultValue={record.status}
+                                  {record.student.name}
+                                </TableCell>
+                                <TableCell>{record.student.email ?? "-"}</TableCell>
+                                <TableCell>
+                                    <select
+                                      className="h-8 rounded-md border bg-background px-2 text-sm"
+                                      name="status"
+                                      defaultValue={
+                                        record.status === AttendanceStatus.PENDING
+                                          ? AttendanceStatus.PRESENT
+                                          : record.status
+                                      }
+                                    >
+                                      {Object.values(AttendanceStatus).map(
+                                        (status) => (
+                                          <option key={status} value={status}>
+                                            {status}
+                                          </option>
+                                        )
+                                      )}
+                                    </select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    name="note"
+                                    defaultValue={record.note ?? ""}
+                                    placeholder="Optional"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    name="recordIndex"
+                                    size="sm"
+                                    type="submit"
+                                    value={index}
+                                    variant="outline"
                                   >
-                                    {Object.values(AttendanceStatus).map(
-                                      (status) => (
-                                        <option key={status} value={status}>
-                                          {status}
-                                        </option>
-                                      )
-                                    )}
-                                  </select>
-                                </form>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  form={`attendance-${record.id}`}
-                                  name="note"
-                                  defaultValue={record.note ?? ""}
-                                  placeholder="Optional"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  form={`attendance-${record.id}`}
-                                  size="sm"
-                                  type="submit"
-                                  variant="outline"
-                                >
-                                  Save
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                            ))}
-                          />
+                                    Save
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                              ))}
+                            />
+                          </form>
                         </div>
                       </details>
                     ))}
