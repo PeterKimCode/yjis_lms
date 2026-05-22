@@ -89,7 +89,7 @@ export function LoginForm({
         </div>
       </CardHeader>
       <form action="/login" method="post" onSubmit={handleSubmit}>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 pb-3">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">
               Email
@@ -136,7 +136,7 @@ export function LoginForm({
             </p>
           ) : null}
         </CardContent>
-        <CardFooter className="pt-2">
+        <CardFooter className="mt-3 pt-4">
           <Button className="w-full" type="submit" disabled={isSubmitting}>
             <LogIn />
             {isSubmitting ? "Signing in..." : "Sign in"}

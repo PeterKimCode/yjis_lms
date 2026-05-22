@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
 import { Button } from "@/components/ui/button"
 import {
   archiveNotificationAction,
@@ -28,6 +29,7 @@ export default async function NotificationsPage({
   const readNotifications = notifications.filter((notification) => notification.readAt)
 
   return (
+    <CurrentWorkspaceShell>
     <main className="app-shell-surface flex-1 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <Button asChild size="sm" variant="outline">
@@ -97,6 +99,7 @@ export default async function NotificationsPage({
         )}
       </div>
     </main>
+    </CurrentWorkspaceShell>
   )
 }
 

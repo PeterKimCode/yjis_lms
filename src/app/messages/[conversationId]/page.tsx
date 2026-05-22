@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/modules/dashboards/components"
 import { deleteMessage } from "@/modules/messages/actions"
@@ -27,6 +28,7 @@ export default async function ConversationPage({
   const { conversation, displayTitle, typeLabel, user } = data
 
   return (
+    <CurrentWorkspaceShell>
     <main className="app-shell-surface flex-1 px-4 py-8">
       <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <ConversationSubmenu
@@ -118,6 +120,7 @@ export default async function ConversationPage({
         </div>
       </div>
     </main>
+    </CurrentWorkspaceShell>
   )
 }
 

@@ -61,18 +61,12 @@ export function RoleSidebarNav({
 }: RoleSidebarNavProps) {
   const pathname = usePathname()
   const toneClass = toneClasses[tone]
-  const hideWorkspaceSidebar =
-    pathname.startsWith("/messages") || pathname.startsWith("/notifications")
   const isClassRoute =
     pathname.includes("/classes/") || pathname.endsWith("/classes")
 
-  if (hideWorkspaceSidebar) {
-    return null
-  }
-
   return (
     <>
-      <aside className="hidden w-64 shrink-0 border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 shrink-0 overflow-y-auto border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
         <div className="mb-5 space-y-1">
           <div className="flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${toneClass.dot}`} />

@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="role-admin-surface flex flex-1">
-      <aside className="hidden w-64 border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
         <div className="mb-5">
           <p className="text-sm font-semibold">Admin workspace</p>
           <p className="text-xs text-muted-foreground">{user.email}</p>
