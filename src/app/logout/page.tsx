@@ -11,7 +11,7 @@ export default async function LogoutPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-muted/40 px-4 py-12">
+    <main className="app-shell-surface min-h-[calc(100vh-4rem)] px-4 py-12">
       <div className="mx-auto w-full max-w-sm space-y-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">Sign out</h1>

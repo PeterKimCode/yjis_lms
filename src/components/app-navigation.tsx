@@ -23,10 +23,13 @@ export async function AppNavigation() {
     : "/"
 
   return (
-    <header className="border-b bg-background">
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
-        <Link className="font-semibold tracking-tight" href="/">
-          LMS Platform
+        <Link className="flex items-center gap-2 font-semibold tracking-tight" href="/">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-sm shadow-blue-200">
+            Y
+          </span>
+          <span>YJIS LMS</span>
         </Link>
         <nav className="flex items-center gap-2">
           {session?.user ? (

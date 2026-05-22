@@ -17,7 +17,7 @@ export default async function LoginPage({
   }
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-muted/40 px-4 py-12">
+    <main className="app-shell-surface min-h-[calc(100vh-4rem)] px-4 py-12">
       <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>

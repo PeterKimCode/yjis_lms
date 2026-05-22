@@ -28,7 +28,7 @@ export default async function NotificationsPage({
   const readNotifications = notifications.filter((notification) => notification.readAt)
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-8">
+    <main className="app-shell-surface flex-1 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <Button asChild size="sm" variant="outline">
           <Link href={getDashboardHref(user.roleAssignments.map((item) => item.role))}>
@@ -44,7 +44,7 @@ export default async function NotificationsPage({
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 rounded-lg border bg-background p-4">
+        <div className="lms-soft-panel flex flex-col gap-3 rounded-lg p-4">
           <form className="flex flex-col gap-2 md:flex-row">
             <input
               className="h-9 rounded-md border bg-background px-3 text-sm md:max-w-sm"
@@ -91,7 +91,7 @@ export default async function NotificationsPage({
             ) : null}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
             No notifications yet.
           </div>
         )}
@@ -113,7 +113,7 @@ function NotificationGroup({
       <div className="grid gap-3">
         {notifications.map((notification) => (
           <article
-            className={`rounded-lg border bg-background p-4 ${
+            className={`lms-card rounded-lg p-4 ${
               notification.readAt ? "" : "border-primary/50 bg-primary/5"
             }`}
             key={notification.id}

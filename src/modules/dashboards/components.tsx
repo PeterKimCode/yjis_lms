@@ -18,17 +18,20 @@ export function DashboardPage({
   description,
   actions,
   children,
+  tone = "default",
 }: {
   title: string
   description: string
   actions?: ReactNode
   children: ReactNode
+  tone?: "default" | "admin" | "instructor" | "student" | "parent"
 }) {
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-8">
+    <main className={`flex-1 px-4 py-8 ${getPageToneClass(tone)}`}>
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="lms-soft-panel flex flex-col gap-3 rounded-xl p-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
+            <div className="h-1.5 w-16 rounded-full bg-primary/70" />
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
@@ -55,7 +58,7 @@ export function MetricCard({
 }) {
   const card = (
     <Card
-      className={`${href ? "transition-colors hover:bg-muted/60" : ""} ${
+      className={`lms-card ${href ? "lms-card-hover" : ""} ${
         tone === "attention" ? "border-primary/40 bg-primary/5" : ""
       }`}
     >
@@ -76,8 +79,9 @@ export function MetricCard({
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
-      {children}
+    <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
+      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200" />
+      <div>{children}</div>
     </div>
   )
 }
@@ -92,7 +96,7 @@ export function ActionPanel({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-lg border bg-background p-4">
+    <section className="lms-soft-panel rounded-xl p-4">
       <div className="mb-3 space-y-1">
         <h2 className="text-sm font-semibold">{title}</h2>
         {description ? (
@@ -119,7 +123,7 @@ export function ActionCard({
 }) {
   return (
     <Link
-      className="rounded-md border p-3 transition-colors hover:bg-muted/60"
+      className="lms-card lms-card-hover rounded-lg p-3"
       href={href}
     >
       <div className="flex items-start justify-between gap-3">
@@ -148,7 +152,7 @@ export function SimpleTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border bg-background">
+    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
       <Table>
         <TableHeader>
           <TableRow>
@@ -175,11 +179,14 @@ export function SectionBlock({
   children: ReactNode
 }) {
   return (
-    <Card>
-      <CardHeader className="gap-2">
+    <Card className={`lms-card overflow-hidden ${getSectionAccentClass(title)}`}>
+      <CardHeader className="gap-2 border-b border-slate-100/90 bg-white/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-[var(--section-accent,#2563eb)]" />
+              {title}
+            </CardTitle>
             {description ? (
               <p className="text-sm text-muted-foreground">{description}</p>
             ) : null}
@@ -281,4 +288,45 @@ function getStatusTone(value: string | boolean | null | undefined) {
     default:
       return "border-slate-200 bg-slate-50 text-slate-600"
   }
+}
+
+function getPageToneClass(tone: "default" | "admin" | "instructor" | "student" | "parent") {
+  switch (tone) {
+    case "admin":
+      return "role-admin-surface"
+    case "instructor":
+      return "role-instructor-surface"
+    case "student":
+      return "role-student-surface"
+    case "parent":
+      return "role-parent-surface"
+    default:
+      return "app-shell-surface"
+  }
+}
+
+function getSectionAccentClass(title: string) {
+  const normalized = title.toLowerCase()
+  if (normalized.includes("lesson")) {
+    return "[--section-accent:#2563eb] border-l-4 border-l-blue-400"
+  }
+  if (normalized.includes("attendance")) {
+    return "[--section-accent:#059669] border-l-4 border-l-emerald-400"
+  }
+  if (normalized.includes("assignment")) {
+    return "[--section-accent:#7c3aed] border-l-4 border-l-violet-400"
+  }
+  if (normalized.includes("quiz")) {
+    return "[--section-accent:#0284c7] border-l-4 border-l-sky-400"
+  }
+  if (normalized.includes("exam")) {
+    return "[--section-accent:#d97706] border-l-4 border-l-amber-400"
+  }
+  if (normalized.includes("grade")) {
+    return "[--section-accent:#ca8a04] border-l-4 border-l-yellow-400"
+  }
+  if (normalized.includes("board")) {
+    return "[--section-accent:#db2777] border-l-4 border-l-pink-400"
+  }
+  return "[--section-accent:#2563eb] border-l-4 border-l-blue-300"
 }

@@ -17,7 +17,7 @@ export default async function MessagesPage({
   ])
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-8">
+    <main className="app-shell-surface flex-1 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <Button asChild size="sm" variant="outline">
           <Link href={getDashboardHref(user.roleAssignments.map((item) => item.role))}>
@@ -37,7 +37,7 @@ export default async function MessagesPage({
           directOptions={options.directOptions}
         />
 
-        <form className="flex flex-col gap-2 rounded-lg border bg-background p-4 md:flex-row">
+        <form className="lms-soft-panel flex flex-col gap-2 rounded-lg p-4 md:flex-row">
           <input
             className="h-9 rounded-md border bg-background px-3 text-sm md:max-w-sm"
             defaultValue={q}
@@ -72,7 +72,7 @@ export default async function MessagesPage({
 
               return (
                 <Link
-                  className="rounded-lg border bg-background p-4 transition-colors hover:bg-muted/60"
+                  className="lms-card lms-card-hover rounded-lg p-4"
                   href={`/messages/${conversation.id}`}
                   key={conversation.id}
                 >
@@ -111,7 +111,7 @@ export default async function MessagesPage({
             })}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed bg-background p-8 text-center text-sm text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
             No conversations yet.
           </div>
         )}

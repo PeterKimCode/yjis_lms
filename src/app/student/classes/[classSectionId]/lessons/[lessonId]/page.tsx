@@ -39,7 +39,7 @@ export default async function StudentLessonPage({
       : null
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-8">
+    <main className="role-student-surface flex-1 px-4 py-8">
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">

@@ -52,6 +52,7 @@ export default async function StudentPage() {
     <DashboardPage
       title="Student dashboard"
       description="Your enrolled classes, coursework, and learning progress."
+      tone="student"
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard

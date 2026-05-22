@@ -64,7 +64,7 @@ export default async function AdminPage() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map(([label, value, href]) => (
           <Link href={href} key={label}>
-            <Card className="transition-colors hover:bg-muted/60">
+            <Card className="lms-card lms-card-hover">
               <CardHeader>
                 <CardTitle className="text-sm text-muted-foreground">
                   {label}

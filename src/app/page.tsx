@@ -13,7 +13,7 @@ export default async function Home() {
     : "/login"
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-10">
+    <main className="app-shell-surface flex-1 px-4 py-10">
       <section className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
           <div className="space-y-3">
@@ -39,7 +39,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <Card>
+        <Card className="lms-card">
           <CardHeader>
             <CardTitle>Session</CardTitle>
           </CardHeader>

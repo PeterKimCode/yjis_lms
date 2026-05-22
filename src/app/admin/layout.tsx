@@ -13,10 +13,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const user = await requireAdmin()
 
   return (
-    <div className="flex flex-1 bg-muted/40">
-      <aside className="hidden w-64 border-r bg-background p-4 md:block">
+    <div className="role-admin-surface flex flex-1">
+      <aside className="hidden w-64 border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
         <div className="mb-5">
-          <p className="text-sm font-semibold">Academic Setup</p>
+          <p className="text-sm font-semibold">Admin workspace</p>
           <p className="text-xs text-muted-foreground">{user.email}</p>
         </div>
         <nav className="space-y-3">
@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </nav>
       </aside>
       <section className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b bg-background px-4 py-3">
+        <header className="border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium">Admin dashboard</p>
@@ -61,7 +61,7 @@ function NavGroup({ links }: { links: readonly (readonly [string, string])[] }) 
     <div className="grid gap-1">
       {links.map(([href, label]) => (
         <Link
-          className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-blue-50 hover:text-blue-700"
           href={href}
           key={href}
         >

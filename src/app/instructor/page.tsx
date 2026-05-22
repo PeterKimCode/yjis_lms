@@ -25,6 +25,7 @@ export default async function InstructorPage() {
     <DashboardPage
       title="Instructor dashboard"
       description="Assigned class sections, learning activity, and teaching setup."
+      tone="instructor"
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard

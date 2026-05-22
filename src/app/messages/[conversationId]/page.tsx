@@ -23,7 +23,7 @@ export default async function ConversationPage({
   const { conversation, displayTitle, typeLabel, user } = data
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-8">
+    <main className="app-shell-surface flex-1 px-4 py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <div className="space-y-3">
           <Button asChild size="sm" variant="outline">
@@ -43,7 +43,7 @@ export default async function ConversationPage({
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             {conversation.participants.map((participant) => (
               <span
-                className="rounded-md border bg-background px-2 py-1"
+                className="rounded-md border border-slate-200 bg-white/80 px-2 py-1"
                 key={participant.id}
               >
                 {participant.user.name ?? participant.user.email}
@@ -52,7 +52,7 @@ export default async function ConversationPage({
           </div>
         </div>
 
-        <section className="space-y-3 rounded-lg border bg-background p-4">
+        <section className="lms-soft-panel space-y-3 rounded-lg p-4">
           {conversation.messages.length ? (
             conversation.messages.map((message) => {
               const own = message.senderId === user.id

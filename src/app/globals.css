@@ -49,38 +49,38 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #f6f8fb;
+  --foreground: #0f172a;
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: #0f172a;
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: #eef4ff;
+  --secondary-foreground: #1e3a8a;
+  --muted: #eef2f7;
+  --muted-foreground: #64748b;
+  --accent: #eaf2ff;
+  --accent-foreground: #1d4ed8;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --border: #dce4ef;
+  --input: #d7e1ee;
+  --ring: #93c5fd;
+  --chart-1: #2563eb;
+  --chart-2: #0f766e;
+  --chart-3: #d97706;
+  --chart-4: #7c3aed;
+  --chart-5: #e11d48;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-accent: #eef4ff;
+  --sidebar-accent-foreground: #1d4ed8;
+  --sidebar-border: #dce4ef;
+  --sidebar-ring: #93c5fd;
 }
 
 .dark {
@@ -123,8 +123,60 @@
   }
   body {
     @apply bg-background text-foreground;
+    background:
+      radial-gradient(circle at top left, rgb(219 234 254 / 0.65), transparent 30rem),
+      linear-gradient(180deg, #f8fbff 0%, #f6f8fb 34%, #f3f6fb 100%);
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  .app-shell-surface {
+    background:
+      radial-gradient(circle at 12% 0%, rgb(219 234 254 / 0.72), transparent 22rem),
+      radial-gradient(circle at 88% 8%, rgb(204 251 241 / 0.48), transparent 20rem),
+      #f6f8fb;
+  }
+
+  .role-admin-surface {
+    background:
+      radial-gradient(circle at 8% 0%, rgb(219 234 254 / 0.9), transparent 24rem),
+      radial-gradient(circle at 92% 10%, rgb(207 250 254 / 0.55), transparent 22rem),
+      #f5f8fc;
+  }
+
+  .role-instructor-surface {
+    background:
+      radial-gradient(circle at 8% 0%, rgb(204 251 241 / 0.82), transparent 24rem),
+      radial-gradient(circle at 92% 10%, rgb(220 252 231 / 0.62), transparent 22rem),
+      #f1faf7;
+  }
+
+  .role-student-surface {
+    background:
+      radial-gradient(circle at 8% 0%, rgb(224 231 255 / 0.86), transparent 24rem),
+      radial-gradient(circle at 92% 10%, rgb(219 234 254 / 0.64), transparent 22rem),
+      #f4f7ff;
+  }
+
+  .role-parent-surface {
+    background:
+      radial-gradient(circle at 8% 0%, rgb(254 243 199 / 0.86), transparent 24rem),
+      radial-gradient(circle at 92% 10%, rgb(255 228 230 / 0.58), transparent 22rem),
+      #fff8f1;
+  }
+
+  .lms-card {
+    @apply border border-slate-200/80 bg-white/95 shadow-sm shadow-slate-200/70;
+  }
+
+  .lms-card-hover {
+    @apply transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-slate-200/80;
+  }
+
+  .lms-soft-panel {
+    @apply border border-slate-200/80 bg-white/85 shadow-sm shadow-slate-200/60 backdrop-blur;
   }
 }

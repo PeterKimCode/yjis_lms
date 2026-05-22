@@ -52,7 +52,8 @@ export function AdminPageHeader({
   description: string
 }) {
   return (
-    <div className="space-y-1">
+    <div className="lms-soft-panel space-y-1 rounded-xl p-5">
+      <div className="h-1.5 w-16 rounded-full bg-primary/70" />
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
@@ -61,7 +62,8 @@ export function AdminPageHeader({
 
 export function EmptyState({ label }: { label: string }) {
   return (
-    <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+    <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
+      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200" />
       {label}
     </div>
   )
@@ -75,7 +77,7 @@ export function FormCard({
   children: ReactNode
 }) {
   return (
-    <Card>
+    <Card className="lms-card">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -100,7 +102,7 @@ export function DataTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
       <Table className={minWidth}>
         <TableHeader>
           <TableRow>
@@ -127,7 +129,7 @@ export function SearchForm({
   resultSummary?: string
 }) {
   return (
-    <form className="rounded-lg border bg-background p-3" action="">
+    <form className="lms-soft-panel rounded-lg p-3" action="">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           className="sm:max-w-sm"

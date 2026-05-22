@@ -25,6 +25,7 @@ export default async function ParentPage() {
     <DashboardPage
       title="Parent dashboard"
       description="Linked students and their current learning activity."
+      tone="parent"
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard
