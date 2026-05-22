@@ -13,6 +13,7 @@ import { z } from "zod"
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
 import { hashPassword } from "@/modules/auth/password"
+import { uploadImageFile } from "@/modules/files/upload"
 import { ensureDefaultPoliciesForCampus } from "@/modules/policies/initialize"
 
 const optionalString = z.preprocess(
@@ -255,6 +256,131 @@ export async function saveUser(formData: FormData) {
 
   await revalidateAdmin("/admin/users")
   await revalidateAdmin(`/admin/users/${user.id}`)
+}
+
+export type AdminUserAvatarState = {
+  message: string
+  ok: boolean
+}
+
+const adminUserAvatarSchema = z.object({
+  userId: requiredString,
+})
+
+export async function updateAdminUserAvatar(
+  _state: AdminUserAvatarState,
+  formData: FormData
+): Promise<AdminUserAvatarState> {
+  const data = adminUserAvatarSchema.parse(readForm(formData))
+  const file = formData.get("avatar")
+
+  if (!(file instanceof File) || file.size === 0) {
+    return {
+      ok: false,
+      message: "Choose a JPG, PNG, WEBP, or GIF image first.",
+    }
+  }
+
+  const prisma = getPrismaClient()
+  const user = await prisma.user.findUnique({
+    where: { id: data.userId },
+    select: {
+      id: true,
+      name: true,
+      organizationId: true,
+      roleAssignments: {
+        select: { campusId: true },
+        take: 1,
+      },
+    },
+  })
+
+  if (!user) {
+    return { ok: false, message: "User account was not found." }
+  }
+
+  await assertAdminScope({
+    organizationId: user.organizationId,
+    campusId: user.roleAssignments[0]?.campusId ?? null,
+  })
+
+  try {
+    const upload = await uploadImageFile({
+      campusId: user.roleAssignments[0]?.campusId ?? null,
+      file,
+      metadata: { source: "admin-user-avatar", userId: user.id },
+      organizationId: user.organizationId,
+      ownerId: user.id,
+      prefix: `users/${user.id}/avatar`,
+    })
+
+    if (!upload.ok) {
+      return { ok: false, message: upload.message }
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { avatarFileAssetId: upload.fileAsset.id },
+    })
+
+    await revalidateAdmin("/admin/users")
+    await revalidateAdmin(`/admin/users/${user.id}`)
+
+    return { ok: true, message: "Profile photo updated." }
+  } catch (error) {
+    console.error("Admin avatar upload failed", {
+      userId: user.id,
+      error: error instanceof Error ? error.message : String(error),
+    })
+
+    return {
+      ok: false,
+      message: "Image upload failed. Please try again.",
+    }
+  }
+}
+
+export async function removeAdminUserAvatar(
+  _state: AdminUserAvatarState,
+  formData: FormData
+): Promise<AdminUserAvatarState> {
+  const data = adminUserAvatarSchema.parse(readForm(formData))
+  const prisma = getPrismaClient()
+  const user = await prisma.user.findUnique({
+    where: { id: data.userId },
+    select: {
+      id: true,
+      organizationId: true,
+      avatarFileAssetId: true,
+      roleAssignments: {
+        select: { campusId: true },
+        take: 1,
+      },
+    },
+  })
+
+  if (!user) {
+    return { ok: false, message: "User account was not found." }
+  }
+
+  await assertAdminScope({
+    organizationId: user.organizationId,
+    campusId: user.roleAssignments[0]?.campusId ?? null,
+  })
+
+  if (!user.avatarFileAssetId) {
+    return { ok: true, message: "No profile photo is set." }
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { avatarFileAssetId: null },
+  })
+
+  await revalidateAdmin("/admin/users")
+  await revalidateAdmin(`/admin/users/${user.id}`)
+
+  return { ok: true, message: "Profile photo removed." }
 }
 
 const parentStudentRelationSchema = z.object({

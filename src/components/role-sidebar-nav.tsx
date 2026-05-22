@@ -4,6 +4,21 @@ import Link from "next/link"
 import { useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import {
+  Bell,
+  BookOpen,
+  CalendarDays,
+  CheckSquare,
+  ClipboardList,
+  FileText,
+  GraduationCap,
+  Home,
+  Layers,
+  MessageSquare,
+  NotebookTabs,
+  School,
+  type LucideIcon,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 
@@ -85,13 +100,17 @@ export function RoleSidebarNav({
         }`}
       >
         <div className={`mb-4 grid place-items-center ${collapsed ? "px-0" : "px-3"}`}>
-          <Image
-            alt="General Trias College of Cavite"
-            className={`rounded-full object-contain ${collapsed ? "h-10 w-10" : "h-28 w-28"}`}
-            height={112}
-            src="/brand/gtcc-logo.png"
-            width={112}
-          />
+          <Link aria-label="Go to overview" href={`/${tone}`}>
+            <Image
+              alt="General Trias College of Cavite"
+              className={`rounded-full object-contain transition-transform hover:scale-105 ${
+                collapsed ? "h-10 w-10" : "h-28 w-28"
+              }`}
+              height={112}
+              src="/brand/gtcc-logo.png"
+              width={112}
+            />
+          </Link>
         </div>
         <div className="mb-5 space-y-3">
           <div className="flex items-center justify-between gap-2">
@@ -119,19 +138,21 @@ export function RoleSidebarNav({
             const active =
               pathname === link.href ||
               (link.href !== `/${tone}` && pathname.startsWith(`${link.href}/`))
+            const Icon = getSidebarIcon(link.label)
 
             return (
               <div key={link.href}>
                 <Link
-                  className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                     active
                       ? toneClass.active
                       : `text-slate-300 ${toneClass.hover}`
                   }`}
                   href={link.href}
+                  title={collapsed ? link.label : undefined}
                 >
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className={collapsed ? "sr-only" : ""}>{link.label}</span>
-                  {collapsed ? link.label.slice(0, 1) : null}
                 </Link>
                 {!collapsed && link.label === "Classes" && classLinks.length ? (
                   <div className="ml-3 mt-1 grid gap-1 border-l border-white/10 pl-2">
@@ -142,7 +163,7 @@ export function RoleSidebarNav({
 
                       return (
                         <Link
-                          className={`rounded-md px-2 py-1.5 text-xs transition-colors ${
+                          className={`flex gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
                             classActive
                               ? toneClass.active
                               : "text-slate-400 hover:bg-white/10 hover:text-white"
@@ -150,14 +171,17 @@ export function RoleSidebarNav({
                           href={classLink.href}
                           key={classLink.id}
                         >
-                          <span className="block truncate font-medium">
-                            {classLink.label}
-                          </span>
-                          {classLink.subLabel ? (
-                            <span className="block truncate text-[11px] opacity-75">
-                              {classLink.subLabel}
+                          <School className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium">
+                              {classLink.label}
                             </span>
-                          ) : null}
+                            {classLink.subLabel ? (
+                              <span className="block truncate text-[11px] opacity-75">
+                                {classLink.subLabel}
+                              </span>
+                            ) : null}
+                          </span>
                         </Link>
                       )
                     })}
@@ -182,8 +206,9 @@ export function RoleSidebarNav({
                           key={messageLink.id}
                         >
                           <span className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate font-medium">
-                              {messageLink.label}
+                            <span className="flex min-w-0 items-center gap-1.5 truncate font-medium">
+                              <MessageSquare className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{messageLink.label}</span>
                             </span>
                             {messageLink.unreadCount ? (
                               <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] text-primary-foreground">
@@ -211,10 +236,11 @@ export function RoleSidebarNav({
             <div className="grid gap-1">
               {sectionLinks.map((section) => (
                 <Link
-                  className="rounded-md px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
                   href={section.href}
                   key={section.href}
                 >
+                  {sectionIcon(section.label)}
                   {section.label}
                 </Link>
               ))}
@@ -244,4 +270,31 @@ export function RoleSidebarNav({
       </header>
     </>
   )
+}
+
+function getSidebarIcon(label: string): LucideIcon {
+  const normalized = label.toLowerCase()
+
+  if (normalized.includes("overview")) return Home
+  if (normalized.includes("class")) return GraduationCap
+  if (normalized.includes("message")) return MessageSquare
+  if (normalized.includes("notification")) return Bell
+  if (normalized.includes("linked")) return School
+
+  return Layers
+}
+
+function sectionIcon(label: string) {
+  const normalized = label.toLowerCase()
+  const className = "h-3.5 w-3.5 shrink-0"
+
+  if (normalized.includes("lesson")) return <BookOpen className={className} />
+  if (normalized.includes("session")) return <CalendarDays className={className} />
+  if (normalized.includes("attendance")) return <CheckSquare className={className} />
+  if (normalized.includes("assignment")) return <ClipboardList className={className} />
+  if (normalized.includes("quiz")) return <NotebookTabs className={className} />
+  if (normalized.includes("exam")) return <FileText className={className} />
+  if (normalized.includes("grade")) return <GraduationCap className={className} />
+
+  return <Layers className={className} />
 }

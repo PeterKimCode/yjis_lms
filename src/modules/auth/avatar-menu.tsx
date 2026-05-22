@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
@@ -22,10 +22,24 @@ export function AvatarMenu({
     updateCurrentUserAvatar,
     initialState
   )
+  const [open, setOpen] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (state.ok && state.message) {
+      formRef.current?.reset()
+      const timeoutId = window.setTimeout(() => setOpen(false), 0)
+      return () => window.clearTimeout(timeoutId)
+    }
+  }, [state])
 
   return (
-    <details className="relative">
-      <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center overflow-hidden rounded-full border bg-white shadow-sm">
+    <details
+      className="relative"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center overflow-hidden rounded-full border border-white/20 bg-white shadow-sm">
         {avatarUrl ? (
           <Image
             alt={`${userName} profile photo`}
@@ -41,15 +55,15 @@ export function AvatarMenu({
           </span>
         )}
       </summary>
-      <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border bg-white p-3 shadow-lg">
+      <div className="absolute right-0 z-50 mt-2 w-72 rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
         <p className="text-sm font-semibold">{userName}</p>
         <p className="mt-1 text-xs text-muted-foreground">
           Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.
         </p>
-        <form action={formAction} className="mt-3 grid gap-2">
+        <form action={formAction} className="mt-3 grid gap-2" ref={formRef}>
           <input
             accept="image/jpeg,image/png,image/webp,image/gif"
-            className="text-xs"
+            className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-slate-700"
             name="avatar"
             type="file"
           />

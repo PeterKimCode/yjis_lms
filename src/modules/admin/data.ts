@@ -265,6 +265,12 @@ export async function getAdminUserDetail(userId: string) {
     },
     include: {
       organization: true,
+      avatarFileAsset: {
+        select: {
+          id: true,
+          originalName: true,
+        },
+      },
       studentProfile: {
         include: {
           campus: true,

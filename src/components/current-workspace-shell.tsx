@@ -1,6 +1,19 @@
 import Link from "next/link"
 import Image from "next/image"
 import type { ReactNode } from "react"
+import {
+  Bell,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  GraduationCap,
+  Home,
+  Layers,
+  MessageSquare,
+  School,
+  Settings,
+  Users,
+} from "lucide-react"
 
 import { UserRole } from "@prisma/client"
 
@@ -55,15 +68,18 @@ export async function CurrentWorkspaceShell({
               <div className="ml-3 grid gap-1 border-l border-white/10 pl-2">
                 {messageLinks.map((message) => (
                   <Link
-                    className="rounded-md px-2 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex gap-2 rounded-md px-2 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
                     href={message.href}
                     key={message.id}
                   >
-                    <span className="block truncate font-medium">
-                      {message.label}
-                    </span>
-                    <span className="block truncate text-[11px] opacity-75">
-                      {message.preview}
+                    <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {message.label}
+                      </span>
+                      <span className="block truncate text-[11px] opacity-75">
+                        {message.preview}
+                      </span>
                     </span>
                   </Link>
                 ))}
@@ -163,13 +179,40 @@ function NavGroup({ links }: { links: readonly (readonly [string, string])[] }) 
     <div className="grid gap-1">
       {links.map(([href, label]) => (
         <Link
-          className="rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           href={href}
           key={href}
         >
+          <AdminNavIcon label={label} />
           {label}
         </Link>
       ))}
     </div>
   )
+}
+
+function AdminNavIcon({ label }: { label: string }) {
+  const normalized = label.toLowerCase()
+  const className = "h-4 w-4 shrink-0"
+
+  if (normalized.includes("overview")) return <Home className={className} />
+  if (normalized.includes("class")) return <GraduationCap className={className} />
+  if (normalized.includes("course")) return <BookOpen className={className} />
+  if (normalized.includes("user")) return <Users className={className} />
+  if (normalized.includes("board")) return <Layers className={className} />
+  if (normalized.includes("organization")) return <Building2 className={className} />
+  if (normalized.includes("campus")) return <School className={className} />
+  if (normalized.includes("year") || normalized.includes("term")) {
+    return <CalendarDays className={className} />
+  }
+  if (normalized.includes("grade") || normalized.includes("homeroom")) {
+    return <GraduationCap className={className} />
+  }
+  if (normalized.includes("department") || normalized.includes("polic")) {
+    return <Settings className={className} />
+  }
+  if (normalized.includes("message")) return <MessageSquare className={className} />
+  if (normalized.includes("notification")) return <Bell className={className} />
+
+  return <Layers className={className} />
 }

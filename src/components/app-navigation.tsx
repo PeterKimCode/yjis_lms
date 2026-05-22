@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { LogIn } from "lucide-react"
 
 import { BackButton } from "@/components/back-button"
@@ -31,36 +30,33 @@ export async function AppNavigation() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
-        <Link className="flex items-center gap-2 font-semibold tracking-tight" href="/">
-          <Image
-            alt="YJIS LMS"
-            className="h-9 w-auto rounded-md bg-white px-1"
-            height={36}
-            src="/brand/yjis-lms-logo.svg"
-            width={120}
-          />
+        <Link
+          className="max-w-[42vw] truncate text-sm font-semibold tracking-tight text-white sm:max-w-none sm:text-base"
+          href="/"
+        >
+          General Trias College of Cavite
         </Link>
         <nav className="flex items-center gap-2">
           {session?.user ? (
             <>
-              <Button asChild size="sm" variant="ghost">
+              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
                 <Link href={dashboardHref}>Dashboard</Link>
               </Button>
-              <Button asChild size="sm" variant="ghost">
+              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
                 <Link href="/messages">
                   Messages
                   <NavBadge count={unreadMessages} />
                 </Link>
               </Button>
-              <Button asChild size="sm" variant="ghost">
+              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
                 <Link href="/notifications">
                   Notifications
                   <NavBadge count={unreadNotifications} />
                 </Link>
               </Button>
               <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium">{session.user.name}</p>
-                <p className="text-xs text-muted-foreground">{roleSummary}</p>
+                <p className="text-sm font-medium text-white">{session.user.name}</p>
+                <p className="text-xs text-slate-400">{roleSummary}</p>
               </div>
               <GoogleTranslateControl />
               <AvatarMenu
@@ -69,12 +65,15 @@ export async function AppNavigation() {
                 }
                 userName={session.user.name ?? session.user.email ?? "User"}
               />
-              <BackButton />
-              <LogoutButton size="sm" />
+              <BackButton className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white" />
+              <LogoutButton
+                className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                size="sm"
+              />
             </>
           ) : (
             <>
-              <BackButton />
+              <BackButton className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white" />
               <GoogleTranslateControl />
               <Button asChild size="sm">
                 <Link href="/login">

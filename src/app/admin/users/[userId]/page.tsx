@@ -20,6 +20,7 @@ import {
   removeParentStudentRelation,
   saveParentStudentRelation,
 } from "@/modules/admin/actions"
+import { AdminUserAvatarForm } from "@/modules/admin/user-avatar-form"
 import { UserForm } from "@/modules/admin/user-form"
 
 type AdminUserDetail = NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>>
@@ -90,13 +91,22 @@ export default async function AdminUserDetailPage({
         </DetailsSection>
       ) : null}
 
-      <DetailsSection title="Account details" defaultOpen={!isStudent}>
+      <DetailsSection title="Account details" defaultOpen>
+        <AdminUserAvatarForm
+          avatarUrl={
+            user.avatarFileAsset
+              ? `/api/files/${user.avatarFileAsset.id}/download?disposition=inline`
+              : null
+          }
+          userId={user.id}
+          userName={user.name}
+        />
         <UserForm
           campusOptions={detail.campusOptions}
           gradeLevelOptions={detail.gradeLevelOptions}
           homeroomOptions={detail.homeroomOptions}
           organizationOptions={detail.organizationOptions}
-          user={user}
+          user={toUserFormValue(user)}
         />
       </DetailsSection>
 
@@ -121,6 +131,30 @@ export default async function AdminUserDetailPage({
       ) : null}
     </div>
   )
+}
+
+function toUserFormValue(user: DetailUser) {
+  return {
+    email: user.email,
+    id: user.id,
+    isActive: user.isActive,
+    name: user.name,
+    organizationId: user.organizationId,
+    roleAssignments: user.roleAssignments.map((assignment) => ({
+      campusId: assignment.campusId,
+      organizationId: assignment.organizationId,
+      role: assignment.role,
+    })),
+    studentProfile: user.studentProfile
+      ? {
+          admissionYear:
+            user.studentProfile.admissionDate?.getUTCFullYear() ?? null,
+          currentGradeLevelId: user.studentProfile.currentGradeLevelId,
+          homeroomId: user.studentProfile.homeroomId,
+          studentNumber: user.studentProfile.studentNumber,
+        }
+      : null,
+  }
 }
 
 function StudentDocuments({ user }: { user: DetailUser }) {

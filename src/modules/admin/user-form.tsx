@@ -21,7 +21,7 @@ export type AdminUserFormValue = {
   isActive: boolean
   studentProfile: {
     studentNumber: string | null
-    admissionDate: Date | null
+    admissionYear: number | null
     currentGradeLevelId: string | null
     homeroomId: string | null
   } | null
@@ -119,7 +119,7 @@ export function UserForm({
               label="Admission year"
               name="admissionYear"
               type="number"
-              defaultValue={user?.studentProfile?.admissionDate?.getUTCFullYear()}
+              defaultValue={user?.studentProfile?.admissionYear}
             />
           </>
         ) : null}
