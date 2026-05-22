@@ -12,7 +12,7 @@ import {
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
-import { formatDate, getAcademicSetupOptions } from "@/modules/admin/data"
+import { getAcademicSetupOptions } from "@/modules/admin/data"
 
 export default async function AcademicYearsPage({
   searchParams,
@@ -43,7 +43,7 @@ export default async function AcademicYearsPage({
           <TableRow key={year.id}>
             <TableCell className="font-medium">{year.name}</TableCell>
             <TableCell>
-              {formatDate(year.startsAt)} - {formatDate(year.endsAt)}
+              {formatYear(year.startsAt)} - {formatYear(year.endsAt)}
             </TableCell>
             <TableCell>
               {year.campus
@@ -106,17 +106,17 @@ function AcademicYearForm({
         />
         <Field label="Name" name="name" defaultValue={year?.name} required />
         <Field
-          label="Starts"
+          label="Start year"
           name="startsAt"
-          type="date"
-          defaultValue={year ? formatDate(year.startsAt) : ""}
+          type="number"
+          defaultValue={year ? formatYear(year.startsAt) : ""}
           required
         />
         <Field
-          label="Ends"
+          label="End year"
           name="endsAt"
-          type="date"
-          defaultValue={year ? formatDate(year.endsAt) : ""}
+          type="number"
+          defaultValue={year ? formatYear(year.endsAt) : ""}
           required
         />
         <label className="flex items-end gap-2 text-sm">
@@ -133,4 +133,8 @@ function AcademicYearForm({
       </form>
     </FormCard>
   )
+}
+
+function formatYear(value: Date) {
+  return value.getUTCFullYear().toString()
 }

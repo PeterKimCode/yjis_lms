@@ -41,6 +41,18 @@ function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`)
 }
 
+function toYearStartDate(value: string) {
+  return /^\d{4}$/.test(value)
+    ? new Date(`${value}-01-01T00:00:00.000Z`)
+    : toDate(value)
+}
+
+function toYearEndDate(value: string) {
+  return /^\d{4}$/.test(value)
+    ? new Date(`${value}-12-31T00:00:00.000Z`)
+    : toDate(value)
+}
+
 function maybeId(value: string | null | undefined) {
   return value && value.length > 0 ? value : undefined
 }
@@ -472,8 +484,8 @@ const academicYearSchema = z.object({
   organizationId: requiredString,
   campusId: optionalString,
   name: requiredString,
-  startsAt: requiredString.transform(toDate),
-  endsAt: requiredString.transform(toDate),
+  startsAt: requiredString.transform(toYearStartDate),
+  endsAt: requiredString.transform(toYearEndDate),
   isActive: checkboxBoolean,
 })
 

@@ -123,12 +123,16 @@ function TermForm({
           required
         />
         <Field
-          label="Sequence"
+          label="Term order"
           name="sequence"
           type="number"
           defaultValue={term?.sequence ?? 1}
           required
         />
+        <p className="text-xs text-muted-foreground xl:col-span-2">
+          Term order controls sorting inside the academic year. Example: 1 =
+          first semester, 2 = second semester.
+        </p>
         <label className="flex items-end gap-2 text-sm">
           <input
             name="isActive"

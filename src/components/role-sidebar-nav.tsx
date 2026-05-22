@@ -107,6 +107,7 @@ export function RoleSidebarNav({
                 collapsed ? "h-10 w-10" : "h-28 w-28"
               }`}
               height={112}
+              loading="eager"
               src="/brand/gtcc-logo.png"
               width={112}
             />

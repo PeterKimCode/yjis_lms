@@ -41,13 +41,16 @@ export async function CurrentWorkspaceShell({
       <div className="role-admin-surface flex flex-1">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:block">
           <div className="mb-4 grid place-items-center">
-            <Image
-              alt="General Trias College of Cavite"
-              className="h-28 w-28 rounded-full object-contain"
-              height={112}
-              src="/brand/gtcc-logo.png"
-              width={112}
-            />
+            <Link aria-label="Go to admin overview" href="/admin">
+              <Image
+                alt="General Trias College of Cavite"
+                className="h-28 w-28 rounded-full object-contain transition-transform hover:scale-105"
+                height={112}
+                loading="eager"
+                src="/brand/gtcc-logo.png"
+                width={112}
+              />
+            </Link>
           </div>
           <div className="mb-5">
             <p className="text-sm font-semibold">Admin workspace</p>

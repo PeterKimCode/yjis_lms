@@ -16,8 +16,8 @@ import { StatusBadge } from "@/modules/dashboards/components"
 
 export const adminPrimaryLinks = [
   ["/admin", "Overview"],
-  ["/admin/class-sections", "Class Sections"],
   ["/admin/courses", "Courses"],
+  ["/admin/class-sections", "Class Sections"],
   ["/admin/users", "Users"],
   ["/admin/boards", "Boards"],
 ] as const
@@ -25,11 +25,11 @@ export const adminPrimaryLinks = [
 export const adminSetupLinks = [
   ["/admin/organizations", "Organizations"],
   ["/admin/campuses", "Campuses"],
+  ["/admin/departments", "Departments"],
   ["/admin/academic-years", "Academic Years"],
   ["/admin/terms", "Terms"],
   ["/admin/grade-levels", "Grade Levels"],
   ["/admin/homerooms", "Homerooms"],
-  ["/admin/departments", "Departments"],
   ["/admin/policies", "Policies"],
 ] as const
 

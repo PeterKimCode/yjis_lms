@@ -26,6 +26,7 @@ export async function GET(
     where: { id: fileId },
     select: {
       bucket: true,
+      id: true,
       objectKey: true,
       originalName: true,
       contentType: true,
@@ -130,6 +131,7 @@ export async function GET(
 async function canDownloadFile(
   userId: string,
   file: {
+    id: string
     uploadedById: string | null
     classSectionId: string | null
     assignmentSubmission: {
@@ -154,6 +156,15 @@ async function canDownloadFile(
 ) {
   if (file.uploadedById === userId) {
     return true
+  }
+
+  const avatarOwner = await getPrismaClient().user.findFirst({
+    where: { avatarFileAssetId: file.id },
+    select: { id: true },
+  })
+
+  if (avatarOwner) {
+    return canViewStudentData(userId, avatarOwner.id)
   }
 
   if (file.assignmentSubmission) {
