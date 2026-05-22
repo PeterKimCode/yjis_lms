@@ -80,132 +80,187 @@ export function AssignmentPanel({
           </p>
         </>
       ) : null}
-      <SimpleTable
-        empty="No assignments yet."
-        headers={
-          mode === "instructor"
-            ? [
-                "Title",
-                "Due",
-                "Max score",
-                "Late",
-                "Submissions",
-                "Graded",
-                "Details",
-              ]
-            : ["Title", "Due", "Max score", "Status", "Score", "Open"]
-        }
-        rows={assignments.map((assignment) => {
-          const ownSubmission = assignment.submissions.find(
-            (submission) => submission.studentId === userId
-          )
-          const gradedCount = assignment.submissions.filter(
-            (submission) => submission.score !== null
-          ).length
+      {mode === "instructor" ? (
+        <InstructorAssignmentList
+          assignments={assignments}
+          classSectionId={classSectionId}
+          defaultAcceptsLate={defaultAcceptsLate}
+        />
+      ) : (
+        <SimpleTable
+          empty="No assignments yet."
+          headers={["Title", "Due", "Max score", "Status", "Score", "Open"]}
+          rows={assignments.map((assignment) => {
+            const ownSubmission = assignment.submissions.find(
+              (submission) => submission.studentId === userId
+            )
 
-          return (
-            <TableRow key={assignment.id}>
-              <TableCell className="font-medium">{assignment.title}</TableCell>
-              <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
-              <TableCell>{assignment.pointsPossible ?? "-"}</TableCell>
-              {mode === "instructor" ? (
-                <>
-                  <TableCell>
-                    <StatusBadge
-                      label={assignment.acceptsLate ? "Allowed" : "Closed"}
-                      value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"}
-                    />
-                  </TableCell>
-                  <TableCell>{assignment.submissions.length}</TableCell>
-                  <TableCell>{gradedCount}</TableCell>
-                  <TableCell>
-                    <details className="min-w-[260px]">
-                      <summary className="cursor-pointer text-primary underline-offset-4 hover:underline">
-                        Manage
-                      </summary>
-                      <div className="mt-3 space-y-4 rounded-md border bg-background p-3">
-                        <details className="rounded-md border p-3">
-                          <summary className="cursor-pointer text-sm font-medium">
-                            Edit assignment
-                          </summary>
-                          <div className="pt-3">
-                            <AssignmentForm
-                              assignment={assignment}
-                              classSectionId={classSectionId}
-                              defaultAcceptsLate={defaultAcceptsLate}
-                            />
-                          </div>
-                        </details>
-                        <details className="rounded-md border p-3">
-                          <summary className="cursor-pointer text-sm font-medium">
-                            Review submissions
-                          </summary>
-                          <div className="space-y-3 pt-3">
-                            <DeleteAssignmentForm assignmentId={assignment.id} />
-                            <SubmissionReview assignment={assignment} />
-                          </div>
-                        </details>
-                      </div>
-                    </details>
-                  </TableCell>
-                </>
-              ) : (
-                <>
-                  <TableCell>
-                    <StatusBadge
-                      label={getSubmissionStatus({
-                        dueAt: assignment.dueAt,
-                        score: ownSubmission?.score,
-                        submittedAt: ownSubmission?.submittedAt,
-                      })}
-                      value={getSubmissionStatus({
-                        dueAt: assignment.dueAt,
-                        score: ownSubmission?.score,
-                        submittedAt: ownSubmission?.submittedAt,
-                      }).toUpperCase().replaceAll(" ", "_")}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {ownSubmission?.score
-                      ? `${ownSubmission.score}/${assignment.pointsPossible ?? "-"}`
-                      : "-"}
-                  </TableCell>
-                  <TableCell>
-                    <details className="min-w-[260px]">
-                      <summary className="cursor-pointer text-primary underline-offset-4 hover:underline">
-                        Open
-                      </summary>
-                      <div className="mt-3 space-y-3 rounded-md border bg-background p-3">
-                        {assignment.description ? (
-                          <p className="text-sm text-muted-foreground">
-                            {assignment.description}
+            return (
+              <TableRow key={assignment.id}>
+                <TableCell className="font-medium">{assignment.title}</TableCell>
+                <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
+                <TableCell>{assignment.pointsPossible ?? "-"}</TableCell>
+                <TableCell>
+                  <StatusBadge
+                    label={getSubmissionStatus({
+                      dueAt: assignment.dueAt,
+                      score: ownSubmission?.score,
+                      submittedAt: ownSubmission?.submittedAt,
+                    })}
+                    value={getSubmissionStatus({
+                      dueAt: assignment.dueAt,
+                      score: ownSubmission?.score,
+                      submittedAt: ownSubmission?.submittedAt,
+                    }).toUpperCase().replaceAll(" ", "_")}
+                  />
+                </TableCell>
+                <TableCell>
+                  {ownSubmission?.score
+                    ? `${ownSubmission.score}/${assignment.pointsPossible ?? "-"}`
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  <details className="min-w-[260px]">
+                    <summary className="cursor-pointer text-primary underline-offset-4 hover:underline">
+                      Open
+                    </summary>
+                    <div className="mt-3 space-y-3 rounded-md border bg-background p-3">
+                      {assignment.description ? (
+                        <p className="text-sm text-muted-foreground">
+                          {assignment.description}
+                        </p>
+                      ) : null}
+                      {ownSubmission?.feedback ? (
+                        <div className="rounded-md border p-3 text-sm">
+                          <div className="font-medium">Feedback</div>
+                          <p className="mt-1 text-muted-foreground">
+                            {ownSubmission.feedback}
                           </p>
-                        ) : null}
-                        {ownSubmission?.feedback ? (
-                          <div className="rounded-md border p-3 text-sm">
-                            <div className="font-medium">Feedback</div>
-                            <p className="mt-1 text-muted-foreground">
-                              {ownSubmission.feedback}
-                            </p>
-                          </div>
-                        ) : null}
-                        {ownSubmission?.attachments.length ? (
-                          <AttachmentLinks attachments={ownSubmission.attachments} />
-                        ) : null}
-                        <SubmissionForm
-                          assignment={assignment}
-                          now={now}
-                          submission={ownSubmission}
-                        />
-                      </div>
-                    </details>
-                  </TableCell>
-                </>
-              )}
-            </TableRow>
-          )
-        })}
-      />
+                        </div>
+                      ) : null}
+                      {ownSubmission?.attachments.length ? (
+                        <AttachmentLinks attachments={ownSubmission.attachments} />
+                      ) : null}
+                      <SubmissionForm
+                        assignment={assignment}
+                        now={now}
+                        submission={ownSubmission}
+                      />
+                    </div>
+                  </details>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        />
+      )}
+    </div>
+  )
+}
+
+function InstructorAssignmentList({
+  assignments,
+  classSectionId,
+  defaultAcceptsLate,
+}: {
+  assignments: AssignmentPanelValue[]
+  classSectionId: string
+  defaultAcceptsLate: boolean
+}) {
+  if (!assignments.length) {
+    return <EmptyState>No assignments yet.</EmptyState>
+  }
+
+  return (
+    <div className="grid gap-3">
+      {assignments.map((assignment) => {
+        const gradedCount = assignment.submissions.filter(
+          (submission) => submission.score !== null
+        ).length
+
+        return (
+          <article
+            className="lms-card rounded-lg p-4"
+            key={assignment.id}
+          >
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(90px,auto))] md:items-start">
+              <AssignmentSummaryItem
+                label="Title"
+                value={assignment.title}
+                strong
+              />
+              <AssignmentSummaryItem
+                label="Due"
+                value={formatDateTime(assignment.dueAt)}
+              />
+              <AssignmentSummaryItem
+                label="Max score"
+                value={assignment.pointsPossible ?? "-"}
+              />
+              <div className="space-y-1">
+                <div className="text-xs text-muted-foreground">Late</div>
+                <StatusBadge
+                  label={assignment.acceptsLate ? "Allowed" : "Closed"}
+                  value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"}
+                />
+              </div>
+              <AssignmentSummaryItem
+                label="Submissions"
+                value={assignment.submissions.length}
+              />
+              <AssignmentSummaryItem label="Graded" value={gradedCount} />
+            </div>
+
+            <details className="mt-4 rounded-md border bg-white/80 p-3">
+              <summary className="cursor-pointer text-sm font-medium text-primary underline-offset-4 hover:underline">
+                Manage assignment
+              </summary>
+              <div className="mt-3 grid gap-3">
+                <details className="rounded-md border bg-background p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Edit assignment
+                  </summary>
+                  <div className="pt-3">
+                    <AssignmentForm
+                      assignment={assignment}
+                      classSectionId={classSectionId}
+                      defaultAcceptsLate={defaultAcceptsLate}
+                    />
+                  </div>
+                </details>
+                <details className="rounded-md border bg-background p-3">
+                  <summary className="cursor-pointer text-sm font-medium">
+                    Review submissions
+                  </summary>
+                  <div className="space-y-3 pt-3">
+                    <DeleteAssignmentForm assignmentId={assignment.id} />
+                    <SubmissionReview assignment={assignment} />
+                  </div>
+                </details>
+              </div>
+            </details>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+function AssignmentSummaryItem({
+  label,
+  strong,
+  value,
+}: {
+  label: string
+  strong?: boolean
+  value: string | number
+}) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`${strong ? "font-semibold" : "text-sm"} truncate`}>
+        {value}
+      </div>
     </div>
   )
 }
