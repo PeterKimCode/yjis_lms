@@ -311,27 +311,6 @@ function getPageToneClass(tone: "default" | "admin" | "instructor" | "student" |
 }
 
 function getSectionAccentClass(title: string) {
-  const normalized = title.toLowerCase()
-  if (normalized.includes("lesson")) {
-    return "[--section-accent:#2563eb] border-l-4 border-l-blue-400"
-  }
-  if (normalized.includes("attendance")) {
-    return "[--section-accent:#059669] border-l-4 border-l-emerald-400"
-  }
-  if (normalized.includes("assignment")) {
-    return "[--section-accent:#7c3aed] border-l-4 border-l-violet-400"
-  }
-  if (normalized.includes("quiz")) {
-    return "[--section-accent:#0284c7] border-l-4 border-l-sky-400"
-  }
-  if (normalized.includes("exam")) {
-    return "[--section-accent:#d97706] border-l-4 border-l-amber-400"
-  }
-  if (normalized.includes("grade")) {
-    return "[--section-accent:#ca8a04] border-l-4 border-l-yellow-400"
-  }
-  if (normalized.includes("board")) {
-    return "[--section-accent:#db2777] border-l-4 border-l-pink-400"
-  }
-  return "[--section-accent:#2563eb] border-l-4 border-l-blue-300"
+  void title
+  return "[--section-accent:#0f3f83] border-l-4 border-l-[#0f3f83]"
 }

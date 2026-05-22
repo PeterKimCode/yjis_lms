@@ -20,7 +20,7 @@ export default async function LoginPage({
     <main className="app-shell-surface min-h-[calc(100vh-4rem)] px-4 py-12">
       <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
         <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Log In</h1>
           <p className="text-sm text-muted-foreground">
             Use a school-managed account to access the LMS.
           </p>

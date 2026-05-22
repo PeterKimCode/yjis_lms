@@ -29,19 +29,18 @@ export async function AppNavigation() {
     : "/"
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
         <Link className="flex items-center gap-2 font-semibold tracking-tight" href="/">
           <Image
             alt="YJIS LMS"
-            className="h-9 w-auto"
+            className="h-9 w-auto rounded-md bg-white px-1"
             height={36}
             src="/brand/yjis-lms-logo.svg"
             width={120}
           />
         </Link>
         <nav className="flex items-center gap-2">
-          <BackButton />
           {session?.user ? (
             <>
               <Button asChild size="sm" variant="ghost">
@@ -70,15 +69,17 @@ export async function AppNavigation() {
                 }
                 userName={session.user.name ?? session.user.email ?? "User"}
               />
+              <BackButton />
               <LogoutButton size="sm" />
             </>
           ) : (
             <>
+              <BackButton />
               <GoogleTranslateControl />
               <Button asChild size="sm">
                 <Link href="/login">
                   <LogIn />
-                  Login
+                  Log In
                 </Link>
               </Button>
             </>

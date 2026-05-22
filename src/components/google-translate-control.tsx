@@ -1,42 +1,60 @@
 "use client"
 
+import { useEffect } from "react"
 import { Languages } from "lucide-react"
 
-const languages = [
-  ["", "Translate"],
-  ["ko", "Korean"],
-  ["en", "English"],
-  ["es", "Spanish"],
-  ["ja", "Japanese"],
-  ["zh-CN", "Chinese"],
-] as const
+declare global {
+  interface Window {
+    google?: {
+      translate?: {
+        TranslateElement?: new (
+          options: Record<string, unknown>,
+          elementId: string
+        ) => void
+      }
+    }
+    googleTranslateElementInit?: () => void
+  }
+}
+
+const GOOGLE_TRANSLATE_SCRIPT_ID = "google-translate-element-script"
 
 export function GoogleTranslateControl() {
-  function handleChange(value: string) {
-    if (!value) return
+  useEffect(() => {
+    window.googleTranslateElementInit = () => {
+      if (!window.google?.translate?.TranslateElement) return
 
-    const target = new URL("https://translate.google.com/translate")
-    target.searchParams.set("sl", "auto")
-    target.searchParams.set("tl", value)
-    target.searchParams.set("u", window.location.href)
-    window.open(target.toString(), "_blank", "noopener,noreferrer")
-  }
+      new window.google.translate.TranslateElement(
+        {
+          autoDisplay: false,
+          includedLanguages: "en,ko,es,ja,zh-CN",
+          pageLanguage: "en",
+        },
+        "google_translate_element"
+      )
+    }
+
+    if (document.getElementById(GOOGLE_TRANSLATE_SCRIPT_ID)) {
+      window.googleTranslateElementInit()
+      return
+    }
+
+    const script = document.createElement("script")
+    script.id = GOOGLE_TRANSLATE_SCRIPT_ID
+    script.src =
+      "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+    script.async = true
+    document.body.appendChild(script)
+  }, [])
 
   return (
-    <label className="hidden items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs text-muted-foreground sm:flex">
+    <div className="hidden min-h-8 items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 sm:flex">
       <Languages className="h-3.5 w-3.5" />
-      <select
+      <div
         aria-label="Google Translate"
-        className="bg-transparent text-xs outline-none"
-        defaultValue=""
-        onChange={(event) => handleChange(event.target.value)}
-      >
-        {languages.map(([value, label]) => (
-          <option key={value || "default"} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
-    </label>
+        className="google-translate-widget"
+        id="google_translate_element"
+      />
+    </div>
   )
 }

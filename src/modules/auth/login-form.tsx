@@ -139,7 +139,7 @@ export function LoginForm({
         <CardFooter className="mt-3 pt-4">
           <Button className="w-full" type="submit" disabled={isSubmitting}>
             <LogIn />
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? "Logging in..." : "Log In"}
           </Button>
         </CardFooter>
       </form>
