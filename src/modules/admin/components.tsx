@@ -202,12 +202,14 @@ export function Field({
   name,
   label,
   defaultValue,
+  placeholder,
   type = "text",
   required,
 }: {
   name: string
   label: string
   defaultValue?: string | number | null
+  placeholder?: string
   type?: string
   required?: boolean
 }) {
@@ -218,6 +220,7 @@ export function Field({
         name={name}
         type={type}
         defaultValue={defaultValue ?? ""}
+        placeholder={placeholder}
         required={required}
       />
     </label>

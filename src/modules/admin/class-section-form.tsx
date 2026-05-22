@@ -212,10 +212,11 @@ export function ClassSectionClientForm({
           </select>
         </label>
         <Field
-          label="Capacity"
+          label="Capacity (max students)"
           name="capacity"
           type="number"
           defaultValue={section?.capacity}
+          placeholder="Example: 24"
         />
         <div className="flex items-end">
           <SubmitButton />

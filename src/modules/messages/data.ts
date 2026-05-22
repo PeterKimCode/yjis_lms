@@ -323,6 +323,62 @@ export async function getUnreadMessageCountForCurrentUser() {
   return getUnreadMessageCount(user.id)
 }
 
+export async function getConversationSidebarLinksForUser(userId: string) {
+  const prisma = getPrismaClient()
+  const conversations = await prisma.conversation.findMany({
+    where: {
+      participants: { some: { userId } },
+    },
+    include: {
+      classSection: {
+        include: { course: true },
+      },
+      participants: {
+        include: {
+          user: {
+            include: { roleAssignments: true },
+          },
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: { sender: true },
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    take: 8,
+  })
+
+  return Promise.all(
+    conversations.map(async (conversation) => {
+      const participant = conversation.participants.find(
+        (item) => item.userId === userId
+      )
+      const unreadCount = await prisma.message.count({
+        where: {
+          conversationId: conversation.id,
+          senderId: { not: userId },
+          createdAt: participant?.lastReadAt
+            ? { gt: participant.lastReadAt }
+            : undefined,
+        },
+      })
+      const lastMessage = conversation.messages[0]
+
+      return {
+        href: `/messages/${conversation.id}`,
+        id: conversation.id,
+        label: getConversationTitle(conversation, userId),
+        preview: lastMessage
+          ? `${lastMessage.sender?.name ?? "User"}: ${lastMessage.body}`
+          : getConversationTypeLabel(conversation.type),
+        unreadCount,
+      }
+    })
+  )
+}
+
 export async function getUnreadMessageCount(userId: string) {
   const prisma = getPrismaClient()
   const participants = await prisma.conversationParticipant.findMany({

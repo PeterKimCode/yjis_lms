@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import { RoleSidebarNav } from "@/components/role-sidebar-nav"
 import { getPrismaClient } from "@/lib/prisma"
 import { requireAuth } from "@/modules/auth/permissions"
+import { getConversationSidebarLinksForUser } from "@/modules/messages/data"
 
 type SidebarLink = {
   href: string
@@ -38,7 +39,10 @@ export async function RoleSidebarLayout({
 }: RoleSidebarLayoutProps) {
   const user = await requireAuth()
   const toneClass = toneClasses[tone]
-  const classLinks = await getRoleClassLinks(user.id, tone)
+  const [classLinks, messageLinks] = await Promise.all([
+    getRoleClassLinks(user.id, tone),
+    getConversationSidebarLinksForUser(user.id),
+  ])
   const sectionLinks = getClassSectionAnchorLinks(tone)
 
   return (
@@ -47,6 +51,7 @@ export async function RoleSidebarLayout({
         classLinks={classLinks}
         description={description}
         links={links}
+        messageLinks={messageLinks}
         sectionLinks={sectionLinks}
         title={title}
         tone={tone}

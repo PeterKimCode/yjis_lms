@@ -510,15 +510,20 @@ export async function saveClassSection(formData: FormData) {
   const { id, ...values } = data
 
   await assertAdminScope(data)
-  await getPrismaClient().classSection.upsert({
-    where: { id: maybeId(id) ?? "__new_class_section__" },
-    update: values,
-    create: values,
-  })
+  const prisma = getPrismaClient()
+  const classSection = id
+    ? await prisma.classSection.update({
+        where: { id },
+        data: values,
+        select: { id: true },
+      })
+    : await prisma.classSection.create({
+        data: values,
+        select: { id: true },
+      })
   await revalidateAdmin("/admin/class-sections")
-  if (id) {
-    await revalidateAdmin(`/admin/class-sections/${id}`)
-  }
+  await revalidateAdmin(`/admin/class-sections/${classSection.id}`)
+  redirect(`/admin/class-sections/${classSection.id}`)
 }
 
 const instructorAssignmentSchema = z.object({

@@ -5,8 +5,7 @@ import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/modules/dashboards/components"
 import { deleteMessage } from "@/modules/messages/actions"
-import { ConversationSubmenu } from "@/modules/messages/conversation-submenu"
-import { getConversationDetail, getConversationList } from "@/modules/messages/data"
+import { getConversationDetail } from "@/modules/messages/data"
 import {
   EditMessageForm,
   MessageComposer,
@@ -18,10 +17,7 @@ export default async function ConversationPage({
   params: Promise<{ conversationId: string }>
 }) {
   const { conversationId } = await params
-  const [data, listData] = await Promise.all([
-    getConversationDetail(conversationId),
-    getConversationList({ filter: "all", q: "" }),
-  ])
+  const data = await getConversationDetail(conversationId)
 
   if (!data) notFound()
 
@@ -30,12 +26,7 @@ export default async function ConversationPage({
   return (
     <CurrentWorkspaceShell>
     <main className="app-shell-surface flex-1 px-4 py-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <ConversationSubmenu
-          activeConversationId={conversation.id}
-          conversations={listData.conversations}
-        />
-        <div className="space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
           <div className="space-y-3">
             <Button asChild size="sm" variant="outline">
               <Link href="/messages">Back to messages</Link>
@@ -117,7 +108,6 @@ export default async function ConversationPage({
           </section>
 
           <MessageComposer conversationId={conversation.id} />
-        </div>
       </div>
     </main>
     </CurrentWorkspaceShell>
