@@ -1,6 +1,7 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import type { Readable } from "node:stream"
 import { NextResponse } from "next/server"
+import { UserRole } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
 import {
@@ -64,6 +65,9 @@ export async function GET(
             },
           },
         },
+      },
+      logoOrganizations: {
+        select: { id: true },
       },
     },
   })
@@ -152,6 +156,7 @@ async function canDownloadFile(
         }
       }
     }[]
+    logoOrganizations: { id: string }[]
   }
 ) {
   if (file.uploadedById === userId) {
@@ -165,6 +170,34 @@ async function canDownloadFile(
 
   if (avatarOwner) {
     return canViewStudentData(userId, avatarOwner.id)
+  }
+
+  if (file.logoOrganizations.length) {
+    const logoOrganizationIds = new Set(
+      file.logoOrganizations.map((organization) => organization.id)
+    )
+    const user = await getPrismaClient().user.findUnique({
+      where: { id: userId },
+      select: {
+        organizationId: true,
+        roleAssignments: {
+          select: {
+            organizationId: true,
+            role: true,
+          },
+        },
+      },
+    })
+
+    return Boolean(
+      user &&
+        (logoOrganizationIds.has(user.organizationId) ||
+          user.roleAssignments.some(
+            (assignment) =>
+              assignment.role === UserRole.SUPER_ADMIN ||
+              logoOrganizationIds.has(assignment.organizationId)
+          ))
+    )
   }
 
   if (file.assignmentSubmission) {

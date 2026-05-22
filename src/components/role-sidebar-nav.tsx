@@ -14,6 +14,8 @@ import {
   GraduationCap,
   Home,
   Layers,
+  LifeBuoy,
+  Menu,
   MessageSquare,
   NotebookTabs,
   School,
@@ -51,6 +53,7 @@ type RoleSidebarNavProps = {
   classLinks: ClassLink[]
   description: string
   links: SidebarLink[]
+  logoUrl: string
   messageLinks: MessageLink[]
   sectionLinks: SectionLink[]
   title: string
@@ -80,6 +83,7 @@ export function RoleSidebarNav({
   classLinks,
   description,
   links,
+  logoUrl,
   messageLinks,
   sectionLinks,
   title,
@@ -88,6 +92,7 @@ export function RoleSidebarNav({
 }: RoleSidebarNavProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const toneClass = toneClasses[tone]
   const isClassRoute =
     pathname.includes("/classes/") || pathname.endsWith("/classes")
@@ -95,7 +100,7 @@ export function RoleSidebarNav({
   return (
     <>
       <aside
-        className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 overflow-y-auto border-r border-slate-800 bg-slate-950 p-3 text-slate-100 shadow-sm shadow-slate-950/40 transition-[width] md:block ${
+        className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-3 text-slate-100 shadow-sm shadow-slate-950/40 transition-[width] md:flex ${
           collapsed ? "w-16" : "w-64"
         }`}
       >
@@ -108,8 +113,9 @@ export function RoleSidebarNav({
               }`}
               height={112}
               loading="eager"
-              src="/brand/gtcc-logo.png"
+              src={logoUrl}
               width={112}
+              unoptimized={logoUrl.startsWith("/api/")}
             />
           </Link>
         </div>
@@ -248,28 +254,112 @@ export function RoleSidebarNav({
             </div>
           </div>
         ) : null}
+        <HelpContact collapsed={collapsed} />
       </aside>
       <header className="border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur md:hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <button
+            aria-label="Open sidebar menu"
+            className="grid h-9 w-9 place-items-center rounded-md border bg-white text-slate-700"
+            type="button"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">{title}</p>
             <p className="text-xs text-muted-foreground">{description}</p>
           </div>
           <Badge variant="secondary">{tone.toUpperCase()}</Badge>
         </div>
-        <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {links.map((link) => (
-            <Link
-              className="whitespace-nowrap rounded-md border bg-white px-3 py-1.5 text-xs text-muted-foreground"
-              href={link.href}
-              key={link.href}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
       </header>
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            aria-label="Close sidebar menu"
+            className="absolute inset-0 bg-slate-950/60"
+            type="button"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="relative flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <Link
+                aria-label="Go to overview"
+                className="flex items-center gap-3"
+                href={`/${tone}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                <Image
+                  alt="General Trias College of Cavite"
+                  className="h-12 w-12 rounded-full object-contain"
+                  height={48}
+                  loading="eager"
+                  src={logoUrl}
+                  width={48}
+                  unoptimized={logoUrl.startsWith("/api/")}
+                />
+                <span className="text-sm font-semibold">{title}</span>
+              </Link>
+              <button
+                className="rounded-md border border-white/10 px-2 py-1 text-xs"
+                type="button"
+                onClick={() => setMobileOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <nav className="grid gap-1">
+              {links.map((link) => {
+                const Icon = getSidebarIcon(link.label)
+                return (
+                  <Link
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
+                    href={link.href}
+                    key={link.href}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {link.label}
+                  </Link>
+                )
+              })}
+            </nav>
+            <HelpContact />
+          </aside>
+        </div>
+      ) : null}
     </>
+  )
+}
+
+function HelpContact({ collapsed = false }: { collapsed?: boolean }) {
+  return (
+    <details className="mt-auto pt-6">
+      <summary
+        className={`flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white ${
+          collapsed ? "justify-center px-0" : ""
+        }`}
+        title={collapsed ? "Help & Contact" : undefined}
+      >
+        <LifeBuoy className="h-4 w-4 shrink-0" />
+        {collapsed ? <span className="sr-only">Help & Contact</span> : "Help & Contact"}
+      </summary>
+      {!collapsed ? (
+        <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
+          <p className="font-semibold text-white">ADDRESS</p>
+          <p className="mt-1">
+            B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City
+            Cavite
+          </p>
+          <p className="mt-3 font-semibold text-white">PHONE AND EMAIL</p>
+          <p className="mt-1">
+            (046) 402-1779 / 0917-155-1779 / 0917-175-1779
+            <br />
+            gtcc2006@gmail.com
+          </p>
+        </div>
+      ) : null}
+    </details>
   )
 }
 

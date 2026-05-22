@@ -25,6 +25,7 @@ import {
   adminSetupLinks,
 } from "@/modules/admin/components"
 import { requireAuth } from "@/modules/auth/permissions"
+import { getOrganizationLogoUrl } from "@/modules/branding/organization-logo"
 import { getConversationSidebarLinksForUser } from "@/modules/messages/data"
 
 export async function CurrentWorkspaceShell({
@@ -34,7 +35,10 @@ export async function CurrentWorkspaceShell({
 }) {
   const user = await requireAuth()
   const roles = user.roleAssignments.map((assignment) => assignment.role)
-  const messageLinks = await getConversationSidebarLinksForUser(user.id)
+  const [messageLinks, logoUrl] = await Promise.all([
+    getConversationSidebarLinksForUser(user.id),
+    getOrganizationLogoUrl(user.organizationId),
+  ])
 
   if (roles.some((role) => adminRoles.includes(role))) {
     return (
@@ -47,8 +51,9 @@ export async function CurrentWorkspaceShell({
                 className="h-28 w-28 rounded-full object-contain transition-transform hover:scale-105"
                 height={112}
                 loading="eager"
-                src="/brand/gtcc-logo.png"
+                src={logoUrl}
                 width={112}
+                unoptimized={logoUrl.startsWith("/api/")}
               />
             </Link>
           </div>
@@ -88,6 +93,7 @@ export async function CurrentWorkspaceShell({
                 ))}
               </div>
             ) : null}
+            <HelpContact />
           </nav>
         </aside>
         <section className="flex min-w-0 flex-1 flex-col">
@@ -163,6 +169,30 @@ export async function CurrentWorkspaceShell({
   }
 
   return <>{children}</>
+}
+
+function HelpContact() {
+  return (
+    <details className="mt-8">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white">
+        <Settings className="h-4 w-4 shrink-0" />
+        Help & Contact
+      </summary>
+      <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
+        <p className="font-semibold text-white">ADDRESS</p>
+        <p className="mt-1">
+          B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City
+          Cavite
+        </p>
+        <p className="mt-3 font-semibold text-white">PHONE AND EMAIL</p>
+        <p className="mt-1">
+          (046) 402-1779 / 0917-155-1779 / 0917-175-1779
+          <br />
+          gtcc2006@gmail.com
+        </p>
+      </div>
+    </details>
+  )
 }
 
 const adminRoles: readonly UserRole[] = [

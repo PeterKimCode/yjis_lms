@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { LogIn } from "lucide-react"
+import { Bell, Home, LogIn, MessageSquare } from "lucide-react"
 
 import { BackButton } from "@/components/back-button"
 import { GoogleTranslateControl } from "@/components/google-translate-control"
@@ -39,18 +39,38 @@ export async function AppNavigation() {
         <nav className="flex items-center gap-2">
           {session?.user ? (
             <>
-              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
-                <Link href={dashboardHref}>Dashboard</Link>
+              <Button
+                asChild
+                className="text-slate-100 hover:bg-white/10 hover:text-white"
+                size="icon-sm"
+                variant="ghost"
+              >
+                <Link href={dashboardHref} title="Dashboard">
+                  <Home />
+                  <span className="sr-only">Dashboard</span>
+                </Link>
               </Button>
-              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
-                <Link href="/messages">
-                  Messages
+              <Button
+                asChild
+                className="relative text-slate-100 hover:bg-white/10 hover:text-white"
+                size="icon-sm"
+                variant="ghost"
+              >
+                <Link href="/messages" title="Messages">
+                  <MessageSquare />
+                  <span className="sr-only">Messages</span>
                   <NavBadge count={unreadMessages} />
                 </Link>
               </Button>
-              <Button asChild className="text-slate-100 hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
-                <Link href="/notifications">
-                  Notifications
+              <Button
+                asChild
+                className="relative text-slate-100 hover:bg-white/10 hover:text-white"
+                size="icon-sm"
+                variant="ghost"
+              >
+                <Link href="/notifications" title="Notifications">
+                  <Bell />
+                  <span className="sr-only">Notifications</span>
                   <NavBadge count={unreadNotifications} />
                 </Link>
               </Button>
@@ -58,7 +78,6 @@ export async function AppNavigation() {
                 <p className="text-sm font-medium text-white">{session.user.name}</p>
                 <p className="text-xs text-slate-400">{roleSummary}</p>
               </div>
-              <GoogleTranslateControl />
               <AvatarMenu
                 avatarUrl={
                   avatar ? `/api/files/${avatar.id}/download?disposition=inline` : null
@@ -70,6 +89,7 @@ export async function AppNavigation() {
                 className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
                 size="sm"
               />
+              <GoogleTranslateControl />
             </>
           ) : (
             <>

@@ -27,6 +27,14 @@ export async function getAdminData() {
 
   const organizations = await prisma.organization.findMany({
     where: getOrganizationWhereForAdmin(user),
+    include: {
+      logoFileAsset: {
+        select: {
+          id: true,
+          originalName: true,
+        },
+      },
+    },
     orderBy: { name: "asc" },
   })
 

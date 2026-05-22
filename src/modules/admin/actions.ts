@@ -84,6 +84,7 @@ export async function saveOrganization(formData: FormData) {
   })
   const { id, ...values } = data
   const admin = await requireAdmin()
+  const logo = formData.get("logo")
   const canCreateOrganization = admin.roleAssignments.some(
     (assignment) => assignment.role === UserRole.SUPER_ADMIN
   )
@@ -94,20 +95,43 @@ export async function saveOrganization(formData: FormData) {
     throw new Error("Only super admins can create organizations.")
   }
 
-  if (id) {
-    await getPrismaClient().organization.update({
-      where: { id },
-      data: values,
+  const prisma = getPrismaClient()
+  const organization = id
+    ? await prisma.organization.update({
+        where: { id },
+        data: values,
+        select: { id: true },
+      })
+    : await prisma.organization.create({
+        data: {
+          ...values,
+          slug: slugify(values.name),
+        },
+        select: { id: true },
+      })
+
+  if (logo instanceof File && logo.size > 0) {
+    const upload = await uploadImageFile({
+      campusId: null,
+      file: logo,
+      metadata: { source: "organization-logo", organizationId: organization.id },
+      organizationId: organization.id,
+      ownerId: admin.id,
+      prefix: `organizations/${organization.id}/logo`,
     })
-  } else {
-    await getPrismaClient().organization.create({
-      data: {
-        ...values,
-        slug: slugify(values.name),
-      },
+
+    if (!upload.ok) {
+      throw new Error(upload.message)
+    }
+
+    await prisma.organization.update({
+      where: { id: organization.id },
+      data: { logoFileAssetId: upload.fileAsset.id },
     })
   }
+
   await revalidateAdmin("/admin/organizations")
+  revalidatePath("/")
 }
 
 const campusSchema = z.object({

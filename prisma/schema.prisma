@@ -163,11 +163,13 @@ model Organization {
   name                    String
   slug                    String                   @unique
   institutionType         InstitutionType
+  logoFileAssetId         String?
   defaultLocale           String                   @default("ko-KR")
   timezone                String                   @default("Asia/Seoul")
   isActive                Boolean                  @default(true)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
+  logoFileAsset           FileAsset?                @relation("OrganizationLogo", fields: [logoFileAssetId], references: [id], onDelete: SetNull)
   campuses                Campus[]
   users                   User[]
   roleAssignments         UserRoleAssignment[]
@@ -223,6 +225,7 @@ model Organization {
   classSectionInstructors ClassSectionInstructor[]
 
   @@index([institutionType])
+  @@index([logoFileAssetId])
   @@index([createdAt])
 }
 
@@ -1644,6 +1647,7 @@ model FileAsset {
   classSection           ClassSection?         @relation(fields: [classSectionId], references: [id], onDelete: SetNull)
   uploadedBy             User?                 @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
   avatarUsers            User[]                @relation("UserAvatar")
+  logoOrganizations      Organization[]        @relation("OrganizationLogo")
   lessons                Lesson[]
   learningMaterials      LearningMaterial[]
   assignmentSubmission   AssignmentSubmission? @relation(fields: [assignmentSubmissionId], references: [id], onDelete: SetNull)

@@ -11,7 +11,10 @@ type RoleAssignmentSummary = Pick<
   "role" | "organizationId" | "campusId" | "startsAt" | "endsAt"
 >
 
-type AuthenticatedUser = Pick<User, "id" | "email" | "name" | "isActive"> & {
+type AuthenticatedUser = Pick<
+  User,
+  "id" | "email" | "name" | "isActive" | "organizationId"
+> & {
   roleAssignments: RoleAssignmentSummary[]
 }
 
@@ -388,6 +391,7 @@ async function getUserWithRoles(userId: string) {
       id: true,
       email: true,
       name: true,
+      organizationId: true,
       isActive: true,
       roleAssignments: {
         where: {
