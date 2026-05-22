@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Self-Hosted School LMS",
   description: "Local-first school LMS for self-hosted education workflows",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

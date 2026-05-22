@@ -170,16 +170,21 @@ export function SimpleTable({
 export function SectionBlock({
   title,
   description,
+  id,
   meta,
   children,
 }: {
   title: string
   description?: string
+  id?: string
   meta?: ReactNode
   children: ReactNode
 }) {
   return (
-    <Card className={`lms-card overflow-hidden ${getSectionAccentClass(title)}`}>
+    <Card
+      className={`lms-card scroll-mt-24 overflow-hidden ${getSectionAccentClass(title)}`}
+      id={id}
+    >
       <CardHeader className="gap-2 border-b border-slate-100/90 bg-white/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { LogIn } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -26,10 +27,13 @@ export async function AppNavigation() {
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
         <Link className="flex items-center gap-2 font-semibold tracking-tight" href="/">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-sm shadow-blue-200">
-            Y
-          </span>
-          <span>YJIS LMS</span>
+          <Image
+            alt="YJIS LMS"
+            className="h-9 w-auto"
+            height={36}
+            src="/brand/yjis-lms-logo.svg"
+            width={120}
+          />
         </Link>
         <nav className="flex items-center gap-2">
           {session?.user ? (

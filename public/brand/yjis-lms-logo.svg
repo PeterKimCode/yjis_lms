@@ -1,0 +1,20 @@
+<svg width="240" height="72" viewBox="0 0 240 72" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YJIS LMS">
+  <rect width="240" height="72" rx="18" fill="#F8FBFF"/>
+  <rect x="10" y="10" width="52" height="52" rx="15" fill="url(#markGradient)"/>
+  <path d="M25.5 24.5L36 37.2L46.5 24.5" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M36 37V48" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <path d="M72 24H89.6C96.3 24 100.4 27.6 100.4 33.3C100.4 39 96.3 42.7 89.6 42.7H80.3V52H72V24ZM88.7 36.2C90.9 36.2 92.1 35.1 92.1 33.3C92.1 31.5 90.9 30.5 88.7 30.5H80.3V36.2H88.7Z" fill="#0F172A"/>
+  <path d="M105.3 24H113.6V45.2H128.2V52H105.3V24Z" fill="#0F172A"/>
+  <path d="M132.2 24H140.7L148.6 37.1L156.5 24H165V52H156.9V36.6L150.5 47H146.7L140.3 36.6V52H132.2V24Z" fill="#0F172A"/>
+  <path d="M170 47.8L174.4 42.5C177.3 44.7 180.8 46.1 184.3 46.1C187 46.1 188.3 45.3 188.3 43.9C188.3 42.4 187.1 41.9 182.9 41C176.5 39.6 171.3 37.9 171.3 32.2C171.3 27 175.4 23.4 182.2 23.4C187 23.4 191 24.6 194.4 27.1L190.5 32.7C187.9 30.9 184.8 29.9 182 29.9C179.7 29.9 178.6 30.8 178.6 32C178.6 33.6 179.9 34.1 184.2 35C191.1 36.5 195.6 38.6 195.6 43.8C195.6 49.5 191 52.6 184.2 52.6C178.9 52.6 173.8 51 170 47.8Z" fill="#0F172A"/>
+  <path d="M72 59H195" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+  <path d="M204 24H215C223.3 24 230 30.7 230 39C230 47.3 223.3 54 215 54H204V24Z" fill="#DFF7ED"/>
+  <path d="M211 35H217.5M211 43H221" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="markGradient" x1="10" y1="10" x2="62" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="0.56" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+</svg>

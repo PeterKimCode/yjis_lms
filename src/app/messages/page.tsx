@@ -2,7 +2,11 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/modules/dashboards/components"
-import { getConversationList, getConversationStartOptions } from "@/modules/messages/data"
+import { ConversationSubmenu } from "@/modules/messages/conversation-submenu"
+import {
+  getConversationList,
+  getConversationStartOptions,
+} from "@/modules/messages/data"
 import { NewMessageForm } from "@/modules/messages/message-forms"
 
 export default async function MessagesPage({
@@ -18,103 +22,108 @@ export default async function MessagesPage({
 
   return (
     <main className="app-shell-surface flex-1 px-4 py-8">
-      <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Button asChild size="sm" variant="outline">
-          <Link href={getDashboardHref(user.roleAssignments.map((item) => item.role))}>
-            Back
-          </Link>
-        </Button>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
-          <p className="text-sm text-muted-foreground">
-            Text-only LMS conversations with teachers, students, parents, and
-            class groups.
-          </p>
-        </div>
-
-        <NewMessageForm
-          classGroupOptions={options.classGroupOptions}
-          directOptions={options.directOptions}
-        />
-
-        <form className="lms-soft-panel flex flex-col gap-2 rounded-lg p-4 md:flex-row">
-          <input
-            className="h-9 rounded-md border bg-background px-3 text-sm md:max-w-sm"
-            defaultValue={q}
-            name="q"
-            placeholder="Search conversations..."
-          />
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            defaultValue={filter}
-            name="filter"
-          >
-            <option value="all">All</option>
-            <option value="unread">Unread</option>
-            <option value="DIRECT">Direct</option>
-            <option value="CLASS_SECTION">Class groups</option>
-            <option value="SUPPORT">Support</option>
-          </select>
-          <div className="flex gap-2">
-            <Button type="submit" variant="outline">
-              Filter
-            </Button>
-            <Button asChild type="button" variant="ghost">
-              <Link href="/messages">Reset</Link>
-            </Button>
+      <div className="mx-auto grid w-full max-w-7xl gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <ConversationSubmenu conversations={conversations} />
+        <div className="space-y-6">
+          <Button asChild size="sm" variant="outline">
+            <Link href={getDashboardHref(user.roleAssignments.map((item) => item.role))}>
+              Back
+            </Link>
+          </Button>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
+            <p className="text-sm text-muted-foreground">
+              Text-only LMS conversations with teachers, students, parents, and
+              class groups.
+            </p>
           </div>
-        </form>
 
-        {conversations.length ? (
-          <div className="grid gap-3">
-            {conversations.map((conversation) => {
-              const lastMessage = conversation.messages[0]
+          <NewMessageForm
+            classGroupOptions={options.classGroupOptions}
+            directOptions={options.directOptions}
+          />
 
-              return (
-                <Link
-                  className="lms-card lms-card-hover rounded-lg p-4"
-                  href={`/messages/${conversation.id}`}
-                  key={conversation.id}
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-semibold">{conversation.displayTitle}</h2>
-                        <StatusBadge
-                          label={conversation.typeLabel}
-                          value={conversation.type}
-                        />
-                        {conversation.unreadCount ? (
+          <form className="lms-soft-panel flex flex-col gap-2 rounded-lg p-4 md:flex-row">
+            <input
+              className="h-9 rounded-md border bg-background px-3 text-sm md:max-w-sm"
+              defaultValue={q}
+              name="q"
+              placeholder="Search conversations..."
+            />
+            <select
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              defaultValue={filter}
+              name="filter"
+            >
+              <option value="all">All</option>
+              <option value="unread">Unread</option>
+              <option value="DIRECT">Direct</option>
+              <option value="CLASS_SECTION">Class groups</option>
+              <option value="SUPPORT">Support</option>
+            </select>
+            <div className="flex gap-2">
+              <Button type="submit" variant="outline">
+                Filter
+              </Button>
+              <Button asChild type="button" variant="ghost">
+                <Link href="/messages">Reset</Link>
+              </Button>
+            </div>
+          </form>
+
+          {conversations.length ? (
+            <div className="grid gap-3">
+              {conversations.map((conversation) => {
+                const lastMessage = conversation.messages[0]
+
+                return (
+                  <Link
+                    className="lms-card lms-card-hover rounded-lg p-4"
+                    href={`/messages/${conversation.id}`}
+                    key={conversation.id}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="font-semibold">
+                            {conversation.displayTitle}
+                          </h2>
                           <StatusBadge
-                            label={`${conversation.unreadCount} unread`}
-                            value="PENDING"
+                            label={conversation.typeLabel}
+                            value={conversation.type}
                           />
-                        ) : null}
+                          {conversation.unreadCount ? (
+                            <StatusBadge
+                              label={`${conversation.unreadCount} unread`}
+                              value="PENDING"
+                            />
+                          ) : null}
+                        </div>
+                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                          {lastMessage
+                            ? `${lastMessage.sender?.name ?? "Unknown"}: ${lastMessage.body}`
+                            : "No messages yet."}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {conversation.classSection
+                            ? `${conversation.classSection.course.title} · ${conversation.classSection.name}`
+                            : `${conversation.participants.length} participants`}
+                        </p>
                       </div>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
-                        {lastMessage
-                          ? `${lastMessage.sender?.name ?? "Unknown"}: ${lastMessage.body}`
-                          : "No messages yet."}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {conversation.classSection
-                          ? `${conversation.classSection.course.title} · ${conversation.classSection.name}`
-                          : `${conversation.participants.length} participants`}
+                      <p className="whitespace-nowrap text-xs text-muted-foreground">
+                        {formatDate(lastMessage?.createdAt ?? conversation.updatedAt)}
                       </p>
                     </div>
-                    <p className="whitespace-nowrap text-xs text-muted-foreground">
-                      {formatDate(lastMessage?.createdAt ?? conversation.updatedAt)}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
-            No conversations yet.
-          </div>
-        )}
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
+              No conversations yet.
+            </div>
+          )}
+        </div>
       </div>
     </main>
   )

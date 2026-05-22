@@ -140,6 +140,7 @@ export async function ClassSectionDetail({
       <div className="flex flex-col gap-6">
         <SectionBlock
           description="Create, publish, and review lesson completion."
+          id="lessons"
           meta={<SectionBadge>{section.lessons.length} lessons</SectionBadge>}
           title={`Lessons · ${gradeWeights.lessonsWeight}%`}
         >
@@ -303,6 +304,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Scheduled class meetings and attendance setup."
+          id="sessions"
           meta={<SectionBadge>{section.sessions.length} sessions</SectionBadge>}
           title="Sessions"
         >
@@ -411,6 +413,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Attendance summaries use the active school attendance policy."
+          id="attendance"
           meta={
             <SectionBadge>
               {attendanceSummary.attendanceRate.toFixed(1)}% rate
@@ -577,6 +580,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Manage assignments, student submissions, and grading feedback."
+          id="assignments"
           meta={<SectionBadge>{section.assignments.length} assignments</SectionBadge>}
           title={`Assignments · ${gradeWeights.assignmentsWeight}%`}
         >
@@ -592,6 +596,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Create quizzes, review attempts, and handle manual grading."
+          id="quizzes"
           meta={<SectionBadge>{section.quizzes.length} quizzes</SectionBadge>}
           title={`Quizzes · ${gradeWeights.quizzesWeight}%`}
         >
@@ -607,6 +612,7 @@ export async function ClassSectionDetail({
         {mode === "instructor" ? (
           <SectionBlock
             description="Scheduled exams for this class section."
+            id="exams"
             meta={<SectionBadge>{section.exams.length} exams</SectionBadge>}
             title={`Exams · ${gradeWeights.examsWeight}%`}
           >
@@ -619,6 +625,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Set module weights, calculate final grades, and publish results."
+          id="grades"
           meta={<SectionBadge>{section.finalGrades.length} final grades</SectionBadge>}
           title="Grades"
         >
@@ -632,6 +639,7 @@ export async function ClassSectionDetail({
 
         <SectionBlock
           description="Class announcements, Q&A, resources, and discussion spaces."
+          id="boards"
           meta={<SectionBadge>{section.boards.length} boards</SectionBadge>}
           title="Boards"
         >
