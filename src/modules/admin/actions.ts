@@ -124,10 +124,11 @@ export async function saveOrganization(formData: FormData) {
       throw new Error(upload.message)
     }
 
-    await prisma.organization.update({
-      where: { id: organization.id },
-      data: { logoFileAssetId: upload.fileAsset.id },
-    })
+    await prisma.$executeRaw`
+      UPDATE "Organization"
+      SET "logoFileAssetId" = ${upload.fileAsset.id}
+      WHERE "id" = ${organization.id}
+    `
   }
 
   await revalidateAdmin("/admin/organizations")

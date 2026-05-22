@@ -75,7 +75,7 @@ function OrganizationForm({
     name: string
     institutionType: InstitutionType
     isActive: boolean
-    logoFileAsset?: { id: string; originalName: string } | null
+    logoFileAsset?: { id: string } | null
   }
 }) {
   return (

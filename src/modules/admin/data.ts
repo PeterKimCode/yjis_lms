@@ -1,6 +1,6 @@
 import "server-only"
 
-import { UserRole } from "@prisma/client"
+import { Prisma, UserRole } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
 import {
@@ -27,16 +27,18 @@ export async function getAdminData() {
 
   const organizations = await prisma.organization.findMany({
     where: getOrganizationWhereForAdmin(user),
-    include: {
-      logoFileAsset: {
-        select: {
-          id: true,
-          originalName: true,
-        },
-      },
-    },
     orderBy: { name: "asc" },
   })
+  const organizationLogos = organizations.length
+    ? await prisma.$queryRaw<Array<{ id: string; logoFileAssetId: string | null }>>`
+        SELECT "id", "logoFileAssetId"
+        FROM "Organization"
+        WHERE "id" IN (${Prisma.join(organizations.map((organization) => organization.id))})
+      `
+    : []
+  const logoByOrganizationId = new Map(
+    organizationLogos.map((row) => [row.id, row.logoFileAssetId])
+  )
 
   const campuses = await prisma.campus.findMany({
     where: getCampusWhereForAdmin(user),
@@ -47,7 +49,12 @@ export async function getAdminData() {
   return {
     user,
     isSuperAdmin,
-    organizations,
+    organizations: organizations.map((organization) => ({
+      ...organization,
+      logoFileAsset: logoByOrganizationId.get(organization.id)
+        ? { id: logoByOrganizationId.get(organization.id) as string }
+        : null,
+    })),
     campuses,
     organizationOptions: organizations.map((organization) => ({
       id: organization.id,

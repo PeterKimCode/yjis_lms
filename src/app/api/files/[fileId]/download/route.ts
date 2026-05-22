@@ -66,9 +66,6 @@ export async function GET(
           },
         },
       },
-      logoOrganizations: {
-        select: { id: true },
-      },
     },
   })
 
@@ -156,7 +153,6 @@ async function canDownloadFile(
         }
       }
     }[]
-    logoOrganizations: { id: string }[]
   }
 ) {
   if (file.uploadedById === userId) {
@@ -172,10 +168,12 @@ async function canDownloadFile(
     return canViewStudentData(userId, avatarOwner.id)
   }
 
-  if (file.logoOrganizations.length) {
-    const logoOrganizationIds = new Set(
-      file.logoOrganizations.map((organization) => organization.id)
-    )
+  const logoOrganizations = await getPrismaClient().$queryRaw<Array<{ id: string }>>`
+    SELECT "id" FROM "Organization" WHERE "logoFileAssetId" = ${file.id}
+  `
+
+  if (logoOrganizations.length) {
+    const logoOrganizationIds = new Set(logoOrganizations.map((organization) => organization.id))
     const user = await getPrismaClient().user.findUnique({
       where: { id: userId },
       select: {
