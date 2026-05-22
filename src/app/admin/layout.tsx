@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import type { ReactNode } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,15 +15,24 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="role-admin-surface flex flex-1">
-      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-slate-200/60 backdrop-blur md:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:block">
+        <div className="mb-4 grid place-items-center">
+          <Image
+            alt="General Trias College of Cavite"
+            className="h-28 w-28 rounded-full object-contain"
+            height={112}
+            src="/brand/gtcc-logo.png"
+            width={112}
+          />
+        </div>
         <div className="mb-5">
           <p className="text-sm font-semibold">Admin workspace</p>
-          <p className="text-xs text-muted-foreground">{user.email}</p>
+          <p className="text-xs text-slate-400">{user.email}</p>
         </div>
         <nav className="space-y-3">
           <NavGroup links={adminPrimaryLinks} />
-          <details className="rounded-md border p-2">
-            <summary className="cursor-pointer px-1 text-xs font-medium text-muted-foreground">
+          <details className="rounded-md border border-white/10 p-2">
+            <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
               Academic setup
             </summary>
             <div className="mt-2 grid gap-1">
@@ -61,7 +71,7 @@ function NavGroup({ links }: { links: readonly (readonly [string, string])[] }) 
     <div className="grid gap-1">
       {links.map(([href, label]) => (
         <Link
-          className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-blue-50 hover:text-blue-700"
+          className="rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
           href={href}
           key={href}
         >

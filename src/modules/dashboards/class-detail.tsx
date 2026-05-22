@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { CheckCircle2 } from "lucide-react"
 import { AttendanceStatus, DeliveryMode } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
@@ -170,7 +171,7 @@ export async function ClassSectionDetail({
               headers={
                 mode === "instructor"
                   ? ["Order", "Title", "Type", "Video", "Published", "Completion"]
-                  : ["Order", "Title", "Type", "Duration", "Open"]
+                  : ["Order", "Title", "Type", "Duration", "Progress", "Open"]
               }
               rows={section.lessons.map((lesson) => {
                 const completedCount = lesson.videoProgress.filter(
@@ -210,6 +211,13 @@ export async function ClassSectionDetail({
                           {lesson.durationSeconds
                             ? `${lesson.durationSeconds}s`
                             : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <LessonProgressBadge
+                            progress={lesson.videoProgress.find(
+                              (progress) => progress.studentId === userId
+                            )}
+                          />
                         </TableCell>
                         <TableCell>
                           <OpenButton
@@ -744,6 +752,34 @@ export async function ClassSectionDetail({
         </SectionBlock>
       </div>
     </DashboardPage>
+  )
+}
+
+function LessonProgressBadge({
+  progress,
+}: {
+  progress?: {
+    completed: boolean
+    percentComplete: unknown
+    progressRate: unknown
+  }
+}) {
+  const percent = Math.round(
+    Number(progress?.percentComplete ?? progress?.progressRate ?? 0)
+  )
+  const complete = progress?.completed || percent >= 100
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold ${
+        complete
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-red-200 bg-red-50 text-red-700"
+      }`}
+    >
+      {complete ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+      {complete ? "100%" : `${Math.min(99, Math.max(0, percent))}%`}
+    </span>
   )
 }
 
