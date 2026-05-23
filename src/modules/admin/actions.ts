@@ -12,6 +12,7 @@ import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
+import type { AdminFormState } from "@/modules/admin/form-state"
 import { hashPassword } from "@/modules/auth/password"
 import { uploadImageFile } from "@/modules/files/upload"
 import { ensureDefaultPoliciesForCampus } from "@/modules/policies/initialize"
@@ -203,6 +204,18 @@ const userSchema = z.object({
   isActive: checkboxBoolean,
 })
 
+export async function saveUserWithState(
+  _previousState: AdminFormState,
+  formData: FormData
+): Promise<AdminFormState> {
+  try {
+    await saveUser(formData)
+    return { ok: true, message: "User saved." }
+  } catch (error) {
+    return { ok: false, message: getActionErrorMessage(error) }
+  }
+}
+
 export async function saveUser(formData: FormData) {
   const data = userSchema.parse({
     ...readForm(formData),
@@ -332,6 +345,18 @@ export async function saveUser(formData: FormData) {
 
   await revalidateAdmin("/admin/users")
   await revalidateAdmin(`/admin/users/${user.id}`)
+}
+
+function getActionErrorMessage(error: unknown) {
+  if (error instanceof z.ZodError) {
+    return error.issues[0]?.message ?? "Please check the form values."
+  }
+
+  if (error instanceof Error) {
+    return error.message || "The request could not be completed."
+  }
+
+  return "The request could not be completed."
 }
 
 export type AdminUserAvatarState = {

@@ -1,19 +1,15 @@
 import "server-only"
 
-import { UserRole } from "@prisma/client"
-
 import {
   requireAnyRole,
   requireCampusScope,
   requireOrganizationScope,
 } from "@/modules/auth/permissions"
-
-export const adminRoles: UserRole[] = [
-  UserRole.SUPER_ADMIN,
-  UserRole.ORG_ADMIN,
-  UserRole.SCHOOL_ADMIN,
-  UserRole.ACADEMIC_STAFF,
-]
+import {
+  adminRoles,
+  getAdminAssignments,
+  hasSuperAdminRole,
+} from "@/modules/admin/scope-rules"
 
 type AdminUser = Awaited<ReturnType<typeof requireAdmin>>
 
@@ -22,15 +18,7 @@ export async function requireAdmin() {
 }
 
 export function isSuperAdmin(user: AdminUser) {
-  return user.roleAssignments.some(
-    (assignment) => assignment.role === UserRole.SUPER_ADMIN
-  )
-}
-
-function adminAssignments(user: AdminUser) {
-  return user.roleAssignments.filter((assignment) =>
-    adminRoles.includes(assignment.role)
-  )
+  return hasSuperAdminRole(user.roleAssignments)
 }
 
 export function getOrganizationWhereForAdmin(user: AdminUser) {
@@ -38,7 +26,7 @@ export function getOrganizationWhereForAdmin(user: AdminUser) {
 
   return {
     id: {
-      in: [...new Set(adminAssignments(user).map((item) => item.organizationId))],
+      in: [...new Set(getAdminAssignments(user.roleAssignments).map((item) => item.organizationId))],
     },
   }
 }
@@ -47,7 +35,7 @@ export function getCampusWhereForAdmin(user: AdminUser) {
   if (isSuperAdmin(user)) return {}
 
   return {
-    OR: adminAssignments(user).map((assignment) => ({
+    OR: getAdminAssignments(user.roleAssignments).map((assignment) => ({
       organizationId: assignment.organizationId,
       ...(assignment.campusId ? { id: assignment.campusId } : {}),
     })),
@@ -58,7 +46,7 @@ export function getScopedWhereForAdmin(user: AdminUser) {
   if (isSuperAdmin(user)) return {}
 
   return {
-    OR: adminAssignments(user).map((assignment) => ({
+    OR: getAdminAssignments(user.roleAssignments).map((assignment) => ({
       organizationId: assignment.organizationId,
       ...(assignment.campusId ? { campusId: assignment.campusId } : {}),
     })),
@@ -78,7 +66,7 @@ export function getUserWhereForAdmin(user: AdminUser) {
 
   return {
     organizationId: {
-      in: [...new Set(adminAssignments(user).map((item) => item.organizationId))],
+      in: [...new Set(getAdminAssignments(user.roleAssignments).map((item) => item.organizationId))],
     },
   }
 }

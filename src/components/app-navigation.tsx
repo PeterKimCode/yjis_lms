@@ -29,14 +29,14 @@ export async function AppNavigation() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:px-4">
         <Link
           className="max-w-[42vw] truncate text-sm font-semibold tracking-tight text-white sm:max-w-none sm:text-base"
           href="/"
         >
           General Trias College of Cavite
         </Link>
-        <nav className="flex items-center gap-3">
+        <nav className="flex min-w-0 items-center gap-1.5 sm:gap-3">
           {session?.user ? (
             <>
               <Button
@@ -74,7 +74,7 @@ export async function AppNavigation() {
                   <NavBadge count={unreadNotifications} />
                 </Link>
               </Button>
-              <div className="hidden text-right sm:block">
+              <div className="hidden text-right md:block">
                 <p className="text-sm font-medium text-white">{session.user.name}</p>
                 <p className="text-xs text-slate-400">{roleSummary}</p>
               </div>
@@ -86,7 +86,7 @@ export async function AppNavigation() {
               />
               <BackButton className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white" />
               <LogoutButton
-                className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                className="hidden border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white sm:inline-flex"
                 size="sm"
               />
               <GoogleTranslateControl />

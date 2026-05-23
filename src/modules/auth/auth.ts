@@ -10,6 +10,27 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 })
 
+const sessionMaxAgeSeconds = 8 * 60 * 60
+const loginWindowMs = 5 * 60 * 1000
+const loginLockoutMs = 15 * 60 * 1000
+const maxLoginAttempts = 5
+
+type LoginAttempt = {
+  count: number
+  firstAttemptAt: number
+  lockedUntil?: number
+}
+
+const loginAttempts =
+  globalThis as typeof globalThis & {
+    __lmsLoginAttempts?: Map<string, LoginAttempt>
+  }
+
+const loginAttemptStore =
+  loginAttempts.__lmsLoginAttempts ?? new Map<string, LoginAttempt>()
+
+loginAttempts.__lmsLoginAttempts = loginAttemptStore
+
 export type SessionRoleAssignment = {
   role: string
   organizationId: string
@@ -19,6 +40,11 @@ export type SessionRoleAssignment = {
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+    maxAge: sessionMaxAgeSeconds,
+    updateAge: 60 * 60,
+  },
+  jwt: {
+    maxAge: sessionMaxAgeSeconds,
   },
   pages: {
     signIn: "/login",
@@ -40,6 +66,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         const { email, password } = parsedCredentials.data
+
+        if (isLoginRateLimited(email)) {
+          return null
+        }
+
         const prisma = getPrismaClient()
         const users = await prisma.user.findMany({
           where: {
@@ -66,6 +97,7 @@ export const authOptions: NextAuthOptions = {
           const isValidPassword = await verifyPassword(password, user.passwordHash)
 
           if (isValidPassword) {
+            clearLoginAttempts(email)
             return {
               id: user.id,
               email: user.email,
@@ -75,6 +107,7 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        recordFailedLogin(email)
         return null
       },
     }),
@@ -97,4 +130,42 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+}
+
+function isLoginRateLimited(email: string) {
+  const attempt = loginAttemptStore.get(email)
+  const now = Date.now()
+
+  if (!attempt) return false
+  if (attempt.lockedUntil && attempt.lockedUntil > now) return true
+  if (attempt.lockedUntil && attempt.lockedUntil <= now) {
+    loginAttemptStore.delete(email)
+    return false
+  }
+  if (now - attempt.firstAttemptAt > loginWindowMs) {
+    loginAttemptStore.delete(email)
+    return false
+  }
+
+  return attempt.count >= maxLoginAttempts
+}
+
+function recordFailedLogin(email: string) {
+  const now = Date.now()
+  const existing = loginAttemptStore.get(email)
+  const attempt =
+    existing && now - existing.firstAttemptAt <= loginWindowMs
+      ? existing
+      : { count: 0, firstAttemptAt: now }
+
+  attempt.count += 1
+  if (attempt.count >= maxLoginAttempts) {
+    attempt.lockedUntil = now + loginLockoutMs
+  }
+
+  loginAttemptStore.set(email, attempt)
+}
+
+function clearLoginAttempts(email: string) {
+  loginAttemptStore.delete(email)
 }

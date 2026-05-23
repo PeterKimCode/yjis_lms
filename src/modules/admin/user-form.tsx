@@ -1,9 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useActionState, useMemo, useState } from "react"
 import { UserRole } from "@prisma/client"
 
-import { saveUser } from "@/modules/admin/actions"
+import { saveUserWithState } from "@/modules/admin/actions"
+import { initialAdminFormState } from "@/modules/admin/form-state"
 import {
   AdminSelect,
   Field,
@@ -49,6 +50,10 @@ export function UserForm({
   homeroomOptions: ScopedOption[]
   user?: AdminUserFormValue
 }) {
+  const [state, formAction, pending] = useActionState(
+    saveUserWithState,
+    initialAdminFormState
+  )
   const primaryRole = user?.roleAssignments[0]
   const [role, setRole] = useState<UserRole>(primaryRole?.role ?? UserRole.STUDENT)
   const [organizationId, setOrganizationId] = useState(
@@ -88,7 +93,19 @@ export function UserForm({
 
   return (
     <FormCard title={user ? "Edit user" : "Create user"}>
-      <form action={saveUser} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {state.message ? (
+        <div
+          className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
+            state.ok
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+          role="status"
+        >
+          {state.message}
+        </div>
+      ) : null}
+      <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <input name="id" type="hidden" value={user?.id ?? ""} />
         <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Organization</span>
@@ -201,7 +218,7 @@ export function UserForm({
           Active
         </label>
         <div className="flex items-end">
-          <SubmitButton />
+          <SubmitButton label={pending ? "Saving..." : "Save"} />
         </div>
       </form>
     </FormCard>
