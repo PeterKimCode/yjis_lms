@@ -205,4 +205,29 @@
   body {
     top: 0 !important;
   }
+
+  .login-slide-window {
+    @apply relative h-64 overflow-hidden;
+  }
+
+  .login-slide-card {
+    animation: login-slide-cycle 15s infinite;
+    animation-delay: calc(var(--slide-index) * 5s);
+    opacity: 0;
+    transform: translateX(2rem);
+    @apply absolute inset-0 flex flex-col justify-center;
+  }
+}
+
+@keyframes login-slide-cycle {
+  0%,
+  26% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  33%,
+  100% {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
 }

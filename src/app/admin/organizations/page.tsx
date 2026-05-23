@@ -20,7 +20,7 @@ export default async function OrganizationsPage({
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
-  const { organizations } = await getAdminData()
+  const { isSuperAdmin, organizations } = await getAdminData()
   const q = (await searchParams).q?.trim() ?? ""
   const filteredOrganizations = organizations.filter((organization) =>
     matchesSearch(q, [
@@ -37,7 +37,14 @@ export default async function OrganizationsPage({
         description="Tenant organizations available in your admin scope."
       />
       <SearchForm q={q} placeholder="Search organizations..." />
-      <OrganizationForm />
+      {isSuperAdmin ? (
+        <OrganizationForm />
+      ) : (
+        <div className="rounded-lg border bg-white/90 p-4 text-sm text-muted-foreground">
+          Organization creation is limited to SUPER_ADMIN accounts. You can edit
+          organizations already assigned to your admin scope.
+        </div>
+      )}
       <DataTable
         empty="No organizations are available for your scope."
         headers={["Name", "Slug", "Type", "Status", "Edit"]}

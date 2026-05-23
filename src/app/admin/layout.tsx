@@ -50,7 +50,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </div>
         <nav className="space-y-3">
           <NavGroup links={adminPrimaryLinks} />
-          <details className="rounded-md border border-white/10 p-2">
+          <details className="rounded-md border border-white/10 p-2" open>
             <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
               Academic setup
             </summary>
