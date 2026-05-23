@@ -36,7 +36,7 @@ export async function AppNavigation() {
         >
           General Trias College of Cavite
         </Link>
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-3">
           {session?.user ? (
             <>
               <Button
@@ -124,7 +124,7 @@ async function getUserAvatar(userId: string) {
 
 function NavBadge({ count }: { count: number }) {
   return count ? (
-    <span className="ml-1 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+    <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground ring-2 ring-slate-950">
       {count > 99 ? "99+" : count}
     </span>
   ) : null

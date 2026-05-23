@@ -230,6 +230,45 @@ export async function saveUser(formData: FormData) {
     ? { passwordHash: await hashPassword(password) }
     : {}
   const prisma = getPrismaClient()
+
+  if (campusId) {
+    const campus = await prisma.campus.findUnique({
+      where: { id: campusId },
+      select: { organizationId: true },
+    })
+    if (!campus || campus.organizationId !== userValues.organizationId) {
+      throw new Error("Selected campus does not belong to the selected organization.")
+    }
+  }
+
+  if (currentGradeLevelId) {
+    const gradeLevel = await prisma.gradeLevel.findUnique({
+      where: { id: currentGradeLevelId },
+      select: { organizationId: true, campusId: true },
+    })
+    if (
+      !gradeLevel ||
+      gradeLevel.organizationId !== userValues.organizationId ||
+      (campusId && gradeLevel.campusId && gradeLevel.campusId !== campusId)
+    ) {
+      throw new Error("Selected student grade does not belong to this scope.")
+    }
+  }
+
+  if (homeroomId) {
+    const homeroom = await prisma.homeroom.findUnique({
+      where: { id: homeroomId },
+      select: { organizationId: true, campusId: true },
+    })
+    if (
+      !homeroom ||
+      homeroom.organizationId !== userValues.organizationId ||
+      (campusId && homeroom.campusId && homeroom.campusId !== campusId)
+    ) {
+      throw new Error("Selected homeroom does not belong to this scope.")
+    }
+  }
+
   const user = id
     ? await prisma.user.update({
         where: { id },

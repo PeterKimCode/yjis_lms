@@ -63,6 +63,7 @@ export async function getAdminData() {
     campusOptions: campuses.map((campus) => ({
       id: campus.id,
       label: `${campus.name} (${campus.organization.name})`,
+      organizationId: campus.organizationId,
     })),
   }
 }
@@ -239,10 +240,14 @@ export async function getAcademicSetupOptions() {
     gradeLevelOptions: gradeLevels.map((gradeLevel) => ({
       id: gradeLevel.id,
       label: gradeLevel.name,
+      organizationId: gradeLevel.organizationId,
+      campusId: gradeLevel.campusId,
     })),
     homeroomOptions: homerooms.map((homeroom) => ({
       id: homeroom.id,
       label: homeroom.name,
+      organizationId: homeroom.organizationId,
+      campusId: homeroom.campusId,
     })),
     departmentOptions: departments.map((department) => ({
       id: department.id,
