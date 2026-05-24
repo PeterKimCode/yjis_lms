@@ -64,10 +64,62 @@ export const getClassSectionWhereForAdmin = getScopedWhereForAdmin
 export function getUserWhereForAdmin(user: AdminUser) {
   if (isSuperAdmin(user)) return {}
 
+  const assignments = getAdminAssignments(user.roleAssignments)
+  const hasOrganizationWideScope = assignments.some((assignment) => !assignment.campusId)
+
+  if (hasOrganizationWideScope) {
+    return {
+      organizationId: {
+        in: [
+          ...new Set(
+            assignments
+              .filter((assignment) => !assignment.campusId)
+              .map((item) => item.organizationId)
+          ),
+        ],
+      },
+    }
+  }
+
   return {
-    organizationId: {
-      in: [...new Set(getAdminAssignments(user.roleAssignments).map((item) => item.organizationId))],
-    },
+    OR: assignments.map((assignment) => ({
+      organizationId: assignment.organizationId,
+      OR: [
+        {
+          roleAssignments: {
+            some: {
+              organizationId: assignment.organizationId,
+              campusId: assignment.campusId,
+            },
+          },
+        },
+        {
+          studentProfile: {
+            is: {
+              campusId: assignment.campusId,
+            },
+          },
+        },
+        {
+          instructorProfile: {
+            is: {
+              campusId: assignment.campusId,
+            },
+          },
+        },
+        {
+          parentRelations: {
+            some: {
+              student: {
+                studentProfile: {
+                  campusId: assignment.campusId,
+                },
+              },
+            },
+          },
+        },
+      ],
+    })),
   }
 }
 

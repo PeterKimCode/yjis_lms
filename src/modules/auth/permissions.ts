@@ -359,24 +359,13 @@ export async function canAccessConversation(
     return true
   }
 
-  if (
+  return (
     canManageScopedAcademicData(
       user.roleAssignments,
       conversation.organizationId,
       conversation.campusId
-    )
-  ) {
-    return true
-  }
-
-  if (
-    conversation.classSectionId &&
-    (await canViewClassSection(userId, conversation.classSectionId))
-  ) {
-    return true
-  }
-
-  return hasHomeroomTeacherAuthority(user, conversation.homeroom?.teacherId)
+    ) || hasHomeroomTeacherAuthority(user, conversation.homeroom?.teacherId)
+  )
 }
 
 async function getUserWithRoles(userId: string) {

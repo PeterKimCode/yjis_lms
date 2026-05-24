@@ -78,8 +78,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const disposition =
+    const requestedInline =
       new URL(request.url).searchParams.get("disposition") === "inline"
+    const disposition =
+      requestedInline && file.contentType?.startsWith("image/")
         ? "inline"
         : "attachment"
     const object = await createS3Client().send(
@@ -104,6 +106,7 @@ export async function GET(
       ),
       "Content-Type": file.contentType ?? "application/octet-stream",
       "Content-Length": String(file.byteSize ?? bytes.byteLength),
+      "X-Content-Type-Options": "nosniff",
     })
 
     return new Response(bytes, { headers })

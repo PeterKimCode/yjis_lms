@@ -3,11 +3,7 @@ import "server-only"
 import { UserRole } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
-import {
-  canAccessConversation,
-  canManageClassSection,
-  canViewClassSection,
-} from "@/modules/auth/permissions"
+import { canManageClassSection, canViewClassSection } from "@/modules/auth/permissions"
 
 export async function canStudentMessageTeacher(
   studentUserId: string,
@@ -128,7 +124,7 @@ export async function canSendInConversation(userId: string, conversationId: stri
     select: { id: true },
   })
 
-  return Boolean(participant) || canAccessConversation(userId, conversationId)
+  return Boolean(participant)
 }
 
 export async function canCreateClassGroupConversation(

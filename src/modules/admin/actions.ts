@@ -11,7 +11,11 @@ import {
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
-import { assertAdminScope, requireAdmin } from "@/modules/admin/access"
+import {
+  assertAdminScope,
+  getUserWhereForAdmin,
+  requireAdmin,
+} from "@/modules/admin/access"
 import type { AdminFormState } from "@/modules/admin/form-state"
 import { hashPassword } from "@/modules/auth/password"
 import { uploadImageFile } from "@/modules/files/upload"
@@ -234,6 +238,7 @@ export async function saveUser(formData: FormData) {
   } = data
 
   await assertAdminScope({ organizationId: userValues.organizationId, campusId })
+  const adminUser = await requireAdmin()
 
   if (!id && password.length < 8) {
     throw new Error("Password must be at least 8 characters.")
@@ -243,6 +248,20 @@ export async function saveUser(formData: FormData) {
     ? { passwordHash: await hashPassword(password) }
     : {}
   const prisma = getPrismaClient()
+
+  if (id) {
+    const editableUser = await prisma.user.findFirst({
+      where: {
+        id,
+        ...getUserWhereForAdmin(adminUser),
+      },
+      select: { id: true },
+    })
+
+    if (!editableUser) {
+      throw new Error("You do not have permission to edit this user.")
+    }
+  }
 
   if (campusId) {
     const campus = await prisma.campus.findUnique({
