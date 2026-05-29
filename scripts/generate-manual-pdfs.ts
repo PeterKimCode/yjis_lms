@@ -5,322 +5,549 @@ import { PDFDocument, PDFFont, PDFPage, rgb } from "pdf-lib"
 
 type ManualSection = {
   title: string
-  bullets: string[]
+  intro?: string
+  steps?: string[]
+  notes?: string[]
 }
 
 type Manual = {
-  audience: string
   fileName: string
-  role: string
+  title: string
+  subtitle: string
   sections: ManualSection[]
 }
 
 const outputDirectory = path.join(process.cwd(), "docs", "manuals")
 const pageSize: [number, number] = [595.28, 841.89]
-const margin = 42
+const margin = 44
 const contentWidth = pageSize[0] - margin * 2
-const bodyLineHeight = 16
-const generatedDate = "2026-05-19"
+const generatedDate = "2026-05-29"
 const fontPath = "C:\\Windows\\Fonts\\malgun.ttf"
 const boldFontPath = "C:\\Windows\\Fonts\\malgunbd.ttf"
 
+const navy = rgb(0.03, 0.07, 0.15)
+const blue = rgb(0.08, 0.26, 0.62)
+const lightBlue = rgb(0.9, 0.94, 1)
+const border = rgb(0.78, 0.84, 0.92)
+const muted = rgb(0.34, 0.42, 0.55)
+const black = rgb(0.05, 0.07, 0.12)
+
+const commonLoginSteps = [
+  "인터넷 주소창에 http://localhost:3000 을 입력합니다.",
+  "오른쪽 위의 Log In 버튼을 누릅니다.",
+  "이메일과 비밀번호를 입력합니다. 테스트 비밀번호는 DemoPass123! 입니다.",
+  "로그인 후 왼쪽 메뉴에서 필요한 기능을 선택합니다.",
+]
+
 const manuals: Manual[] = [
   {
-    audience: "플랫폼 전체 운영자 및 최고 관리자",
+    fileName: "easy-start-guide.pdf",
+    title: "GTCC YJIS LMS 처음 쓰는 쉬운 설명서",
+    subtitle: "계정 만들기부터 영상 레슨, 출석, 과제까지 한 번에 따라 하기",
+    sections: [
+      {
+        title: "처음에는 이 순서만 따라 하세요",
+        steps: [
+          "관리자 계정으로 로그인합니다.",
+          "Users에서 선생님, 학생, 학부모 계정을 만듭니다.",
+          "Courses에서 과목을 만듭니다.",
+          "Class Sections에서 실제 수업 반을 만듭니다.",
+          "수업에 선생님과 학생을 연결합니다.",
+          "선생님 계정으로 로그인해서 Lessons, Attendance, Assignments, Quizzes를 관리합니다.",
+          "학생 계정으로 로그인해서 영상 시청과 과제 제출을 확인합니다.",
+          "학부모 계정으로 로그인해서 자녀의 출석과 성적을 확인합니다.",
+        ],
+      },
+      {
+        title: "로그인",
+        steps: commonLoginSteps,
+      },
+      {
+        title: "사용자 만들기",
+        intro: "학생, 선생님, 학부모 계정을 만드는 곳입니다.",
+        steps: [
+          "관리자 화면 왼쪽에서 Users를 누릅니다.",
+          "Create user 영역을 찾습니다.",
+          "Organization, Campus, Name, Email, Password, Role을 입력합니다.",
+          "학생이라면 Student grade, Student homeroom, Student number도 입력합니다.",
+          "Save를 누릅니다.",
+        ],
+        notes: ["같은 이메일은 두 번 만들 수 없습니다. 이미 있는 이메일이면 기존 사용자를 수정하세요."],
+      },
+      {
+        title: "과목과 수업 만들기",
+        steps: [
+          "Courses 메뉴에서 과목을 먼저 만듭니다.",
+          "Class Sections 메뉴로 이동합니다.",
+          "Course를 먼저 선택합니다.",
+          "수업 이름, 정원, 기간, 담당 선생님, 학생을 입력하거나 연결합니다.",
+          "Save를 누릅니다.",
+        ],
+        notes: ["Capacity는 수업 정원입니다. 예: 30명을 받을 수 있으면 30을 입력합니다."],
+      },
+      {
+        title: "영상 레슨 만들기",
+        steps: [
+          "선생님 계정으로 로그인합니다.",
+          "Classes에서 수업을 엽니다.",
+          "Lessons 섹션에서 Create lesson을 엽니다.",
+          "Title을 입력하고 Type은 VIDEO를 선택합니다.",
+          "YouTube 또는 HTML5 영상을 설정합니다.",
+          "학생에게 보이게 하려면 Published를 체크합니다.",
+          "Save를 누릅니다.",
+        ],
+      },
+      {
+        title: "출석, 과제, 퀴즈",
+        steps: [
+          "Attendance에서는 Manage attendance를 열고 출석을 저장합니다. 기본값은 Present입니다.",
+          "Assignments에서는 과제를 만들고 Review submissions에서 제출물을 확인합니다.",
+          "Quizzes에서는 퀴즈를 만들고 Manage에서 문제를 추가합니다.",
+          "Grades에서는 최종 성적을 계산하고 공개합니다.",
+        ],
+      },
+    ],
+  },
+  {
     fileName: "super-admin-manual.pdf",
-    role: "Super Admin",
+    title: "Super Admin 쉬운 설명서",
+    subtitle: "전체 학교, 조직, 캠퍼스, 정책을 관리하는 계정",
     sections: [
+      { title: "로그인", steps: commonLoginSteps },
       {
-        title: "주요 역할",
-        bullets: [
-          "조직, 캠퍼스, 사용자, 역할, 강좌, 반, 정책, 게시판을 전체 범위에서 관리합니다.",
-          "관리자 대시보드에서 메시지, 알림, 최근 운영 항목을 확인합니다.",
-          "학교 전체 설정을 바꾸기 전에는 영향 범위를 확인하고 필요한 경우 캠퍼스 관리자와 공유합니다.",
+        title: "Organization 만들기",
+        steps: [
+          "왼쪽 메뉴에서 Academic setup을 엽니다.",
+          "Organizations를 누릅니다.",
+          "Create organization에서 학교 이름을 입력합니다.",
+          "필요하면 로고 이미지를 올립니다.",
+          "Save를 누릅니다.",
         ],
       },
       {
-        title: "자주 사용하는 메뉴",
-        bullets: [
-          "Users: 계정, 학생 배치, 학부모 연결, 학생별 학업 기록을 확인합니다.",
-          "Class Sections: 반별 강사, 학생, 수업 운영 상태를 확인합니다.",
-          "Policies: 출석, 영상 완료, 과제, 성적 공개, 문서, GPA, 등급표 정책을 설정합니다.",
-          "Boards, Messages, Notifications: 학교 공지와 커뮤니케이션 상태를 관리합니다.",
+        title: "Campus 만들기",
+        steps: [
+          "Academic setup 안에서 Campuses를 누릅니다.",
+          "Organization을 선택합니다.",
+          "Campus 이름을 입력합니다.",
+          "Save를 누릅니다.",
         ],
+        notes: ["새 캠퍼스를 만들면 기본 정책과 기본 성적 등급표가 자동으로 준비됩니다."],
       },
       {
-        title: "성적과 문서",
-        bullets: [
-          "최종 성적은 초안 상태에서는 학생과 학부모에게 보이지 않습니다.",
-          "성적이 게시 또는 확정되면 학생과 연결된 학부모가 성적과 문서를 확인할 수 있습니다.",
-          "리포트 카드와 성적표 PDF는 학생 상세 페이지 또는 문서 메뉴에서 생성합니다.",
-        ],
-      },
-      {
-        title: "주의사항",
-        bullets: [
-          "데모 계정은 로컬 개발용입니다. 실제 운영 비밀번호로 사용하지 마세요.",
-          ".env와 .env.local은 커밋하지 않습니다.",
-          "관리자 권한 부여 전에는 사용자 소속과 역할을 반드시 확인합니다.",
+        title: "정책 확인",
+        steps: [
+          "Policies 메뉴를 누릅니다.",
+          "Organization 또는 Campus 범위를 선택합니다.",
+          "출석, 영상 완료 기준, 과제, 성적 공개, 문서 공개 정책을 확인합니다.",
+          "필요한 값을 바꾸고 Save를 누릅니다.",
         ],
       },
     ],
   },
   {
-    audience: "학교 또는 캠퍼스 단위 관리자",
     fileName: "school-admin-manual.pdf",
-    role: "School Admin / Academic Staff",
+    title: "School Admin 쉬운 설명서",
+    subtitle: "사용자, 과목, 수업, 학생 연결을 관리하는 계정",
     sections: [
+      { title: "로그인", steps: commonLoginSteps },
       {
-        title: "주요 역할",
-        bullets: [
-          "자신의 학교 또는 캠퍼스 범위 안에서 사용자, 강좌, 반, 정책, 게시판을 관리합니다.",
-          "학생 상세 페이지에서 학생의 반 목록과 학부모 연결 상태를 확인합니다.",
-          "학생의 특정 반 기록은 학생 상세 페이지의 View class record 링크에서 확인합니다.",
+        title: "학생 또는 선생님 계정 만들기",
+        steps: [
+          "Users 메뉴를 누릅니다.",
+          "Create user 영역을 찾습니다.",
+          "이름, 이메일, 비밀번호, 역할을 입력합니다.",
+          "학생은 학년, 반, 학생 번호를 입력합니다.",
+          "Save를 누릅니다.",
         ],
       },
       {
-        title: "운영 흐름",
-        bullets: [
-          "학기 시작 전 캠퍼스 정책과 등급표가 준비되어 있는지 확인합니다.",
-          "강좌와 반을 만들고 담당 강사와 학생 등록 상태를 점검합니다.",
-          "공지 게시판과 메시지를 통해 학교 또는 반 단위 커뮤니케이션을 운영합니다.",
+        title: "과목 만들기",
+        steps: [
+          "Courses 메뉴를 누릅니다.",
+          "과목 이름과 과목 코드를 입력합니다.",
+          "학점이 있으면 credits를 입력합니다.",
+          "Save를 누릅니다.",
         ],
       },
       {
-        title: "문서와 공개",
-        bullets: [
-          "성적이 게시 또는 확정된 뒤 학생과 학부모에게 문서를 공개합니다.",
-          "관리자는 범위 안에서 초안 문서를 미리 볼 수 있습니다.",
-          "초안 성적을 공개해야 하는 경우 정책 설정과 학교 운영 기준을 먼저 확인합니다.",
-        ],
-      },
-    ],
-  },
-  {
-    audience: "담당 반을 운영하는 강사 또는 담임",
-    fileName: "instructor-manual.pdf",
-    role: "Instructor",
-    sections: [
-      {
-        title: "대시보드",
-        bullets: [
-          "Instructor 대시보드에서 담당 반, 메시지, 알림을 확인합니다.",
-          "읽지 않은 메시지와 알림은 배지로 표시됩니다.",
-          "담당 반을 열면 수업 운영 기능을 한 화면에서 관리할 수 있습니다.",
-        ],
-      },
-      {
-        title: "반 운영",
-        bullets: [
-          "Lessons에서 수업 자료와 영상 학습을 관리합니다.",
-          "Sessions에서 수업 일정을 만들고 Attendance에서 출석을 기록합니다.",
-          "Assignments에서 과제를 만들고 제출물을 검토하며 점수와 피드백을 입력합니다.",
-          "Quizzes에서 퀴즈를 만들고 전용 관리 화면에서 문제와 시도를 관리합니다.",
-        ],
-      },
-      {
-        title: "성적",
-        bullets: [
-          "Grades에서 Lessons, Attendance, Assignments, Quizzes, Exams 비율을 설정합니다.",
-          "Calculate final grades를 실행하면 학생별 최종 점수가 계산됩니다.",
-          "Publish final grades 후 학생과 학부모가 공개된 성적을 볼 수 있습니다.",
-        ],
-      },
-      {
-        title: "커뮤니케이션",
-        bullets: [
-          "Messages는 텍스트 전용 1:1, 반 그룹, 학부모-교사 대화에 사용합니다.",
-          "Boards는 공지, Q&A, 자료 공유에 사용합니다.",
-          "게시판에는 이미지 첨부가 가능하지만 메시지에는 파일 첨부가 없습니다.",
-        ],
-      },
-    ],
-  },
-  {
-    audience: "수업을 수강하는 학생",
-    fileName: "student-manual.pdf",
-    role: "Student",
-    sections: [
-      {
-        title: "대시보드",
-        bullets: [
-          "Student 대시보드에서 수강 반, 메시지, 알림, 문서를 확인합니다.",
-          "읽지 않은 메시지와 알림은 화면 상단과 대시보드에 표시됩니다.",
-          "문서는 공개된 성적이 있을 때 표시됩니다.",
-        ],
-      },
-      {
-        title: "학습 활동",
-        bullets: [
-          "반 상세 화면에서 수업, 출석, 과제, 퀴즈, 게시판, 공개 성적을 확인합니다.",
-          "과제는 텍스트 답변과 허용된 첨부파일로 제출할 수 있습니다.",
-          "퀴즈는 공개 기간과 시도 횟수 안에서 시작하고 제출합니다.",
-          "영상 수업은 학교의 영상 완료 정책 기준에 따라 완료 처리됩니다.",
-        ],
-      },
-      {
-        title: "커뮤니케이션",
-        bullets: [
-          "Messages에서 수강 중인 반의 선생님에게 메시지를 보낼 수 있습니다.",
-          "학생끼리의 직접 메시지는 MVP에서 비활성화되어 있습니다.",
-          "게시판은 권한이 허용된 경우에만 글쓰기 또는 댓글 작성이 가능합니다.",
-        ],
-      },
-    ],
-  },
-  {
-    audience: "학생과 연결된 학부모 또는 보호자",
-    fileName: "parent-manual.pdf",
-    role: "Parent",
-    sections: [
-      {
-        title: "대시보드",
-        bullets: [
-          "Parent 대시보드에서 연결된 학생, 메시지, 알림을 확인합니다.",
-          "연결되지 않은 학생의 정보는 볼 수 없습니다.",
-          "학생별 반, 과제, 퀴즈, 공개 성적, 문서를 확인할 수 있습니다.",
+        title: "수업 만들기",
+        steps: [
+          "Class Sections 메뉴를 누릅니다.",
+          "Course를 먼저 선택합니다.",
+          "수업 이름, 정원, 기간을 입력합니다.",
+          "담당 선생님과 학생을 연결합니다.",
+          "Save를 누릅니다.",
         ],
       },
       {
         title: "학생 기록 확인",
-        bullets: [
-          "출석, 과제 제출 상태, 퀴즈 결과, 최종 성적은 학교 공개 정책에 따라 표시됩니다.",
-          "학부모는 과제를 제출하거나 퀴즈를 응시하거나 학생 기록을 수정할 수 없습니다.",
-          "초안 성적과 초안 문서는 기본적으로 숨겨집니다.",
+        steps: [
+          "Users에서 학생 이름을 엽니다.",
+          "Enrolled classes에서 View class record를 누릅니다.",
+          "해당 수업의 출석, 레슨 진행률, 과제, 퀴즈, 성적을 확인합니다.",
+        ],
+      },
+    ],
+  },
+  {
+    fileName: "instructor-manual.pdf",
+    title: "Instructor 쉬운 설명서",
+    subtitle: "수업 운영, 영상 레슨, 출석, 과제, 퀴즈, 성적 관리",
+    sections: [
+      { title: "로그인", steps: commonLoginSteps },
+      {
+        title: "내 수업 열기",
+        steps: [
+          "왼쪽 메뉴에서 Classes를 누릅니다.",
+          "수업 목록에서 원하는 수업 이름을 누릅니다.",
+          "Lessons, Sessions, Attendance, Assignments, Quizzes, Grades 섹션을 확인합니다.",
         ],
       },
       {
-        title: "커뮤니케이션",
-        bullets: [
-          "Messages에서 연결된 학생의 담당 선생님에게 연락할 수 있습니다.",
-          "학부모 게시판 글쓰기와 댓글은 게시판 권한이 허용된 경우에만 가능합니다.",
-          "다른 학생이나 연결되지 않은 반의 게시판에는 접근할 수 없습니다.",
+        title: "영상 레슨 만들기",
+        steps: [
+          "Lessons 섹션에서 Create lesson을 엽니다.",
+          "Title을 입력합니다.",
+          "Type은 VIDEO를 선택합니다.",
+          "YouTube 또는 HTML5 영상 정보를 입력합니다.",
+          "Published를 체크하면 학생에게 보입니다.",
+          "Save를 누릅니다.",
+        ],
+      },
+      {
+        title: "출석 체크하기",
+        steps: [
+          "Attendance 섹션에서 Manage attendance를 엽니다.",
+          "기본값은 PRESENT입니다.",
+          "결석이나 지각 학생만 상태를 바꿉니다.",
+          "전체 저장 버튼으로 한 번에 저장합니다.",
+        ],
+        notes: ["출석이 바뀌면 학생과 학부모에게 알림이 갑니다."],
+      },
+      {
+        title: "과제와 채점",
+        steps: [
+          "Assignments 섹션에서 Create assignment를 엽니다.",
+          "제목, 마감일, 만점 점수를 입력합니다.",
+          "학생 제출은 Review submissions에서 확인합니다.",
+          "점수와 피드백을 입력하고 Save grade를 누릅니다.",
+        ],
+      },
+      {
+        title: "퀴즈 만들기",
+        steps: [
+          "Quizzes 섹션에서 퀴즈를 만듭니다.",
+          "퀴즈 목록에서 Manage를 누릅니다.",
+          "Add question에서 문제를 추가합니다.",
+          "객관식, 참/거짓은 자동 채점되고 서술형은 직접 채점합니다.",
+        ],
+      },
+    ],
+  },
+  {
+    fileName: "student-manual.pdf",
+    title: "Student 쉬운 설명서",
+    subtitle: "수업 보기, 영상 시청, 과제 제출, 퀴즈 응시",
+    sections: [
+      { title: "로그인", steps: commonLoginSteps },
+      {
+        title: "내 수업 열기",
+        steps: [
+          "왼쪽 메뉴에서 Classes를 누릅니다.",
+          "수업 이름을 누릅니다.",
+          "Lessons, Assignments, Quizzes, Grades를 확인합니다.",
+        ],
+      },
+      {
+        title: "영상 보기",
+        steps: [
+          "Lessons 섹션에서 원하는 레슨의 Open을 누릅니다.",
+          "영상을 끝까지 봅니다.",
+          "진행률이 100%가 되면 완료로 표시됩니다.",
+        ],
+      },
+      {
+        title: "과제 제출",
+        steps: [
+          "Assignments 섹션에서 과제를 확인합니다.",
+          "답변을 입력합니다.",
+          "필요하면 허용된 파일을 첨부합니다.",
+          "Submit 또는 Update submission을 누릅니다.",
+        ],
+      },
+      {
+        title: "메시지와 알림",
+        steps: [
+          "Messages에서 같은 수업의 선생님에게 메시지를 보낼 수 있습니다.",
+          "Notifications에서 새 과제, 새 메시지, 성적 공개 알림을 확인합니다.",
+        ],
+      },
+      {
+        title: "성적표와 Transcript",
+        steps: [
+          "공개된 성적만 볼 수 있습니다.",
+          "Download transcript는 하루 최대 3회까지 가능합니다.",
+        ],
+      },
+    ],
+  },
+  {
+    fileName: "parent-manual.pdf",
+    title: "Parent 쉬운 설명서",
+    subtitle: "자녀 수업, 출석, 과제, 성적 확인",
+    sections: [
+      { title: "로그인", steps: commonLoginSteps },
+      {
+        title: "자녀 정보 보기",
+        steps: [
+          "Parent dashboard에서 연결된 학생 이름을 확인합니다.",
+          "자녀의 수업 목록을 엽니다.",
+          "출석, 과제, 퀴즈, 성적 상태를 확인합니다.",
+        ],
+      },
+      {
+        title: "선생님에게 메시지 보내기",
+        steps: [
+          "Messages 또는 자녀 수업 화면에서 Message teacher를 누릅니다.",
+          "내용을 입력합니다.",
+          "Send를 누릅니다.",
+        ],
+      },
+      {
+        title: "성적과 문서",
+        steps: [
+          "성적은 학교가 공개한 뒤에만 보입니다.",
+          "Report card와 Transcript는 공개된 성적 기준으로 다운로드할 수 있습니다.",
         ],
       },
     ],
   },
 ]
 
-void main()
+class PdfWriter {
+  private page: PDFPage
+  private y = pageSize[1] - margin
+  private pageNumber = 0
+
+  constructor(
+    private readonly doc: PDFDocument,
+    private readonly regular: PDFFont,
+    private readonly bold: PDFFont,
+    private readonly manualTitle: string,
+  ) {
+    this.page = this.addPage()
+  }
+
+  title(title: string, subtitle: string) {
+    this.drawText(title, this.bold, 22, navy, 26)
+    this.drawText(subtitle, this.regular, 11, muted, 18)
+    this.y -= 10
+    this.drawLine()
+  }
+
+  section(section: ManualSection) {
+    this.ensureSpace(80)
+    this.drawText(section.title, this.bold, 15, blue, 22)
+
+    if (section.intro) {
+      this.drawText(section.intro, this.regular, 10.5, muted, 17)
+      this.y -= 4
+    }
+
+    if (section.steps?.length) {
+      this.drawStepBox(section.steps)
+    }
+
+    if (section.notes?.length) {
+      this.drawNoteBox(section.notes)
+    }
+
+    this.y -= 8
+  }
+
+  private addPage() {
+    const page = this.doc.addPage(pageSize)
+    this.pageNumber += 1
+    page.drawText("GTCC YJIS LMS", {
+      x: margin,
+      y: 24,
+      size: 8,
+      font: this.bold,
+      color: muted,
+    })
+    page.drawText(`${this.manualTitle} · ${generatedDate} · ${this.pageNumber}`, {
+      x: pageSize[0] - margin - 190,
+      y: 24,
+      size: 8,
+      font: this.regular,
+      color: muted,
+    })
+    return page
+  }
+
+  private drawLine() {
+    this.page.drawLine({
+      start: { x: margin, y: this.y },
+      end: { x: pageSize[0] - margin, y: this.y },
+      thickness: 1,
+      color: border,
+    })
+    this.y -= 18
+  }
+
+  private drawStepBox(steps: string[]) {
+    const startY = this.y
+    const lines = steps.flatMap((step, index) => this.wrapText(`${index + 1}. ${step}`, this.regular, 10.5, contentWidth - 28))
+    const boxHeight = lines.length * 17 + 22
+    this.ensureSpace(boxHeight + 12)
+
+    const actualStartY = this.y
+    this.page.drawRectangle({
+      x: margin,
+      y: actualStartY - boxHeight + 8,
+      width: contentWidth,
+      height: boxHeight,
+      borderColor: border,
+      borderWidth: 1,
+      color: rgb(0.98, 0.99, 1),
+    })
+
+    let lineY = actualStartY - 12
+    for (const line of lines) {
+      this.page.drawText(line, {
+        x: margin + 14,
+        y: lineY,
+        size: 10.5,
+        font: this.regular,
+        color: black,
+      })
+      lineY -= 17
+    }
+
+    this.y = actualStartY - boxHeight - 4
+
+    if (startY !== actualStartY) {
+      this.y -= 2
+    }
+  }
+
+  private drawNoteBox(notes: string[]) {
+    const lines = notes.flatMap((note) => this.wrapText(`참고: ${note}`, this.regular, 9.5, contentWidth - 26))
+    const boxHeight = lines.length * 15 + 18
+    this.ensureSpace(boxHeight + 10)
+    this.page.drawRectangle({
+      x: margin,
+      y: this.y - boxHeight + 7,
+      width: contentWidth,
+      height: boxHeight,
+      borderColor: rgb(0.7, 0.82, 1),
+      borderWidth: 1,
+      color: lightBlue,
+    })
+
+    let lineY = this.y - 11
+    for (const line of lines) {
+      this.page.drawText(line, {
+        x: margin + 13,
+        y: lineY,
+        size: 9.5,
+        font: this.regular,
+        color: blue,
+      })
+      lineY -= 15
+    }
+    this.y -= boxHeight + 4
+  }
+
+  private drawText(text: string, font: PDFFont, size: number, color: ReturnType<typeof rgb>, lineHeight: number) {
+    const lines = this.wrapText(text, font, size, contentWidth)
+    this.ensureSpace(lines.length * lineHeight + 8)
+    for (const line of lines) {
+      this.page.drawText(line, { x: margin, y: this.y, size, font, color })
+      this.y -= lineHeight
+    }
+  }
+
+  private ensureSpace(requiredHeight: number) {
+    if (this.y - requiredHeight > 54) return
+    this.page = this.addPage()
+    this.y = pageSize[1] - margin
+  }
+
+  private wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
+    const words = text.split(" ")
+    const lines: string[] = []
+    let current = ""
+
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word
+      if (font.widthOfTextAtSize(next, size) <= maxWidth) {
+        current = next
+        continue
+      }
+
+      if (current) lines.push(current)
+
+      if (font.widthOfTextAtSize(word, size) <= maxWidth) {
+        current = word
+      } else {
+        const chunks = this.breakLongWord(word, font, size, maxWidth)
+        lines.push(...chunks.slice(0, -1))
+        current = chunks[chunks.length - 1] ?? ""
+      }
+    }
+
+    if (current) lines.push(current)
+    return lines
+  }
+
+  private breakLongWord(word: string, font: PDFFont, size: number, maxWidth: number) {
+    const chunks: string[] = []
+    let current = ""
+    for (const char of Array.from(word)) {
+      const next = `${current}${char}`
+      if (font.widthOfTextAtSize(next, size) <= maxWidth) {
+        current = next
+      } else {
+        if (current) chunks.push(current)
+        current = char
+      }
+    }
+    if (current) chunks.push(current)
+    return chunks
+  }
+}
+
+async function createManual(manual: Manual, regularBytes: Uint8Array, boldBytes: Uint8Array) {
+  const pdfDoc = await PDFDocument.create()
+  pdfDoc.registerFontkit(fontkit)
+
+  const regular = await pdfDoc.embedFont(regularBytes)
+  const bold = await pdfDoc.embedFont(boldBytes)
+  const writer = new PdfWriter(pdfDoc, regular, bold, manual.title)
+
+  writer.title(manual.title, manual.subtitle)
+  for (const section of manual.sections) {
+    writer.section(section)
+  }
+
+  const bytes = await pdfDoc.save()
+  await writeFile(path.join(outputDirectory, manual.fileName), bytes)
+}
 
 async function main() {
   await mkdir(outputDirectory, { recursive: true })
 
+  const [regularBytes, boldBytes] = await Promise.all([readFile(fontPath), readFile(boldFontPath)])
+
   for (const manual of manuals) {
-    const bytes = await createManualPdf(manual)
-    await writeFile(path.join(outputDirectory, manual.fileName), bytes)
-    console.log(`Created docs/manuals/${manual.fileName}`)
+    await createManual(manual, regularBytes, boldBytes)
+    console.log(`Generated ${manual.fileName}`)
   }
 }
 
-async function createManualPdf(manual: Manual) {
-  const doc = await PDFDocument.create()
-  doc.registerFontkit(fontkit)
-
-  const [regularBytes, boldBytes] = await Promise.all([
-    readFile(fontPath),
-    readFile(boldFontPath),
-  ])
-  const regular = await doc.embedFont(regularBytes, { subset: true })
-  const bold = await doc.embedFont(boldBytes, { subset: true })
-
-  const state = {
-    page: doc.addPage(pageSize),
-    y: pageSize[1] - margin,
-  }
-
-  drawText(state.page, bold, `YJIS LMS ${manual.role} 설명서`, 20, state.y)
-  state.y -= 28
-  drawText(state.page, regular, manual.audience, 10, state.y, 0.38)
-  state.y -= 18
-  drawText(state.page, regular, `생성일: ${generatedDate}`, 9, state.y, 0.45)
-  state.y -= 18
-  drawRule(state.page, state.y)
-  state.y -= 26
-
-  for (const section of manual.sections) {
-    ensureSpace(doc, state, 110)
-    drawText(state.page, bold, section.title, 13, state.y)
-    state.y -= 22
-
-    for (const bullet of section.bullets) {
-      const wrapped = wrapText(bullet, regular, 10, contentWidth - 18)
-      for (let index = 0; index < wrapped.length; index += 1) {
-        ensureSpace(doc, state, 42)
-        const prefix = index === 0 ? "• " : "  "
-        drawText(state.page, regular, `${prefix}${wrapped[index]}`, 10, state.y)
-        state.y -= bodyLineHeight
-      }
-      state.y -= 4
-    }
-
-    state.y -= 14
-  }
-
-  doc.getPages().forEach((page, index) => {
-    drawText(
-      page,
-      regular,
-      `YJIS LMS | ${manual.role} | ${index + 1}`,
-      8,
-      24,
-      0.45
-    )
-  })
-
-  return doc.save()
-}
-
-function ensureSpace(
-  doc: PDFDocument,
-  state: { page: PDFPage; y: number },
-  requiredHeight: number
-) {
-  if (state.y >= margin + requiredHeight) return
-  state.page = doc.addPage(pageSize)
-  state.y = pageSize[1] - margin
-}
-
-function drawText(
-  page: PDFPage,
-  font: PDFFont,
-  text: string,
-  size: number,
-  y: number,
-  shade = 0.1
-) {
-  page.drawText(text, {
-    x: margin,
-    y,
-    size,
-    font,
-    color: rgb(shade, shade + 0.02, shade + 0.06),
-  })
-}
-
-function drawRule(page: PDFPage, y: number) {
-  page.drawLine({
-    color: rgb(0.82, 0.85, 0.9),
-    end: { x: pageSize[0] - margin, y },
-    start: { x: margin, y },
-    thickness: 1,
-  })
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
-  const lines: string[] = []
-  let line = ""
-
-  for (const char of text) {
-    const next = `${line}${char}`
-    if (font.widthOfTextAtSize(next, size) > maxWidth && line) {
-      lines.push(line)
-      line = char.trimStart()
-    } else {
-      line = next
-    }
-  }
-
-  if (line) lines.push(line)
-  return lines
-}
+main().catch((error) => {
+  console.error("Manual PDF generation failed", error)
+  process.exit(1)
+})

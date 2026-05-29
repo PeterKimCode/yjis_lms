@@ -1,171 +1,229 @@
-# YJIS LMS
+# GTCC YJIS LMS 쉬운 사용 설명서
 
-YJIS LMS는 학교 운영을 위한 로컬 우선(Self-hosted) 학습관리시스템입니다.
-Next.js, Prisma, PostgreSQL, Redis, MinIO 기반으로 동작하며 관리자, 강사,
-학생, 학부모 역할별 대시보드와 학사 운영 기능을 제공합니다.
+이 문서는 컴퓨터가 익숙하지 않은 분도 LMS를 사용할 수 있도록 아주 천천히 설명합니다.
+어려운 말보다 “어느 메뉴를 누르고, 무엇을 입력하고, 어떤 버튼을 누르는지”를 중심으로 적었습니다.
 
-## 빠른 시작
+## 1. 먼저 이것만 기억하세요
 
-```bash
-npm install
-docker compose up -d
-npx prisma migrate dev
-npx prisma db seed
-npm run dev
-```
+1. 인터넷 주소창에 `http://localhost:3000`을 입력합니다.
+2. 오른쪽 위 또는 화면의 `Log In` 버튼을 누릅니다.
+3. 이메일과 비밀번호를 입력합니다.
+4. 로그인 후 왼쪽 메뉴에서 필요한 일을 선택합니다.
+5. 새로 만든 뒤에는 보통 `Save` 버튼을 눌러 저장합니다.
 
-브라우저에서 아래 주소를 엽니다.
+## 2. 테스트 계정
 
-```text
-http://localhost:3000
-```
+모든 테스트 계정의 비밀번호는 `DemoPass123!` 입니다.
 
-## 주요 명령어
-
-```bash
-npm run dev
-npm run lint
-npm run build
-npm run start
-npm run worker
-npm run worker:once
-```
-
-`npm run worker`는 과제 마감 예정 알림, 퀴즈 오픈 알림처럼 주기적으로
-확인해야 하는 LMS 백그라운드 작업을 실행합니다.
-
-## 로컬 인프라
-
-개발 환경은 Docker Compose로 실행합니다.
-
-- PostgreSQL: 애플리케이션 데이터
-- Redis: 캐시 및 큐 준비 인프라
-- MinIO: S3 호환 파일 저장소
-- NextAuth: 인증
-- Prisma: 데이터베이스 접근 및 마이그레이션
-
-```bash
-docker compose up -d
-```
-
-PostgreSQL, Redis, MinIO는 외부 인터넷에 직접 공개하지 마세요.
-
-## 데모 계정
-
-`npx prisma db seed` 실행 후 아래 로컬 데모 계정을 사용할 수 있습니다.
-
-| 역할 | 이메일 | 비밀번호 |
+| 역할 | 이메일 | 주로 하는 일 |
 | --- | --- | --- |
-| SUPER_ADMIN | `super.admin@demo.local` | `DemoPass123!` |
-| SCHOOL_ADMIN | `school.admin@demo.local` | `DemoPass123!` |
-| INSTRUCTOR | `instructor@demo.local` | `DemoPass123!` |
-| STUDENT | `student@demo.local` | `DemoPass123!` |
-| PARENT | `parent@demo.local` | `DemoPass123!` |
+| Super Admin | `super.admin@demo.local` | 전체 학교/조직 관리 |
+| School Admin | `school.admin@demo.local` | 사용자, 수업, 학사 설정 관리 |
+| Instructor | `instructor@demo.local` | 레슨, 출석, 과제, 퀴즈, 성적 관리 |
+| Student | `student@demo.local` | 수업 보기, 영상 보기, 과제 제출 |
+| Parent | `parent@demo.local` | 자녀 수업, 출석, 성적 확인 |
 
-데모 계정은 로컬 개발과 테스트용입니다. 운영 환경에서 그대로 사용하지 마세요.
+## 3. 가장 많이 쓰는 순서
 
-## 계정 유형별 PDF 설명서
+처음 학교를 세팅할 때는 보통 아래 순서대로 하면 됩니다.
 
-PDF 설명서는 `docs/manuals` 폴더에 있습니다.
+1. 관리자 계정으로 로그인합니다.
+2. `Users`에서 선생님, 학생, 학부모 계정을 만듭니다.
+3. `Courses`에서 과목을 만듭니다.
+4. `Class Sections`에서 실제 반/수업을 만듭니다.
+5. 수업에 선생님과 학생을 연결합니다.
+6. 선생님 계정으로 로그인합니다.
+7. `Classes`에서 수업을 열고 영상 레슨, 출석, 과제, 퀴즈를 만듭니다.
+8. 학생 계정으로 로그인해서 영상 시청, 과제 제출, 퀴즈 응시를 확인합니다.
+9. 학부모 계정으로 로그인해서 자녀 기록을 확인합니다.
 
+## 4. 사용자 만들기
+
+관리자가 학생, 선생님, 학부모 계정을 만드는 방법입니다.
+
+1. 관리자 계정으로 로그인합니다.
+2. 왼쪽 메뉴에서 `Users`를 누릅니다.
+3. `Create user` 또는 사용자 생성 영역을 찾습니다.
+4. 아래 내용을 입력합니다.
+   - `Organization`: 학교 또는 조직
+   - `Campus`: 캠퍼스
+   - `Name`: 이름
+   - `Email`: 로그인할 이메일
+   - `Password`: 임시 비밀번호
+   - `Role`: 역할
+5. 학생이라면 `Student grade`, `Student homeroom`, `Student number`도 입력합니다.
+6. `Save` 버튼을 누릅니다.
+
+중요: 같은 이메일은 두 번 만들 수 없습니다. 이미 있는 이메일이면 다른 이메일을 사용하거나 기존 사용자를 수정하세요.
+
+## 5. 과목 만들기
+
+과목은 “영어”, “수학”, “Introduction to Learning” 같은 큰 이름입니다.
+
+1. 관리자 계정으로 로그인합니다.
+2. 왼쪽 메뉴에서 `Courses`를 누릅니다.
+3. `Create course` 영역을 찾습니다.
+4. 과목 이름, 코드, 학점이 있으면 입력합니다.
+5. `Save`를 누릅니다.
+
+## 6. 수업 만들기
+
+수업은 실제 학생들이 들어가는 반입니다. 예: `Introduction to Learning - Section A`
+
+1. 관리자 계정으로 로그인합니다.
+2. 왼쪽 메뉴에서 `Class Sections`를 누릅니다.
+3. `Create class section` 영역을 찾습니다.
+4. `Course`를 먼저 선택합니다.
+5. Course를 선택하면 가능한 조직/캠퍼스 정보가 맞게 채워집니다.
+6. 수업 제목, 정원, 기간, 강의 방식을 입력합니다.
+7. 담당 선생님과 학생을 연결합니다.
+8. `Save`를 누릅니다.
+
+참고: `Capacity`는 수업 정원입니다. 예를 들어 30명을 받을 수 있으면 `30`을 입력합니다.
+
+## 7. 영상 레슨 만들기
+
+선생님이 학생에게 보여줄 동영상 수업을 만드는 방법입니다.
+
+1. 선생님 계정으로 로그인합니다.
+2. 왼쪽 메뉴에서 `Classes`를 누릅니다.
+3. 원하는 수업 이름을 누릅니다.
+4. 화면에서 `Lessons` 섹션을 찾습니다.
+5. `Create lesson`을 엽니다.
+6. 아래 내용을 입력합니다.
+   - `Title`: 레슨 제목
+   - `Type`: `VIDEO`
+   - `Video provider`: YouTube 또는 HTML5
+   - `Duration`: 영상 길이
+   - `Published`: 학생에게 보이게 하려면 체크
+7. `Save`를 누릅니다.
+
+학생 화면에서는 `Open` 버튼 옆에 시청 진행률이 보입니다.
+100%가 아니면 빨간색으로 보이고, 완료되면 초록색 100%와 체크 표시가 보입니다.
+
+## 8. 출석 체크하기
+
+선생님이 한 번에 출석을 저장하는 방법입니다.
+
+1. 선생님 계정으로 로그인합니다.
+2. `Classes`에서 수업을 엽니다.
+3. `Attendance` 섹션을 찾습니다.
+4. `Manage attendance`를 엽니다.
+5. 기본 상태는 `PRESENT`입니다.
+6. 결석이나 지각 학생만 상태를 바꿉니다.
+7. 한 명씩 저장할 수도 있고, 전체 저장 버튼으로 한 번에 저장할 수 있습니다.
+
+출석이 바뀌면 학생과 연결된 학부모에게 알림이 갑니다.
+
+## 9. 과제 만들기와 채점
+
+1. 선생님 계정으로 수업을 엽니다.
+2. `Assignments` 섹션으로 갑니다.
+3. `Create assignment`를 엽니다.
+4. 제목, 설명, 마감일, 만점 점수를 입력합니다.
+5. `Save`를 누릅니다.
+6. 학생이 제출하면 `Review submissions`에서 확인합니다.
+7. 점수와 피드백을 입력하고 `Save grade`를 누릅니다.
+
+학생은 자기 과제만 볼 수 있고, 학부모는 연결된 자녀의 과제 상태만 볼 수 있습니다.
+
+## 10. 퀴즈 만들기
+
+1. 선생님 계정으로 수업을 엽니다.
+2. `Quizzes` 섹션에서 퀴즈를 만듭니다.
+3. 퀴즈 목록에서 `Manage`를 누릅니다.
+4. 퀴즈 관리 페이지에서 `Add question`을 엽니다.
+5. 문제 유형을 고릅니다.
+   - `MULTIPLE_CHOICE`: 객관식
+   - `TRUE_FALSE`: 참/거짓
+   - `SHORT_ANSWER`: 짧은 답
+   - `ESSAY`: 서술형
+6. 문제, 점수, 정답을 입력합니다.
+7. 저장합니다.
+
+객관식과 참/거짓은 자동 채점됩니다. 서술형은 선생님이 직접 채점합니다.
+
+## 11. 성적과 성적표
+
+1. 선생님 계정으로 수업을 엽니다.
+2. `Grades` 섹션으로 갑니다.
+3. `Grade weights`에서 레슨, 출석, 과제, 퀴즈, 시험 비율을 확인합니다.
+4. `Calculate final grades`를 누르면 최종 성적 초안이 만들어집니다.
+5. 공개할 준비가 되면 `Publish final grades`를 누릅니다.
+
+학생과 학부모는 공개된 성적만 볼 수 있습니다. 초안 성적은 보이지 않습니다.
+
+## 12. PDF 성적표와 Transcript
+
+관리자는 학생 상세 페이지에서 문서를 받을 수 있습니다.
+
+1. 관리자 계정으로 로그인합니다.
+2. `Users`를 누릅니다.
+3. 학생 이름을 엽니다.
+4. `Documents` 영역을 찾습니다.
+5. `Report card` 또는 `Download transcript`를 누릅니다.
+
+학생은 Transcript 다운로드를 하루 최대 3회까지 할 수 있습니다.
+
+## 13. 메시지와 알림
+
+### Messages
+
+1. 상단 또는 왼쪽 메뉴에서 메시지 아이콘을 누릅니다.
+2. `New message`를 엽니다.
+3. 받을 사람을 선택합니다.
+4. 내용을 입력하고 보냅니다.
+
+학생은 같은 수업의 선생님에게만 메시지를 보낼 수 있습니다. 학생끼리 직접 메시지는 MVP에서 막혀 있습니다.
+
+### Notifications
+
+1. 알림 아이콘을 누릅니다.
+2. 새 과제, 새 메시지, 출석 변경, 성적 공개 알림을 확인합니다.
+3. 확인한 알림은 읽음 처리할 수 있습니다.
+
+## 14. 게시판
+
+1. 관리자 또는 선생님 계정으로 로그인합니다.
+2. `Boards`를 누르거나 수업 안의 `Boards` 섹션을 엽니다.
+3. 공지, Q&A, 자료 게시판을 만들 수 있습니다.
+4. 게시글과 댓글을 작성할 수 있습니다.
+5. 이미지 첨부는 JPG, PNG, WEBP, GIF만 가능하고 10MB 이하만 됩니다.
+
+## 15. 자주 막히는 부분
+
+| 상황 | 확인할 것 |
+| --- | --- |
+| 학생에게 수업이 안 보임 | 학생이 해당 Class Section에 등록되어 있는지 확인 |
+| 영상이 안 보임 | Lesson이 Published 상태인지 확인 |
+| 과제가 제출되지 않음 | 마감일이 지났는지, late submission 허용 여부 확인 |
+| 성적이 학생에게 안 보임 | Final grade가 Published 상태인지 확인 |
+| 학부모에게 자녀가 안 보임 | Parent와 Student가 연결되어 있는지 확인 |
+| 파일이 안 올라감 | 허용된 파일 형식과 10MB 제한 확인 |
+
+## 16. PDF 설명서
+
+아래 PDF는 역할별로 더 쉽게 정리한 설명서입니다.
+
+- [처음 쓰는 쉬운 설명서](docs/manuals/easy-start-guide.pdf)
 - [Super Admin 설명서](docs/manuals/super-admin-manual.pdf)
-- [School Admin / Academic Staff 설명서](docs/manuals/school-admin-manual.pdf)
+- [School Admin 설명서](docs/manuals/school-admin-manual.pdf)
 - [Instructor 설명서](docs/manuals/instructor-manual.pdf)
 - [Student 설명서](docs/manuals/student-manual.pdf)
 - [Parent 설명서](docs/manuals/parent-manual.pdf)
 
-설명서 PDF를 다시 생성하려면 아래 명령을 실행합니다.
+## 17. 개발자용 문서 다시 만들기
+
+PDF 설명서를 다시 만들려면 아래 명령어를 실행합니다.
 
 ```bash
 npx tsx scripts/generate-manual-pdfs.ts
 ```
 
-## 설계 문서와 소개 자료
-
-LMS 구조와 기능 설명 문서는 `docs` 폴더에 있습니다.
-
-| 문서 | Markdown | PDF |
-| --- | --- | --- |
-| Information Architecture | [docs/information-architecture.md](docs/information-architecture.md) | [docs/pdfs/information-architecture.pdf](docs/pdfs/information-architecture.pdf) |
-| 앱 기능 정의서 | [docs/app-feature-spec.md](docs/app-feature-spec.md) | [docs/pdfs/app-feature-spec.pdf](docs/pdfs/app-feature-spec.pdf) |
-| 화면 설계서 | [docs/screen-design-spec.md](docs/screen-design-spec.md) | [docs/pdfs/screen-design-spec.pdf](docs/pdfs/screen-design-spec.pdf) |
-| DB 설계도 | [docs/database-design.md](docs/database-design.md) | [docs/pdfs/database-design.pdf](docs/pdfs/database-design.pdf) |
-
-LMS 소개용 PowerPoint:
-
-- [YJIS LMS Introduction PPT](docs/presentations/yjis-lms-introduction.pptx)
-
-설계 PDF와 PPT를 다시 생성하려면 아래 명령을 실행합니다.
-
-```bash
-npx tsx scripts/generate-project-artifacts.ts
-```
-
-## 현재 구현된 주요 기능
-
-- 역할별 대시보드: 관리자, 강사, 학생, 학부모
-- 학사 설정: 조직, 캠퍼스, 학년도, 학기, 강좌, 반
-- 수업 운영: Lessons, Sessions, Attendance, Assignments, Quizzes, Exams
-- 출석 정책, 영상 완료 정책, 과제 정책, 성적 공개 정책, 문서 정책, GPA 정책
-- 과제 제출, 강사 채점, 학생/학부모 공개 범위 제어
-- 퀴즈 문제 관리, 시도, 자동 채점, 수동 채점
-- 모듈 비율 기반 MVP 성적 계산과 최종 성적 게시
-- 리포트 카드와 성적표 PDF 생성
-- 게시판, 게시글, 댓글, 게시판 이미지 첨부
-- 텍스트 전용 메시지: 1:1, 반 그룹, 학부모-교사 대화
-- 인앱 알림 센터와 백그라운드 워커 알림
-
-## 관리자 메뉴 설명
-
-| 메뉴 | 설명 |
-| --- | --- |
-| Overview | 관리자 홈 화면입니다. 주요 운영 지표, 빠른 이동, 읽지 않은 메시지와 알림을 확인합니다. |
-| Class Sections | 실제로 운영되는 반 또는 수업 분반을 관리합니다. 강사 배정, 학생 등록, 반별 학업 기록 확인으로 이동합니다. |
-| Courses | 강좌 기본 정보를 관리합니다. 강좌명, 코드, 학점, 기본 수업 방식을 설정합니다. |
-| Users | 관리자, 강사, 학생, 학부모 계정을 관리합니다. 학생 배치, 학부모 연결, 학생별 반 기록도 여기서 확인합니다. |
-| Boards | 학교/캠퍼스/반 게시판을 관리합니다. 공지, Q&A, 자료 게시판과 게시글 권한을 설정합니다. |
-| Academic setup | 학사 운영에 필요한 기준 데이터를 묶어 관리하는 영역입니다. 아래 Organizations부터 Policies까지가 여기에 해당합니다. |
-| Organizations | 최상위 학교/기관 단위를 관리합니다. 여러 캠퍼스를 포함할 수 있습니다. |
-| Campuses | 조직 아래의 캠퍼스 또는 학교 지점을 관리합니다. 캠퍼스 생성 시 기본 정책과 등급표가 초기화됩니다. |
-| Academic Years | 학년도를 관리합니다. 예: 2026 Academic Year. |
-| Terms | 학기 또는 분기를 관리합니다. 예: Spring 2026, Semester 1. |
-| Grade Levels | 학년 또는 레벨을 관리합니다. 예: Grade 1, Grade 10. |
-| Homerooms | 담임반을 관리합니다. 담임 교사와 학생 배치를 연결합니다. |
-| Departments | 부서 또는 학과를 관리합니다. 강좌 분류와 운영 범위를 정리할 때 사용합니다. |
-| Policies | 출석, 영상 완료, 과제, 성적 공개, 문서 공개, GPA, 등급표 정책을 관리합니다. |
-| Messages | 텍스트 전용 메시지함입니다. 1:1, 반 그룹, 학부모-교사 대화를 확인합니다. |
-| Notifications | 시스템 알림 센터입니다. 메시지, 과제, 게시판, 출석, 성적 관련 알림을 확인하고 읽음 처리합니다. |
-
-## 프로젝트 구조
-
-- `src/app`: Next.js App Router 페이지, 레이아웃, API 라우트
-- `src/components`: 공통 UI 컴포넌트
-- `src/modules`: LMS 도메인별 기능 모듈
-- `src/lib`: 공통 서버/클라이언트 유틸리티
-- `prisma`: Prisma 스키마, 마이그레이션, 시드 데이터
-- `docs`: 보안, 구현 메모, 사용자 설명서
-- `scripts`: 워커와 문서 생성 스크립트
-
-## 보안 메모
-
-- `.env`와 `.env.local`은 커밋하지 않습니다.
-- 로컬 설정은 `.env.example`을 기준으로 작성합니다.
-- 파일 다운로드는 권한 검사를 거치는 앱 라우트를 통해 제공해야 합니다.
-- 학생과 학부모는 게시 또는 확정된 성적/문서만 볼 수 있습니다.
-- 메시지는 현재 텍스트 전용이며, 파일 첨부는 구현하지 않았습니다.
-
-## 작업 전후 확인
-
-변경 사항을 넘기기 전 아래 명령을 실행합니다.
+검사 명령어:
 
 ```bash
 npx prisma validate
 npm run lint
 npm run build
-```
-
-Prisma 스키마를 변경했다면 아래 명령도 실행합니다.
-
-```bash
-npx prisma generate
 ```
