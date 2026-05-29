@@ -81,6 +81,7 @@ function OrganizationForm({
     id: string
     name: string
     institutionType: InstitutionType
+    websiteUrl: string | null
     isActive: boolean
     logoFileAsset?: { id: string } | null
   }
@@ -124,6 +125,18 @@ function OrganizationForm({
               </option>
             ))}
           </select>
+        </label>
+        <label className="grid gap-1 text-sm sm:col-span-2">
+          <span className="font-medium">Homepage URL</span>
+          <input
+            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            name="websiteUrl"
+            placeholder="https://www.school.edu"
+            defaultValue={organization?.websiteUrl ?? ""}
+          />
+          <span className="text-xs text-muted-foreground">
+            Used on generated transcript backgrounds when available.
+          </span>
         </label>
         <label className="grid gap-1 text-sm sm:col-span-2">
           <span className="font-medium">Organization logo</span>

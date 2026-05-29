@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useMemo, useState } from "react"
+import { useActionState, useId, useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -59,6 +59,7 @@ export function LessonForm({
     uploadLessonVideo,
     initialLessonActionState
   )
+  const uploadFormId = useId()
   const [contentType, setContentType] = useState<ContentType>(
     lesson?.contentType ?? "TEXT"
   )
@@ -103,6 +104,7 @@ export function LessonForm({
 
   return (
     <div className="space-y-3 rounded-md border bg-background p-3">
+      <form action={uploadAction} id={uploadFormId} />
       <form action={saveAction} className="space-y-3">
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
         <input name="classSectionId" type="hidden" value={classSectionId} />
@@ -185,30 +187,72 @@ export function LessonForm({
             </label>
           ) : null}
           {isVideo && videoProvider === "HTML5" ? (
-            <label className="space-y-1 text-sm md:col-span-2">
-              <span className="font-medium">Uploaded video file</span>
-              <select
-                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                key={selectedVideoFileAssetId || "no-video-file"}
-                name="videoFileAssetId"
-                defaultValue={selectedVideoFileAssetId}
-              >
-                <option value="">
-                  {effectiveVideoFileOptions.length
-                    ? "Select uploaded MinIO video"
-                    : "No uploaded videos yet. Upload a video below."}
-                </option>
-                {effectiveVideoFileOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
+            <div className="space-y-2 text-sm md:col-span-2">
+              <label className="space-y-1">
+                <span className="font-medium">Uploaded video file</span>
+                <select
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  key={selectedVideoFileAssetId || "no-video-file"}
+                  name="videoFileAssetId"
+                  defaultValue={selectedVideoFileAssetId}
+                >
+                  <option value="">
+                    {effectiveVideoFileOptions.length
+                      ? "Select uploaded MinIO video"
+                      : "No uploaded videos yet. Upload a video below."}
                   </option>
-                ))}
-              </select>
-              <span className="text-xs text-muted-foreground">
-                Upload through the LMS so FileAsset metadata exists. Files
-                uploaded directly in the MinIO Console do not appear here.
-              </span>
-            </label>
+                  {effectiveVideoFileOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="block text-xs text-muted-foreground">
+                  Upload through the LMS so FileAsset metadata exists. Files
+                  uploaded directly in the MinIO Console do not appear here.
+                </span>
+              </label>
+              <div className="space-y-2 rounded-md border bg-slate-50/80 p-3">
+                <input
+                  form={uploadFormId}
+                  name="classSectionId"
+                  type="hidden"
+                  value={classSectionId}
+                />
+                <label className="space-y-1 text-sm">
+                  <span className="font-medium">Upload video to LMS</span>
+                  <Input
+                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
+                    form={uploadFormId}
+                    name="videoFile"
+                    type="file"
+                  />
+                  <span className="block text-xs text-muted-foreground">
+                    Upload through the LMS so FileAsset metadata exists for the
+                    dropdown.
+                  </span>
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    className="bg-sky-600 text-white hover:bg-sky-700"
+                    form={uploadFormId}
+                    size="sm"
+                    type="submit"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? "Uploading..." : "Upload video"}
+                  </Button>
+                  {uploadState.message ? (
+                    <p
+                      className={`text-sm ${uploadState.ok ? "text-muted-foreground" : "text-destructive"}`}
+                      role="status"
+                    >
+                      {uploadState.message}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
           ) : null}
           <label className="space-y-1 text-sm md:col-span-2">
             <span className="font-medium">Description</span>
@@ -246,42 +290,6 @@ export function LessonForm({
               : "Create lesson"}
         </Button>
       </form>
-      {isVideo && videoProvider === "HTML5" ? (
-        <form
-          action={uploadAction}
-          className="space-y-2 rounded-md border p-3"
-        >
-          <input name="classSectionId" type="hidden" value={classSectionId} />
-          <label className="space-y-1 text-sm">
-            <span className="font-medium">Upload video to LMS</span>
-            <Input
-              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
-              name="videoFile"
-              type="file"
-            />
-            <span className="text-xs text-muted-foreground">
-              Upload through the LMS so FileAsset metadata exists for the
-              dropdown.
-            </span>
-          </label>
-          {uploadState.message ? (
-            <p
-              className={`text-sm ${uploadState.ok ? "text-muted-foreground" : "text-destructive"}`}
-              role="status"
-            >
-              {uploadState.message}
-            </p>
-          ) : null}
-          <Button
-            className="bg-sky-600 text-white hover:bg-sky-700"
-            size="sm"
-            type="submit"
-            disabled={isUploading}
-          >
-            {isUploading ? "Uploading..." : "Upload video"}
-          </Button>
-        </form>
-      ) : null}
       {lesson ? (
         <form action={deleteLesson}>
           <input name="lessonId" type="hidden" value={lesson.id} />

@@ -164,6 +164,7 @@ model Organization {
   slug                    String                   @unique
   institutionType         InstitutionType
   logoFileAssetId         String?
+  websiteUrl              String?
   defaultLocale           String                   @default("ko-KR")
   timezone                String                   @default("Asia/Seoul")
   isActive                Boolean                  @default(true)

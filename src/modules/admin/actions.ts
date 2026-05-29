@@ -79,6 +79,7 @@ const organizationSchema = z.object({
   id: optionalString,
   name: requiredString,
   institutionType: z.nativeEnum(InstitutionType),
+  websiteUrl: optionalString,
   isActive: checkboxBoolean,
 })
 

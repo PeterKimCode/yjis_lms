@@ -292,10 +292,7 @@ export async function generateTranscriptPdf(input: {
   const logo = await getOrganizationLogoImage(ctx.doc, student.organization.id)
 
   drawTranscriptCover(ctx, student, generatedAt, logo)
-  ctx.page = ctx.doc.addPage(pageSize)
-  ctx.y = pageSize[1] - margin
-
-  drawDocumentHeader(ctx, "Official Transcript", "University-style credit and GPA record")
+  ctx.y = pageSize[1] - 300
   drawStudentInfo(ctx, student, generatedAt)
 
   for (const term of terms) {
@@ -431,7 +428,7 @@ function drawDocumentHeader(ctx: PdfContext, title: string, subtitle: string) {
 function drawTranscriptCover(
   ctx: PdfContext,
   student: {
-    organization: { name: string }
+    organization: { name: string; websiteUrl?: string | null }
     studentProfile: {
       campus: { name: string } | null
     } | null
@@ -510,7 +507,7 @@ function drawTranscriptCover(
     color: mutedColor,
     size: 8,
   })
-  drawText(ctx, "gtcc2006@gmail.com", pageSize[0] - 178, 58, {
+  drawText(ctx, student.organization.websiteUrl || "gtcc2006@gmail.com", pageSize[0] - 210, 58, {
     color: burgundy,
     font: ctx.fonts.bold,
     size: 10,
