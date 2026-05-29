@@ -67,6 +67,28 @@ export function LessonForm({
   )
   const isEditing = Boolean(lesson)
   const isVideo = contentType === "VIDEO"
+  const selectedVideoFileAssetId =
+    uploadState.uploadedVideoFileAssetId ?? lesson?.videoFileAssetId ?? ""
+  const effectiveVideoFileOptions = useMemo(() => {
+    if (
+      uploadState.uploadedVideoFileAssetId &&
+      !videoFileOptions.some((option) => option.id === uploadState.uploadedVideoFileAssetId)
+    ) {
+      return [
+        ...videoFileOptions,
+        {
+          id: uploadState.uploadedVideoFileAssetId,
+          label: uploadState.uploadedVideoFileLabel ?? "Uploaded video",
+        },
+      ]
+    }
+
+    return videoFileOptions
+  }, [
+    uploadState.uploadedVideoFileAssetId,
+    uploadState.uploadedVideoFileLabel,
+    videoFileOptions,
+  ])
   const note = useMemo(() => {
     if (contentType === "FILE") {
       return "Detailed file linking will be added in the files module."
@@ -167,15 +189,16 @@ export function LessonForm({
               <span className="font-medium">Uploaded video file</span>
               <select
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                key={selectedVideoFileAssetId || "no-video-file"}
                 name="videoFileAssetId"
-                defaultValue={lesson?.videoFileAssetId ?? ""}
+                defaultValue={selectedVideoFileAssetId}
               >
                 <option value="">
-                  {videoFileOptions.length
+                  {effectiveVideoFileOptions.length
                     ? "Select uploaded MinIO video"
                     : "No uploaded videos yet. Upload a video below."}
                 </option>
-                {videoFileOptions.map((option) => (
+                {effectiveVideoFileOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
@@ -250,9 +273,9 @@ export function LessonForm({
             </p>
           ) : null}
           <Button
+            className="bg-sky-600 text-white hover:bg-sky-700"
             size="sm"
             type="submit"
-            variant="outline"
             disabled={isUploading}
           >
             {isUploading ? "Uploading..." : "Upload video"}

@@ -233,7 +233,7 @@ export async function uploadLessonVideo(
     })
   )
 
-  await prisma.fileAsset.create({
+  const fileAsset = await prisma.fileAsset.create({
     data: {
       organizationId: classSection.organizationId,
       campusId: classSection.campusId,
@@ -255,6 +255,8 @@ export async function uploadLessonVideo(
   return {
     ok: true,
     message: "Video uploaded. You can now select it from Uploaded video file.",
+    uploadedVideoFileAssetId: fileAsset.id,
+    uploadedVideoFileLabel: fileAsset.originalName,
   }
 }
 

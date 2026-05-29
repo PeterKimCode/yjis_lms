@@ -1,4 +1,6 @@
 export type LessonActionState = {
+  uploadedVideoFileAssetId?: string
+  uploadedVideoFileLabel?: string
   ok: boolean
   message: string
 }

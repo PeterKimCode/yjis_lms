@@ -1,8 +1,12 @@
 import "server-only"
 
 import { DocumentStatus, DocumentType, FinalGradeStatus, UserRole } from "@prisma/client"
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { readFile } from "node:fs/promises"
+import path from "node:path"
 import {
   PDFDocument,
+  PDFImage,
   PDFPage,
   PDFFont,
   StandardFonts,
@@ -52,6 +56,9 @@ const textColor = rgb(0.08, 0.1, 0.16)
 const mutedColor = rgb(0.38, 0.42, 0.5)
 const borderColor = rgb(0.82, 0.85, 0.9)
 const headerFill = rgb(0.95, 0.96, 0.98)
+const accentBlue = rgb(0.05, 0.55, 0.75)
+const burgundy = rgb(0.43, 0.06, 0.1)
+const softGreen = rgb(0.43, 0.72, 0.56)
 
 export async function assertStudentDocumentAccess(input: {
   currentUserId: string
@@ -282,6 +289,12 @@ export async function generateTranscriptPdf(input: {
   const terms = groupTranscriptGradesByTerm(student.finalGrades)
   const cumulative = calculateGpa(student.finalGrades)
   const ctx = await createPdfContext()
+  const logo = await getOrganizationLogoImage(ctx.doc, student.organization.id)
+
+  drawTranscriptCover(ctx, student, generatedAt, logo)
+  ctx.page = ctx.doc.addPage(pageSize)
+  ctx.y = pageSize[1] - margin
+
   drawDocumentHeader(ctx, "Official Transcript", "University-style credit and GPA record")
   drawStudentInfo(ctx, student, generatedAt)
 
@@ -413,6 +426,141 @@ function drawDocumentHeader(ctx: PdfContext, title: string, subtitle: string) {
   ctx.y -= 20
   drawLine(ctx, margin, ctx.y, pageSize[0] - margin)
   ctx.y -= 18
+}
+
+function drawTranscriptCover(
+  ctx: PdfContext,
+  student: {
+    organization: { name: string }
+    studentProfile: {
+      campus: { name: string } | null
+    } | null
+  },
+  generatedAt: Date,
+  logo: PDFImage | null
+) {
+  const page = ctx.page
+  const schoolName = student.organization.name || "General Trias College of Cavite"
+  const campusName = student.studentProfile?.campus?.name
+
+  page.drawRectangle({
+    x: 24,
+    y: 24,
+    width: pageSize[0] - 48,
+    height: pageSize[1] - 48,
+    borderColor: accentBlue,
+    borderWidth: 3,
+  })
+  page.drawRectangle({
+    x: 29,
+    y: 29,
+    width: pageSize[0] - 58,
+    height: pageSize[1] - 58,
+    borderColor,
+    borderWidth: 0.8,
+  })
+
+  drawHexagon(ctx, pageSize[0] - 92, pageSize[1] - 60, 32, softGreen, 0.72)
+  drawHexagon(ctx, pageSize[0] - 38, pageSize[1] - 104, 40, rgb(0.55, 0.7, 1), 0.28)
+  drawHexagon(ctx, pageSize[0] - 114, pageSize[1] - 126, 23, softGreen, 0.74)
+  drawHexagon(ctx, 54, 88, 28, rgb(0.55, 0.7, 1), 0.25)
+  drawHexagon(ctx, 128, 60, 46, burgundy, 0.42)
+  drawHexagon(ctx, 18, 36, 54, burgundy, 0.36)
+
+  if (logo) {
+    page.drawImage(logo, {
+      x: 58,
+      y: pageSize[1] - 152,
+      width: 96,
+      height: 96,
+    })
+    page.drawImage(logo, {
+      x: (pageSize[0] - 230) / 2,
+      y: 248,
+      width: 230,
+      height: 230,
+      opacity: 0.12,
+    })
+  }
+
+  drawWrappedCoverText(
+    ctx,
+    schoolName.toUpperCase(),
+    172,
+    pageSize[1] - 94,
+    20,
+    burgundy,
+    330
+  )
+  if (campusName) {
+    drawWrappedCoverText(ctx, campusName, 172, pageSize[1] - 150, 10, mutedColor, 330)
+  }
+
+  drawText(ctx, "TRANSCRIPT OF RECORDS", 148, pageSize[1] - 214, {
+    color: accentBlue,
+    font: ctx.fonts.bold,
+    size: 20,
+  })
+  drawLine(ctx, 174, pageSize[1] - 230, pageSize[0] - 174)
+  drawText(ctx, "Official academic record", 206, pageSize[1] - 252, {
+    color: mutedColor,
+    size: 10,
+  })
+  drawText(ctx, `Generated ${generatedAt.toLocaleDateString("en-US")}`, 58, 58, {
+    color: mutedColor,
+    size: 8,
+  })
+  drawText(ctx, "gtcc2006@gmail.com", pageSize[0] - 178, 58, {
+    color: burgundy,
+    font: ctx.fonts.bold,
+    size: 10,
+  })
+}
+
+function drawWrappedCoverText(
+  ctx: PdfContext,
+  value: string,
+  x: number,
+  y: number,
+  size: number,
+  color: RGB,
+  maxWidth: number
+) {
+  const lines = wrapText(value, maxWidth, ctx.fonts.bold, size, 3)
+  lines.forEach((line, index) => {
+    drawText(ctx, line, x, y - index * (size + 5), {
+      color,
+      font: ctx.fonts.bold,
+      size,
+    })
+  })
+}
+
+function drawHexagon(
+  ctx: PdfContext,
+  centerX: number,
+  centerY: number,
+  radius: number,
+  color: RGB,
+  opacity: number
+) {
+  const points = Array.from({ length: 6 }, (_, index) => {
+    const angle = (Math.PI / 3) * index + Math.PI / 6
+    return {
+      x: centerX + Math.cos(angle) * radius,
+      y: centerY + Math.sin(angle) * radius,
+    }
+  })
+
+  for (let index = 0; index < points.length; index += 1) {
+    ctx.page.drawLine({
+      start: points[index],
+      end: points[(index + 1) % points.length],
+      color,
+      opacity,
+      thickness: 2,
+    })
+  }
 }
 
 function drawStudentInfo(
@@ -808,6 +956,63 @@ function calculateGpa(
   }
 }
 
+async function getOrganizationLogoImage(doc: PDFDocument, organizationId: string) {
+  const logoBytes = await getOrganizationLogoBytes(organizationId)
+
+  if (!logoBytes) return null
+
+  try {
+    return await doc.embedPng(logoBytes)
+  } catch {
+    try {
+      return await doc.embedJpg(logoBytes)
+    } catch {
+      return null
+    }
+  }
+}
+
+async function getOrganizationLogoBytes(organizationId: string) {
+  const prisma = getPrismaClient()
+  const rows = await prisma.$queryRaw<Array<{ logoFileAssetId: string | null }>>`
+    SELECT "logoFileAssetId" FROM "Organization" WHERE "id" = ${organizationId} LIMIT 1
+  `
+  const logoFileAssetId = rows[0]?.logoFileAssetId
+
+  if (logoFileAssetId) {
+    const file = await prisma.fileAsset.findUnique({
+      where: { id: logoFileAssetId },
+      select: {
+        bucket: true,
+        contentType: true,
+        objectKey: true,
+      },
+    })
+
+    if (file?.contentType && ["image/png", "image/jpeg"].includes(file.contentType)) {
+      try {
+        const object = await createS3Client().send(
+          new GetObjectCommand({
+            Bucket: file.bucket,
+            Key: file.objectKey,
+          })
+        )
+
+        if (object.Body) {
+          return await readS3Body(object.Body)
+        }
+      } catch (error) {
+        console.warn("Falling back to default transcript logo", {
+          error: error instanceof Error ? error.message : String(error),
+          organizationId,
+        })
+      }
+    }
+  }
+
+  return readFile(path.join(process.cwd(), "public", "brand", "gtcc-logo.png"))
+}
+
 async function createGeneratedDocumentMetadata(input: {
   documentType: DocumentType
   organizationId: string
@@ -855,4 +1060,38 @@ async function savePdf(doc: PDFDocument) {
   const copy = new Uint8Array(bytes.byteLength)
   copy.set(bytes)
   return copy.buffer
+}
+
+async function readS3Body(body: unknown) {
+  if (body instanceof Uint8Array) {
+    return Buffer.from(body)
+  }
+
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "transformToByteArray" in body &&
+    typeof body.transformToByteArray === "function"
+  ) {
+    return Buffer.from(await body.transformToByteArray())
+  }
+
+  const chunks: Buffer[] = []
+  for await (const chunk of body as AsyncIterable<Uint8Array | Buffer | string>) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+
+  return Buffer.concat(chunks)
+}
+
+function createS3Client() {
+  return new S3Client({
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION ?? "us-east-1",
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+    },
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== "false",
+  })
 }

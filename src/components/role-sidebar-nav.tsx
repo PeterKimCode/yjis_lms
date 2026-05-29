@@ -180,7 +180,15 @@ export function RoleSidebarNav({
                         >
                           <School className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           <span className="min-w-0">
-                            <span className="block truncate font-medium">
+                            <span
+                              className="block whitespace-normal break-words font-medium leading-snug"
+                              style={{
+                                WebkitBoxOrient: "vertical",
+                                WebkitLineClamp: 2,
+                                display: "-webkit-box",
+                                overflow: "hidden",
+                              }}
+                            >
                               {classLink.label}
                             </span>
                             {classLink.subLabel ? (
