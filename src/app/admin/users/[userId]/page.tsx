@@ -6,6 +6,7 @@ import { AttendanceStatus, FinalGradeStatus, UserRole } from "@prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getAdminUserDetail } from "@/modules/admin/data"
+import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
 import {
   ActiveBadge,
   AdminPageHeader,
@@ -170,11 +171,9 @@ function StudentDocuments({ user }: { user: DetailUser }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm">
-          <Link href={`/api/documents/transcript?studentId=${user.id}`}>
-            Generate transcript PDF
-          </Link>
-        </Button>
+        <TranscriptDownloadButton studentId={user.id} variant="default">
+          Generate transcript PDF
+        </TranscriptDownloadButton>
         <Button asChild size="sm" variant="outline">
           <Link href={`/api/documents/report-card?studentId=${user.id}`}>
             Generate all-term report card PDF

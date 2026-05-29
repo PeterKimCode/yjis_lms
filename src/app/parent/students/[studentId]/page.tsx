@@ -17,6 +17,7 @@ import {
   getAttendancePolicyForOrganization,
   getParentStudentDetail,
 } from "@/modules/dashboards/data"
+import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
 import {
   getAttendanceSummary,
 } from "@/modules/attendance/summary"
@@ -94,11 +95,7 @@ export default async function ParentStudentDetailPage({
           </p>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button asChild size="sm" variant="outline">
-            <Link href={`/api/documents/transcript?studentId=${student.id}`}>
-              Download transcript
-            </Link>
-          </Button>
+          <TranscriptDownloadButton studentId={student.id} />
           {termOptions.length ? (
             termOptions.map((term) => (
               <Button asChild key={term.id} size="sm" variant="outline">

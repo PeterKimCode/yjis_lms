@@ -318,12 +318,6 @@ export async function generateTranscriptPdf(input: {
         { header: "Status", value: (row) => row.status, width: 72 },
       ]
     )
-    drawNote(
-      ctx,
-      `Term GPA: ${term.gpa.toFixed(2)} | Attempted credits: ${term.attempted.toFixed(
-        1
-      )} | Earned credits: ${term.earned.toFixed(1)}`
-    )
   }
 
   if (!terms.length) {
@@ -336,10 +330,6 @@ export async function generateTranscriptPdf(input: {
     ["Attempted credits", cumulative.attempted.toFixed(1)],
     ["Earned credits", cumulative.earned.toFixed(1)],
   ])
-  drawNote(ctx, "TODO: Store generated PDFs in MinIO/FileAsset after storage is stabilized.")
-  drawNote(ctx, "TODO: Embed Korean fonts later for production-quality Korean PDF output.")
-  drawFooter(ctx, generatedAt)
-
   await createGeneratedDocumentMetadata({
     documentType: DocumentType.TRANSCRIPT,
     organizationId: student.organizationId,
@@ -502,10 +492,6 @@ function drawTranscriptCover(
   drawText(ctx, "Official academic record", 206, pageSize[1] - 252, {
     color: mutedColor,
     size: 10,
-  })
-  drawText(ctx, `Generated ${generatedAt.toLocaleDateString("en-US")}`, 58, 58, {
-    color: mutedColor,
-    size: 8,
   })
   drawText(ctx, student.organization.websiteUrl || "gtcc2006@gmail.com", pageSize[0] - 210, 58, {
     color: burgundy,

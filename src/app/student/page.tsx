@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import { getStudentClasses } from "@/modules/dashboards/data"
+import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
@@ -125,11 +126,7 @@ export default async function StudentPage() {
         </div>
         {hasPublishedDocuments ? (
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/api/documents/transcript?studentId=${user.id}`}>
-                Download transcript
-              </Link>
-            </Button>
+            <TranscriptDownloadButton studentId={user.id} />
             {termOptions.length ? (
               termOptions.map((term) => (
                 <Button asChild key={term.id} size="sm" variant="outline">
