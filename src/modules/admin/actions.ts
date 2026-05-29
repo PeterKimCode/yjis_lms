@@ -263,6 +263,18 @@ export async function saveUser(formData: FormData) {
     }
   }
 
+  const duplicateEmailUser = await prisma.user.findFirst({
+    where: {
+      email: userValues.email,
+      ...(id ? { id: { not: id } } : {}),
+    },
+    select: { id: true },
+  })
+
+  if (duplicateEmailUser) {
+    throw new Error("This email is already used by another user.")
+  }
+
   if (campusId) {
     const campus = await prisma.campus.findUnique({
       where: { id: campusId },
