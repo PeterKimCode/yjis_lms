@@ -1,6 +1,8 @@
 import { UserRole, VideoProvider } from "@prisma/client"
 import { notFound } from "next/navigation"
+import Link from "next/link"
 
+import { Button } from "@/components/ui/button"
 import { EmptyState, SectionBlock } from "@/modules/dashboards/components"
 import { getPublishedLessonForStudent } from "@/modules/dashboards/data"
 import { requireAnyRole } from "@/modules/auth/permissions"
@@ -53,8 +55,27 @@ export default async function StudentLessonPage({
           ) : null}
         </div>
 
-        <SectionBlock title="Lesson video">
-          {youtubeVideoId ? (
+        <SectionBlock title={lesson.contentType === "FILE" ? "Lesson file" : "Lesson video"}>
+          {lesson.contentType === "FILE" ? (
+            lesson.videoFileAsset ? (
+              <div className="rounded-lg border bg-background p-4">
+                <p className="font-medium">{lesson.videoFileAsset.originalName}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Download or open the lesson file through the LMS.
+                </p>
+                <Button asChild className="mt-3" size="sm">
+                  <Link
+                    href={`/api/files/${lesson.videoFileAsset.id}/download`}
+                    target="_blank"
+                  >
+                    Download file
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <EmptyState>No file has been attached to this lesson yet.</EmptyState>
+            )
+          ) : youtubeVideoId ? (
             <YouTubePlayer
               classSectionId={classSectionId}
               initialCompleted={progress?.completed ?? false}

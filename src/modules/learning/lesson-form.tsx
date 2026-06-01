@@ -43,10 +43,12 @@ export type LessonFormValue = {
 
 export function LessonForm({
   classSectionId,
+  fileAssetOptions,
   lesson,
   videoFileOptions,
 }: {
   classSectionId: string
+  fileAssetOptions: { id: string; label: string }[]
   lesson?: LessonFormValue
   videoFileOptions: { id: string; label: string }[]
 }) {
@@ -70,11 +72,16 @@ export function LessonForm({
     id: string
     label: string
   } | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<{
+    id: string
+    label: string
+  } | null>(null)
   const [selectedVideoFileAssetId, setSelectedVideoFileAssetId] = useState(
     lesson?.videoFileAssetId ?? ""
   )
   const isEditing = Boolean(lesson)
   const isVideo = contentType === "VIDEO"
+  const isFile = contentType === "FILE"
   const effectiveVideoFileOptions = useMemo(() => {
     if (uploadedVideo && !videoFileOptions.some((option) => option.id === uploadedVideo.id)) {
       return [...videoFileOptions, uploadedVideo]
@@ -82,11 +89,14 @@ export function LessonForm({
 
     return videoFileOptions
   }, [uploadedVideo, videoFileOptions])
-  const note = useMemo(() => {
-    if (contentType === "FILE") {
-      return "Detailed file linking will be added in the files module."
+  const effectiveFileAssetOptions = useMemo(() => {
+    if (uploadedFile && !fileAssetOptions.some((option) => option.id === uploadedFile.id)) {
+      return [...fileAssetOptions, uploadedFile]
     }
 
+    return fileAssetOptions
+  }, [fileAssetOptions, uploadedFile])
+  const note = useMemo(() => {
     if (["QUIZ", "ASSIGNMENT", "LIVE_SESSION"].includes(contentType)) {
       return "Detailed linking for this content type will be added in a later module."
     }
@@ -163,6 +173,80 @@ export function LessonForm({
       } catch {
         setUploadOk(false)
         setUploadMessage("Video upload failed. Please try again.")
+      }
+    }
+    request.send(formData)
+  }
+
+  function handleUploadLessonFile() {
+    const input = document.getElementById(
+      `lesson-attachment-file-${classSectionId}-${lesson?.id ?? "new"}`
+    ) as HTMLInputElement | null
+    const file = input?.files?.[0]
+
+    if (!file) {
+      setUploadOk(false)
+      setUploadMessage("Choose a lesson file to upload.")
+      return
+    }
+
+    const formData = new FormData()
+    formData.set("classSectionId", classSectionId)
+    formData.set("lessonFile", file)
+
+    const request = new XMLHttpRequest()
+    uploadRequestRef.current = request
+    request.open("POST", "/api/learning/lesson-file-upload")
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        setUploadProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)))
+      }
+    }
+    request.onloadstart = () => {
+      setIsUploading(true)
+      setUploadProgress(0)
+      setUploadMessage("")
+      setUploadOk(true)
+    }
+    request.onerror = () => {
+      uploadRequestRef.current = null
+      setIsUploading(false)
+      setUploadOk(false)
+      setUploadMessage("Lesson file upload failed. Please try again.")
+    }
+    request.onabort = () => {
+      uploadRequestRef.current = null
+      setIsUploading(false)
+      setUploadProgress(0)
+      setUploadOk(false)
+      setUploadMessage("File upload canceled.")
+    }
+    request.onload = () => {
+      uploadRequestRef.current = null
+      setIsUploading(false)
+
+      try {
+        const response = JSON.parse(request.responseText) as {
+          ok?: boolean
+          message?: string
+          error?: string
+          fileAsset?: { id: string; label: string }
+        }
+
+        if (request.status >= 200 && request.status < 300 && response.fileAsset) {
+          setUploadProgress(100)
+          setUploadedFile(response.fileAsset)
+          setSelectedVideoFileAssetId(response.fileAsset.id)
+          setUploadOk(true)
+          setUploadMessage(response.message ?? "Lesson file uploaded.")
+          return
+        }
+
+        setUploadOk(false)
+        setUploadMessage(response.error ?? "Lesson file upload failed. Please try again.")
+      } catch {
+        setUploadOk(false)
+        setUploadMessage("Lesson file upload failed. Please try again.")
       }
     }
     request.send(formData)
@@ -333,6 +417,107 @@ export function LessonForm({
                     disabled={isUploading || !selectedUploadFileName}
                   >
                     {isUploading ? "Uploading..." : "Upload video"}
+                  </Button>
+                  {isUploading ? (
+                    <Button
+                      onClick={cancelUploadVideo}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Cancel upload
+                    </Button>
+                  ) : null}
+                  {uploadMessage ? (
+                    <p
+                      className={`text-sm ${uploadOk ? "text-muted-foreground" : "text-destructive"}`}
+                      role="status"
+                    >
+                      {uploadMessage}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+          {isFile ? (
+            <div className="space-y-2 text-sm md:col-span-2">
+              <label className="space-y-1">
+                <span className="font-medium">Uploaded lesson file</span>
+                <select
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  key={selectedVideoFileAssetId || "no-lesson-file"}
+                  name="videoFileAssetId"
+                  onChange={(event) =>
+                    setSelectedVideoFileAssetId(event.target.value)
+                  }
+                  value={selectedVideoFileAssetId}
+                >
+                  <option value="">
+                    {effectiveFileAssetOptions.length
+                      ? "Select uploaded lesson file"
+                      : "No uploaded lesson files yet. Upload a file below."}
+                  </option>
+                  {effectiveFileAssetOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="block text-xs text-muted-foreground">
+                  Allowed: PDF, Office files, text, images, CSV, and ZIP. Max
+                  20MB. Executable/script files are blocked.
+                </span>
+              </label>
+              <div className="space-y-3 rounded-md border border-indigo-200 bg-indigo-50/80 p-3">
+                <label className="space-y-2 text-sm">
+                  <span className="font-medium text-indigo-950">
+                    Upload lesson file to LMS
+                  </span>
+                  <span className="block text-xs text-indigo-800">
+                    Upload PPT, PDF, Word, Excel, text, image, CSV, or ZIP files
+                    for this lesson.
+                  </span>
+                  <Input
+                    id={`lesson-attachment-file-${classSectionId}-${lesson?.id ?? "new"}`}
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,.gif,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown,text/csv,image/png,image/jpeg,image/webp,image/gif,application/zip"
+                    className="border-indigo-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-indigo-100 file:px-3 file:py-1 file:text-indigo-800"
+                    onChange={(event) =>
+                      setSelectedUploadFileName(
+                        event.currentTarget.files?.[0]?.name ?? ""
+                      )
+                    }
+                    type="file"
+                  />
+                  {selectedUploadFileName ? (
+                    <span className="block text-xs font-medium text-indigo-800">
+                      Selected: {selectedUploadFileName}
+                    </span>
+                  ) : null}
+                </label>
+                {isUploading ? (
+                  <div className="space-y-1" role="status">
+                    <div className="h-2 overflow-hidden rounded-full bg-indigo-100">
+                      <div
+                        className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-indigo-800">
+                      Uploading file: {uploadProgress}%. Please keep this page
+                      open until it finishes.
+                    </p>
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-slate-300"
+                    onClick={handleUploadLessonFile}
+                    size="sm"
+                    type="button"
+                    disabled={isUploading || !selectedUploadFileName}
+                  >
+                    {isUploading ? "Uploading..." : "Upload file"}
                   </Button>
                   {isUploading ? (
                     <Button

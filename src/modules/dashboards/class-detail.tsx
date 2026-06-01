@@ -21,6 +21,7 @@ import {
 import {
   formatDateTime,
   getClassSectionDetail,
+  getLessonFileOptionsForClassSection,
   getVideoFileOptionsForClassSection,
 } from "@/modules/dashboards/data"
 import {
@@ -104,6 +105,14 @@ export async function ClassSectionDetail({
           campusId: section.campusId,
         })
       : []
+  const lessonFileOptions =
+    mode === "instructor"
+      ? await getLessonFileOptionsForClassSection({
+          classSectionId: section.id,
+          organizationId: section.organizationId,
+          campusId: section.campusId,
+        })
+      : []
   const gradeWeights = getModuleWeights(section.gradingConfig)
 
   return (
@@ -157,6 +166,7 @@ export async function ClassSectionDetail({
                 <div className="pt-3">
                   <LessonForm
                     classSectionId={section.id}
+                    fileAssetOptions={lessonFileOptions}
                     videoFileOptions={videoFileOptions}
                   />
                 </div>
@@ -253,6 +263,7 @@ export async function ClassSectionDetail({
                       <div className="pt-3">
                         <LessonForm
                           classSectionId={section.id}
+                          fileAssetOptions={lessonFileOptions}
                           lesson={toLessonFormValue(lesson)}
                           videoFileOptions={videoFileOptions}
                         />
@@ -766,17 +777,30 @@ function LessonPreviewLink({
 }: {
   lesson: {
     contentType: string
+    videoFileAsset?: { originalName: string } | null
     videoFileAssetId: string | null
     videoUrl: string | null
   }
 }) {
-  if (lesson.contentType !== "VIDEO") {
-    return <span className="text-sm text-muted-foreground">-</span>
-  }
-
   const href = lesson.videoFileAssetId
     ? `/api/files/${lesson.videoFileAssetId}/download?disposition=inline`
     : lesson.videoUrl
+
+  if (lesson.contentType === "FILE") {
+    return href ? (
+      <Button asChild size="sm" variant="outline">
+        <Link href={href} target="_blank">
+          Download file
+        </Link>
+      </Button>
+    ) : (
+      <span className="text-sm text-muted-foreground">No file</span>
+    )
+  }
+
+  if (lesson.contentType !== "VIDEO") {
+    return <span className="text-sm text-muted-foreground">-</span>
+  }
 
   return href ? (
     <Button asChild size="sm" variant="outline">

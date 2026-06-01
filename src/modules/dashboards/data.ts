@@ -151,6 +151,7 @@ export async function getClassSectionDetail(
         orderBy: { sequence: "asc" },
         include: {
           materials: true,
+          videoFileAsset: true,
           videoProgress: {
             include: {
               student: true,
@@ -344,6 +345,47 @@ export async function getVideoFileOptionsForClassSection({
           ],
         },
       ],
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      originalName: true,
+      byteSize: true,
+    },
+  })
+
+  return files.map((file) => ({
+    id: file.id,
+    label: `${file.originalName}${file.byteSize ? ` (${formatBytes(file.byteSize)})` : ""}`,
+  }))
+}
+
+export async function getLessonFileOptionsForClassSection({
+  classSectionId,
+  organizationId,
+  campusId,
+}: {
+  classSectionId: string
+  organizationId: string
+  campusId: string | null
+}) {
+  const files = await getPrismaClient().fileAsset.findMany({
+    where: {
+      organizationId,
+      OR: [
+        { classSectionId },
+        { classSectionId: null, campusId },
+        { classSectionId: null, campusId: null },
+      ],
+      NOT: {
+        OR: [
+          { contentType: { startsWith: "video/" } },
+          { originalName: { endsWith: ".mp4", mode: "insensitive" } },
+          { originalName: { endsWith: ".webm", mode: "insensitive" } },
+          { originalName: { endsWith: ".mov", mode: "insensitive" } },
+          { originalName: { endsWith: ".m4v", mode: "insensitive" } },
+        ],
+      },
     },
     orderBy: { createdAt: "desc" },
     select: {

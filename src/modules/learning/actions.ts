@@ -41,6 +41,17 @@ const lessonSchema = z.object({
   durationSeconds: optionalInt,
   isPublished: z.boolean(),
 }).superRefine((data, context) => {
+  if (data.contentType === LessonContentType.FILE) {
+    if (!data.videoFileAssetId) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "File lessons require an uploaded PDF, PPT, document, or image file.",
+        path: ["videoFileAssetId"],
+      })
+    }
+    return
+  }
+
   if (data.contentType !== LessonContentType.VIDEO) {
     return
   }
@@ -114,7 +125,7 @@ export async function saveLesson(
     where: { id: data.classSectionId },
     select: { organizationId: true },
   })
-  const selectedVideoFile = data.videoFileAssetId
+  const selectedFile = data.videoFileAssetId
     ? await prisma.fileAsset.findFirst({
         where: {
           id: data.videoFileAssetId,
@@ -128,10 +139,10 @@ export async function saveLesson(
       })
     : null
 
-  if (data.videoFileAssetId && !selectedVideoFile) {
+  if (data.videoFileAssetId && !selectedFile) {
     return {
       ok: false,
-      message: "Selected video file is not available for this class section.",
+      message: "Selected file is not available for this class section.",
     }
   }
 
@@ -145,6 +156,13 @@ export async function saveLesson(
               ? null
               : values.videoFileAssetId,
         }
+      : values.contentType === LessonContentType.FILE
+        ? {
+            ...values,
+            videoProvider: VideoProvider.HTML5,
+            videoUrl: null,
+            durationSeconds: null,
+          }
       : {
           ...values,
           videoProvider: VideoProvider.HTML5,
