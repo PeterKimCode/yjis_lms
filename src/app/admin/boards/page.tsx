@@ -2,16 +2,19 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
+import { deleteAdminEntity } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   matchesSearch,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getScopedWhereForAdmin } from "@/modules/admin/access"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 import { BoardForm } from "@/modules/boards/board-form"
 import {
   BOARD_KIND_OPTIONS,
@@ -27,6 +30,8 @@ export default async function AdminBoardsPage({
     boardDeleted?: string
     boardType?: string
     campusId?: string
+    deleted?: string
+    deleteError?: string
     organizationId?: string
     permission?: string
     q?: string
@@ -91,6 +96,7 @@ export default async function AdminBoardsPage({
           Board deleted.
         </p>
       ) : null}
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <BoardFilters admin={admin} params={params} q={q} />
       <details className="rounded-lg border bg-background p-4" open>
         <summary className="cursor-pointer font-medium">Create board</summary>
@@ -113,6 +119,7 @@ export default async function AdminBoardsPage({
           "Permissions",
           "Status",
           "Manage",
+          "Delete",
         ]}
         minWidth="min-w-[980px]"
         rows={filteredBoards.map((board) => {
@@ -141,6 +148,15 @@ export default async function AdminBoardsPage({
                 <Button asChild size="sm" variant="outline">
                   <Link href={`/admin/boards/${board.id}`}>Manage</Link>
                 </Button>
+              </TableCell>
+              <TableCell>
+                <ConfirmDeleteForm
+                  action={deleteAdminEntity}
+                  entity="board"
+                  id={board.id}
+                  message={`Delete board "${board.name}"? Boards with posts may delete related posts or be blocked by related records.`}
+                  returnPath="/admin/boards"
+                />
               </TableCell>
             </TableRow>
           )

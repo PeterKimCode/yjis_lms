@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useMemo, useState } from "react"
+import { useActionState, useMemo, useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,6 +65,7 @@ export function LessonForm({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState("")
   const [uploadOk, setUploadOk] = useState(true)
+  const uploadRequestRef = useRef<XMLHttpRequest | null>(null)
   const [uploadedVideo, setUploadedVideo] = useState<{
     id: string
     label: string
@@ -110,6 +111,7 @@ export function LessonForm({
     formData.set("videoFile", file)
 
     const request = new XMLHttpRequest()
+    uploadRequestRef.current = request
     request.open("POST", "/api/learning/lesson-video-upload")
     request.upload.onprogress = (event) => {
       if (event.lengthComputable) {
@@ -123,11 +125,20 @@ export function LessonForm({
       setUploadOk(true)
     }
     request.onerror = () => {
+      uploadRequestRef.current = null
       setIsUploading(false)
       setUploadOk(false)
       setUploadMessage("Video upload failed. Please try again.")
     }
+    request.onabort = () => {
+      uploadRequestRef.current = null
+      setIsUploading(false)
+      setUploadProgress(0)
+      setUploadOk(false)
+      setUploadMessage("Video upload canceled.")
+    }
     request.onload = () => {
+      uploadRequestRef.current = null
       setIsUploading(false)
 
       try {
@@ -155,6 +166,10 @@ export function LessonForm({
       }
     }
     request.send(formData)
+  }
+
+  function cancelUploadVideo() {
+    uploadRequestRef.current?.abort()
   }
 
   return (
@@ -319,6 +334,16 @@ export function LessonForm({
                   >
                     {isUploading ? "Uploading..." : "Upload video"}
                   </Button>
+                  {isUploading ? (
+                    <Button
+                      onClick={cancelUploadVideo}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      Cancel upload
+                    </Button>
+                  ) : null}
                   {uploadMessage ? (
                     <p
                       className={`text-sm ${uploadOk ? "text-muted-foreground" : "text-destructive"}`}

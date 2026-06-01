@@ -3,24 +3,28 @@ import {
   type CourseFormData,
   type CourseFormValue,
 } from "@/modules/admin/course-form"
+import { deleteAdminEntity } from "@/modules/admin/actions"
 import {
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   matchesSearch,
   SearchForm,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function CoursesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
   const formData = toCourseFormData(data)
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const courses = data.courses.filter((course) =>
     matchesSearch(q, [
       course.title,
@@ -44,10 +48,11 @@ export default async function CoursesPage({
         placeholder="Search courses..."
         resultSummary={`${courses.length} of ${data.courses.length} courses shown`}
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <CourseForm data={formData} />
       <DataTable
         empty="No courses yet."
-        headers={["Title", "Code", "Credits", "Department", "Mode", "Edit"]}
+        headers={["Title", "Code", "Credits", "Department", "Mode", "Edit", "Delete"]}
         rows={courses.map((course) => (
           <TableRow key={course.id}>
             <TableCell className="font-medium">{course.title}</TableCell>
@@ -61,6 +66,15 @@ export default async function CoursesPage({
             <TableCell>{course.defaultDeliveryMode}</TableCell>
             <TableCell>
               <CourseForm data={formData} course={toCourseFormValue(course)} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="course"
+                id={course.id}
+                message={`Delete course "${course.title}"? Related class sections may prevent deletion.`}
+                returnPath="/admin/courses"
+              />
             </TableCell>
           </TableRow>
         ))}

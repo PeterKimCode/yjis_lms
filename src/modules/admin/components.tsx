@@ -69,6 +69,47 @@ export function EmptyState({ label }: { label: string }) {
   )
 }
 
+const deleteEntityLabels: Record<string, string> = {
+  academicYear: "Academic year",
+  board: "Board",
+  campus: "Campus",
+  classSection: "Class section",
+  course: "Course",
+  department: "Department",
+  gradeLevel: "Grade level",
+  homeroom: "Homeroom",
+  organization: "Organization",
+  term: "Term",
+  user: "User",
+}
+
+export function DeleteStatusBanner({
+  deleted,
+  deleteError,
+}: {
+  deleted?: string
+  deleteError?: string
+}) {
+  if (deleted) {
+    return (
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+        {deleteEntityLabels[deleted] ?? "Record"} deleted.
+      </div>
+    )
+  }
+
+  if (deleteError) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        Could not delete {deleteEntityLabels[deleteError] ?? "this record"}. It
+        may still be used by related LMS records.
+      </div>
+    )
+  }
+
+  return null
+}
+
 export function FormCard({
   title,
   children,

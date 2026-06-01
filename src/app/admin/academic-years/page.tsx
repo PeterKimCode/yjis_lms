@@ -1,9 +1,10 @@
-import { saveAcademicYear } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveAcademicYear } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
   AdminSelect,
   DataTable,
+  DeleteStatusBanner,
   Field,
   FormCard,
   matchesSearch,
@@ -13,14 +14,16 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function AcademicYearsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const academicYears = data.academicYears.filter((year) =>
     matchesSearch(q, [year.name, year.campus?.name, year.organization.name])
   )
@@ -31,6 +34,7 @@ export default async function AcademicYearsPage({
         title="Academic years"
         description="Create and edit school years for K-12, academy, or university terms."
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search academic years..." />
       <AcademicYearForm
         campusOptions={data.campusOptions}
@@ -38,7 +42,7 @@ export default async function AcademicYearsPage({
       />
       <DataTable
         empty="No academic years yet."
-        headers={["Name", "Dates", "Campus", "Status", "Edit"]}
+        headers={["Name", "Dates", "Campus", "Status", "Edit", "Delete"]}
         rows={academicYears.map((year) => (
           <TableRow key={year.id}>
             <TableCell className="font-medium">{year.name}</TableCell>
@@ -58,6 +62,15 @@ export default async function AcademicYearsPage({
                 campusOptions={data.campusOptions}
                 organizationOptions={data.organizationOptions}
                 year={year}
+              />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="academicYear"
+                id={year.id}
+                message={`Delete academic year "${year.name}"? Related terms and classes may be removed or prevent deletion.`}
+                returnPath="/admin/academic-years"
               />
             </TableCell>
           </TableRow>

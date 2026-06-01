@@ -6,6 +6,7 @@ import {
   DeliveryMode,
   EnrollmentStatus,
   InstitutionType,
+  Prisma,
   UserRole,
 } from "@prisma/client"
 import { z } from "zod"
@@ -763,6 +764,178 @@ const classSectionSchema = z.object({
   deliveryMode: z.nativeEnum(DeliveryMode),
   capacity: optionalInt,
 })
+
+const deleteAdminEntitySchema = z.object({
+  entity: z.enum([
+    "academicYear",
+    "board",
+    "campus",
+    "classSection",
+    "course",
+    "department",
+    "gradeLevel",
+    "homeroom",
+    "organization",
+    "term",
+    "user",
+  ]),
+  id: requiredString,
+  returnPath: requiredString,
+})
+
+function safeReturnPath(value: string) {
+  return value.startsWith("/admin") ? value : "/admin"
+}
+
+function withDeleteMessage(path: string, key: "deleted" | "deleteError", entity: string) {
+  const separator = path.includes("?") ? "&" : "?"
+
+  return `${path}${separator}${key}=${encodeURIComponent(entity)}`
+}
+
+export async function deleteAdminEntity(formData: FormData) {
+  const data = deleteAdminEntitySchema.parse(readForm(formData))
+  const returnPath = safeReturnPath(data.returnPath)
+  const prisma = getPrismaClient()
+  let redirectTo = withDeleteMessage(returnPath, "deleted", data.entity)
+
+  try {
+    switch (data.entity) {
+      case "organization": {
+        const organization = await prisma.organization.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true },
+        })
+        await assertAdminScope({ organizationId: organization.id })
+        await prisma.organization.delete({ where: { id: organization.id } })
+        await revalidateAdmin("/admin/organizations")
+        break
+      }
+      case "campus": {
+        const campus = await prisma.campus.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true },
+        })
+        await assertAdminScope(campus)
+        await prisma.campus.delete({ where: { id: campus.id } })
+        await revalidateAdmin("/admin/campuses")
+        break
+      }
+      case "department": {
+        const department = await prisma.department.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(department)
+        await prisma.department.delete({ where: { id: department.id } })
+        await revalidateAdmin("/admin/departments")
+        break
+      }
+      case "academicYear": {
+        const academicYear = await prisma.academicYear.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(academicYear)
+        await prisma.academicYear.delete({ where: { id: academicYear.id } })
+        await revalidateAdmin("/admin/academic-years")
+        break
+      }
+      case "term": {
+        const term = await prisma.term.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(term)
+        await prisma.term.delete({ where: { id: term.id } })
+        await revalidateAdmin("/admin/terms")
+        break
+      }
+      case "gradeLevel": {
+        const gradeLevel = await prisma.gradeLevel.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(gradeLevel)
+        await prisma.gradeLevel.delete({ where: { id: gradeLevel.id } })
+        await revalidateAdmin("/admin/grade-levels")
+        break
+      }
+      case "homeroom": {
+        const homeroom = await prisma.homeroom.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(homeroom)
+        await prisma.homeroom.delete({ where: { id: homeroom.id } })
+        await revalidateAdmin("/admin/homerooms")
+        break
+      }
+      case "course": {
+        const course = await prisma.course.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(course)
+        await prisma.course.delete({ where: { id: course.id } })
+        await revalidateAdmin("/admin/courses")
+        break
+      }
+      case "classSection": {
+        const section = await prisma.classSection.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(section)
+        await prisma.classSection.delete({ where: { id: section.id } })
+        await revalidateAdmin("/admin/class-sections")
+        break
+      }
+      case "board": {
+        const board = await prisma.board.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true, campusId: true },
+        })
+        await assertAdminScope(board)
+        await prisma.board.delete({ where: { id: board.id } })
+        await revalidateAdmin("/admin/boards")
+        break
+      }
+      case "user": {
+        const admin = await requireAdmin()
+        if (admin.id === data.id) {
+          throw new Error("You cannot delete your own signed-in account.")
+        }
+        const user = await prisma.user.findUniqueOrThrow({
+          where: { id: data.id },
+          select: { id: true, organizationId: true },
+        })
+        await assertAdminScope({ organizationId: user.organizationId })
+        await prisma.user.delete({ where: { id: user.id } })
+        await revalidateAdmin("/admin/users")
+        break
+      }
+    }
+  } catch (error) {
+    console.error("Admin delete failed", {
+      entity: data.entity,
+      id: data.id,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      ["P2003", "P2014"].includes(error.code)
+    ) {
+      redirectTo = withDeleteMessage(returnPath, "deleteError", data.entity)
+    } else if (error instanceof Error) {
+      redirectTo = withDeleteMessage(returnPath, "deleteError", data.entity)
+    } else {
+      redirectTo = withDeleteMessage(returnPath, "deleteError", data.entity)
+    }
+  }
+
+  redirect(redirectTo)
+}
 
 export async function saveClassSection(formData: FormData) {
   const data = classSectionSchema.parse(readForm(formData))

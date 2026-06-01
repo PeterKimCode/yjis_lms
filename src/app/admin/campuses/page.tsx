@@ -1,9 +1,10 @@
-import { saveCampus } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveCampus } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
   AdminSelect,
   DataTable,
+  DeleteStatusBanner,
   Field,
   FormCard,
   matchesSearch,
@@ -13,12 +14,15 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAdminData } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function CampusesPage({
   searchParams,
 }: {
   searchParams: Promise<{
     createdWithPolicies?: string
+    deleted?: string
+    deleteError?: string
     policyInitFailed?: string
     q?: string
   }>
@@ -53,11 +57,12 @@ export default async function CampusesPage({
           can try again or initialize policies from Admin &gt; Policies.
         </p>
       ) : null}
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search campuses..." />
       <CampusForm organizationOptions={organizationOptions} />
       <DataTable
         empty="No campuses are available for your scope."
-        headers={["Name", "Code", "Organization", "Address", "Status", "Edit"]}
+        headers={["Name", "Code", "Organization", "Address", "Status", "Edit", "Delete"]}
         rows={filteredCampuses.map((campus) => (
           <TableRow key={campus.id}>
             <TableCell className="font-medium">{campus.name}</TableCell>
@@ -69,6 +74,15 @@ export default async function CampusesPage({
             </TableCell>
             <TableCell>
               <CampusForm campus={campus} organizationOptions={organizationOptions} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="campus"
+                id={campus.id}
+                message={`Delete campus "${campus.name}"? Related LMS records may prevent deletion.`}
+                returnPath="/admin/campuses"
+              />
             </TableCell>
           </TableRow>
         ))}

@@ -1,24 +1,28 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
+import { deleteAdminEntity } from "@/modules/admin/actions"
 import { HomeroomForm } from "@/modules/admin/academic-management"
 import {
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   matchesSearch,
   SearchForm,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function HomeroomsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const homerooms = data.homerooms.filter((homeroom) =>
     matchesSearch(q, [
       homeroom.name,
@@ -35,6 +39,7 @@ export default async function HomeroomsPage({
         title="Homerooms"
         description="Manage K-12 homerooms, advisor assignments, and student placement."
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search homerooms, grades, teachers..." />
       <HomeroomForm data={data} />
       <DataTable
@@ -75,9 +80,18 @@ export default async function HomeroomsPage({
               {homeroom._count.studentProfiles === 1 ? "student" : "students"}
             </TableCell>
             <TableCell>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/admin/homerooms/${homeroom.id}`}>View</Link>
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/admin/homerooms/${homeroom.id}`}>View</Link>
+                </Button>
+                <ConfirmDeleteForm
+                  action={deleteAdminEntity}
+                  entity="homeroom"
+                  id={homeroom.id}
+                  message={`Delete homeroom "${homeroom.name}"? Related students may prevent deletion.`}
+                  returnPath="/admin/homerooms"
+                />
+              </div>
             </TableCell>
           </TableRow>
         ))}

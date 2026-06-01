@@ -1,11 +1,12 @@
 import { InstitutionType } from "@prisma/client"
 import Image from "next/image"
 
-import { saveOrganization } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveOrganization } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   FormCard,
   matchesSearch,
   SearchForm,
@@ -14,14 +15,16 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAdminData } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function OrganizationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const { isSuperAdmin, organizations } = await getAdminData()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const filteredOrganizations = organizations.filter((organization) =>
     matchesSearch(q, [
       organization.name,
@@ -37,6 +40,7 @@ export default async function OrganizationsPage({
         description="Tenant organizations available in your admin scope."
       />
       <SearchForm q={q} placeholder="Search organizations..." />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       {isSuperAdmin ? (
         <OrganizationForm />
       ) : (
@@ -47,7 +51,7 @@ export default async function OrganizationsPage({
       )}
       <DataTable
         empty="No organizations are available for your scope."
-        headers={["Name", "Slug", "Type", "Status", "Edit"]}
+        headers={["Name", "Slug", "Type", "Status", "Edit", "Delete"]}
         rows={filteredOrganizations.map((organization) => (
           <TableRow key={organization.id}>
             <TableCell className="font-medium">
@@ -66,6 +70,15 @@ export default async function OrganizationsPage({
             </TableCell>
             <TableCell>
               <OrganizationForm organization={organization} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="organization"
+                id={organization.id}
+                message={`Delete organization "${organization.name}"? This can remove related campus and LMS records.`}
+                returnPath="/admin/organizations"
+              />
             </TableCell>
           </TableRow>
         ))}

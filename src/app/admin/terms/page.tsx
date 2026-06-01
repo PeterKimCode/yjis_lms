@@ -1,9 +1,10 @@
-import { saveTerm } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveTerm } from "@/modules/admin/actions"
 import {
   ActiveBadge,
   AdminPageHeader,
   AdminSelect,
   DataTable,
+  DeleteStatusBanner,
   Field,
   FormCard,
   matchesSearch,
@@ -13,14 +14,16 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { formatDate, getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function TermsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const terms = data.terms.filter((term) =>
     matchesSearch(q, [
       term.name,
@@ -36,11 +39,12 @@ export default async function TermsPage({
         title="Terms"
         description="Create semester, trimester, quarter, or academy term windows."
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search terms..." />
       <TermForm data={data} />
       <DataTable
         empty="No terms yet."
-        headers={["Name", "Academic Year", "Dates", "Status", "Edit"]}
+        headers={["Name", "Academic Year", "Dates", "Status", "Edit", "Delete"]}
         rows={terms.map((term) => (
           <TableRow key={term.id}>
             <TableCell className="font-medium">{term.name}</TableCell>
@@ -56,6 +60,15 @@ export default async function TermsPage({
             </TableCell>
             <TableCell>
               <TermForm data={data} term={term} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="term"
+                id={term.id}
+                message={`Delete term "${term.name}"? Related class sections may prevent deletion.`}
+                returnPath="/admin/terms"
+              />
             </TableCell>
           </TableRow>
         ))}

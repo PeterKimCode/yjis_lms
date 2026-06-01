@@ -1,8 +1,9 @@
-import { saveGradeLevel } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveGradeLevel } from "@/modules/admin/actions"
 import {
   AdminPageHeader,
   AdminSelect,
   DataTable,
+  DeleteStatusBanner,
   Field,
   FormCard,
   matchesSearch,
@@ -12,14 +13,16 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function GradeLevelsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const gradeLevels = data.gradeLevels.filter((gradeLevel) =>
     matchesSearch(q, [
       gradeLevel.name,
@@ -37,11 +40,12 @@ export default async function GradeLevelsPage({
         title="Grade levels"
         description="Define K-12 grade levels or academy cohorts."
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search grade levels..." />
       <GradeLevelForm data={data} />
       <DataTable
         empty="No grade levels yet."
-        headers={["Name", "Code", "Sequence", "Academic Year", "Edit"]}
+        headers={["Name", "Code", "Sequence", "Academic Year", "Edit", "Delete"]}
         rows={gradeLevels.map((gradeLevel) => (
           <TableRow key={gradeLevel.id}>
             <TableCell className="font-medium">{gradeLevel.name}</TableCell>
@@ -54,6 +58,15 @@ export default async function GradeLevelsPage({
             </TableCell>
             <TableCell>
               <GradeLevelForm data={data} gradeLevel={gradeLevel} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="gradeLevel"
+                id={gradeLevel.id}
+                message={`Delete grade level "${gradeLevel.name}"? Related student records may prevent deletion.`}
+                returnPath="/admin/grade-levels"
+              />
             </TableCell>
           </TableRow>
         ))}

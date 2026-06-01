@@ -1,24 +1,28 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
+import { deleteAdminEntity } from "@/modules/admin/actions"
 import { ClassSectionForm } from "@/modules/admin/academic-management"
 import {
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   matchesSearch,
   SearchForm,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function ClassSectionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const classSections = data.classSections.filter((section) =>
     matchesSearch(q, [
       section.name,
@@ -42,6 +46,7 @@ export default async function ClassSectionsPage({
         placeholder="Search sections, courses, terms..."
         resultSummary={`${classSections.length} of ${data.classSections.length} class sections shown`}
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <ClassSectionForm data={data} />
       <DataTable
         empty="No class sections match your search."
@@ -105,9 +110,18 @@ export default async function ClassSectionsPage({
                 {studentCount} {studentCount === 1 ? "student" : "students"}
               </TableCell>
               <TableCell>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={`/admin/class-sections/${section.id}`}>View</Link>
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/admin/class-sections/${section.id}`}>View</Link>
+                  </Button>
+                  <ConfirmDeleteForm
+                    action={deleteAdminEntity}
+                    entity="classSection"
+                    id={section.id}
+                    message={`Delete class section "${section.name}"? Related class records may be removed or prevent deletion.`}
+                    returnPath="/admin/class-sections"
+                  />
+                </div>
               </TableCell>
             </TableRow>
           )

@@ -1,8 +1,9 @@
-import { saveDepartment } from "@/modules/admin/actions"
+import { deleteAdminEntity, saveDepartment } from "@/modules/admin/actions"
 import {
   AdminPageHeader,
   AdminSelect,
   DataTable,
+  DeleteStatusBanner,
   Field,
   FormCard,
   matchesSearch,
@@ -12,14 +13,16 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
 export default async function DepartmentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const departments = data.departments.filter((department) =>
     matchesSearch(q, [
       department.name,
@@ -35,11 +38,12 @@ export default async function DepartmentsPage({
         title="Departments"
         description="Define university or academy departments for course ownership."
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <SearchForm q={q} placeholder="Search departments..." />
       <DepartmentForm data={data} />
       <DataTable
         empty="No departments yet."
-        headers={["Name", "Code", "Campus", "Edit"]}
+        headers={["Name", "Code", "Campus", "Edit", "Delete"]}
         rows={departments.map((department) => (
           <TableRow key={department.id}>
             <TableCell className="font-medium">{department.name}</TableCell>
@@ -50,6 +54,15 @@ export default async function DepartmentsPage({
             </TableCell>
             <TableCell>
               <DepartmentForm data={data} department={department} />
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="department"
+                id={department.id}
+                message={`Delete department "${department.name}"? Related courses may prevent deletion.`}
+                returnPath="/admin/departments"
+              />
             </TableCell>
           </TableRow>
         ))}

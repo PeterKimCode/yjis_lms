@@ -217,14 +217,31 @@ export function ClassSectionClientForm({
             ))}
           </select>
         </label>
-        <AdminSelect
-          includeEmpty={false}
-          label="Academic year"
-          name="academicYearId"
-          options={scopedAcademicYearOptions}
-          defaultValue={section?.academicYearId}
-          required
-        />
+        <label className="grid min-w-0 gap-1 text-sm">
+          <span className="font-medium">Academic year</span>
+          <select
+            className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm disabled:text-muted-foreground"
+            name="academicYearId"
+            defaultValue={section?.academicYearId ?? ""}
+            disabled={scopedAcademicYearOptions.length === 0}
+            required
+          >
+            {scopedAcademicYearOptions.length === 0 ? (
+              <option value="">No academic years available</option>
+            ) : (
+              scopedAcademicYearOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))
+            )}
+          </select>
+          {scopedAcademicYearOptions.length === 0 ? (
+            <span className="text-xs text-muted-foreground">
+              Create an academic year for this organization or campus first.
+            </span>
+          ) : null}
+        </label>
         <AdminSelect
           label="Term"
           name="termId"

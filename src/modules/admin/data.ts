@@ -167,6 +167,7 @@ export async function getAcademicSetupOptions() {
         },
         include: {
           roleAssignments: true,
+          instructorProfile: true,
           studentProfile: {
             include: {
               currentGradeLevel: true,
@@ -202,27 +203,50 @@ export async function getAcademicSetupOptions() {
           ] as UserRole[]).includes(assignment.role)
         )
       )
-      .map((user) => ({
-        id: user.id,
-        label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
-        organizationId: user.organizationId,
-      })),
+      .map((user) => {
+        const roleScope = user.roleAssignments.find((assignment) =>
+          ([
+            UserRole.INSTRUCTOR,
+            UserRole.HOMEROOM_TEACHER,
+            UserRole.ACADEMIC_STAFF,
+          ] as UserRole[]).includes(assignment.role)
+        )
+
+        return {
+          id: user.id,
+          label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+          organizationId:
+            user.instructorProfile?.organizationId ??
+            roleScope?.organizationId ??
+            user.organizationId,
+          campusId: user.instructorProfile?.campusId ?? roleScope?.campusId ?? null,
+        }
+      }),
     studentOptions: users
       .filter((user) =>
         user.roleAssignments.some(
           (assignment) => assignment.role === UserRole.STUDENT
         )
       )
-      .map((user) => ({
-        id: user.id,
-        label: `${user.name}${user.email ? ` (${user.email})` : ""}${
-          user.studentProfile?.homeroom
-            ? ` - ${user.studentProfile.homeroom.name}`
-            : ""
-        }`,
-        organizationId: user.organizationId,
-        campusId: user.studentProfile?.campusId ?? null,
-      })),
+      .map((user) => {
+        const roleScope = user.roleAssignments.find(
+          (assignment) => assignment.role === UserRole.STUDENT
+        )
+
+        return {
+          id: user.id,
+          label: `${user.name}${user.email ? ` (${user.email})` : ""}${
+            user.studentProfile?.homeroom
+              ? ` - ${user.studentProfile.homeroom.name}`
+              : ""
+          }`,
+          organizationId:
+            user.studentProfile?.organizationId ??
+            roleScope?.organizationId ??
+            user.organizationId,
+          campusId: user.studentProfile?.campusId ?? roleScope?.campusId ?? null,
+        }
+      }),
     parentOptions: users
       .filter((user) =>
         user.roleAssignments.some(

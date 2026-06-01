@@ -1,27 +1,31 @@
 import Link from "next/link"
 
+import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
+import { deleteAdminEntity } from "@/modules/admin/actions"
 import { getUserWhereForAdmin } from "@/modules/admin/access"
 import {
   ActiveBadge,
   AdminPageHeader,
   DataTable,
+  DeleteStatusBanner,
   matchesSearch,
   SearchForm,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
+import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 import { UserForm } from "@/modules/admin/user-form"
-import { Button } from "@/components/ui/button"
 
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
 }) {
   const admin = await getAcademicSetupOptions()
-  const q = (await searchParams).q?.trim() ?? ""
+  const params = await searchParams
+  const q = params.q?.trim() ?? ""
   const users = await getPrismaClient().user.findMany({
     where: getUserWhereForAdmin(admin.user),
     include: {
@@ -63,6 +67,7 @@ export default async function UsersPage({
         placeholder="Search users, emails, roles..."
         resultSummary={`${filteredUsers.length} of ${users.length} users shown`}
       />
+      <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <UserForm
         campusOptions={admin.campusOptions}
         gradeLevelOptions={admin.gradeLevelOptions}
@@ -79,6 +84,7 @@ export default async function UsersPage({
           "Student placement",
           "Status",
           "Edit",
+          "Delete",
         ]}
         rows={filteredUsers.map((user) => (
           <TableRow key={user.id}>
@@ -139,6 +145,15 @@ export default async function UsersPage({
               <Button asChild size="sm" variant="outline">
                 <Link href={`/admin/users/${user.id}`}>Edit</Link>
               </Button>
+            </TableCell>
+            <TableCell>
+              <ConfirmDeleteForm
+                action={deleteAdminEntity}
+                entity="user"
+                id={user.id}
+                message={`Delete user "${user.name}"? This cannot be undone if no related records block deletion.`}
+                returnPath="/admin/users"
+              />
             </TableCell>
           </TableRow>
         ))}
