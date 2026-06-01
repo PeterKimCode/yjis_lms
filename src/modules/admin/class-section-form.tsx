@@ -68,7 +68,10 @@ export function ClassSectionClientForm({
     [courseOptions, section?.courseId]
   )
   const [organizationId, setOrganizationId] = useState(
-    section?.organizationId ?? initialCourse?.organizationId ?? ""
+    section?.organizationId ??
+      initialCourse?.organizationId ??
+      organizationOptions[0]?.id ??
+      ""
   )
   const [campusId, setCampusId] = useState(
     section?.campusId ?? initialCourse?.campusId ?? ""

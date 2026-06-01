@@ -29,7 +29,7 @@ export function DashboardPage({
   return (
     <main className={`flex-1 px-4 py-8 ${getPageToneClass(tone)}`}>
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <div className="lms-soft-panel flex flex-col gap-3 rounded-xl p-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="lms-soft-panel animate-in fade-in-50 slide-in-from-bottom-2 flex flex-col gap-3 rounded-xl p-5 duration-500 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <div className="h-1.5 w-16 rounded-full bg-primary/70" />
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
@@ -182,7 +182,7 @@ export function SectionBlock({
 }) {
   return (
     <Card
-      className={`lms-card scroll-mt-24 overflow-hidden ${getSectionAccentClass(title)}`}
+      className={`lms-card animate-in fade-in-50 slide-in-from-bottom-2 scroll-mt-24 overflow-hidden duration-500 ${getSectionAccentClass(title)}`}
       id={id}
     >
       <CardHeader className="gap-2 border-b border-slate-100/90 bg-white/70">

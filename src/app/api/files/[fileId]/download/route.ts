@@ -81,7 +81,9 @@ export async function GET(
     const requestedInline =
       new URL(request.url).searchParams.get("disposition") === "inline"
     const disposition =
-      requestedInline && file.contentType?.startsWith("image/")
+      requestedInline &&
+      (file.contentType?.startsWith("image/") ||
+        file.contentType?.startsWith("video/"))
         ? "inline"
         : "attachment"
     const object = await createS3Client().send(

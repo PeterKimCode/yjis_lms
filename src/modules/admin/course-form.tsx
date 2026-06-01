@@ -3,7 +3,6 @@
 import { DeliveryMode } from "@prisma/client"
 import { useMemo, useState } from "react"
 
-import { Input } from "@/components/ui/input"
 import { saveCourse } from "@/modules/admin/actions"
 import { Field, FormCard, SubmitButton } from "@/modules/admin/components"
 
@@ -17,8 +16,6 @@ export type CourseFormData = {
   organizationOptions: Option[]
   campusOptions: ScopedOption[]
   departmentOptions: ScopedOption[]
-  instructorOptions: ScopedOption[]
-  studentOptions: ScopedOption[]
 }
 
 export type CourseFormValue = {
@@ -61,23 +58,6 @@ export function CourseForm({
       ),
     [campusId, data.departmentOptions, organizationId]
   )
-  const instructorOptions = useMemo(
-    () =>
-      data.instructorOptions.filter(
-        (option) => option.organizationId === organizationId
-      ),
-    [data.instructorOptions, organizationId]
-  )
-  const studentOptions = useMemo(
-    () =>
-      data.studentOptions.filter(
-        (option) =>
-          option.organizationId === organizationId &&
-          (!campusId || !option.campusId || option.campusId === campusId)
-      ),
-    [campusId, data.studentOptions, organizationId]
-  )
-
   function handleOrganizationChange(value: string) {
     setOrganizationId(value)
     if (
@@ -172,40 +152,6 @@ export function CourseForm({
           name="description"
           defaultValue={course?.description}
         />
-        <label className="grid min-w-0 gap-1 text-sm xl:col-span-2">
-          <span className="font-medium">Instructor search</span>
-          <Input
-            list={`course-instructors-${course?.id ?? "new"}`}
-            name="instructorSearch"
-            placeholder="Search scoped instructors by name or email"
-          />
-          <datalist id={`course-instructors-${course?.id ?? "new"}`}>
-            {instructorOptions.map((option) => (
-              <option key={option.id} value={option.label} />
-            ))}
-          </datalist>
-          <span className="text-xs text-muted-foreground">
-            Course-level assignment is handled in Class Sections; this search is
-            scoped to the selected organization.
-          </span>
-        </label>
-        <label className="grid min-w-0 gap-1 text-sm xl:col-span-2">
-          <span className="font-medium">Student search</span>
-          <Input
-            list={`course-students-${course?.id ?? "new"}`}
-            name="studentSearch"
-            placeholder="Search scoped students by name or email"
-          />
-          <datalist id={`course-students-${course?.id ?? "new"}`}>
-            {studentOptions.map((option) => (
-              <option key={option.id} value={option.label} />
-            ))}
-          </datalist>
-          <span className="text-xs text-muted-foreground">
-            Student enrollment is managed in Class Sections; this list follows
-            the selected organization and campus.
-          </span>
-        </label>
         <div className="flex items-end">
           <SubmitButton />
         </div>

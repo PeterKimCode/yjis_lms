@@ -12,6 +12,7 @@ import {
   saveHomeroom,
 } from "@/modules/admin/actions"
 import { ClassSectionClientForm } from "@/modules/admin/class-section-form"
+import { SearchableSelect } from "@/modules/admin/searchable-select"
 import {
   AdminSelect,
   DataTable,
@@ -84,6 +85,10 @@ export function InstructorManagement({
   data: AdminData
   section: ClassSection
 }) {
+  const instructorOptions = data.instructorOptions.filter(
+    (option) => option.organizationId === section.organizationId
+  )
+
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
       <FormCard title="Assigned instructors">
@@ -123,12 +128,12 @@ export function InstructorManagement({
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1"
         >
           <input name="classSectionId" type="hidden" value={section.id} />
-          <AdminSelect
-            includeEmpty={false}
+          <SearchableSelect
             label="Instructor"
             name="instructorId"
-            options={data.instructorOptions}
+            options={instructorOptions}
             required
+            searchPlaceholder="Search instructors by name or email..."
           />
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Role</span>
@@ -158,6 +163,12 @@ export function EnrollmentManagement({
   data: AdminData
   section: ClassSection
 }) {
+  const studentOptions = data.studentOptions.filter(
+    (option) =>
+      option.organizationId === section.organizationId &&
+      (!section.campusId || !option.campusId || option.campusId === section.campusId)
+  )
+
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
       <FormCard title="Enrolled students">
@@ -226,12 +237,12 @@ export function EnrollmentManagement({
         <FormCard title="Enroll student">
           <form action={saveEnrollment} className="grid gap-3">
             <input name="classSectionId" type="hidden" value={section.id} />
-            <AdminSelect
-              includeEmpty={false}
+            <SearchableSelect
               label="Student"
               name="studentId"
-              options={data.studentOptions}
+              options={studentOptions}
               required
+              searchPlaceholder="Search students by name, email, or homeroom..."
             />
             <label className="grid gap-1 text-sm">
               <span className="font-medium">Status</span>

@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { LessonContentType, UserRole, VideoProvider } from "@prisma/client"
 import { z } from "zod"
 
@@ -13,6 +12,10 @@ import {
 } from "@/modules/auth/permissions"
 import type { LessonActionState } from "@/modules/learning/action-state"
 import { isYouTubeUrl } from "@/modules/learning/video"
+import {
+  LessonVideoUploadError,
+  uploadLessonVideoFile,
+} from "@/modules/learning/video-upload-service"
 import { resolvePolicies } from "@/modules/policies/resolve"
 
 const optionalString = z.preprocess(
@@ -206,57 +209,33 @@ export async function uploadLessonVideo(
     throw new Error("Forbidden")
   }
 
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File)) {
     return { ok: false, message: "Choose a video file to upload." }
   }
 
-  if (!isVideoFile(file.name, file.type)) {
-    return { ok: false, message: "Upload an MP4, WebM, MOV, or M4V video file." }
-  }
-
-  const prisma = getPrismaClient()
-  const classSection = await prisma.classSection.findUniqueOrThrow({
-    where: { id: classSectionId },
-    select: { organizationId: true, campusId: true },
-  })
-  const bucket = process.env.S3_BUCKET_NAME ?? "lms-files"
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-")
-  const objectKey = `videos/${classSectionId}/${Date.now()}-${safeName}`
-  const client = createS3Client()
-
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: objectKey,
-      Body: Buffer.from(await file.arrayBuffer()),
-      ContentType: file.type || "application/octet-stream",
-    })
-  )
-
-  const fileAsset = await prisma.fileAsset.create({
-    data: {
-      organizationId: classSection.organizationId,
-      campusId: classSection.campusId,
+  try {
+    const fileAsset = await uploadLessonVideoFile({
       classSectionId,
-      uploadedById: instructor.id,
-      bucket,
-      objectKey,
-      originalName: file.name,
-      contentType: file.type || "application/octet-stream",
-      byteSize: BigInt(file.size),
-      visibility: "CLASS_SECTION",
-      metadata: {
-        source: "lesson-video-upload",
-      },
-    },
-  })
+      file,
+      instructorId: instructor.id,
+    })
 
-  revalidatePath(`/instructor/classes/${classSectionId}`)
-  return {
-    ok: true,
-    message: "Video uploaded. You can now select it from Uploaded video file.",
-    uploadedVideoFileAssetId: fileAsset.id,
-    uploadedVideoFileLabel: fileAsset.originalName,
+    revalidatePath(`/instructor/classes/${classSectionId}`)
+    return {
+      ok: true,
+      message: "Video uploaded. You can now select it from Uploaded video file.",
+      uploadedVideoFileAssetId: fileAsset.id,
+      uploadedVideoFileLabel: fileAsset.originalName,
+    }
+  } catch (error) {
+    if (error instanceof LessonVideoUploadError) {
+      return { ok: false, message: error.message }
+    }
+    console.error("Lesson video upload failed", {
+      classSectionId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return { ok: false, message: "Video upload failed. Please try again." }
   }
 }
 
@@ -352,23 +331,4 @@ async function getCompletionThreshold(input: {
 }) {
   const policies = await resolvePolicies(input)
   return policies.videoCompletion.completionThresholdPercent
-}
-
-function createS3Client() {
-  return new S3Client({
-    endpoint: process.env.S3_ENDPOINT,
-    region: process.env.S3_REGION ?? "us-east-1",
-    credentials: {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
-    },
-    forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== "false",
-  })
-}
-
-function isVideoFile(name: string, contentType: string) {
-  return (
-    contentType.startsWith("video/") ||
-    /\.(mp4|webm|mov|m4v)$/i.test(name)
-  )
 }

@@ -52,7 +52,7 @@ export function AdminPageHeader({
   description: string
 }) {
   return (
-    <div className="lms-soft-panel space-y-1 rounded-xl p-5">
+    <div className="lms-soft-panel animate-in fade-in-50 slide-in-from-bottom-2 space-y-1 rounded-xl p-5 duration-500">
       <div className="h-1.5 w-16 rounded-full bg-primary/70" />
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <p className="text-sm text-muted-foreground">{description}</p>
@@ -77,7 +77,7 @@ export function FormCard({
   children: ReactNode
 }) {
   return (
-    <Card className="lms-card">
+    <Card className="lms-card animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

@@ -1,4 +1,3 @@
-import Image from "next/image"
 import { redirect } from "next/navigation"
 import type { CSSProperties } from "react"
 
@@ -62,23 +61,11 @@ function LoginHeroSlider() {
     <section className="relative hidden min-h-[520px] overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-950 p-8 text-white shadow-xl shadow-slate-200/70 lg:block">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(59,130,246,0.42),transparent_26rem),radial-gradient(circle_at_80%_12%,rgba(20,184,166,0.34),transparent_20rem)]" />
       <div className="relative z-10 flex h-full min-h-[456px] flex-col justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-white">
-            <Image
-              alt="Learning Management System logo"
-              className="h-14 w-14 rounded-full object-contain"
-              height={56}
-              src="/brand/gtcc-logo.png"
-              width={56}
-              loading="eager"
-            />
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-sky-200">
-              Learning Management System
-            </p>
-            <p className="text-xs text-slate-300">School LMS workspace</p>
-          </div>
+        <div>
+          <p className="text-sm font-semibold text-sky-200">
+            Learning Management System
+          </p>
+          <p className="text-xs text-slate-300">School LMS workspace</p>
         </div>
 
         <div className="login-slide-window">

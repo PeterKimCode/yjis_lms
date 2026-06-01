@@ -76,8 +76,6 @@ function toCourseFormData(
     organizationOptions: data.organizationOptions,
     campusOptions: data.campusOptions,
     departmentOptions: data.departmentOptions,
-    instructorOptions: data.instructorOptions,
-    studentOptions: data.studentOptions,
   }
 }
 
