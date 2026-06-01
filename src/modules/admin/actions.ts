@@ -76,6 +76,22 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "")
 }
 
+async function createUniqueOrganizationSlug(
+  prisma: ReturnType<typeof getPrismaClient>,
+  name: string
+) {
+  const baseSlug = slugify(name) || "organization"
+  let slug = baseSlug
+  let suffix = 2
+
+  while (await prisma.organization.findUnique({ where: { slug }, select: { id: true } })) {
+    slug = `${baseSlug}-${suffix}`
+    suffix += 1
+  }
+
+  return slug
+}
+
 const organizationSchema = z.object({
   id: optionalString,
   name: requiredString,
@@ -112,7 +128,7 @@ export async function saveOrganization(formData: FormData) {
     : await prisma.organization.create({
         data: {
           ...values,
-          slug: slugify(values.name),
+          slug: await createUniqueOrganizationSlug(prisma, values.name),
         },
         select: { id: true },
       })
@@ -977,17 +993,23 @@ export async function assignClassSectionInstructor(formData: FormData) {
   const instructor = await prisma.user.findFirstOrThrow({
     where: {
       id: data.instructorId,
-      roleAssignments: {
-        some: {
-          role: {
-            in: [
-              UserRole.INSTRUCTOR,
-              UserRole.HOMEROOM_TEACHER,
-              UserRole.ACADEMIC_STAFF,
-            ],
+      OR: [
+        {
+          roleAssignments: {
+            some: {
+              role: {
+                in: [
+                  UserRole.INSTRUCTOR,
+                  UserRole.HOMEROOM_TEACHER,
+                  UserRole.ACADEMIC_STAFF,
+                ],
+              },
+              organizationId: classSection.organizationId,
+            },
           },
         },
-      },
+        { instructorProfile: { organizationId: classSection.organizationId } },
+      ],
     },
     select: { id: true },
   })

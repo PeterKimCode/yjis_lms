@@ -195,6 +195,7 @@ export async function getAcademicSetupOptions() {
     })),
     instructorOptions: users
       .filter((user) =>
+        Boolean(user.instructorProfile) ||
         user.roleAssignments.some((assignment) =>
           ([
             UserRole.INSTRUCTOR,

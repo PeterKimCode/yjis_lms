@@ -236,11 +236,6 @@ export function ClassSectionClientForm({
               ))
             )}
           </select>
-          {scopedAcademicYearOptions.length === 0 ? (
-            <span className="text-xs text-muted-foreground">
-              Create an academic year for this organization or campus first.
-            </span>
-          ) : null}
         </label>
         <AdminSelect
           label="Term"
