@@ -78,13 +78,22 @@ function slugify(value: string) {
 
 async function createUniqueOrganizationSlug(
   prisma: ReturnType<typeof getPrismaClient>,
-  name: string
+  value: string,
+  excludeId?: string | null
 ) {
-  const baseSlug = slugify(name) || "organization"
+  const baseSlug = slugify(value) || "organization"
   let slug = baseSlug
   let suffix = 2
 
-  while (await prisma.organization.findUnique({ where: { slug }, select: { id: true } })) {
+  while (
+    await prisma.organization.findFirst({
+      where: {
+        slug,
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      select: { id: true },
+    })
+  ) {
     slug = `${baseSlug}-${suffix}`
     suffix += 1
   }
@@ -95,6 +104,7 @@ async function createUniqueOrganizationSlug(
 const organizationSchema = z.object({
   id: optionalString,
   name: requiredString,
+  slug: optionalString,
   institutionType: z.nativeEnum(InstitutionType),
   websiteUrl: optionalString,
   isActive: checkboxBoolean,
@@ -105,7 +115,7 @@ export async function saveOrganization(formData: FormData) {
     ...readForm(formData),
     isActive: formData.get("isActive"),
   })
-  const { id, ...values } = data
+  const { id, slug, ...values } = data
   const admin = await requireAdmin()
   const logo = formData.get("logo")
   const canCreateOrganization = admin.roleAssignments.some(
@@ -119,16 +129,24 @@ export async function saveOrganization(formData: FormData) {
   }
 
   const prisma = getPrismaClient()
+  const safeSlug = await createUniqueOrganizationSlug(
+    prisma,
+    slug ?? values.name,
+    id
+  )
   const organization = id
     ? await prisma.organization.update({
         where: { id },
-        data: values,
+        data: {
+          ...values,
+          slug: safeSlug,
+        },
         select: { id: true },
       })
     : await prisma.organization.create({
         data: {
           ...values,
-          slug: await createUniqueOrganizationSlug(prisma, values.name),
+          slug: safeSlug,
         },
         select: { id: true },
       })
@@ -1004,11 +1022,10 @@ export async function assignClassSectionInstructor(formData: FormData) {
                   UserRole.ACADEMIC_STAFF,
                 ],
               },
-              organizationId: classSection.organizationId,
             },
           },
         },
-        { instructorProfile: { organizationId: classSection.organizationId } },
+        { instructorProfile: { isNot: null } },
       ],
     },
     select: { id: true },

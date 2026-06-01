@@ -85,9 +85,7 @@ export function InstructorManagement({
   data: AdminData
   section: ClassSection
 }) {
-  const instructorOptions = data.instructorOptions.filter(
-    (option) => option.organizationId === section.organizationId
-  )
+  const instructorOptions = data.instructorOptions
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_420px]">
@@ -163,11 +161,7 @@ export function EnrollmentManagement({
   data: AdminData
   section: ClassSection
 }) {
-  const studentOptions = data.studentOptions.filter(
-    (option) =>
-      option.organizationId === section.organizationId &&
-      (!section.campusId || !option.campusId || option.campusId === section.campusId)
-  )
+  const studentOptions = data.studentOptions
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_420px]">

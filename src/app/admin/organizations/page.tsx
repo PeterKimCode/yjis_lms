@@ -69,7 +69,14 @@ export default async function OrganizationsPage({
               <ActiveBadge active={organization.isActive} />
             </TableCell>
             <TableCell>
-              <OrganizationForm organization={organization} />
+              <details className="rounded-lg border bg-white/90 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-primary">
+                  Edit
+                </summary>
+                <div className="pt-3">
+                  <OrganizationForm organization={organization} compact />
+                </div>
+              </details>
             </TableCell>
             <TableCell>
               <ConfirmDeleteForm
@@ -88,19 +95,21 @@ export default async function OrganizationsPage({
 }
 
 function OrganizationForm({
+  compact = false,
   organization,
 }: {
+  compact?: boolean
   organization?: {
     id: string
     name: string
+    slug: string
     institutionType: InstitutionType
     websiteUrl: string | null
     isActive: boolean
     logoFileAsset?: { id: string } | null
   }
 }) {
-  return (
-    <FormCard title={organization ? "Edit organization" : "Create organization"}>
+  const form = (
       <form action={saveOrganization} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <input name="id" type="hidden" value={organization?.id ?? ""} />
         {organization ? (
@@ -124,6 +133,18 @@ function OrganizationForm({
             defaultValue={organization?.name ?? ""}
             required
           />
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="font-medium">Slug</span>
+          <input
+            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            name="slug"
+            placeholder="example-school"
+            defaultValue={organization?.slug ?? ""}
+          />
+          <span className="text-xs text-muted-foreground">
+            URL-safe short name. If blank, it is generated from the name.
+          </span>
         </label>
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Type</span>
@@ -172,6 +193,15 @@ function OrganizationForm({
           <SubmitButton />
         </div>
       </form>
+  )
+
+  if (compact) {
+    return form
+  }
+
+  return (
+    <FormCard title={organization ? "Edit organization" : "Create organization"}>
+      {form}
     </FormCard>
   )
 }
