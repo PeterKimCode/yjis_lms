@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:security": "tsx scripts/admin-scope-check.ts",
+    "admin:repair-access": "tsx scripts/repair-admin-access.ts",
     "worker": "tsx scripts/worker.ts",
     "worker:once": "tsx scripts/worker.ts --once"
   },
