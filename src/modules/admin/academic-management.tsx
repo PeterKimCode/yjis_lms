@@ -57,6 +57,7 @@ export function ClassSectionForm({
       campusOptions={data.campuses.map((campus) => ({
         id: campus.id,
         label: `${campus.name} (${campus.organization.name})`,
+        organizationId: campus.organizationId,
       }))}
       courseOptions={data.courses.map((course) => ({
         campusId: course.campusId,

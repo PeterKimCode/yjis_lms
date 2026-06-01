@@ -107,7 +107,7 @@ export function RoleSidebarNav({
         <div className={`mb-4 grid place-items-center ${collapsed ? "px-0" : "px-3"}`}>
           <Link aria-label="Go to overview" href={`/${tone}`}>
             <Image
-              alt="General Trias College of Cavite"
+              alt="Learning Management System"
               className={`rounded-full object-contain transition-transform hover:scale-105 ${
                 collapsed ? "h-10 w-10" : "h-28 w-28"
               }`}
@@ -298,7 +298,7 @@ export function RoleSidebarNav({
                 onClick={() => setMobileOpen(false)}
               >
                 <Image
-                  alt="General Trias College of Cavite"
+                  alt="Learning Management System"
                   className="h-12 w-12 rounded-full object-contain"
                   height={48}
                   loading="eager"

@@ -19,7 +19,7 @@ export default async function Home() {
           <div className="space-y-3">
             <Badge variant="secondary">Local self-hosted LMS</Badge>
             <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-              General Trias College of Cavite
+              Learning Management System
             </h1>
             <p className="max-w-2xl text-muted-foreground">
               School-managed learning, attendance, grades, communication, and

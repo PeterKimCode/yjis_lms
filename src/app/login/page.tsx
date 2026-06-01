@@ -42,7 +42,7 @@ export default async function LoginPage({
 function LoginHeroSlider() {
   const slides = [
     {
-      eyebrow: "GTCC YJIS LMS",
+      eyebrow: "LMS workspace",
       title: "Manage learning in one place",
       body: "Classes, attendance, assignments, quizzes, grades, documents, messages, and notifications stay connected.",
     },
@@ -65,7 +65,7 @@ function LoginHeroSlider() {
         <div className="flex items-center gap-3">
           <span className="grid h-16 w-16 place-items-center rounded-full bg-white">
             <Image
-              alt="General Trias College of Cavite logo"
+              alt="Learning Management System logo"
               className="h-14 w-14 rounded-full object-contain"
               height={56}
               src="/brand/gtcc-logo.png"
@@ -75,7 +75,7 @@ function LoginHeroSlider() {
           </span>
           <div>
             <p className="text-sm font-semibold text-sky-200">
-              General Trias College of Cavite
+              Learning Management System
             </p>
             <p className="text-xs text-slate-300">School LMS workspace</p>
           </div>

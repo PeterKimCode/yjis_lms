@@ -1,3 +1,6 @@
+import Link from "next/link"
+import type { ReactNode } from "react"
+
 import {
   DashboardPage,
   OpenButton,
@@ -18,16 +21,23 @@ export default async function StudentClassesPage() {
       <SimpleTable
         empty="No enrolled class sections yet."
         headers={["Class", "Course", "Term", "Campus", "Status", "Open"]}
-        rows={enrollments.map((enrollment) => (
-          <TableRow key={enrollment.id}>
-            <TableCell className="font-medium">
+      rows={enrollments.map((enrollment) => (
+        <TableRow key={enrollment.id}>
+            <LinkedCell
+              className="font-medium"
+              href={`/student/classes/${enrollment.classSectionId}`}
+            >
               {enrollment.classSection.name}
-            </TableCell>
-            <TableCell>{enrollment.classSection.course.title}</TableCell>
-            <TableCell>{enrollment.classSection.term?.name ?? "No term"}</TableCell>
-            <TableCell>
+            </LinkedCell>
+            <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
+              {enrollment.classSection.course.title}
+            </LinkedCell>
+            <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
+              {enrollment.classSection.term?.name ?? "No term"}
+            </LinkedCell>
+            <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
               {enrollment.classSection.campus?.name ?? "Organization-wide"}
-            </TableCell>
+            </LinkedCell>
             <TableCell>{enrollment.status}</TableCell>
             <TableCell>
               <OpenButton href={`/student/classes/${enrollment.classSectionId}`} />
@@ -36,5 +46,23 @@ export default async function StudentClassesPage() {
         ))}
       />
     </DashboardPage>
+  )
+}
+
+function LinkedCell({
+  href,
+  children,
+  className,
+}: {
+  href: string
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <TableCell className={className}>
+      <Link className="-m-3 block p-3 hover:text-primary" href={href}>
+        {children}
+      </Link>
+    </TableCell>
   )
 }

@@ -16,6 +16,11 @@ type SelectOption = {
   label: string
 }
 
+type ScopedOption = SelectOption & {
+  organizationId: string
+  campusId?: string | null
+}
+
 type CourseOption = SelectOption & {
   campusId: string | null
   code: string | null
@@ -49,14 +54,14 @@ export function ClassSectionClientForm({
   section,
   termOptions,
 }: {
-  academicYearOptions: SelectOption[]
-  campusOptions: SelectOption[]
+  academicYearOptions: ScopedOption[]
+  campusOptions: ScopedOption[]
   courseOptions: CourseOption[]
-  gradeLevelOptions: SelectOption[]
-  homeroomOptions: SelectOption[]
+  gradeLevelOptions: ScopedOption[]
+  homeroomOptions: ScopedOption[]
   organizationOptions: SelectOption[]
   section?: ClassSectionFormValue
-  termOptions: SelectOption[]
+  termOptions: ScopedOption[]
 }) {
   const initialCourse = useMemo(
     () => courseOptions.find((course) => course.id === section?.courseId),
@@ -76,6 +81,87 @@ export function ClassSectionClientForm({
   const [sectionCode, setSectionCode] = useState(
     section?.sectionCode ?? initialCourse?.code ?? ""
   )
+  const scopedCampusOptions = useMemo(
+    () => campusOptions.filter((option) => option.organizationId === organizationId),
+    [campusOptions, organizationId]
+  )
+  const scopedCourseOptions = useMemo(
+    () =>
+      courseOptions.filter(
+        (option) =>
+          option.organizationId === organizationId &&
+          (!campusId || !option.campusId || option.campusId === campusId)
+      ),
+    [campusId, courseOptions, organizationId]
+  )
+  const scopedAcademicYearOptions = useMemo(
+    () =>
+      academicYearOptions.filter(
+        (option) =>
+          option.organizationId === organizationId &&
+          (!campusId || !option.campusId || option.campusId === campusId)
+      ),
+    [academicYearOptions, campusId, organizationId]
+  )
+  const scopedTermOptions = useMemo(
+    () =>
+      termOptions.filter(
+        (option) =>
+          option.organizationId === organizationId &&
+          (!campusId || !option.campusId || option.campusId === campusId)
+      ),
+    [campusId, organizationId, termOptions]
+  )
+  const scopedGradeLevelOptions = useMemo(
+    () =>
+      gradeLevelOptions.filter(
+        (option) =>
+          option.organizationId === organizationId &&
+          (!campusId || !option.campusId || option.campusId === campusId)
+      ),
+    [campusId, gradeLevelOptions, organizationId]
+  )
+  const scopedHomeroomOptions = useMemo(
+    () =>
+      homeroomOptions.filter(
+        (option) =>
+          option.organizationId === organizationId &&
+          (!campusId || !option.campusId || option.campusId === campusId)
+      ),
+    [campusId, homeroomOptions, organizationId]
+  )
+
+  function handleOrganizationChange(value: string) {
+    setOrganizationId(value)
+    if (
+      !campusOptions.some(
+        (option) => option.id === campusId && option.organizationId === value
+      )
+    ) {
+      setCampusId("")
+    }
+    if (
+      !courseOptions.some(
+        (option) => option.id === courseId && option.organizationId === value
+      )
+    ) {
+      setCourseId("")
+    }
+  }
+
+  function handleCampusChange(value: string) {
+    setCampusId(value)
+    if (
+      !courseOptions.some(
+        (option) =>
+          option.id === courseId &&
+          option.organizationId === organizationId &&
+          (!value || !option.campusId || option.campusId === value)
+      )
+    ) {
+      setCourseId("")
+    }
+  }
 
   function handleCourseChange(nextCourseId: string) {
     setCourseId(nextCourseId)
@@ -101,7 +187,7 @@ export function ClassSectionClientForm({
           <select
             className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
             name="organizationId"
-            onChange={(event) => setOrganizationId(event.target.value)}
+            onChange={(event) => handleOrganizationChange(event.target.value)}
             required
             value={organizationId}
           >
@@ -117,11 +203,11 @@ export function ClassSectionClientForm({
           <select
             className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
             name="campusId"
-            onChange={(event) => setCampusId(event.target.value)}
+            onChange={(event) => handleCampusChange(event.target.value)}
             value={campusId}
           >
             <option value="">None</option>
-            {campusOptions.map((option) => (
+            {scopedCampusOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
@@ -132,14 +218,14 @@ export function ClassSectionClientForm({
           includeEmpty={false}
           label="Academic year"
           name="academicYearId"
-          options={academicYearOptions}
+          options={scopedAcademicYearOptions}
           defaultValue={section?.academicYearId}
           required
         />
         <AdminSelect
           label="Term"
           name="termId"
-          options={termOptions}
+          options={scopedTermOptions}
           defaultValue={section?.termId}
         />
         <label className="grid min-w-0 gap-1 text-sm">
@@ -154,7 +240,7 @@ export function ClassSectionClientForm({
             <option value="" disabled>
               Select a course
             </option>
-            {courseOptions.map((option) => (
+            {scopedCourseOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
@@ -168,13 +254,13 @@ export function ClassSectionClientForm({
         <AdminSelect
           label="Grade level"
           name="gradeLevelId"
-          options={gradeLevelOptions}
+          options={scopedGradeLevelOptions}
           defaultValue={section?.gradeLevelId}
         />
         <AdminSelect
           label="Homeroom"
           name="homeroomId"
-          options={homeroomOptions}
+          options={scopedHomeroomOptions}
           defaultValue={section?.homeroomId}
         />
         <label className="grid min-w-0 gap-1 text-sm">

@@ -190,6 +190,7 @@ export async function getAcademicSetupOptions() {
     userOptions: users.map((user) => ({
       id: user.id,
       label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+      organizationId: user.organizationId,
     })),
     instructorOptions: users
       .filter((user) =>
@@ -204,6 +205,7 @@ export async function getAcademicSetupOptions() {
       .map((user) => ({
         id: user.id,
         label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+        organizationId: user.organizationId,
       })),
     studentOptions: users
       .filter((user) =>
@@ -218,6 +220,8 @@ export async function getAcademicSetupOptions() {
             ? ` - ${user.studentProfile.homeroom.name}`
             : ""
         }`,
+        organizationId: user.organizationId,
+        campusId: user.studentProfile?.campusId ?? null,
       })),
     parentOptions: users
       .filter((user) =>
@@ -228,14 +232,19 @@ export async function getAcademicSetupOptions() {
       .map((user) => ({
         id: user.id,
         label: `${user.name}${user.email ? ` (${user.email})` : ""}`,
+        organizationId: user.organizationId,
       })),
     academicYearOptions: academicYears.map((year) => ({
       id: year.id,
       label: year.name,
+      organizationId: year.organizationId,
+      campusId: year.campusId,
     })),
     termOptions: terms.map((term) => ({
       id: term.id,
       label: term.name,
+      organizationId: term.organizationId,
+      campusId: term.campusId,
     })),
     gradeLevelOptions: gradeLevels.map((gradeLevel) => ({
       id: gradeLevel.id,
@@ -252,10 +261,14 @@ export async function getAcademicSetupOptions() {
     departmentOptions: departments.map((department) => ({
       id: department.id,
       label: department.name,
+      organizationId: department.organizationId,
+      campusId: department.campusId,
     })),
     courseOptions: courses.map((course) => ({
       id: course.id,
       label: course.title,
+      organizationId: course.organizationId,
+      campusId: course.campusId,
     })),
   }
 }

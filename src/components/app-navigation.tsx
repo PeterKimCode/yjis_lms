@@ -34,7 +34,7 @@ export async function AppNavigation() {
           className="max-w-[42vw] truncate text-sm font-semibold tracking-tight text-white sm:max-w-none sm:text-base"
           href="/"
         >
-          General Trias College of Cavite
+          Learning Management System
         </Link>
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-3">
           {session?.user ? (

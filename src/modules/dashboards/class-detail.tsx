@@ -170,8 +170,16 @@ export async function ClassSectionDetail({
               }
               headers={
                 mode === "instructor"
-                  ? ["Order", "Title", "Type", "Video", "Published", "Completion"]
-                  : ["Order", "Title", "Type", "Duration", "Progress", "Open"]
+                  ? [
+                      "Order",
+                      "Title",
+                      "Type",
+                      "Video",
+                      "Published",
+                      "Completion",
+                      "Preview",
+                    ]
+                  : ["Order", "Title", "Type", "Progress", "Open"]
               }
               rows={section.lessons.map((lesson) => {
                 const completedCount = lesson.videoProgress.filter(
@@ -204,14 +212,12 @@ export async function ClassSectionDetail({
                             {completedCount}/{enrollmentCount}
                           </Link>
                         </TableCell>
+                        <TableCell>
+                          <LessonPreviewLink lesson={lesson} />
+                        </TableCell>
                       </>
                     ) : (
                       <>
-                        <TableCell>
-                          {lesson.durationSeconds
-                            ? `${lesson.durationSeconds}s`
-                            : "-"}
-                        </TableCell>
                         <TableCell>
                           <LessonProgressBadge
                             progress={lesson.videoProgress.find(
@@ -752,6 +758,34 @@ export async function ClassSectionDetail({
         </SectionBlock>
       </div>
     </DashboardPage>
+  )
+}
+
+function LessonPreviewLink({
+  lesson,
+}: {
+  lesson: {
+    contentType: string
+    videoFileAssetId: string | null
+    videoUrl: string | null
+  }
+}) {
+  if (lesson.contentType !== "VIDEO") {
+    return <span className="text-sm text-muted-foreground">-</span>
+  }
+
+  const href = lesson.videoFileAssetId
+    ? `/api/files/${lesson.videoFileAssetId}/download?disposition=inline`
+    : lesson.videoUrl
+
+  return href ? (
+    <Button asChild size="sm" variant="outline">
+      <Link href={href} target="_blank">
+        View video
+      </Link>
+    </Button>
+  ) : (
+    <span className="text-sm text-muted-foreground">No video</span>
   )
 }
 

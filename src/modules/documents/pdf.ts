@@ -427,7 +427,7 @@ function drawTranscriptCover(
   logo: PDFImage | null
 ) {
   const page = ctx.page
-  const schoolName = student.organization.name || "General Trias College of Cavite"
+  const schoolName = student.organization.name || "Learning Management System"
   const campusName = student.studentProfile?.campus?.name
 
   page.drawRectangle({

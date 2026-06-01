@@ -164,11 +164,54 @@ async function canDownloadFile(
 
   const avatarOwner = await getPrismaClient().user.findFirst({
     where: { avatarFileAssetId: file.id },
-    select: { id: true },
+    select: {
+      id: true,
+      organizationId: true,
+      studentProfile: {
+        select: {
+          campusId: true,
+        },
+      },
+    },
   })
 
   if (avatarOwner) {
-    return canViewStudentData(userId, avatarOwner.id)
+    if (await canViewStudentData(userId, avatarOwner.id)) {
+      return true
+    }
+
+    const viewer = await getPrismaClient().user.findUnique({
+      where: { id: userId },
+      select: {
+        roleAssignments: {
+          select: {
+            organizationId: true,
+            campusId: true,
+            role: true,
+          },
+        },
+      },
+    })
+
+    return Boolean(
+      viewer?.roleAssignments.some((assignment) => {
+        if (assignment.role === UserRole.SUPER_ADMIN) return true
+        if (assignment.organizationId !== avatarOwner.organizationId) return false
+        if (
+          assignment.role === UserRole.ORG_ADMIN ||
+          assignment.role === UserRole.ACADEMIC_STAFF
+        ) {
+          return !assignment.campusId
+        }
+        if (assignment.role === UserRole.SCHOOL_ADMIN) {
+          return (
+            Boolean(assignment.campusId) &&
+            assignment.campusId === avatarOwner.studentProfile?.campusId
+          )
+        }
+        return false
+      })
+    )
   }
 
   const logoOrganizations = await getPrismaClient().$queryRaw<Array<{ id: string }>>`

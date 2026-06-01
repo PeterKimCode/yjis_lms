@@ -66,6 +66,7 @@ export function LessonForm({
   const [videoProvider, setVideoProvider] = useState<VideoProvider>(
     lesson?.videoProvider ?? "HTML5"
   )
+  const [selectedUploadFileName, setSelectedUploadFileName] = useState("")
   const isEditing = Boolean(lesson)
   const isVideo = contentType === "VIDEO"
   const selectedVideoFileAssetId =
@@ -212,33 +213,57 @@ export function LessonForm({
                   uploaded directly in the MinIO Console do not appear here.
                 </span>
               </label>
-              <div className="space-y-2 rounded-md border bg-slate-50/80 p-3">
+              <div className="space-y-3 rounded-md border border-sky-200 bg-sky-50/80 p-3">
                 <input
                   form={uploadFormId}
                   name="classSectionId"
                   type="hidden"
                   value={classSectionId}
                 />
-                <label className="space-y-1 text-sm">
-                  <span className="font-medium">Upload video to LMS</span>
-                  <Input
-                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
-                    form={uploadFormId}
-                    name="videoFile"
-                    type="file"
-                  />
-                  <span className="block text-xs text-muted-foreground">
+                <label className="space-y-2 text-sm">
+                  <span className="font-medium text-sky-950">
+                    Upload video to LMS
+                  </span>
+                  <span className="block text-xs text-sky-800">
                     Upload through the LMS so FileAsset metadata exists for the
                     dropdown.
                   </span>
+                  <Input
+                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
+                    className="border-sky-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-sky-100 file:px-3 file:py-1 file:text-sky-800"
+                    form={uploadFormId}
+                    name="videoFile"
+                    onChange={(event) =>
+                      setSelectedUploadFileName(
+                        event.currentTarget.files?.[0]?.name ?? ""
+                      )
+                    }
+                    type="file"
+                  />
+                  {selectedUploadFileName ? (
+                    <span className="block text-xs font-medium text-sky-800">
+                      Selected: {selectedUploadFileName}
+                    </span>
+                  ) : null}
                 </label>
+                {isUploading ? (
+                  <div className="space-y-1" role="status">
+                    <div className="h-2 overflow-hidden rounded-full bg-sky-100">
+                      <div className="h-full w-1/2 animate-pulse rounded-full bg-sky-600" />
+                    </div>
+                    <p className="text-xs text-sky-800">
+                      Uploading video. Please keep this page open until it
+                      finishes.
+                    </p>
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
-                    className="bg-sky-600 text-white hover:bg-sky-700"
+                    className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300"
                     form={uploadFormId}
                     size="sm"
                     type="submit"
-                    disabled={isUploading}
+                    disabled={isUploading || !selectedUploadFileName}
                   >
                     {isUploading ? "Uploading..." : "Upload video"}
                   </Button>

@@ -1,15 +1,13 @@
-import { DeliveryMode } from "@prisma/client"
-
-import { saveCourse } from "@/modules/admin/actions"
+import {
+  CourseForm,
+  type CourseFormData,
+  type CourseFormValue,
+} from "@/modules/admin/course-form"
 import {
   AdminPageHeader,
-  AdminSelect,
   DataTable,
-  Field,
-  FormCard,
   matchesSearch,
   SearchForm,
-  SubmitButton,
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
@@ -21,6 +19,7 @@ export default async function CoursesPage({
   searchParams: Promise<{ q?: string }>
 }) {
   const data = await getAcademicSetupOptions()
+  const formData = toCourseFormData(data)
   const q = (await searchParams).q?.trim() ?? ""
   const courses = data.courses.filter((course) =>
     matchesSearch(q, [
@@ -45,7 +44,7 @@ export default async function CoursesPage({
         placeholder="Search courses..."
         resultSummary={`${courses.length} of ${data.courses.length} courses shown`}
       />
-      <CourseForm data={data} />
+      <CourseForm data={formData} />
       <DataTable
         empty="No courses yet."
         headers={["Title", "Code", "Credits", "Department", "Mode", "Edit"]}
@@ -61,7 +60,7 @@ export default async function CoursesPage({
             </TableCell>
             <TableCell>{course.defaultDeliveryMode}</TableCell>
             <TableCell>
-              <CourseForm data={data} course={course} />
+              <CourseForm data={formData} course={toCourseFormValue(course)} />
             </TableCell>
           </TableRow>
         ))}
@@ -70,78 +69,30 @@ export default async function CoursesPage({
   )
 }
 
-function CourseForm({
-  data,
-  course,
-}: {
+function toCourseFormData(
   data: Awaited<ReturnType<typeof getAcademicSetupOptions>>
-  course?: {
-    id: string
-    organizationId: string
-    campusId: string | null
-    departmentId: string | null
-    code: string | null
-    title: string
-    description: string | null
-    credits: { toString(): string } | null
-    defaultDeliveryMode: DeliveryMode
+): CourseFormData {
+  return {
+    organizationOptions: data.organizationOptions,
+    campusOptions: data.campusOptions,
+    departmentOptions: data.departmentOptions,
+    instructorOptions: data.instructorOptions,
+    studentOptions: data.studentOptions,
   }
-}) {
-  return (
-    <FormCard title={course ? "Edit course" : "Create course"}>
-      <form action={saveCourse} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <input name="id" type="hidden" value={course?.id ?? ""} />
-        <AdminSelect
-          includeEmpty={false}
-          label="Organization"
-          name="organizationId"
-          options={data.organizationOptions}
-          defaultValue={course?.organizationId}
-          required
-        />
-        <AdminSelect
-          label="Campus"
-          name="campusId"
-          options={data.campusOptions}
-          defaultValue={course?.campusId}
-        />
-        <AdminSelect
-          label="Department"
-          name="departmentId"
-          options={data.departmentOptions}
-          defaultValue={course?.departmentId}
-        />
-        <Field label="Code" name="code" defaultValue={course?.code} />
-        <Field label="Title" name="title" defaultValue={course?.title} required />
-        <Field
-          label="Credits"
-          name="credits"
-          type="number"
-          defaultValue={course?.credits?.toString() ?? ""}
-        />
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Default delivery</span>
-          <select
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            name="defaultDeliveryMode"
-            defaultValue={course?.defaultDeliveryMode ?? DeliveryMode.OFFLINE}
-          >
-            {Object.values(DeliveryMode).map((mode) => (
-              <option key={mode} value={mode}>
-                {mode}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Field
-          label="Description"
-          name="description"
-          defaultValue={course?.description}
-        />
-        <div className="flex items-end">
-          <SubmitButton />
-        </div>
-      </form>
-    </FormCard>
-  )
+}
+
+function toCourseFormValue(
+  course: Awaited<ReturnType<typeof getAcademicSetupOptions>>["courses"][number]
+): CourseFormValue {
+  return {
+    id: course.id,
+    organizationId: course.organizationId,
+    campusId: course.campusId,
+    departmentId: course.departmentId,
+    code: course.code,
+    title: course.title,
+    description: course.description,
+    credits: course.credits?.toString() ?? "",
+    defaultDeliveryMode: course.defaultDeliveryMode,
+  }
 }

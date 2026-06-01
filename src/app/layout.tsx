@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Self-Hosted School LMS",
-  description: "Local-first school LMS for self-hosted education workflows",
+  title: "Learning Management System",
+  description: "School learning, attendance, grades, and communication workflows",
   icons: {
     icon: "/icon.svg",
   },

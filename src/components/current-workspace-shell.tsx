@@ -47,7 +47,7 @@ export async function CurrentWorkspaceShell({
           <div className="mb-4 grid place-items-center">
             <Link aria-label="Go to admin overview" href="/admin">
               <Image
-                alt="General Trias College of Cavite"
+                alt="Learning Management System"
                 className="h-28 w-28 rounded-full object-contain transition-transform hover:scale-105"
                 height={112}
                 loading="eager"
