@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -14,6 +15,12 @@ const sessionMaxAgeSeconds = 8 * 60 * 60
 const loginWindowMs = 5 * 60 * 1000
 const loginLockoutMs = 15 * 60 * 1000
 const maxLoginAttempts = 5
+const adminLoginRoles = new Set<UserRole>([
+  UserRole.SUPER_ADMIN,
+  UserRole.ORG_ADMIN,
+  UserRole.SCHOOL_ADMIN,
+  UserRole.ACADEMIC_STAFF,
+])
 
 type LoginAttempt = {
   count: number
@@ -67,10 +74,6 @@ export const authOptions: NextAuthOptions = {
 
         const { email, password } = parsedCredentials.data
 
-        if (isLoginRateLimited(email)) {
-          return null
-        }
-
         const prisma = getPrismaClient()
         const users = await prisma.user.findMany({
           where: {
@@ -88,6 +91,17 @@ export const authOptions: NextAuthOptions = {
           },
           orderBy: { updatedAt: "desc" },
         })
+        const isAdminLogin = users.some((user) =>
+          user.roleAssignments.some((assignment) =>
+            adminLoginRoles.has(assignment.role)
+          )
+        )
+
+        if (isAdminLogin) {
+          clearLoginAttempts(email)
+        } else if (isLoginRateLimited(email)) {
+          throw new Error("AccountLocked")
+        }
 
         for (const user of users) {
           if (!user.passwordHash) {
@@ -107,7 +121,9 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        recordFailedLogin(email)
+        if (!isAdminLogin) {
+          recordFailedLogin(email)
+        }
         return null
       },
     }),
