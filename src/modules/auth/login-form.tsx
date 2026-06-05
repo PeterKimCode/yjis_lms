@@ -66,7 +66,13 @@ export function LoginForm({
       return
     }
 
-    setError("Invalid email or password.")
+    const message = "Invalid email or password."
+    setError(message)
+    window.dispatchEvent(
+      new CustomEvent("lms-toast", {
+        detail: { message, tone: "error" },
+      })
+    )
   }
 
   return (

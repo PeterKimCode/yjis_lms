@@ -8,6 +8,7 @@ const orgA = "org-a"
 const orgB = "org-b"
 const campusA = "campus-a"
 const campusB = "campus-b"
+const campusC = "campus-c"
 
 assert.equal(
   canAccessAdminScope(
@@ -38,11 +39,53 @@ assert.equal(
 
 assert.equal(
   canAccessAdminScope(
+    [{ role: UserRole.SCHOOL_ADMIN, organizationId: orgA, campusId: campusA }],
+    { organizationId: orgB, campusId: campusA }
+  ),
+  false,
+  "SCHOOL_ADMIN should not access a campus id under another organization"
+)
+
+assert.equal(
+  canAccessAdminScope(
     [{ role: UserRole.ORG_ADMIN, organizationId: orgA, campusId: null }],
     { organizationId: orgA, campusId: campusB }
   ),
   true,
   "ORG_ADMIN should access campuses in their organization"
+)
+
+assert.equal(
+  canAccessAdminScope(
+    [{ role: UserRole.ACADEMIC_STAFF, organizationId: orgA, campusId: campusA }],
+    { organizationId: orgA, campusId: campusA }
+  ),
+  true,
+  "ACADEMIC_STAFF with campus scope should access that campus"
+)
+
+assert.equal(
+  canAccessAdminScope(
+    [{ role: UserRole.ACADEMIC_STAFF, organizationId: orgA, campusId: campusA }],
+    { organizationId: orgA, campusId: campusC }
+  ),
+  false,
+  "ACADEMIC_STAFF with campus scope should not access another campus"
+)
+
+assert.equal(
+  canAccessAdminScope(
+    [{ role: UserRole.STUDENT, organizationId: orgA, campusId: campusA }],
+    { organizationId: orgA, campusId: campusA }
+  ),
+  false,
+  "Non-admin roles should not access admin scopes"
+)
+
+assert.equal(
+  canAccessAdminScope([], { organizationId: orgA, campusId: campusA }),
+  false,
+  "Users without role assignments should not access admin scopes"
 )
 
 assert.equal(

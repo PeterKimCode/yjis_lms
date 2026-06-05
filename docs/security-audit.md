@@ -1,6 +1,6 @@
 # LMS Security and Permission Audit
 
-Last updated: 2026-05-24
+Last updated: 2026-06-05
 
 ## Scope
 
@@ -20,6 +20,8 @@ This audit focuses on server-side authorization and data visibility for:
 
 - Credentials login uses rate limiting by email.
 - Sessions explicitly expire after 8 hours.
+- Admin accounts are excluded from the temporary in-memory lockout so emergency access is not accidentally blocked.
+- Login now distinguishes inactive accounts, locked accounts, missing passwords, and unavailable organizations from a wrong password where NextAuth exposes the credential error code.
 - Public registration is not exposed.
 - Inactive users are excluded when resolving the current authenticated user.
 
@@ -75,12 +77,26 @@ Current coverage:
 - Super admin global scope
 - Organization admin organization-only scope
 - School admin campus-only scope
+- Academic staff campus-only scope
+- Non-admin roles denied from admin scopes
+
+Run:
+
+```bash
+npm run audit:actions
+```
+
+This reports remaining Server Action raw throw candidates that should be converted to form-friendly errors over time.
+
+See also:
+
+- `docs/operations-and-security.md`
 
 ## Remaining Hardening Backlog
 
 - Add a real persistent rate-limit backend such as Redis for multi-process production deployments.
 - Add CSRF-aware stateful wrappers for all sensitive Server Actions that are not already protected by framework form semantics.
-- Convert remaining raw-throw Server Actions to `useActionState` responses for friendlier errors.
+- Continue converting remaining raw-throw Server Actions to `useActionState` responses for friendlier errors.
 - Add integration tests for:
   - file download permissions
   - assignment submission visibility
