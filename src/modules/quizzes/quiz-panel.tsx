@@ -4,6 +4,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { useActionState, useState } from "react"
 
+import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -109,14 +110,13 @@ export function QuizPanel({
   return (
     <div className="space-y-6">
       {mode === "instructor" ? (
-        <details className="rounded-md border bg-background p-3">
-          <summary className="cursor-pointer text-sm font-medium">
-            Create quiz
-          </summary>
-          <div className="pt-3">
-            <QuizForm classSectionId={classSectionId} />
-          </div>
-        </details>
+        <FormDialog
+          title="Create quiz"
+          description="Create quiz settings and optionally add questions before saving."
+          trigger="Create quiz"
+        >
+          <QuizForm classSectionId={classSectionId} />
+        </FormDialog>
       ) : null}
       <SimpleTable
         empty="No quizzes yet."
@@ -265,7 +265,7 @@ export function QuizManagePanel({
             questions, or use essay questions for manual grading.
           </p>
         </div>
-        <details className="rounded-md border p-3">
+      <details className="rounded-md border p-3">
           <summary className="cursor-pointer text-sm font-medium">
             Add question
           </summary>
@@ -310,6 +310,10 @@ function QuizForm({
     saveQuiz,
     initialQuizActionState
   )
+  const [draftQuestions, setDraftQuestions] = useState<number[]>(
+    quiz ? [] : [0]
+  )
+  const [nextDraftQuestion, setNextDraftQuestion] = useState(1)
 
   return (
     <form action={formAction} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -412,6 +416,50 @@ function QuizForm({
           defaultValue={quiz?.description ?? ""}
         />
       </Field>
+      {!quiz ? (
+        <div className="space-y-3 rounded-lg border bg-muted/20 p-3 md:col-span-2 xl:col-span-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-semibold">Questions</h3>
+              <p className="text-xs text-muted-foreground">
+                Optional. Add multiple-choice or open-ended questions now, or
+                manage questions later from the quiz detail page.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDraftQuestions((items) => [...items, nextDraftQuestion])
+                setNextDraftQuestion((value) => value + 1)
+              }}
+            >
+              Add question
+            </Button>
+          </div>
+          <input
+            name="initialQuestionKeys"
+            type="hidden"
+            value={draftQuestions.join(",")}
+          />
+          <div className="space-y-3">
+            {draftQuestions.map((key, index) => (
+              <DraftQuestionFields
+                index={index}
+                key={key}
+                questionKey={key}
+                canRemove={draftQuestions.length > 1}
+                onRemove={() =>
+                  setDraftQuestions((items) =>
+                    items.filter((item) => item !== key)
+                  )
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
       <ActionMessage state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
@@ -419,6 +467,93 @@ function QuizForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+function DraftQuestionFields({
+  canRemove,
+  index,
+  onRemove,
+  questionKey,
+}: {
+  canRemove: boolean
+  index: number
+  onRemove: () => void
+  questionKey: number
+}) {
+  const [type, setType] = useState<QuestionType>("MULTIPLE_CHOICE")
+  const prefix = `initialQuestion_${questionKey}`
+
+  return (
+    <div className="space-y-3 rounded-md border bg-background p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-medium">Question {index + 1}</h4>
+        {canRemove ? (
+          <Button size="sm" type="button" variant="outline" onClick={onRemove}>
+            Remove
+          </Button>
+        ) : null}
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Question type" help="Open ended is manually graded.">
+          <select
+            className="h-9 rounded-md border bg-background px-3 text-sm"
+            name={`${prefix}_type`}
+            value={type}
+            onChange={(event) => setType(event.target.value as QuestionType)}
+          >
+            <option value="MULTIPLE_CHOICE">Multiple choice</option>
+            <option value="ESSAY">Open ended</option>
+          </select>
+        </Field>
+        <Field label="Points" help="Score for this question.">
+          <Input
+            inputMode="decimal"
+            min="0"
+            name={`${prefix}_points`}
+            placeholder="Example: 10"
+            step="0.5"
+            type="number"
+            defaultValue="1"
+          />
+        </Field>
+        <Field label="Prompt" className="md:col-span-2">
+          <Textarea
+            name={`${prefix}_prompt`}
+            placeholder="Type the question students will answer."
+            rows={2}
+          />
+        </Field>
+      </div>
+      {type === "MULTIPLE_CHOICE" ? (
+        <div className="grid gap-2">
+          {[0, 1, 2, 3].map((optionIndex) => (
+            <Input
+              key={optionIndex}
+              name={`${prefix}_option${optionIndex}`}
+              placeholder={`Answer ${optionIndex + 1}`}
+            />
+          ))}
+          <Field label="Correct answer" help="Select the correct option.">
+            <select
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              name={`${prefix}_correctOptionIndex`}
+              defaultValue="0"
+            >
+              {[0, 1, 2, 3].map((optionIndex) => (
+                <option key={optionIndex} value={optionIndex}>
+                  Answer {optionIndex + 1}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      ) : (
+        <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+          Open-ended questions are saved as essay questions and graded manually.
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -822,14 +957,13 @@ export function ExamPanel({
 }) {
   return (
     <div className="space-y-4">
-      <details className="rounded-md border bg-background p-3">
-        <summary className="cursor-pointer text-sm font-medium">
-          Create exam
-        </summary>
-        <div className="pt-3">
-          <ExamForm classSectionId={classSectionId} />
-        </div>
-      </details>
+      <FormDialog
+        title="Create exam"
+        description="Schedule a midterm, final, practical, oral, or custom exam."
+        trigger="Create exam"
+      >
+        <ExamForm classSectionId={classSectionId} />
+      </FormDialog>
       <SimpleTable
         empty="No exams yet."
         headers={["Title", "Type", "Starts", "Ends", "Max score", "Location"]}

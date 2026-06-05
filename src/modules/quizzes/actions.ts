@@ -128,6 +128,14 @@ export async function saveQuiz(
         organizationId: classSection.organizationId,
       },
     })
+    const questionResult = await createInitialQuizQuestions({
+      formData,
+      organizationId: classSection.organizationId,
+      quizId: quiz.id,
+    })
+    if (!questionResult.ok) {
+      return questionResult
+    }
     if (data.isPublished) {
       await notifyClassStudents(data.classSectionId, {
         actionUrl: `/student/classes/${data.classSectionId}`,
@@ -159,6 +167,97 @@ export async function saveQuiz(
   }
   revalidatePath(`/student/classes/${data.classSectionId}`)
   return { ok: true, message: id ? "Quiz saved." : "Quiz created." }
+}
+
+async function createInitialQuizQuestions({
+  formData,
+  organizationId,
+  quizId,
+}: {
+  formData: FormData
+  organizationId: string
+  quizId: string
+}): Promise<QuizActionState> {
+  const keys = String(formData.get("initialQuestionKeys") ?? "")
+    .split(",")
+    .map((key) => key.trim())
+    .filter(Boolean)
+
+  if (!keys.length) return { ok: true, message: "" }
+
+  const prisma = getPrismaClient()
+  for (const [index, key] of keys.entries()) {
+    const prefix = `initialQuestion_${key}`
+    const prompt = String(formData.get(`${prefix}_prompt`) ?? "").trim()
+
+    if (!prompt) continue
+
+    const type =
+      String(formData.get(`${prefix}_type`) ?? QuestionType.MULTIPLE_CHOICE) ===
+      QuestionType.ESSAY
+        ? QuestionType.ESSAY
+        : QuestionType.MULTIPLE_CHOICE
+    const points = Number(formData.get(`${prefix}_points`) ?? 1)
+    if (!Number.isFinite(points) || points < 0) {
+      return { ok: false, message: "Question points must be 0 or greater." }
+    }
+
+    const correctOptionIndex = Number(
+      formData.get(`${prefix}_correctOptionIndex`) ?? 0
+    )
+    const answerKey =
+      type === QuestionType.MULTIPLE_CHOICE
+        ? { correctOptionIndex }
+        : Prisma.JsonNull
+    const options =
+      type === QuestionType.MULTIPLE_CHOICE
+        ? [0, 1, 2, 3]
+            .map((optionIndex) => ({
+              index: optionIndex,
+              text: String(
+                formData.get(`${prefix}_option${optionIndex}`) ?? ""
+              ).trim(),
+            }))
+            .filter((option) => option.text.length > 0)
+        : []
+
+    if (type === QuestionType.MULTIPLE_CHOICE) {
+      if (options.length < 2) {
+        return {
+          ok: false,
+          message: "Multiple-choice questions need at least two non-empty options.",
+        }
+      }
+      if (!options.some((option) => option.index === correctOptionIndex)) {
+        return { ok: false, message: "Correct answer option is invalid." }
+      }
+    }
+
+    const question = await prisma.question.create({
+      data: {
+        answerKey,
+        organizationId,
+        points: new Prisma.Decimal(points),
+        prompt,
+        quizId,
+        sequence: index + 1,
+        type,
+      },
+    })
+
+    if (type === QuestionType.MULTIPLE_CHOICE) {
+      await prisma.questionOption.createMany({
+        data: options.map((option) => ({
+          isCorrect: option.index === correctOptionIndex,
+          questionId: question.id,
+          sequence: option.index + 1,
+          text: option.text,
+        })),
+      })
+    }
+  }
+
+  return { ok: true, message: "" }
 }
 
 const questionSchema = z.object({

@@ -37,29 +37,48 @@ export function NewMessageForm({
     "DIRECT"
   )
   const [recipientKey, setRecipientKey] = useState("")
+  const availableModes = useMemo(() => {
+    const modes: Array<{
+      label: string
+      value: "CLASS_SECTION" | "DIRECT" | "PARENT_TEACHER"
+    }> = []
+    if (directOptions.some((option) => option.type === "DIRECT")) {
+      modes.push({ label: "DM", value: "DIRECT" })
+    }
+    if (directOptions.some((option) => option.type === "PARENT_TEACHER")) {
+      modes.push({ label: "Parent", value: "PARENT_TEACHER" })
+    }
+    if (classGroupOptions.length) {
+      modes.push({ label: "Class group", value: "CLASS_SECTION" })
+    }
+    return modes
+  }, [classGroupOptions.length, directOptions])
+  const currentMode = availableModes.some((item) => item.value === mode)
+    ? mode
+    : availableModes[0]?.value ?? "DIRECT"
   const filteredRecipients = useMemo(
-    () => directOptions.filter((option) => option.type === mode),
-    [directOptions, mode]
+    () => directOptions.filter((option) => option.type === currentMode),
+    [directOptions, currentMode]
   )
   const selectedRecipient = filteredRecipients.find(
     (option) =>
       `${option.type}:${option.userId}:${option.classSectionId}` === recipientKey
   )
   const recipientLabel =
-    mode === "PARENT_TEACHER"
+    currentMode === "PARENT_TEACHER"
       ? filteredRecipients.some((option) => option.targetKind === "PARENT")
         ? "Parent"
         : "Teacher"
       : "Recipient"
   const recipientPlaceholder =
-    mode === "PARENT_TEACHER"
+    currentMode === "PARENT_TEACHER"
       ? filteredRecipients.some((option) => option.targetKind === "PARENT")
         ? "Select a parent"
         : "Select a teacher"
       : "Select a student or teacher"
 
   return (
-    <details className="rounded-lg border bg-background p-4" open>
+    <details className="rounded-xl border bg-white/90 p-4 shadow-sm" open>
       <summary className="cursor-pointer text-sm font-medium">
         New message
       </summary>
@@ -69,20 +88,27 @@ export function NewMessageForm({
           <select
             className="h-9 rounded-md border bg-background px-3 text-sm"
             name="mode"
-            value={mode}
+            value={currentMode}
             onChange={(event) => {
               setMode(event.target.value as typeof mode)
               setRecipientKey("")
             }}
             required
           >
-            <option value="DIRECT">DM</option>
-            <option value="PARENT_TEACHER">Parent</option>
-            <option value="CLASS_SECTION">Class group</option>
+            {availableModes.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
+          {!availableModes.length ? (
+            <span className="text-xs text-muted-foreground">
+              No conversation types are available for your account.
+            </span>
+          ) : null}
         </label>
 
-        {mode === "CLASS_SECTION" ? (
+        {currentMode === "CLASS_SECTION" ? (
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Class group</span>
             <select
@@ -133,7 +159,7 @@ export function NewMessageForm({
               </select>
               {!filteredRecipients.length ? (
                 <span className="text-xs text-muted-foreground">
-                  {mode === "PARENT_TEACHER"
+                  {currentMode === "PARENT_TEACHER"
                     ? "No parents are available to message."
                     : "No direct recipients are available for your role."}
                 </span>
@@ -143,7 +169,7 @@ export function NewMessageForm({
         )}
 
         <label className="grid gap-1 text-sm">
-          <span className="font-medium">First message</span>
+          <span className="font-medium">Message</span>
           <textarea
             className="min-h-24 rounded-md border bg-background px-3 py-2 text-sm"
             maxLength={MESSAGE_BODY_MAX_LENGTH}
@@ -157,7 +183,7 @@ export function NewMessageForm({
         </label>
         <ActionMessage state={state} />
         <div>
-          <Button size="sm" type="submit">
+          <Button size="sm" type="submit" disabled={!availableModes.length}>
             Start conversation
           </Button>
         </div>

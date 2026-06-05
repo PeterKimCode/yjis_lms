@@ -261,21 +261,22 @@ export function LessonForm({
       <form action={saveAction} className="space-y-3">
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
         <input name="classSectionId" type="hidden" value={classSectionId} />
+        {lesson ? (
+          <input name="sequence" type="hidden" value={lesson.sequence} />
+        ) : null}
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1 text-sm">
             <span className="font-medium">Title</span>
             <Input name="title" required defaultValue={lesson?.title ?? ""} />
           </label>
-          <label className="space-y-1 text-sm">
-            <span className="font-medium">Order</span>
-            <Input
-              min={1}
-              name="sequence"
-              required
-              type="number"
-              defaultValue={lesson?.sequence ?? 1}
-            />
-          </label>
+          {lesson ? (
+            <div className="space-y-1 text-sm">
+              <span className="font-medium">Order</span>
+              <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                {lesson.sequence}
+              </div>
+            </div>
+          ) : null}
           <label className="space-y-1 text-sm">
             <span className="font-medium">Content type</span>
             <select

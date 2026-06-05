@@ -42,7 +42,7 @@ export default async function MessagesPage({
             directOptions={options.directOptions}
           />
 
-          <form className="lms-soft-panel flex flex-col gap-2 rounded-lg p-4 md:flex-row">
+          <form className="lms-soft-panel flex flex-col gap-2 rounded-xl p-4 shadow-sm md:flex-row">
             <input
               className="h-9 rounded-md border bg-background px-3 text-sm md:max-w-sm"
               defaultValue={q}
@@ -77,14 +77,14 @@ export default async function MessagesPage({
 
                 return (
                   <Link
-                    className="lms-card lms-card-hover rounded-lg p-4"
+                    className="group rounded-2xl border bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                     href={`/messages/${conversation.id}`}
                     key={conversation.id}
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="font-semibold">
+                          <h2 className="font-semibold group-hover:text-primary">
                             {conversation.displayTitle}
                           </h2>
                           <StatusBadge
@@ -98,7 +98,7 @@ export default async function MessagesPage({
                             />
                           ) : null}
                         </div>
-                        <p className="mt-1 truncate text-sm text-muted-foreground">
+                        <p className="mt-2 truncate rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
                           {lastMessage
                             ? `${lastMessage.sender?.name ?? "Unknown"}: ${lastMessage.body}`
                             : "No messages yet."}

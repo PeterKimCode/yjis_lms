@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -201,11 +202,14 @@ export async function BoardDetailPage({
                     type="post"
                   />
                   {data.canManage || post.authorId === data.user?.id ? (
-                    <details className="mt-4 rounded-md border p-3">
-                      <summary className="cursor-pointer text-sm font-medium">
-                        Edit post
-                      </summary>
-                      <form action={updatePost} className="grid gap-3 pt-3">
+                    <div className="mt-4">
+                      <FormDialog
+                        title={`Edit post: ${post.title}`}
+                        description="Update this post and add images if needed."
+                        trigger="Edit post"
+                        variant="outline"
+                      >
+                      <form action={updatePost} className="grid gap-3">
                         <input name="boardId" type="hidden" value={board.id} />
                         <input name="postId" type="hidden" value={post.id} />
                         <label className="grid gap-1 text-sm">
@@ -278,7 +282,8 @@ export async function BoardDetailPage({
                         <input name="boardId" type="hidden" value={board.id} />
                         <input name="postId" type="hidden" value={post.id} />
                       </form>
-                    </details>
+                      </FormDialog>
+                    </div>
                   ) : null}
                   <details className="mt-4 rounded-md border p-3">
                     <summary className="cursor-pointer text-sm font-medium">
@@ -309,13 +314,16 @@ export async function BoardDetailPage({
                               type="comment"
                             />
                             {data.canManage || comment.authorId === data.user?.id ? (
-                              <details className="mt-2">
-                                <summary className="cursor-pointer text-xs font-medium">
-                                  Edit comment
-                                </summary>
+                              <div className="mt-2">
+                                <FormDialog
+                                  title="Edit comment"
+                                  description="Update the comment text or replace its image."
+                                  trigger="Edit comment"
+                                  variant="outline"
+                                >
                                 <form
                                   action={updateComment}
-                                  className="mt-2 grid gap-2"
+                                  className="grid gap-2"
                                 >
                                   <input
                                     name="commentId"
@@ -370,7 +378,8 @@ export async function BoardDetailPage({
                                     value={comment.id}
                                   />
                                 </form>
-                              </details>
+                                </FormDialog>
+                              </div>
                             ) : null}
                           </div>
                         ))
@@ -400,7 +409,11 @@ export async function BoardDetailPage({
                             10MB.
                           </label>
                           <div>
-                            <Button size="sm" type="submit" variant="outline">
+                            <Button
+                              className="bg-sky-700 text-white hover:bg-sky-800"
+                              size="sm"
+                              type="submit"
+                            >
                               Add comment
                             </Button>
                           </div>

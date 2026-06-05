@@ -27,13 +27,17 @@ const optionalInt = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
   z.coerce.number().int().min(0).optional().nullable().transform((value) => value ?? null)
 )
+const optionalSequence = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.coerce.number().int().min(1).optional()
+)
 
 const lessonSchema = z.object({
   id: optionalString,
   classSectionId: requiredString,
   title: requiredString,
   description: optionalString,
-  sequence: z.coerce.number().int().min(1),
+  sequence: optionalSequence,
   contentType: z.nativeEnum(LessonContentType),
   videoProvider: z.nativeEnum(VideoProvider).optional().default(VideoProvider.HTML5),
   videoUrl: optionalString,
@@ -98,7 +102,7 @@ export async function saveLesson(
     classSectionId: formData.get("classSectionId") ?? "",
     title: formData.get("title") ?? "",
     description: formData.get("description") ?? "",
-    sequence: formData.get("sequence") ?? "1",
+    sequence: formData.get("sequence") ?? "",
     contentType: formData.get("contentType") ?? LessonContentType.TEXT,
     videoProvider: formData.get("videoProvider") ?? VideoProvider.HTML5,
     videoUrl: formData.get("videoUrl") ?? "",
@@ -147,10 +151,17 @@ export async function saveLesson(
   }
 
   const { id, ...values } = data
+  const sequence =
+    values.sequence ??
+    ((await prisma.lesson.aggregate({
+      where: { classSectionId: data.classSectionId },
+      _max: { sequence: true },
+    }))._max.sequence ?? 0) + 1
   const lessonValues =
     values.contentType === LessonContentType.VIDEO
       ? {
           ...values,
+          sequence,
           videoFileAssetId:
             values.videoProvider === VideoProvider.YOUTUBE
               ? null
@@ -159,12 +170,14 @@ export async function saveLesson(
       : values.contentType === LessonContentType.FILE
         ? {
             ...values,
+            sequence,
             videoProvider: VideoProvider.HTML5,
             videoUrl: null,
             durationSeconds: null,
           }
       : {
           ...values,
+          sequence,
           videoProvider: VideoProvider.HTML5,
           videoUrl: null,
           videoFileAssetId: null,

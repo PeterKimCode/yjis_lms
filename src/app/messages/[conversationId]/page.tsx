@@ -54,7 +54,7 @@ export default async function ConversationPage({
             </div>
           </div>
 
-          <section className="lms-soft-panel space-y-3 rounded-lg p-4">
+          <section className="lms-soft-panel space-y-4 rounded-2xl p-4 shadow-sm">
             {conversation.messages.length ? (
               conversation.messages.map((message) => {
                 const own = message.senderId === user.id
@@ -65,17 +65,17 @@ export default async function ConversationPage({
                     key={message.id}
                   >
                     <article
-                      className={`max-w-[80%] rounded-lg border p-3 shadow-sm ${
+                      className={`max-w-[min(82%,720px)] rounded-2xl border px-4 py-3 shadow-sm ${
                         own
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "bg-muted/50"
+                          : "border-slate-200 bg-white"
                       }`}
                     >
                       <p className="text-xs opacity-80">
                         {message.sender?.name ?? "Unknown"} ·{" "}
                         {formatDate(message.createdAt)}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm">
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
                         {message.body}
                       </p>
                       {own ? (

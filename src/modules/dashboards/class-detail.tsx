@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react"
 import { AttendanceStatus, DeliveryMode } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
+import { FormDialog } from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -156,21 +157,17 @@ export async function ClassSectionDetail({
         >
           <div className="space-y-4">
             {mode === "instructor" ? (
-              <details
-                className="rounded-md border bg-background p-3"
-                open={!section.lessons.length}
+              <FormDialog
+                title="Create lesson"
+                description="Add a text, video, or file lesson. Lesson order is assigned automatically."
+                trigger="Create lesson"
               >
-                <summary className="cursor-pointer text-sm font-medium">
-                  Create lesson
-                </summary>
-                <div className="pt-3">
-                  <LessonForm
-                    classSectionId={section.id}
-                    fileAssetOptions={lessonFileOptions}
-                    videoFileOptions={videoFileOptions}
-                  />
-                </div>
-              </details>
+                <LessonForm
+                  classSectionId={section.id}
+                  fileAssetOptions={lessonFileOptions}
+                  videoFileOptions={videoFileOptions}
+                />
+              </FormDialog>
             ) : null}
             <SimpleTable
               empty={
@@ -188,6 +185,7 @@ export async function ClassSectionDetail({
                       "Published",
                       "Completion",
                       "Preview",
+                      "Edit",
                     ]
                   : ["Order", "Title", "Type", "Progress", "Open"]
               }
@@ -225,6 +223,21 @@ export async function ClassSectionDetail({
                         <TableCell>
                           <LessonPreviewLink lesson={lesson} />
                         </TableCell>
+                        <TableCell>
+                          <FormDialog
+                            title={`Edit lesson: ${lesson.title}`}
+                            description="Update lesson content, publication, and attached video or file."
+                            trigger="Edit"
+                            variant="outline"
+                          >
+                            <LessonForm
+                              classSectionId={section.id}
+                              fileAssetOptions={lessonFileOptions}
+                              lesson={toLessonFormValue(lesson)}
+                              videoFileOptions={videoFileOptions}
+                            />
+                          </FormDialog>
+                        </TableCell>
                       </>
                     ) : (
                       <>
@@ -246,33 +259,6 @@ export async function ClassSectionDetail({
                 )
               })}
             />
-            {mode === "instructor" && section.lessons.length ? (
-              <details className="rounded-md border bg-background p-3" open={!section.boards.length}>
-                <summary className="cursor-pointer text-sm font-medium">
-                  Edit lessons
-                </summary>
-                <div className="space-y-3 pt-3">
-                  {section.lessons.map((lesson) => (
-                    <details
-                      className="rounded-md border bg-background p-3"
-                      key={lesson.id}
-                    >
-                      <summary className="cursor-pointer text-sm font-medium">
-                        {lesson.sequence}. {lesson.title}
-                      </summary>
-                      <div className="pt-3">
-                        <LessonForm
-                          classSectionId={section.id}
-                          fileAssetOptions={lessonFileOptions}
-                          lesson={toLessonFormValue(lesson)}
-                          videoFileOptions={videoFileOptions}
-                        />
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              </details>
-            ) : null}
             {mode === "instructor" && selectedLesson ? (
               <div className="space-y-3" id="lesson-progress">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -334,13 +320,15 @@ export async function ClassSectionDetail({
           title="Sessions"
         >
           {mode === "instructor" ? (
-            <details className="mb-4 rounded-md border bg-background p-3">
-              <summary className="cursor-pointer text-sm font-medium">
-                Create session
-              </summary>
+            <div className="mb-4">
+              <FormDialog
+                title="Create session"
+                description="Schedule a class meeting. Attendance can be created from the session list after saving."
+                trigger="Create session"
+              >
               <form
                 action={createClassSession}
-                className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-3"
+                className="grid gap-3 md:grid-cols-2 xl:grid-cols-3"
               >
                 <input name="classSectionId" type="hidden" value={section.id} />
                 <label className="grid gap-1 text-sm">
@@ -383,7 +371,8 @@ export async function ClassSectionDetail({
                   </Button>
                 </div>
               </form>
-            </details>
+              </FormDialog>
+            </div>
           ) : null}
           <SimpleTable
             empty="No class sessions yet."

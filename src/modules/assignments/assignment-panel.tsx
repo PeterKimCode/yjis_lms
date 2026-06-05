@@ -2,6 +2,7 @@
 
 import { useActionState } from "react"
 
+import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -63,17 +64,16 @@ export function AssignmentPanel({
     <div className="space-y-4">
       {mode === "instructor" ? (
         <>
-          <details className="rounded-md border bg-background p-3">
-            <summary className="cursor-pointer text-sm font-medium">
-              Create assignment
-            </summary>
-            <div className="pt-3">
-              <AssignmentForm
-                classSectionId={classSectionId}
-                defaultAcceptsLate={defaultAcceptsLate}
-              />
-            </div>
-          </details>
+          <FormDialog
+            title="Create assignment"
+            description="Set assignment details, due date, late submission behavior, and max score."
+            trigger="Create assignment"
+          >
+            <AssignmentForm
+              classSectionId={classSectionId}
+              defaultAcceptsLate={defaultAcceptsLate}
+            />
+          </FormDialog>
           <p className="text-xs text-muted-foreground">
             Instructor-provided assignment attachments are not in the current
             schema yet. Student submission attachments are supported below.
@@ -216,18 +216,18 @@ function InstructorAssignmentList({
                 Manage assignment
               </summary>
               <div className="mt-3 grid gap-3">
-                <details className="rounded-md border bg-background p-3">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    Edit assignment
-                  </summary>
-                  <div className="pt-3">
-                    <AssignmentForm
-                      assignment={assignment}
-                      classSectionId={classSectionId}
-                      defaultAcceptsLate={defaultAcceptsLate}
-                    />
-                  </div>
-                </details>
+                <FormDialog
+                  title={`Edit assignment: ${assignment.title}`}
+                  description="Update assignment details and grading settings."
+                  trigger="Edit assignment"
+                  variant="outline"
+                >
+                  <AssignmentForm
+                    assignment={assignment}
+                    classSectionId={classSectionId}
+                    defaultAcceptsLate={defaultAcceptsLate}
+                  />
+                </FormDialog>
                 <details className="rounded-md border bg-background p-3">
                   <summary className="cursor-pointer text-sm font-medium">
                     Review submissions

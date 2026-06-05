@@ -5,18 +5,9 @@ import { signIn } from "next-auth/react"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
-const demoAccounts = [
-  ["Super Admin", "super.admin@demo.local"],
-  ["School Admin", "school.admin@demo.local"],
-  ["Instructor", "instructor@demo.local"],
-  ["Student", "student@demo.local"],
-  ["Parent", "parent@demo.local"],
-] as const
-
-const demoPassword = "DemoPass123!"
 const lockedMessage =
   "This account is temporarily locked because there were too many failed login attempts. Please wait 15 minutes or contact an administrator."
 const loginErrorMessages: Record<string, string> = {
@@ -40,8 +31,8 @@ export function LoginForm({
     hasError ? "Invalid email or password." : ""
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [email, setEmail] = useState("student@demo.local")
-  const [password, setPassword] = useState(demoPassword)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -76,38 +67,8 @@ export function LoginForm({
 
   return (
     <Card>
-      <CardHeader className="space-y-1">
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>Demo accounts use password {demoPassword}.</p>
-          <div className="space-y-2">
-            {demoAccounts.map(([label, accountEmail]) => (
-              <div
-                className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
-                key={accountEmail}
-              >
-                <span>
-                  <span className="font-medium text-foreground">{label}:</span>{" "}
-                  {accountEmail}
-                </span>
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEmail(accountEmail)
-                    setPassword(demoPassword)
-                    setError("")
-                  }}
-                >
-                  Use
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardHeader>
       <form action="/login" method="post" onSubmit={handleSubmit}>
-        <CardContent className="space-y-5 pb-3">
+        <CardContent className="space-y-5 pt-6 pb-3">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">
               Email
