@@ -5,6 +5,7 @@ import type { ReactNode } from "react"
 import { useActionState, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -843,9 +844,12 @@ function DeleteQuestionForm({ questionId }: { questionId: string }) {
     <form action={formAction} className="space-y-2">
       <input name="questionId" type="hidden" value={questionId} />
       <ActionFeedback state={state} />
-      <Button size="sm" type="submit" variant="destructive" disabled={pending}>
+      <ConfirmSubmitButton
+        confirmMessage="Delete this question? Student attempts may be affected."
+        disabled={pending}
+      >
         Delete question
-      </Button>
+      </ConfirmSubmitButton>
     </form>
   )
 }

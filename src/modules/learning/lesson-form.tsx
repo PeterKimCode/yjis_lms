@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useRef, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -575,9 +576,9 @@ export function LessonForm({
       {lesson ? (
         <form action={deleteLesson}>
           <input name="lessonId" type="hidden" value={lesson.id} />
-          <Button size="sm" type="submit" variant="destructive">
+          <ConfirmSubmitButton confirmMessage="Delete this lesson? Students will no longer see it.">
             Delete
-          </Button>
+          </ConfirmSubmitButton>
         </form>
       ) : null}
     </div>

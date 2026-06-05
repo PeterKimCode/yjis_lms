@@ -58,7 +58,11 @@ export function LoginForm({
     if (result?.error && loginErrorMessages[result.error]) {
       const message = loginErrorMessages[result.error]
       setError(message)
-      window.alert(message)
+      window.dispatchEvent(
+        new CustomEvent("lms-toast", {
+          detail: { message, tone: "error" },
+        })
+      )
       return
     }
 

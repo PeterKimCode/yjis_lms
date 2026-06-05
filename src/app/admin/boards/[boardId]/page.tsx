@@ -6,6 +6,7 @@ import { BoardForm } from "@/modules/boards/board-form"
 import { getBoardDetail } from "@/modules/boards/data"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 import { Button } from "@/components/ui/button"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { getBoardSettings } from "@/modules/boards/constants"
 
 export default async function AdminBoardDetailPage({
@@ -84,15 +85,18 @@ export default async function AdminBoardDetailPage({
             </Button>
             <form action={deactivateBoard}>
               <input name="boardId" type="hidden" value={detail.board.id} />
-              <Button size="sm" type="submit" variant="outline">
+              <ConfirmSubmitButton
+                confirmMessage="Deactivate this board? Normal users will no longer see it."
+                variant="outline"
+              >
                 Deactivate board
-              </Button>
+              </ConfirmSubmitButton>
             </form>
             <form action={deleteBoard}>
               <input name="boardId" type="hidden" value={detail.board.id} />
-              <Button size="sm" type="submit" variant="destructive">
+              <ConfirmSubmitButton confirmMessage="Delete this board if it has no posts?">
                 Delete if empty
-              </Button>
+              </ConfirmSubmitButton>
             </form>
           </div>
         </div>

@@ -143,7 +143,7 @@ export function DataTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
+    <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
       <Table className={minWidth}>
         <TableHeader>
           <TableRow>

@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react"
 import { UserRole } from "@prisma/client"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { saveUserWithState } from "@/modules/admin/actions"
 import { initialAdminFormState } from "@/modules/admin/form-state"
 import {
@@ -93,18 +94,9 @@ export function UserForm({
 
   return (
     <FormCard title={user ? "Edit user" : "Create user"}>
-      {state.message ? (
-        <div
-          className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
-            state.ok
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-700"
-          }`}
-          role="status"
-        >
-          {state.message}
-        </div>
-      ) : null}
+      <div className="mb-3">
+        <ActionFeedback state={state} />
+      </div>
       <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <input name="id" type="hidden" value={user?.id ?? ""} />
         <label className="grid min-w-0 gap-1 text-sm">

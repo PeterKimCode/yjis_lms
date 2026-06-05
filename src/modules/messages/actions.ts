@@ -163,7 +163,8 @@ export async function deleteMessage(formData: FormData) {
     message.conversationId !== data.conversationId ||
     message.senderId !== user.id
   ) {
-    throw new Error("You can delete only your own message.")
+    revalidatePath(`/messages/${data.conversationId}`)
+    return
   }
 
   await getPrismaClient().message.delete({ where: { id: data.messageId } })

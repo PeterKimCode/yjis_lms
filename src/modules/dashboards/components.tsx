@@ -152,12 +152,14 @@ export function SimpleTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
-      <Table>
+    <div className="max-h-[70vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             {headers.map((header) => (
-              <TableHead key={header}>{header}</TableHead>
+              <TableHead className="whitespace-nowrap" key={header}>
+                {header}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>

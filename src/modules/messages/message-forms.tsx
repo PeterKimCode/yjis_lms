@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { Button } from "@/components/ui/button"
 import {
   editMessage,
@@ -181,7 +182,7 @@ export function NewMessageForm({
             Text only. No image or file uploads in messenger.
           </span>
         </label>
-        <ActionMessage state={state} />
+        <ActionFeedback state={state} />
         <div>
           <Button size="sm" type="submit" disabled={!availableModes.length}>
             Start conversation
@@ -211,7 +212,7 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
           Text only for now. Attachments are not enabled in messenger.
         </span>
       </label>
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <div>
         <Button size="sm" type="submit">
           Send
@@ -245,7 +246,7 @@ export function EditMessageForm({
           defaultValue={body}
           required
         />
-        <ActionMessage state={state} />
+        <ActionFeedback state={state} />
         <div>
           <Button size="sm" type="submit" variant="outline">
             Save
@@ -254,16 +255,4 @@ export function EditMessageForm({
       </form>
     </details>
   )
-}
-
-function ActionMessage({ state }: { state: { ok: boolean; message: string } }) {
-  return state.message ? (
-    <p
-      className={`rounded-md border p-2 text-sm ${
-        state.ok ? "text-muted-foreground" : "text-destructive"
-      }`}
-    >
-      {state.message}
-    </p>
-  ) : null
 }

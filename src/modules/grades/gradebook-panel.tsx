@@ -2,6 +2,8 @@
 
 import { useActionState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -435,7 +437,7 @@ function ModuleWeightForm({
         placeholder="Example: 20 for 20%"
         value={weights.examsWeight}
       />
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : "Save weights"}
@@ -541,7 +543,7 @@ function GradeCategoryForm({
           defaultValue={category?.sequence ?? 1}
         />
       </label>
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : category ? "Save category" : "Create category"}
@@ -560,10 +562,13 @@ function DeleteCategoryForm({ categoryId }: { categoryId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input name="categoryId" type="hidden" value={categoryId} />
-      <ActionMessage state={state} />
-      <Button size="sm" type="submit" variant="destructive" disabled={pending}>
+      <ActionFeedback state={state} />
+      <ConfirmSubmitButton
+        confirmMessage="Delete this grade category? Related grade items may be affected."
+        disabled={pending}
+      >
         Delete category
-      </Button>
+      </ConfirmSubmitButton>
     </form>
   )
 }
@@ -688,7 +693,7 @@ function GradeItemForm({
         <span className="font-medium">Due/occurred at</span>
         <Input name="dueAt" type="datetime-local" defaultValue={toLocalInputDate(item?.dueAt)} />
       </label>
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : item ? "Save item" : "Create item"}
@@ -771,10 +776,13 @@ function DeleteGradeItemForm({ gradeItemId }: { gradeItemId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input name="gradeItemId" type="hidden" value={gradeItemId} />
-      <ActionMessage state={state} />
-      <Button size="sm" type="submit" variant="destructive" disabled={pending}>
+      <ActionFeedback state={state} />
+      <ConfirmSubmitButton
+        confirmMessage="Delete this grade item? Entered student scores may be affected."
+        disabled={pending}
+      >
         Delete item
-      </Button>
+      </ConfirmSubmitButton>
     </form>
   )
 }
@@ -853,7 +861,7 @@ function ScoreEntryCells({
           rows={2}
           defaultValue={score?.feedback ?? ""}
         />
-        <ActionMessage state={state} />
+        <ActionFeedback state={state} />
       </TableCell>
       <TableCell>
         <Button
@@ -925,20 +933,9 @@ function GradeActionForm({
       <Button size="sm" type="submit" variant="outline" disabled={pending}>
         {pending ? "Working..." : buttonLabel}
       </Button>
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
     </form>
   )
-}
-
-function ActionMessage({ state }: { state: { ok: boolean; message: string } }) {
-  return state.message ? (
-    <p
-      className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-      role="status"
-    >
-      {state.message}
-    </p>
-  ) : null
 }
 
 function formatDateTime(value: string | null | undefined) {

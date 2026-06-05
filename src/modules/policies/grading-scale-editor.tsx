@@ -2,11 +2,11 @@
 
 import { useActionState, useState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   initialPolicyActionState,
-  type PolicyActionState,
 } from "@/modules/policies/action-state"
 import { saveGradingScale } from "@/modules/policies/actions"
 import type { SerializedGradingScale } from "@/modules/policies/types"
@@ -151,21 +151,10 @@ export function GradingScaleEditor({
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : "Save grading scale"}
         </Button>
-        <ActionMessage state={state} />
+        <ActionFeedback state={state} />
       </div>
     </form>
   )
-}
-
-function ActionMessage({ state }: { state: PolicyActionState }) {
-  return state.message ? (
-    <p
-      className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-      role="status"
-    >
-      {state.message}
-    </p>
-  ) : null
 }
 
 function getRangeWarning(rows: Row[]) {
@@ -191,4 +180,3 @@ function getRangeWarning(rows: Row[]) {
   }
   return null
 }
-

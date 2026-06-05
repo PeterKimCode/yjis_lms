@@ -3,6 +3,7 @@
 import { useActionState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -345,9 +346,12 @@ function DeleteAssignmentForm({ assignmentId }: { assignmentId: string }) {
     <form action={formAction} className="space-y-2">
       <input name="assignmentId" type="hidden" value={assignmentId} />
       <ActionFeedback state={state} />
-      <Button size="sm" type="submit" variant="destructive" disabled={pending}>
+      <ConfirmSubmitButton
+        confirmMessage="Delete this assignment? Existing submissions may be affected."
+        disabled={pending}
+      >
         Delete assignment
-      </Button>
+      </ConfirmSubmitButton>
     </form>
   )
 }

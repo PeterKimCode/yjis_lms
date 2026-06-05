@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/modules/dashboards/components"
 import { deleteMessage } from "@/modules/messages/actions"
@@ -92,9 +93,9 @@ export default async function ConversationPage({
                               value={conversation.id}
                             />
                             <input name="messageId" type="hidden" value={message.id} />
-                            <Button size="sm" type="submit" variant="destructive">
+                            <ConfirmSubmitButton confirmMessage="Delete this message?">
                               Delete
-                            </Button>
+                            </ConfirmSubmitButton>
                           </form>
                         </div>
                       ) : null}

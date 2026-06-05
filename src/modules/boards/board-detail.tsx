@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -268,14 +269,12 @@ export async function BoardDetailPage({
                           <Button size="sm" type="submit">
                             Save post
                           </Button>
-                          <Button
+                          <ConfirmSubmitButton
+                            confirmMessage="Delete this post? Comments under it will no longer be visible."
                             form={`delete-post-${post.id}`}
-                            size="sm"
-                            type="submit"
-                            variant="destructive"
                           >
                             Delete post
-                          </Button>
+                          </ConfirmSubmitButton>
                         </div>
                       </form>
                       <form action={deletePost} id={`delete-post-${post.id}`}>
@@ -358,14 +357,12 @@ export async function BoardDetailPage({
                                     <Button size="sm" type="submit" variant="outline">
                                       Save comment
                                     </Button>
-                                    <Button
+                                    <ConfirmSubmitButton
+                                      confirmMessage="Delete this comment?"
                                       form={`delete-comment-${comment.id}`}
-                                      size="sm"
-                                      type="submit"
-                                      variant="destructive"
                                     >
                                       Delete
-                                    </Button>
+                                    </ConfirmSubmitButton>
                                   </div>
                                 </form>
                                 <form
