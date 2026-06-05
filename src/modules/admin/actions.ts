@@ -18,6 +18,7 @@ import {
   requireAdmin,
 } from "@/modules/admin/access"
 import type { AdminFormState } from "@/modules/admin/form-state"
+import { writeAuditLog } from "@/modules/audit/service"
 import { hashPassword } from "@/modules/auth/password"
 import { uploadImageFile } from "@/modules/files/upload"
 import { ensureDefaultOrganization } from "@/modules/organizations/default-organization"
@@ -62,6 +63,10 @@ function toYearEndDate(value: string) {
 
 function maybeId(value: string | null | undefined) {
   return value && value.length > 0 ? value : undefined
+}
+
+function redirectWithAdminError(path: string, message: string): never {
+  redirect(`${path}?saveError=${encodeURIComponent(message)}`)
 }
 
 async function revalidateAdmin(path: string) {
@@ -126,7 +131,10 @@ export async function saveOrganization(formData: FormData) {
   if (id) {
     await assertAdminScope({ organizationId: id })
   } else if (!canCreateOrganization) {
-    throw new Error("Only super admins can create organizations.")
+    redirectWithAdminError(
+      "/admin/organizations",
+      "Only super admins can create organizations."
+    )
   }
 
   const prisma = getPrismaClient()
@@ -152,6 +160,17 @@ export async function saveOrganization(formData: FormData) {
         select: { id: true },
       })
 
+  await writeAuditLog({
+    action: id ? "organization.update" : "organization.create",
+    actorUserId: admin.id,
+    entityId: organization.id,
+    entityType: "Organization",
+    organizationId: organization.id,
+    summary: id
+      ? `Updated organization ${values.name}`
+      : `Created organization ${values.name}`,
+  })
+
   if (logo instanceof File && logo.size > 0) {
     const upload = await uploadImageFile({
       campusId: null,
@@ -163,7 +182,7 @@ export async function saveOrganization(formData: FormData) {
     })
 
     if (!upload.ok) {
-      throw new Error(upload.message)
+      redirectWithAdminError("/admin/organizations", upload.message)
     }
 
     await prisma.$executeRaw`
@@ -878,6 +897,17 @@ export async function deleteAdminEntity(formData: FormData) {
             where: { organizationId: organization.id },
           })
           await tx.organization.delete({ where: { id: organization.id } })
+        })
+        await writeAuditLog({
+          action: "organization.delete",
+          actorUserId: (await requireAdmin()).id,
+          entityId: organization.id,
+          entityType: "Organization",
+          metadata: {
+            fallbackOrganizationId: fallbackOrganization.id,
+          },
+          organizationId: fallbackOrganization.id,
+          summary: `Deleted organization ${organization.name}; moved users to fallback organization.`,
         })
         await revalidateAdmin("/admin/organizations")
         await revalidateAdmin("/admin/users")

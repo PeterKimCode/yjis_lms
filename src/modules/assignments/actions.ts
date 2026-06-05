@@ -71,24 +71,33 @@ export async function saveAssignment(
   const data = parsed.data
 
   if (!(await canManageClassSection(user.id, data.classSectionId))) {
-    throw new Error("Forbidden")
+    return {
+      ok: false,
+      message: "You do not have permission to manage assignments for this class.",
+    }
   }
 
   const prisma = getPrismaClient()
-  const classSection = await prisma.classSection.findUniqueOrThrow({
+  const classSection = await prisma.classSection.findUnique({
     where: { id: data.classSectionId },
     select: { organizationId: true },
   })
+  if (!classSection) {
+    return { ok: false, message: "Class section was not found." }
+  }
   const { id, ...values } = data
 
   if (id) {
-    const assignment = await prisma.assignment.findUniqueOrThrow({
+    const assignment = await prisma.assignment.findUnique({
       where: { id },
       select: { classSectionId: true },
     })
 
-    if (assignment.classSectionId !== data.classSectionId) {
-      throw new Error("Assignment does not belong to this class section.")
+    if (!assignment || assignment.classSectionId !== data.classSectionId) {
+      return {
+        ok: false,
+        message: "Assignment does not belong to this class section.",
+      }
     }
 
     await prisma.assignment.update({
@@ -135,13 +144,20 @@ export async function deleteAssignment(
     UserRole.HOMEROOM_TEACHER,
   ])
   const assignmentId = String(formData.get("assignmentId") ?? "")
-  const assignment = await getPrismaClient().assignment.findUniqueOrThrow({
+  const assignment = await getPrismaClient().assignment.findUnique({
     where: { id: assignmentId },
     include: { _count: { select: { submissions: true } } },
   })
 
+  if (!assignment) {
+    return { ok: false, message: "Assignment was not found." }
+  }
+
   if (!(await canManageClassSection(user.id, assignment.classSectionId))) {
-    throw new Error("Forbidden")
+    return {
+      ok: false,
+      message: "You do not have permission to delete this assignment.",
+    }
   }
 
   if (assignment._count.submissions > 0) {
@@ -180,7 +196,7 @@ export async function submitAssignment(
   }
 
   const prisma = getPrismaClient()
-  const assignment = await prisma.assignment.findUniqueOrThrow({
+  const assignment = await prisma.assignment.findUnique({
     where: { id: parsed.data.assignmentId },
     select: {
       id: true,
@@ -191,9 +207,15 @@ export async function submitAssignment(
       acceptsLate: true,
     },
   })
+  if (!assignment) {
+    return { ok: false, message: "Assignment was not found." }
+  }
 
   if (!(await canViewClassSection(student.id, assignment.classSectionId))) {
-    throw new Error("Forbidden")
+    return {
+      ok: false,
+      message: "You do not have permission to submit this assignment.",
+    }
   }
 
   const enrollment = await prisma.enrollment.findUnique({
@@ -207,7 +229,10 @@ export async function submitAssignment(
   })
 
   if (!enrollment) {
-    throw new Error("Only enrolled students can submit assignments.")
+    return {
+      ok: false,
+      message: "Only enrolled students can submit assignments.",
+    }
   }
 
   if (
@@ -351,7 +376,7 @@ export async function gradeSubmission(
   }
 
   const prisma = getPrismaClient()
-  const submission = await prisma.assignmentSubmission.findUniqueOrThrow({
+  const submission = await prisma.assignmentSubmission.findUnique({
     where: { id: parsed.data.submissionId },
     include: {
       assignment: {
@@ -363,9 +388,15 @@ export async function gradeSubmission(
       },
     },
   })
+  if (!submission) {
+    return { ok: false, message: "Submission was not found." }
+  }
 
   if (!(await canManageClassSection(instructor.id, submission.assignment.classSectionId))) {
-    throw new Error("Forbidden")
+    return {
+      ok: false,
+      message: "You do not have permission to grade this submission.",
+    }
   }
 
   const maxScore = Number(submission.assignment.pointsPossible ?? 0)

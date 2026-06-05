@@ -62,6 +62,38 @@ total possible app DB connections =
 
 Keep that total safely below PostgreSQL `max_connections`.
 
+## Database Backups
+
+Create a manual PostgreSQL backup:
+
+```bash
+npm run db:backup
+```
+
+Custom output path:
+
+```bash
+npm run db:backup -- --output=/srv/backups/lms-$(date +%F).dump
+```
+
+Requirements:
+
+- `DATABASE_URL` must be set.
+- `pg_dump` must be installed in the environment running the command.
+
+Restore example:
+
+```bash
+pg_restore --clean --if-exists --no-owner --dbname "$DATABASE_URL" /srv/backups/lms-2026-06-05.dump
+```
+
+Recommended production schedule:
+
+- daily database backup,
+- retain at least 7 daily backups,
+- keep a separate off-server copy,
+- test restore monthly.
+
 ## Admin Recovery
 
 Use this when a live admin cannot access the admin dashboard because a role, organization, or campus was changed.
@@ -118,6 +150,24 @@ Preferred pattern:
 - Return `{ ok: false, message: "Friendly message" }`.
 - Show the result with the shared action feedback/toast UI.
 - Avoid raw runtime error pages for normal user mistakes.
+
+## Audit Logs
+
+The app now has an `AuditLog` table for security-sensitive activity.
+
+Current initial coverage:
+
+- organization create/update,
+- organization delete and user fallback reassignment.
+
+Recommended next coverage:
+
+- user create/update/delete,
+- role assignment changes,
+- class section enrollment/instructor assignment changes,
+- attendance changes,
+- grade publication/finalization,
+- document generation/download.
 
 ## Permission Regression Test
 

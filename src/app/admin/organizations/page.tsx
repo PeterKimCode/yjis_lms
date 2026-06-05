@@ -20,7 +20,12 @@ import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 export default async function OrganizationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
+  searchParams: Promise<{
+    deleted?: string
+    deleteError?: string
+    q?: string
+    saveError?: string
+  }>
 }) {
   const { isSuperAdmin, organizations } = await getAdminData()
   const params = await searchParams
@@ -41,6 +46,11 @@ export default async function OrganizationsPage({
       />
       <SearchForm q={q} placeholder="Search organizations..." />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
+      {params.saveError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {params.saveError}
+        </div>
+      ) : null}
       {isSuperAdmin ? (
         <OrganizationForm />
       ) : (

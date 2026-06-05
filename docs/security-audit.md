@@ -36,6 +36,12 @@ This audit focuses on server-side authorization and data visibility for:
   - permission for the requested new organization/campus scope
   - permission to edit the existing user record
 
+### Audit Logs
+
+- `AuditLog` stores security-sensitive server-side events.
+- Initial coverage includes organization create/update/delete operations.
+- Audit writes are best-effort and do not block the user-facing operation if logging fails.
+
 ### Conversations
 
 - Conversation lists and details load only participant conversations.
@@ -104,6 +110,7 @@ See also:
   - parent/student data boundaries
   - direct conversation participant-only access
 - Add structured audit logs for admin changes, grade publication, user edits, and document generation.
+- Expand structured audit logs to user edits, role changes, grade publication, document generation, and attendance changes.
 - Add security headers at the deployment/proxy level:
   - `Content-Security-Policy`
   - `Referrer-Policy`
