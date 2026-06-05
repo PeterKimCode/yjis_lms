@@ -78,9 +78,14 @@ export const authOptions: NextAuthOptions = {
         const users = await prisma.user.findMany({
           where: {
             email,
-            isActive: true,
           },
           include: {
+            organization: {
+              select: {
+                id: true,
+                isActive: true,
+              },
+            },
             roleAssignments: {
               select: {
                 role: true,
@@ -91,11 +96,16 @@ export const authOptions: NextAuthOptions = {
           },
           orderBy: { updatedAt: "desc" },
         })
-        const isAdminLogin = users.some((user) =>
+        const activeUsers = users.filter((user) => user.isActive)
+        const isAdminLogin = activeUsers.some((user) =>
           user.roleAssignments.some((assignment) =>
             adminLoginRoles.has(assignment.role)
           )
         )
+
+        if (users.length > 0 && activeUsers.length === 0) {
+          throw new Error("AccountInactive")
+        }
 
         if (isAdminLogin) {
           clearLoginAttempts(email)
@@ -103,7 +113,19 @@ export const authOptions: NextAuthOptions = {
           throw new Error("AccountLocked")
         }
 
-        for (const user of users) {
+        const usableUsers = activeUsers.filter((user) => user.organization?.isActive)
+
+        if (activeUsers.length > 0 && usableUsers.length === 0) {
+          throw new Error("OrganizationUnavailable")
+        }
+
+        const hasPasswordConfigured = usableUsers.some((user) => user.passwordHash)
+
+        if (usableUsers.length > 0 && !hasPasswordConfigured) {
+          throw new Error("AccountNotConfigured")
+        }
+
+        for (const user of usableUsers) {
           if (!user.passwordHash) {
             continue
           }

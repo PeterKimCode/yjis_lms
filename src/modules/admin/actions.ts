@@ -20,6 +20,7 @@ import {
 import type { AdminFormState } from "@/modules/admin/form-state"
 import { hashPassword } from "@/modules/auth/password"
 import { uploadImageFile } from "@/modules/files/upload"
+import { ensureDefaultOrganization } from "@/modules/organizations/default-organization"
 import { ensureDefaultPoliciesForCampus } from "@/modules/policies/initialize"
 
 const optionalString = z.preprocess(
@@ -231,7 +232,7 @@ export async function saveCampus(formData: FormData) {
 
 const userSchema = z.object({
   id: optionalString,
-  organizationId: requiredString,
+  organizationId: optionalString,
   campusId: optionalString,
   name: requiredString,
   email: z.string().trim().email().transform((value) => value.toLowerCase()),
@@ -270,8 +271,16 @@ export async function saveUser(formData: FormData) {
     homeroomId,
     studentNumber,
     admissionYear,
-    ...userValues
+    ...rawUserValues
   } = data
+  const prisma = getPrismaClient()
+  const fallbackOrganization = rawUserValues.organizationId
+    ? null
+    : await ensureDefaultOrganization(prisma)
+  const userValues = {
+    ...rawUserValues,
+    organizationId: rawUserValues.organizationId ?? fallbackOrganization!.id,
+  }
 
   await assertAdminScope({ organizationId: userValues.organizationId, campusId })
   const adminUser = await requireAdmin()
@@ -283,8 +292,6 @@ export async function saveUser(formData: FormData) {
   const passwordData = password
     ? { passwordHash: await hashPassword(password) }
     : {}
-  const prisma = getPrismaClient()
-
   if (id) {
     const editableUser = await prisma.user.findFirst({
       where: {
@@ -838,11 +845,42 @@ export async function deleteAdminEntity(formData: FormData) {
       case "organization": {
         const organization = await prisma.organization.findUniqueOrThrow({
           where: { id: data.id },
-          select: { id: true },
+          select: { id: true, name: true },
         })
         await assertAdminScope({ organizationId: organization.id })
-        await prisma.organization.delete({ where: { id: organization.id } })
+        const fallbackOrganization = await ensureDefaultOrganization(prisma)
+
+        if (fallbackOrganization.id === organization.id) {
+          throw new Error("The default fallback organization cannot be deleted.")
+        }
+
+        await prisma.$transaction(async (tx) => {
+          await tx.user.updateMany({
+            where: { organizationId: organization.id },
+            data: { organizationId: fallbackOrganization.id },
+          })
+          await tx.userRoleAssignment.updateMany({
+            where: { organizationId: organization.id },
+            data: {
+              organizationId: fallbackOrganization.id,
+              campusId: null,
+              startsAt: null,
+              endsAt: null,
+            },
+          })
+          await tx.studentProfile.deleteMany({
+            where: { organizationId: organization.id },
+          })
+          await tx.instructorProfile.deleteMany({
+            where: { organizationId: organization.id },
+          })
+          await tx.parentStudentRelation.deleteMany({
+            where: { organizationId: organization.id },
+          })
+          await tx.organization.delete({ where: { id: organization.id } })
+        })
         await revalidateAdmin("/admin/organizations")
+        await revalidateAdmin("/admin/users")
         break
       }
       case "campus": {

@@ -19,6 +19,15 @@ const demoAccounts = [
 const demoPassword = "DemoPass123!"
 const lockedMessage =
   "This account is temporarily locked because there were too many failed login attempts. Please wait 15 minutes or contact an administrator."
+const loginErrorMessages: Record<string, string> = {
+  AccountInactive:
+    "This account is inactive. Please contact an administrator.",
+  AccountLocked: lockedMessage,
+  AccountNotConfigured:
+    "This account does not have a login password configured. Please contact an administrator.",
+  OrganizationUnavailable:
+    "This account's organization is unavailable. Please contact an administrator to move the account to an active organization.",
+}
 
 export function LoginForm({
   callbackUrl,
@@ -55,9 +64,10 @@ export function LoginForm({
       return
     }
 
-    if (result?.error === "AccountLocked") {
-      setError(lockedMessage)
-      window.alert(lockedMessage)
+    if (result?.error && loginErrorMessages[result.error]) {
+      const message = loginErrorMessages[result.error]
+      setError(message)
+      window.alert(message)
       return
     }
 
