@@ -3,6 +3,7 @@ import { DocumentType } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { getCurrentSession } from "@/modules/auth/session"
+import { writeAuditLog } from "@/modules/audit/service"
 import {
   assertStudentDocumentAccess,
   generateTranscriptPdf,
@@ -47,6 +48,15 @@ export async function GET(request: Request) {
     if (!document) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
     }
+
+    await writeAuditLog({
+      action: "document.transcript.download",
+      actorUserId: session.user.id,
+      entityId: studentId,
+      entityType: "Transcript",
+      organizationId: document.organizationId,
+      summary: `Transcript downloaded for student ${studentId}.`,
+    })
 
     return new Response(document.pdf, {
       headers: {

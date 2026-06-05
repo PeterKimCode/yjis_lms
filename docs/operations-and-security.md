@@ -9,11 +9,13 @@ This document is for the person running the LMS on a real server.
 - Non-admin accounts are rate limited by email.
 - Default rule: 5 failed attempts within 5 minutes locks login for 15 minutes.
 - Admin accounts are not locked by this in-memory login limiter, so the school does not lose emergency access.
+- If `REDIS_URL` is configured, the rate limiter uses Redis so limits work across multiple app containers.
+- If `REDIS_URL` is not configured, the app falls back to an in-memory limiter for local/single-container deployments.
 - If a non-admin account is locked, the login page should show a lock message instead of a generic password error.
 
-Recommended production improvement:
+Recommended production setup:
 
-- Move login rate-limit state to Redis so it works across multiple app containers.
+- Set `REDIS_URL`.
 - Add reverse-proxy rate limiting for `/api/auth/callback/credentials`.
 
 ## Session Expiration
@@ -94,6 +96,14 @@ Recommended production schedule:
 - keep a separate off-server copy,
 - test restore monthly.
 
+Example cron entry on the host:
+
+```cron
+15 2 * * * cd /srv/docker/sites/lms && docker exec lms-app npm run db:backup -- --output=/app/backups/lms-$(date +\%F).dump
+```
+
+If backups are written inside the container, mount `/app/backups` to a host directory.
+
 ## Admin Recovery
 
 Use this when a live admin cannot access the admin dashboard because a role, organization, or campus was changed.
@@ -159,15 +169,29 @@ Current initial coverage:
 
 - organization create/update,
 - organization delete and user fallback reassignment.
+- user create/update,
+- class instructor assignment/removal,
+- student enrollment/removal,
+- final grade publish/finalize,
+- report card/transcript PDF download.
+
+Admin review page:
+
+```text
+/admin/audit-logs
+```
+
+What this means:
+
+- The log answers "who changed what and when?"
+- It is not a replacement for database backups.
+- It is useful when checking grade release, transcript downloads, user changes, and class enrollment changes.
 
 Recommended next coverage:
 
-- user create/update/delete,
-- role assignment changes,
-- class section enrollment/instructor assignment changes,
 - attendance changes,
-- grade publication/finalization,
-- document generation/download.
+- board moderation actions,
+- file upload/delete actions.
 
 ## Permission Regression Test
 

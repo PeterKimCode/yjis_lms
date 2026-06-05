@@ -15,6 +15,7 @@ import {
   canManageClassSection,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import { writeAuditLog } from "@/modules/audit/service"
 import type { GradebookActionState } from "@/modules/grades/action-state"
 import { getAttendanceSummary } from "@/modules/attendance/summary"
 import { resolvePolicies } from "@/modules/policies/resolve"
@@ -459,6 +460,7 @@ export async function publishFinalGrades(
       },
     },
   })
+  const classSection = grades[0]?.classSection
 
   await Promise.all(
     grades.flatMap((grade) => [
@@ -484,6 +486,21 @@ export async function publishFinalGrades(
     ])
   )
 
+  if (classSection) {
+    await writeAuditLog({
+      action: "final_grade.publish",
+      actorUserId: manager.id,
+      campusId: classSection.campusId,
+      entityId: classSectionId,
+      entityType: "ClassSection",
+      metadata: {
+        gradeCount: grades.length,
+      },
+      organizationId: classSection.organizationId,
+      summary: `Published final grades for ${classSection.course.title}.`,
+    })
+  }
+
   revalidateGradebookPaths(classSectionId)
   return { ok: true, message: "Final grades published." }
 }
@@ -493,15 +510,32 @@ export async function finalizeFinalGrades(
   formData: FormData
 ): Promise<GradebookActionState> {
   const classSectionId = String(formData.get("classSectionId") ?? "")
-  await requireGradebookManager(classSectionId)
+  const manager = await requireGradebookManager(classSectionId)
 
-  await getPrismaClient().finalGrade.updateMany({
+  const prisma = getPrismaClient()
+  await prisma.finalGrade.updateMany({
     where: { classSectionId },
     data: {
       status: FinalGradeStatus.FINALIZED,
       publishedAt: new Date(),
     },
   })
+  const classSection = await prisma.classSection.findUnique({
+    where: { id: classSectionId },
+    include: { course: true },
+  })
+
+  if (classSection) {
+    await writeAuditLog({
+      action: "final_grade.finalize",
+      actorUserId: manager.id,
+      campusId: classSection.campusId,
+      entityId: classSectionId,
+      entityType: "ClassSection",
+      organizationId: classSection.organizationId,
+      summary: `Finalized final grades for ${classSection.course.title}.`,
+    })
+  }
 
   revalidateGradebookPaths(classSectionId)
   return { ok: true, message: "Final grades finalized." }

@@ -436,6 +436,22 @@ export async function saveUser(formData: FormData) {
     })
   }
 
+  await writeAuditLog({
+    action: id ? "user.update" : "user.create",
+    actorUserId: adminUser.id,
+    campusId,
+    entityId: user.id,
+    entityType: "User",
+    metadata: {
+      role,
+      email: userValues.email,
+    },
+    organizationId: userValues.organizationId,
+    summary: id
+      ? `Updated user ${userValues.email}`
+      : `Created user ${userValues.email}`,
+  })
+
   await revalidateAdmin("/admin/users")
   await revalidateAdmin(`/admin/users/${user.id}`)
 }
@@ -1119,6 +1135,20 @@ export async function assignClassSectionInstructor(formData: FormData) {
     },
   })
 
+  await writeAuditLog({
+    action: "class_section.instructor.assign",
+    actorUserId: (await requireAdmin()).id,
+    campusId: classSection.campusId,
+    entityId: data.classSectionId,
+    entityType: "ClassSection",
+    metadata: {
+      instructorId: instructor.id,
+      roleLabel: data.roleLabel,
+    },
+    organizationId: classSection.organizationId,
+    summary: `Assigned instructor to class section.`,
+  })
+
   await revalidateAdmin("/admin/class-sections")
 }
 
@@ -1140,6 +1170,18 @@ export async function removeClassSectionInstructor(formData: FormData) {
 
   await assertAdminScope(assignment.classSection)
   await prisma.classSectionInstructor.delete({ where: { id: assignment.id } })
+  await writeAuditLog({
+    action: "class_section.instructor.remove",
+    actorUserId: (await requireAdmin()).id,
+    campusId: assignment.classSection.campusId,
+    entityId: assignment.classSectionId,
+    entityType: "ClassSection",
+    metadata: {
+      instructorId: assignment.instructorId,
+    },
+    organizationId: assignment.classSection.organizationId,
+    summary: `Removed instructor from class section.`,
+  })
   await revalidateAdmin("/admin/class-sections")
   await revalidateAdmin(`/admin/class-sections/${assignment.classSectionId}`)
 }
@@ -1192,6 +1234,20 @@ export async function saveEnrollment(formData: FormData) {
     },
   })
 
+  await writeAuditLog({
+    action: "class_section.student.enroll",
+    actorUserId: (await requireAdmin()).id,
+    campusId: classSection.campusId,
+    entityId: data.classSectionId,
+    entityType: "ClassSection",
+    metadata: {
+      studentId: student.id,
+      status: data.status,
+    },
+    organizationId: classSection.organizationId,
+    summary: `Saved student enrollment.`,
+  })
+
   await revalidateAdmin("/admin/class-sections")
   await revalidateAdmin(`/admin/class-sections/${data.classSectionId}`)
 }
@@ -1214,6 +1270,18 @@ export async function removeEnrollment(formData: FormData) {
 
   await assertAdminScope(enrollment.classSection)
   await prisma.enrollment.delete({ where: { id: enrollment.id } })
+  await writeAuditLog({
+    action: "class_section.student.remove",
+    actorUserId: (await requireAdmin()).id,
+    campusId: enrollment.classSection.campusId,
+    entityId: enrollment.classSectionId,
+    entityType: "ClassSection",
+    metadata: {
+      studentId: enrollment.studentId,
+    },
+    organizationId: enrollment.classSection.organizationId,
+    summary: `Removed student enrollment.`,
+  })
   await revalidateAdmin("/admin/class-sections")
   await revalidateAdmin(`/admin/class-sections/${enrollment.classSectionId}`)
 }

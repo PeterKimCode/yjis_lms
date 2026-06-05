@@ -1,0 +1,8 @@
+# Example host crontab entries for LMS operations.
+# Edit paths and retention policy before using in production.
+
+# Daily PostgreSQL backup at 02:15.
+15 2 * * * cd /srv/docker/sites/lms && docker exec lms-app npm run db:backup -- --output=/app/backups/lms-$(date +\%F).dump >> /var/log/lms-backup.log 2>&1
+
+# Delete backup files older than 14 days from the mounted host backup directory.
+30 2 * * * find /srv/docker/sites/lms/backups -name 'lms-*.dump' -type f -mtime +14 -delete >> /var/log/lms-backup-cleanup.log 2>&1

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { getCurrentSession } from "@/modules/auth/session"
+import { writeAuditLog } from "@/modules/audit/service"
 import {
   assertStudentDocumentAccess,
   generateReportCardPdf,
@@ -36,6 +37,15 @@ export async function GET(request: Request) {
     if (!document) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
     }
+
+    await writeAuditLog({
+      action: "document.report_card.download",
+      actorUserId: session.user.id,
+      entityId: studentId,
+      entityType: "ReportCard",
+      organizationId: document.organizationId,
+      summary: `Report card downloaded for student ${studentId}.`,
+    })
 
     return new Response(document.pdf, {
       headers: {

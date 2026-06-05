@@ -36,7 +36,17 @@ const findings: Finding[] = []
 
 for (const file of walk(root)) {
   const lines = readFileSync(file, "utf8").split(/\r?\n/)
+  let inExportedServerAction = false
+
   lines.forEach((line, index) => {
+    if (/^export async function\s+\w+/.test(line)) {
+      inExportedServerAction = true
+    } else if (/^(async function|function|const)\s+\w+/.test(line)) {
+      inExportedServerAction = false
+    }
+
+    if (!inExportedServerAction) return
+
     for (const item of unsafePatterns) {
       if (item.pattern.test(line)) {
         findings.push({

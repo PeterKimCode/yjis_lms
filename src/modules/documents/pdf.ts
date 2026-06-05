@@ -244,6 +244,7 @@ export async function generateReportCardPdf(input: {
 
   return {
     filename: safePdfFilename(`report-card-${student.name}-${termName}`),
+    organizationId: student.organizationId,
     pdf: await savePdf(ctx.doc),
   }
 }
@@ -338,6 +339,7 @@ export async function generateTranscriptPdf(input: {
 
   return {
     filename: safePdfFilename(`transcript-${student.name}`),
+    organizationId: student.organizationId,
     pdf: await savePdf(ctx.doc),
   }
 }

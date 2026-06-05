@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { UserRole } from "@prisma/client"
+import Redis from "ioredis"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -37,6 +38,23 @@ const loginAttemptStore =
   loginAttempts.__lmsLoginAttempts ?? new Map<string, LoginAttempt>()
 
 loginAttempts.__lmsLoginAttempts = loginAttemptStore
+
+const redisGlobal =
+  globalThis as typeof globalThis & {
+    __lmsRedis?: Redis
+  }
+
+function getRateLimitRedis() {
+  if (!process.env.REDIS_URL) return null
+  if (!redisGlobal.__lmsRedis) {
+    redisGlobal.__lmsRedis = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+    })
+  }
+
+  return redisGlobal.__lmsRedis
+}
 
 export type SessionRoleAssignment = {
   role: string
@@ -109,7 +127,7 @@ export const authOptions: NextAuthOptions = {
 
         if (isAdminLogin) {
           clearLoginAttempts(email)
-        } else if (isLoginRateLimited(email)) {
+        } else if (await isLoginRateLimited(email)) {
           throw new Error("AccountLocked")
         }
 
@@ -144,7 +162,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!isAdminLogin) {
-          recordFailedLogin(email)
+          await recordFailedLogin(email)
         }
         return null
       },
@@ -170,7 +188,21 @@ export const authOptions: NextAuthOptions = {
   },
 }
 
-function isLoginRateLimited(email: string) {
+async function isLoginRateLimited(email: string) {
+  const redis = getRateLimitRedis()
+  if (redis) {
+    try {
+      const lockedUntil = await redis.get(getLoginLockKey(email))
+      if (!lockedUntil) return false
+
+      return Number(lockedUntil) > Date.now()
+    } catch (error) {
+      console.error("Redis login rate-limit read failed", {
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
   const attempt = loginAttemptStore.get(email)
   const now = Date.now()
 
@@ -188,7 +220,29 @@ function isLoginRateLimited(email: string) {
   return attempt.count >= maxLoginAttempts
 }
 
-function recordFailedLogin(email: string) {
+async function recordFailedLogin(email: string) {
+  const redis = getRateLimitRedis()
+  if (redis) {
+    try {
+      const attemptKey = getLoginAttemptKey(email)
+      const lockKey = getLoginLockKey(email)
+      const count = await redis.incr(attemptKey)
+
+      if (count === 1) {
+        await redis.pexpire(attemptKey, loginWindowMs)
+      }
+      if (count >= maxLoginAttempts) {
+        const lockedUntil = Date.now() + loginLockoutMs
+        await redis.psetex(lockKey, loginLockoutMs, String(lockedUntil))
+      }
+      return
+    } catch (error) {
+      console.error("Redis login rate-limit write failed", {
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
   const now = Date.now()
   const existing = loginAttemptStore.get(email)
   const attempt =
@@ -205,5 +259,23 @@ function recordFailedLogin(email: string) {
 }
 
 function clearLoginAttempts(email: string) {
+  const redis = getRateLimitRedis()
+  if (redis) {
+    redis
+      .del(getLoginAttemptKey(email), getLoginLockKey(email))
+      .catch((error: unknown) => {
+        console.error("Redis login rate-limit clear failed", {
+          error: error instanceof Error ? error.message : String(error),
+        })
+      })
+  }
   loginAttemptStore.delete(email)
+}
+
+function getLoginAttemptKey(email: string) {
+  return `lms:login-attempt:${email}`
+}
+
+function getLoginLockKey(email: string) {
+  return `lms:login-lock:${email}`
 }

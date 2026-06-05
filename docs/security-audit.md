@@ -19,6 +19,7 @@ This audit focuses on server-side authorization and data visibility for:
 ### Authentication
 
 - Credentials login uses rate limiting by email.
+- Login rate limiting uses Redis when `REDIS_URL` is configured, with in-memory fallback for local/single-container installs.
 - Sessions explicitly expire after 8 hours.
 - Admin accounts are excluded from the temporary in-memory lockout so emergency access is not accidentally blocked.
 - Login now distinguishes inactive accounts, locked accounts, missing passwords, and unavailable organizations from a wrong password where NextAuth exposes the credential error code.
@@ -100,7 +101,7 @@ See also:
 
 ## Remaining Hardening Backlog
 
-- Add a real persistent rate-limit backend such as Redis for multi-process production deployments.
+- Keep Redis enabled in multi-container production deployments so login lockouts are shared across app instances.
 - Add CSRF-aware stateful wrappers for all sensitive Server Actions that are not already protected by framework form semantics.
 - Continue converting remaining raw-throw Server Actions to `useActionState` responses for friendlier errors.
 - Add integration tests for:
