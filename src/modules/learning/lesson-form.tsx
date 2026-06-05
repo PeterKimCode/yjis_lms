@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useRef, useState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -553,14 +554,7 @@ export function LessonForm({
           </label>
         </div>
         {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
-        {saveState.message ? (
-          <p
-            className={`text-sm ${saveState.ok ? "text-muted-foreground" : "text-destructive"}`}
-            role="status"
-          >
-            {saveState.message}
-          </p>
-        ) : null}
+        <ActionFeedback closeOnSuccess state={saveState} />
         <label className="flex items-center gap-2 text-sm">
           <input
             className="size-4"

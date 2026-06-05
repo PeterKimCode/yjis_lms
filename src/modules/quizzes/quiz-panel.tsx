@@ -4,6 +4,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { useActionState, useState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -258,29 +259,23 @@ export function QuizManagePanel({
       </details>
 
       <section className="space-y-4 rounded-lg border bg-background p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Questions</h2>
-          <p className="text-sm text-muted-foreground">
-            Add auto-graded multiple-choice, true/false, and short-answer
-            questions, or use essay questions for manual grading.
-          </p>
-        </div>
-      <details className="rounded-md border p-3">
-          <summary className="cursor-pointer text-sm font-medium">
-            Add question
-          </summary>
-          <div className="pt-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Questions</h2>
+            <p className="text-sm text-muted-foreground">
+              Add auto-graded multiple-choice, true/false, and short-answer
+              questions, or use open-ended questions for manual grading.
+            </p>
+          </div>
+          <FormDialog
+            title="Add question"
+            description="Create a question with points, answer choices, and grading details."
+            trigger="Add question"
+          >
             <QuestionForm quizId={quiz.id} />
-          </div>
-        </details>
-        <details className="rounded-md border p-3">
-          <summary className="cursor-pointer text-sm font-medium">
-            Existing questions / edit questions
-          </summary>
-          <div className="pt-3">
-            <QuestionList quiz={quiz} />
-          </div>
-        </details>
+          </FormDialog>
+        </div>
+        <QuestionList quiz={quiz} />
       </section>
 
       <details className="rounded-lg border bg-background p-4">
@@ -460,7 +455,7 @@ function QuizForm({
           </div>
         </div>
       ) : null}
-      <ActionMessage state={state} />
+      <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : quiz ? "Save quiz" : "Create quiz"}
@@ -715,7 +710,7 @@ function QuestionForm({
           Essay questions are manually graded by the instructor.
         </p>
       ) : null}
-      <ActionMessage state={state} />
+      <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : question ? "Save question" : "Add question"}
@@ -731,19 +726,110 @@ function QuestionList({ quiz }: { quiz: QuizPanelValue }) {
   }
 
   return (
-    <div className="space-y-3">
-      {quiz.questions.map((question) => (
-        <details className="rounded-md border p-3" key={question.id}>
-          <summary className="cursor-pointer text-sm font-medium">
-            {question.sequence}. {question.prompt}
-          </summary>
-          <div className="mt-3 space-y-3">
-            <QuestionForm quizId={quiz.id} question={question} />
-            <DeleteQuestionForm questionId={question.id} />
+    <div className="grid gap-3">
+      {quiz.questions.map((question, index) => (
+        <article
+          className="rounded-xl border bg-white/80 p-4 shadow-sm"
+          key={question.id}
+        >
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {index + 1}
+            </div>
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                      label={questionTypeLabel(question.type)}
+                      value={question.type}
+                    />
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
+                      {question.points} pts
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Order {question.sequence}
+                    </span>
+                  </div>
+                  <h3 className="mt-2 whitespace-pre-wrap text-base font-semibold">
+                    {question.prompt}
+                  </h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <FormDialog
+                    title="Edit question"
+                    description="Update the prompt, points, answer options, and grading details."
+                    trigger="Edit"
+                    variant="outline"
+                  >
+                    <QuestionForm quizId={quiz.id} question={question} />
+                  </FormDialog>
+                  <DeleteQuestionForm questionId={question.id} />
+                </div>
+              </div>
+              <QuestionCardDetails question={question} />
+            </div>
           </div>
-        </details>
+        </article>
       ))}
     </div>
+  )
+}
+
+function QuestionCardDetails({ question }: { question: QuestionValue }) {
+  if (question.type === "MULTIPLE_CHOICE") {
+    return (
+      <div className="grid gap-2 md:grid-cols-2">
+        {question.options.map((option, index) => (
+          <div
+            className={`rounded-lg border px-3 py-2 text-sm ${
+              option.isCorrect
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "bg-background"
+            }`}
+            key={option.id}
+          >
+            <span className="font-medium">Option {index + 1}: </span>
+            {option.text}
+            {option.isCorrect ? (
+              <span className="ml-2 text-xs font-semibold">Correct</span>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (question.type === "TRUE_FALSE") {
+    const key = question.answerKey as { correctBoolean?: boolean } | null
+
+    return (
+      <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm">
+        Correct answer:{" "}
+        <span className="font-semibold">
+          {String(key?.correctBoolean ?? true)}
+        </span>
+      </p>
+    )
+  }
+
+  if (question.type === "SHORT_ANSWER") {
+    const key = question.answerKey as { acceptedAnswers?: string[] } | null
+
+    return (
+      <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm">
+        Accepted answer:{" "}
+        <span className="font-semibold">
+          {(key?.acceptedAnswers ?? []).join(", ") || "Not set"}
+        </span>
+      </p>
+    )
+  }
+
+  return (
+    <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
+      Open-ended response. Grade manually after students submit.
+    </p>
   )
 }
 
@@ -756,7 +842,7 @@ function DeleteQuestionForm({ questionId }: { questionId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input name="questionId" type="hidden" value={questionId} />
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <Button size="sm" type="submit" variant="destructive" disabled={pending}>
         Delete question
       </Button>
@@ -777,7 +863,7 @@ function QuizAttemptForm({ quiz, now }: { quiz: QuizPanelValue; now: string }) {
       {quiz.questions.map((question) => (
         <QuestionInput key={question.id} question={question} />
       ))}
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       {blocked ? (
         <p className="text-sm text-destructive">{availabilityLabel(quiz, now)}</p>
       ) : null}
@@ -908,7 +994,7 @@ function GradeAnswerForm({ answer }: { answer: AnswerValue }) {
         rows={2}
         defaultValue={answer.feedback ?? ""}
       />
-      <ActionMessage state={state} />
+      <ActionFeedback state={state} />
       <Button size="sm" type="submit" variant="outline" disabled={pending}>
         Save
       </Button>
@@ -1037,7 +1123,7 @@ function ExamForm({ classSectionId }: { classSectionId: string }) {
       <Field label="Description" className="md:col-span-2 xl:col-span-4">
         <Textarea name="description" rows={2} />
       </Field>
-      <ActionMessage state={state} />
+      <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : "Create exam"}
@@ -1089,17 +1175,6 @@ function CheckField({
   )
 }
 
-function ActionMessage({ state }: { state: { ok: boolean; message: string } }) {
-  return state.message ? (
-    <p
-      className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-      role="status"
-    >
-      {state.message}
-    </p>
-  ) : null
-}
-
 function availabilityLabel(quiz: QuizPanelValue, now: string) {
   const current = new Date(now).getTime()
   if (!quiz.isPublished) return "Not published"
@@ -1110,6 +1185,19 @@ function availabilityLabel(quiz: QuizPanelValue, now: string) {
     return "Closed"
   }
   return "Available"
+}
+
+function questionTypeLabel(type: QuestionType) {
+  switch (type) {
+    case "MULTIPLE_CHOICE":
+      return "Multiple choice"
+    case "TRUE_FALSE":
+      return "True/false"
+    case "SHORT_ANSWER":
+      return "Short answer"
+    case "ESSAY":
+      return "Open ended"
+  }
 }
 
 function totalPoints(quiz: QuizPanelValue) {

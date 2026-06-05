@@ -2,6 +2,7 @@
 
 import { useActionState } from "react"
 
+import { ActionFeedback } from "@/components/action-feedback"
 import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -228,15 +229,17 @@ function InstructorAssignmentList({
                     defaultAcceptsLate={defaultAcceptsLate}
                   />
                 </FormDialog>
-                <details className="rounded-md border bg-background p-3">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    Review submissions
-                  </summary>
-                  <div className="space-y-3 pt-3">
+                <FormDialog
+                  title={`Review submissions: ${assignment.title}`}
+                  description="Review student responses, attachments, scores, and feedback in a wider workspace."
+                  trigger="Review submissions"
+                  variant="outline"
+                >
+                  <div className="space-y-4">
                     <DeleteAssignmentForm assignmentId={assignment.id} />
                     <SubmissionReview assignment={assignment} />
                   </div>
-                </details>
+                </FormDialog>
               </div>
             </details>
           </article>
@@ -322,14 +325,7 @@ function AssignmentForm({
           defaultValue={assignment?.description ?? ""}
         />
       </label>
-      {state.message ? (
-        <p
-          className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-          role="status"
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : assignment ? "Save assignment" : "Create assignment"}
@@ -348,14 +344,7 @@ function DeleteAssignmentForm({ assignmentId }: { assignmentId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input name="assignmentId" type="hidden" value={assignmentId} />
-      {state.message ? (
-        <p
-          className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-          role="status"
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionFeedback state={state} />
       <Button size="sm" type="submit" variant="destructive" disabled={pending}>
         Delete assignment
       </Button>
@@ -411,14 +400,15 @@ function SubmissionForm({
           Last submitted: {formatDateTime(submission.submittedAt)}
         </p>
       ) : null}
-      {state.message || isClosed ? (
+      {isClosed ? (
         <p
-          className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
+          className="text-sm text-destructive"
           role="status"
         >
-          {isClosed ? "This assignment is closed for submissions." : state.message}
+          This assignment is closed for submissions.
         </p>
       ) : null}
+      <ActionFeedback state={state} />
       <Button size="sm" type="submit" disabled={pending || Boolean(isClosed)}>
         {pending ? "Submitting..." : submission ? "Update submission" : "Submit"}
       </Button>
@@ -432,58 +422,108 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
   }
 
   return (
-    <SimpleTable
-      empty="No submissions yet."
-      headers={[
-        "Student",
-        "Submitted",
-        "Status",
-        "Response",
-        "Attachment",
-        "Score",
-        "Feedback",
-        "Grade",
-      ]}
-      rows={assignment.submissions.map((submission) => (
-        <TableRow key={submission.id}>
-          <TableCell>
-            <div className="font-medium">{submission.studentName}</div>
-            <div className="text-xs text-muted-foreground">
-              {submission.studentEmail ?? "-"}
+    <div className="grid gap-4">
+      {assignment.submissions.map((submission) => {
+        const status = getSubmissionStatus({
+          dueAt: assignment.dueAt,
+          score: submission.score,
+          submittedAt: submission.submittedAt,
+        })
+
+        return (
+          <article
+            className="rounded-xl border bg-background p-4 shadow-sm"
+            key={submission.id}
+          >
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="min-w-0 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold">
+                      {submission.studentName}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {submission.studentEmail ?? "-"}
+                    </p>
+                  </div>
+                  <StatusBadge
+                    label={status}
+                    value={status.toUpperCase().replaceAll(" ", "_")}
+                  />
+                </div>
+                <div className="grid gap-3 text-sm md:grid-cols-3">
+                  <SubmissionMeta
+                    label="Submitted"
+                    value={formatDateTime(submission.submittedAt)}
+                  />
+                  <SubmissionMeta
+                    label="Score"
+                    value={
+                      submission.score
+                        ? `${submission.score}/${assignment.pointsPossible ?? "-"}`
+                        : "-"
+                    }
+                  />
+                  <SubmissionMeta
+                    label="Graded"
+                    value={formatDateTime(submission.gradedAt)}
+                  />
+                </div>
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="text-xs font-medium uppercase text-muted-foreground">
+                    Response
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm">
+                    {submission.content?.trim() || "No text response."}
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="text-xs font-medium uppercase text-muted-foreground">
+                    Attachment
+                  </div>
+                  <div className="mt-2">
+                    {submission.attachments.length ? (
+                      <AttachmentLinks attachments={submission.attachments} />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        No attachment.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {submission.feedback ? (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                      Current feedback
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm">
+                      {submission.feedback}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+              <div className="rounded-lg border bg-white/80 p-3">
+                <div className="mb-3 text-sm font-semibold">
+                  Grade submission
+                </div>
+                <GradeForm assignment={assignment} submission={submission} />
+              </div>
             </div>
-          </TableCell>
-          <TableCell>{formatDateTime(submission.submittedAt)}</TableCell>
-          <TableCell>
-            {getSubmissionStatus({
-              dueAt: assignment.dueAt,
-              score: submission.score,
-              submittedAt: submission.submittedAt,
-            })}
-          </TableCell>
-          <TableCell className="max-w-[260px] truncate">
-            {submission.content ?? "-"}
-          </TableCell>
-          <TableCell>
-            {submission.attachments.length ? (
-              <AttachmentLinks attachments={submission.attachments} />
-            ) : (
-              "-"
-            )}
-          </TableCell>
-          <TableCell>
-            {submission.score
-              ? `${submission.score}/${assignment.pointsPossible ?? "-"}`
-              : "-"}
-          </TableCell>
-          <TableCell className="max-w-[220px] truncate">
-            {submission.feedback ?? "-"}
-          </TableCell>
-          <TableCell>
-            <GradeForm assignment={assignment} submission={submission} />
-          </TableCell>
-        </TableRow>
-      ))}
-    />
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+function SubmissionMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-white/70 p-3">
+      <div className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 font-medium">{value}</div>
+    </div>
   )
 }
 
@@ -538,14 +578,7 @@ function GradeForm({
         rows={2}
         defaultValue={submission.feedback ?? ""}
       />
-      {state.message ? (
-        <p
-          className={`text-sm ${state.ok ? "text-muted-foreground" : "text-destructive"}`}
-          role="status"
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionFeedback state={state} />
       <Button size="sm" type="submit" variant="outline" disabled={pending}>
         {pending ? "Saving..." : "Save grade"}
       </Button>
