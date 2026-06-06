@@ -830,7 +830,7 @@ const classSectionSchema = z.object({
   id: optionalString,
   organizationId: requiredString,
   campusId: optionalString,
-  academicYearId: requiredString,
+  academicYearId: optionalString,
   termId: optionalString,
   courseId: requiredString,
   gradeLevelId: optionalString,
@@ -1056,24 +1056,91 @@ export async function deleteAdminEntity(formData: FormData) {
 }
 
 export async function saveClassSection(formData: FormData) {
-  const data = classSectionSchema.parse(readForm(formData))
-  const { id, ...values } = data
+  const parsed = classSectionSchema.safeParse(readForm(formData))
+  if (!parsed.success) {
+    redirectWithAdminError(
+      "/admin/class-sections",
+      "Class section could not be saved. Select a course and fill in the required fields."
+    )
+  }
+
+  const data = parsed.data
+  const { id, ...rawValues } = data
 
   await assertAdminScope(data)
   const prisma = getPrismaClient()
-  const classSection = id
-    ? await prisma.classSection.update({
-        where: { id },
-        data: values,
-        select: { id: true },
-      })
-    : await prisma.classSection.create({
-        data: values,
-        select: { id: true },
-      })
-  await revalidateAdmin("/admin/class-sections")
-  await revalidateAdmin(`/admin/class-sections/${classSection.id}`)
-  redirect(`/admin/class-sections/${classSection.id}`)
+  const academicYearId =
+    rawValues.academicYearId ??
+    (await ensureDefaultAcademicYearForClassSection({
+      campusId: rawValues.campusId,
+      organizationId: rawValues.organizationId,
+    }))
+  const values = { ...rawValues, academicYearId }
+
+  let redirectTo = "/admin/class-sections"
+  try {
+    const classSection = id
+      ? await prisma.classSection.update({
+          where: { id },
+          data: values,
+          select: { id: true },
+        })
+      : await prisma.classSection.create({
+          data: values,
+          select: { id: true },
+        })
+    await revalidateAdmin("/admin/class-sections")
+    await revalidateAdmin(`/admin/class-sections/${classSection.id}`)
+    redirectTo = `/admin/class-sections/${classSection.id}`
+  } catch (error) {
+    console.error("Class section save failed", {
+      id,
+      organizationId: rawValues.organizationId,
+      campusId: rawValues.campusId,
+      courseId: rawValues.courseId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    redirectWithAdminError(
+      "/admin/class-sections",
+      "Class section could not be saved. Check that the selected organization, campus, course, and academic year belong together."
+    )
+  }
+
+  redirect(redirectTo)
+}
+
+async function ensureDefaultAcademicYearForClassSection({
+  campusId,
+  organizationId,
+}: {
+  campusId: string | null
+  organizationId: string
+}) {
+  const prisma = getPrismaClient()
+  const existing = await prisma.academicYear.findFirst({
+    where: {
+      organizationId,
+      OR: [{ campusId }, { campusId: null }],
+    },
+    orderBy: { startsAt: "desc" },
+    select: { id: true },
+  })
+
+  if (existing) return existing.id
+
+  const year = new Date().getFullYear()
+  const created = await prisma.academicYear.create({
+    data: {
+      organizationId,
+      campusId,
+      name: `${year}`,
+      startsAt: new Date(`${year}-01-01T00:00:00.000Z`),
+      endsAt: new Date(`${year}-12-31T00:00:00.000Z`),
+    },
+    select: { id: true },
+  })
+
+  return created.id
 }
 
 const instructorAssignmentSchema = z.object({

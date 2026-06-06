@@ -18,7 +18,12 @@ import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 export default async function ClassSectionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
+  searchParams: Promise<{
+    deleted?: string
+    deleteError?: string
+    q?: string
+    saveError?: string
+  }>
 }) {
   const data = await getAcademicSetupOptions()
   const params = await searchParams
@@ -47,6 +52,11 @@ export default async function ClassSectionsPage({
         resultSummary={`${classSections.length} of ${data.classSections.length} class sections shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
+      {params.saveError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {params.saveError}
+        </div>
+      ) : null}
       <ClassSectionForm data={data} />
       <DataTable
         empty="No class sections match your search."

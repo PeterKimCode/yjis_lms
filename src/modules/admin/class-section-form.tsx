@@ -182,145 +182,152 @@ export function ClassSectionClientForm({
     <FormCard title={section ? "Edit class section" : "Create class section"}>
       <form
         action={saveClassSection}
-        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        className="space-y-3"
       >
         <input name="id" type="hidden" value={section?.id ?? ""} />
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Organization</span>
-          <select
-            className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
-            name="organizationId"
-            onChange={(event) => handleOrganizationChange(event.target.value)}
-            required
-            value={organizationId}
-          >
-            {organizationOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Campus</span>
-          <select
-            className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
-            name="campusId"
-            onChange={(event) => handleCampusChange(event.target.value)}
-            value={campusId}
-          >
-            <option value="">None</option>
-            {scopedCampusOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Academic year</span>
-          <select
-            className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm disabled:text-muted-foreground"
-            name="academicYearId"
-            defaultValue={section?.academicYearId ?? ""}
-            disabled={scopedAcademicYearOptions.length === 0}
-            required
-          >
-            {scopedAcademicYearOptions.length === 0 ? (
-              <option value="">No academic years available</option>
-            ) : (
-              scopedAcademicYearOptions.map((option) => (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Organization</span>
+            <select
+              className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
+              name="organizationId"
+              onChange={(event) => handleOrganizationChange(event.target.value)}
+              required
+              value={organizationId}
+            >
+              {organizationOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
-              ))
-            )}
-          </select>
-        </label>
-        <AdminSelect
-          label="Term"
-          name="termId"
-          options={scopedTermOptions}
-          defaultValue={section?.termId}
-        />
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Course</span>
-          <select
-            className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
-            name="courseId"
-            onChange={(event) => handleCourseChange(event.target.value)}
-            required
-            value={courseId}
-          >
-            <option value="" disabled>
-              Select a course
-            </option>
-            {scopedCourseOptions.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <span className="text-xs text-muted-foreground">
-            Selecting a course fills organization, campus, title, section code,
-            and delivery mode.
-          </span>
-        </label>
-        <AdminSelect
-          label="Grade level"
-          name="gradeLevelId"
-          options={scopedGradeLevelOptions}
-          defaultValue={section?.gradeLevelId}
-        />
-        <AdminSelect
-          label="Homeroom"
-          name="homeroomId"
-          options={scopedHomeroomOptions}
-          defaultValue={section?.homeroomId}
-        />
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Title</span>
-          <input
-            className="h-8 rounded-lg border border-input bg-background px-3 text-sm"
-            name="name"
-            onChange={(event) => setName(event.target.value)}
-            required
-            value={name}
+              ))}
+            </select>
+          </label>
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Campus</span>
+            <select
+              className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
+              name="campusId"
+              onChange={(event) => handleCampusChange(event.target.value)}
+              value={campusId}
+            >
+              <option value="">None</option>
+              {scopedCampusOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Academic year</span>
+            <select
+              className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm disabled:text-muted-foreground"
+              name="academicYearId"
+              defaultValue={section?.academicYearId ?? ""}
+              disabled={scopedAcademicYearOptions.length === 0}
+            >
+              {scopedAcademicYearOptions.length === 0 ? (
+                <option value="">No academic years available</option>
+              ) : (
+                scopedAcademicYearOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+          <AdminSelect
+            label="Term"
+            name="termId"
+            options={scopedTermOptions}
+            defaultValue={section?.termId}
           />
-        </label>
-        <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Section code</span>
-          <input
-            className="h-8 rounded-lg border border-input bg-background px-3 text-sm"
-            name="sectionCode"
-            onChange={(event) => setSectionCode(event.target.value)}
-            value={sectionCode}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Delivery mode</span>
-          <select
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
-            name="deliveryMode"
-            onChange={(event) => setDeliveryMode(event.target.value as DeliveryMode)}
-            value={deliveryMode}
-          >
-            {Object.values(DeliveryMode).map((mode) => (
-              <option key={mode} value={mode}>
-                {mode}
+        </div>
+
+        <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Course</span>
+            <select
+              className="h-8 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
+              name="courseId"
+              onChange={(event) => handleCourseChange(event.target.value)}
+              required
+              value={courseId}
+            >
+              <option value="" disabled>
+                Select a course
               </option>
-            ))}
-          </select>
-        </label>
-        <Field
-          label="Capacity (max students)"
-          name="capacity"
-          type="number"
-          defaultValue={section?.capacity}
-          placeholder="Example: 24"
-        />
-        <div className="flex items-end">
-          <SubmitButton />
+              {scopedCourseOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <span className="min-h-8 text-xs text-muted-foreground">
+              Selecting a course fills organization, campus, title, section
+              code, and delivery mode.
+            </span>
+          </label>
+          <AdminSelect
+            label="Grade level"
+            name="gradeLevelId"
+            options={scopedGradeLevelOptions}
+            defaultValue={section?.gradeLevelId}
+          />
+          <AdminSelect
+            label="Homeroom"
+            name="homeroomId"
+            options={scopedHomeroomOptions}
+            defaultValue={section?.homeroomId}
+          />
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Title</span>
+            <input
+              className="h-8 rounded-lg border border-input bg-background px-3 text-sm"
+              name="name"
+              onChange={(event) => setName(event.target.value)}
+              required
+              value={name}
+            />
+          </label>
+        </div>
+
+        <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="grid min-w-0 gap-1 text-sm">
+            <span className="font-medium">Section code</span>
+            <input
+              className="h-8 rounded-lg border border-input bg-background px-3 text-sm"
+              name="sectionCode"
+              onChange={(event) => setSectionCode(event.target.value)}
+              value={sectionCode}
+            />
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium">Delivery mode</span>
+            <select
+              className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+              name="deliveryMode"
+              onChange={(event) => setDeliveryMode(event.target.value as DeliveryMode)}
+              value={deliveryMode}
+            >
+              {Object.values(DeliveryMode).map((mode) => (
+                <option key={mode} value={mode}>
+                  {mode}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Field
+            label="Capacity (max students)"
+            name="capacity"
+            type="number"
+            defaultValue={section?.capacity}
+            placeholder="Example: 24"
+          />
+          <div className="flex items-end">
+            <SubmitButton />
+          </div>
         </div>
       </form>
     </FormCard>

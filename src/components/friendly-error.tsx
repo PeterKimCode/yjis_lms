@@ -39,11 +39,20 @@ export function FriendlyError({
           <Button type="button" onClick={() => unstable_retry()}>
             Try again
           </Button>
-          <Button type="button" variant="outline" onClick={() => history.back()}>
+          <Button type="button" variant="outline" onClick={goBackSafely}>
             Back
           </Button>
         </div>
       </section>
     </main>
   )
+}
+
+function goBackSafely() {
+  if (window.location.pathname.startsWith("/admin/class-sections")) {
+    window.location.href = "/admin/class-sections"
+    return
+  }
+
+  history.back()
 }
