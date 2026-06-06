@@ -1,3 +1,4 @@
+import { FormDialog } from "@/components/form-dialog"
 import {
   CourseForm,
   type CourseFormData,
@@ -65,7 +66,14 @@ export default async function CoursesPage({
             </TableCell>
             <TableCell>{course.defaultDeliveryMode}</TableCell>
             <TableCell>
-              <CourseForm data={formData} course={toCourseFormValue(course)} />
+              <FormDialog
+                description="Update course details, credits, department, and default delivery mode."
+                title={`Edit course: ${course.title}`}
+                trigger="Edit"
+                variant="outline"
+              >
+                <CourseForm data={formData} course={toCourseFormValue(course)} />
+              </FormDialog>
             </TableCell>
             <TableCell>
               <ConfirmDeleteForm
