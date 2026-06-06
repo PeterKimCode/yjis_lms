@@ -116,7 +116,8 @@ See also:
   - board image visibility
   - parent/student data boundaries
   - direct conversation participant-only access
-- Add field-level before/after diffs for user and policy changes when schools need stricter change review.
+- Add field-level before/after diffs for user profile and enrollment changes when schools need stricter change review.
+- Forward high-value audit logs to an external log store or SIEM for tamper-resistant retention.
 - Prune old audit logs only after database backup is verified:
   `npm run audit:prune -- --days=365 --dry-run`
 - Add security headers at the deployment/proxy level:

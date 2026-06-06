@@ -1,13 +1,14 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { Prisma, UserRole } from "@prisma/client"
+import { NotificationType, Prisma, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope } from "@/modules/admin/access"
 import { writeAuditLog } from "@/modules/audit/service"
 import { requireAnyRole } from "@/modules/auth/permissions"
+import { createNotificationsForUsers } from "@/modules/notifications/service"
 import type { PolicyActionState } from "@/modules/policies/action-state"
 import { DEFAULT_DOCUMENT_POLICY, POLICY_NAMES } from "@/modules/policies/defaults"
 import {
@@ -69,15 +70,16 @@ export async function saveAttendancePolicy(
   const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
+  const before = await getAttendancePolicySnapshot(data)
   await upsertAttendancePolicy(data)
+  const after = getAttendancePolicyFormSnapshot(data)
   await writePolicyAudit({
     action: "policy.attendance.save",
     actorUserId: actor.id,
     campusId: data.campusId,
     metadata: {
-      allowInstructorOverride: data.allowInstructorOverride,
-      countLateAsAbsence: data.countLateAsAbsence,
-      lateThresholdMinutes: data.lateThresholdMinutes,
+      after,
+      before,
     },
     organizationId: data.organizationId,
     summary: "Saved attendance policy.",
@@ -120,15 +122,16 @@ export async function saveVideoCompletionPolicy(
   const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
+  const before = await getVideoPolicySnapshot(data)
   await upsertVideoPolicy(data)
+  const after = getVideoPolicyFormSnapshot(data)
   await writePolicyAudit({
     action: "policy.video_completion.save",
     actorUserId: actor.id,
     campusId: data.campusId,
     metadata: {
-      completionThresholdPercent: data.completionThresholdPercent,
-      minimumWatchSeconds: data.minimumWatchSeconds,
-      requireActualWatchedCoverage: data.requireActualWatchedCoverage,
+      after,
+      before,
     },
     organizationId: data.organizationId,
     summary: "Saved video completion policy.",
@@ -247,17 +250,16 @@ export async function saveGradingAndDocumentPolicy(
   const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
+  const before = await getGradingPolicySnapshot(data)
   await upsertGradingPolicy(data)
+  const after = getGradingPolicyFormSnapshot(data)
   await writePolicyAudit({
     action: "policy.grading_document.save",
     actorUserId: actor.id,
     campusId: data.campusId,
     metadata: {
-      allowLateSubmissionDefault: data.allowLateSubmissionDefault,
-      gpaScale: data.gpaScale,
-      reportCardsRequirePublishedGrades: data.reportCardsRequirePublishedGrades,
-      studentsCanSeeDraftGrades: data.studentsCanSeeDraftGrades,
-      transcriptsRequirePublishedGrades: data.transcriptsRequirePublishedGrades,
+      after,
+      before,
     },
     organizationId: data.organizationId,
     summary: "Saved assignment, grade visibility, document, and GPA policy.",
@@ -313,6 +315,8 @@ export async function saveGradingScale(
     return { ok: false, message: "Grading scale not found." }
   }
 
+  const before = getGradingScaleSnapshot(scale)
+
   await prisma.gradingScale.update({
     where: { id: scale.id },
     data: {
@@ -361,12 +365,18 @@ export async function saveGradingScale(
     action: "policy.grading_scale.save",
     actorUserId: actor.id,
     metadata: {
-      rowCount: data.rows.length,
-      scaleId: scale.id,
-      scaleName: data.name,
+      after: getGradingScaleFormSnapshot(data),
+      before,
     },
     organizationId: data.organizationId,
     summary: `Saved grading scale ${data.name}.`,
+  })
+  await notifyPolicyAdmins({
+    actorUserId: actor.id,
+    body: `${actor.name ?? actor.email ?? "An admin"} updated ${data.name}.`,
+    entityId: scale.id,
+    organizationId: data.organizationId,
+    title: "Grading scale updated",
   })
   revalidatePath("/admin/policies")
   return { ok: true, message: "Grading scale saved." }
@@ -442,7 +452,7 @@ async function writePolicyAudit(input: {
   action: string
   actorUserId: string
   campusId?: string | null
-  metadata?: Record<string, boolean | number | string | null>
+  metadata?: Prisma.InputJsonObject
   organizationId: string
   summary: string
 }) {
@@ -456,6 +466,49 @@ async function writePolicyAudit(input: {
     organizationId: input.organizationId,
     summary: input.summary,
   })
+}
+
+async function notifyPolicyAdmins({
+  actorUserId,
+  body,
+  entityId,
+  organizationId,
+  title,
+}: {
+  actorUserId: string
+  body: string
+  entityId: string
+  organizationId: string
+  title: string
+}) {
+  const admins = await getPrismaClient().userRoleAssignment.findMany({
+    where: {
+      organizationId,
+      role: {
+        in: [
+          UserRole.SUPER_ADMIN,
+          UserRole.ORG_ADMIN,
+          UserRole.SCHOOL_ADMIN,
+          UserRole.ACADEMIC_STAFF,
+        ],
+      },
+      user: { isActive: true },
+    },
+    select: { userId: true },
+  })
+
+  await createNotificationsForUsers(
+    admins.map((admin) => admin.userId),
+    {
+      actionUrl: "/admin/policies",
+      actorUserId,
+      body,
+      entityId,
+      entityType: "GradingScale",
+      title,
+      type: NotificationType.SYSTEM_NOTICE,
+    }
+  )
 }
 
 async function verifyCampusBelongsToOrganization(
@@ -574,6 +627,276 @@ async function upsertGradingPolicy(
       },
     })
   }
+}
+
+async function getAttendancePolicySnapshot(
+  data: z.infer<typeof attendanceSchema>
+): Promise<Prisma.InputJsonObject> {
+  const policy = await getPrismaClient().attendancePolicy.findFirst({
+    where: scopedWhere(data, POLICY_NAMES.attendance),
+    select: {
+      lateAfterMinutes: true,
+      settings: true,
+    },
+  })
+
+  if (!policy) return { configured: false }
+
+  const settings = getObjectSettings(policy.settings)
+  return {
+    configured: true,
+    allowInstructorOverride: getBooleanSetting(
+      settings,
+      "allowInstructorOverride",
+      true
+    ),
+    absenceFailThresholdRate: getNullableNumberSetting(
+      settings,
+      "absenceFailThresholdRate"
+    ),
+    countLateAsAbsence: getBooleanSetting(settings, "countLateAsAbsence", false),
+    excusedCountsAgainstAttendance: getBooleanSetting(
+      settings,
+      "excusedCountsAgainstAttendance",
+      false
+    ),
+    excusedCountsAsPresent: getBooleanSetting(
+      settings,
+      "excusedCountsAsPresent",
+      false
+    ),
+    lateEquivalentAbsenceCount: getNumberSetting(
+      settings,
+      "lateEquivalentAbsenceCount",
+      0
+    ),
+    lateThresholdMinutes: getNumberSetting(
+      settings,
+      "lateThresholdMinutes",
+      policy.lateAfterMinutes ?? 10
+    ),
+  }
+}
+
+function getAttendancePolicyFormSnapshot(
+  data: z.infer<typeof attendanceSchema>
+): Prisma.InputJsonObject {
+  return {
+    configured: true,
+    absenceFailThresholdRate: data.absenceFailThresholdRate,
+    allowInstructorOverride: data.allowInstructorOverride,
+    countLateAsAbsence: data.countLateAsAbsence,
+    excusedCountsAgainstAttendance: data.excusedCountsAgainstAttendance,
+    excusedCountsAsPresent: data.excusedCountsAsPresent,
+    lateEquivalentAbsenceCount: data.lateEquivalentAbsenceCount,
+    lateThresholdMinutes: data.lateThresholdMinutes,
+  }
+}
+
+async function getVideoPolicySnapshot(
+  data: z.infer<typeof videoSchema>
+): Promise<Prisma.InputJsonObject> {
+  const policy = await getPrismaClient().videoCompletionPolicy.findFirst({
+    where: scopedWhere(data, POLICY_NAMES.videoCompletion),
+    select: {
+      requiredPercentage: true,
+      settings: true,
+    },
+  })
+
+  if (!policy) return { configured: false }
+
+  const settings = getObjectSettings(policy.settings)
+  return {
+    configured: true,
+    completionThresholdPercent: getNumberSetting(
+      settings,
+      "completionThresholdPercent",
+      Number(policy.requiredPercentage)
+    ),
+    minimumWatchSeconds: getNullableNumberSetting(
+      settings,
+      "minimumWatchSeconds"
+    ),
+    requireActualWatchedCoverage: getBooleanSetting(
+      settings,
+      "requireActualWatchedCoverage",
+      true
+    ),
+  }
+}
+
+function getVideoPolicyFormSnapshot(
+  data: z.infer<typeof videoSchema>
+): Prisma.InputJsonObject {
+  return {
+    configured: true,
+    completionThresholdPercent: data.completionThresholdPercent,
+    minimumWatchSeconds: data.minimumWatchSeconds,
+    requireActualWatchedCoverage: data.requireActualWatchedCoverage,
+  }
+}
+
+async function getGradingPolicySnapshot(
+  data: z.infer<typeof gradingPolicySchema>
+): Promise<Prisma.InputJsonObject> {
+  const policy = await getPrismaClient().gradingPolicy.findFirst({
+    where: scopedWhere(data, POLICY_NAMES.grading),
+    select: {
+      gpaScale: true,
+      settings: true,
+    },
+  })
+
+  if (!policy) return { configured: false }
+
+  const settings = getObjectSettings(policy.settings)
+  return {
+    configured: true,
+    allowLateSubmissionDefault: getBooleanSetting(
+      settings,
+      "allowLateSubmissionDefault",
+      false
+    ),
+    allowResubmissionBeforeDue: getBooleanSetting(
+      settings,
+      "allowResubmissionBeforeDue",
+      true
+    ),
+    gpaScale: getNumberSetting(settings, "gpaScale", Number(policy.gpaScale)),
+    latePenaltyPercent: getNumberSetting(settings, "latePenaltyPercent", 0),
+    maxLateDays: getNullableNumberSetting(settings, "maxLateDays"),
+    parentsCanSeeDraftGrades: getBooleanSetting(
+      settings,
+      "parentsCanSeeDraftGrades",
+      false
+    ),
+    reportCardsRequirePublishedGrades: getBooleanSetting(
+      settings,
+      "reportCardsRequirePublishedGrades",
+      true
+    ),
+    showAssignmentFeedbackBeforeFinalGrade: getBooleanSetting(
+      settings,
+      "showAssignmentFeedbackBeforeFinalGrade",
+      true
+    ),
+    showQuizResultsImmediately: getBooleanSetting(
+      settings,
+      "showQuizResultsImmediately",
+      false
+    ),
+    studentsCanSeeDraftGrades: getBooleanSetting(
+      settings,
+      "studentsCanSeeDraftGrades",
+      false
+    ),
+    transcriptsRequirePublishedGrades: getBooleanSetting(
+      settings,
+      "transcriptsRequirePublishedGrades",
+      true
+    ),
+  }
+}
+
+function getGradingPolicyFormSnapshot(
+  data: z.infer<typeof gradingPolicySchema>
+): Prisma.InputJsonObject {
+  return {
+    configured: true,
+    allowLateSubmissionDefault: data.allowLateSubmissionDefault,
+    allowResubmissionBeforeDue: data.allowResubmissionBeforeDue,
+    gpaScale: data.gpaScale,
+    latePenaltyPercent: data.latePenaltyPercent,
+    maxLateDays: data.maxLateDays,
+    parentsCanSeeDraftGrades: data.parentsCanSeeDraftGrades,
+    reportCardsRequirePublishedGrades: data.reportCardsRequirePublishedGrades,
+    showAssignmentFeedbackBeforeFinalGrade:
+      data.showAssignmentFeedbackBeforeFinalGrade,
+    showQuizResultsImmediately: data.showQuizResultsImmediately,
+    studentsCanSeeDraftGrades: data.studentsCanSeeDraftGrades,
+    transcriptsRequirePublishedGrades: data.transcriptsRequirePublishedGrades,
+  }
+}
+
+function getGradingScaleSnapshot(scale: {
+  description: string | null
+  id: string
+  items: Array<{
+    gradePoint: Prisma.Decimal | null
+    isPassing: boolean
+    label: string
+    maxPercentage: Prisma.Decimal
+    minPercentage: Prisma.Decimal
+  }>
+  name: string
+}): Prisma.InputJsonObject {
+  return {
+    configured: true,
+    description: scale.description,
+    id: scale.id,
+    name: scale.name,
+    rows: scale.items
+      .map((row) => ({
+        gradePoint: row.gradePoint ? Number(row.gradePoint) : 0,
+        isPassing: row.isPassing,
+        label: row.label,
+        maxPercentage: Number(row.maxPercentage),
+        minPercentage: Number(row.minPercentage),
+      }))
+      .sort((a, b) => a.minPercentage - b.minPercentage),
+  }
+}
+
+function getGradingScaleFormSnapshot(
+  data: z.infer<typeof gradingScaleSchema>
+): Prisma.InputJsonObject {
+  return {
+    configured: true,
+    description: data.description,
+    id: data.id,
+    name: data.name,
+    rows: data.rows
+      .map((row) => ({
+        gradePoint: row.gradePoint,
+        isPassing: row.isPassing,
+        label: row.label,
+        maxPercentage: row.maxPercentage,
+        minPercentage: row.minPercentage,
+      }))
+      .sort((a, b) => a.minPercentage - b.minPercentage),
+  }
+}
+
+function getObjectSettings(value: Prisma.JsonValue | null) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+function getBooleanSetting(
+  settings: Record<string, unknown>,
+  key: string,
+  fallback: boolean
+) {
+  return typeof settings[key] === "boolean" ? settings[key] : fallback
+}
+
+function getNumberSetting(
+  settings: Record<string, unknown>,
+  key: string,
+  fallback: number
+) {
+  const value = settings[key]
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback
+}
+
+function getNullableNumberSetting(
+  settings: Record<string, unknown>,
+  key: string
+) {
+  const value = settings[key]
+  return typeof value === "number" && Number.isFinite(value) ? value : null
 }
 
 function scopedWhere(

@@ -51,7 +51,14 @@ export default async function AdminAuditLogDetailPage({
       />
       <section className="grid gap-4 rounded-xl border bg-white p-5 shadow-sm md:grid-cols-2">
         <DetailItem label="Time" value={formatDateTime(log.createdAt)} />
-        <DetailItem label="Action" value={log.action} />
+        <div className="min-w-0 rounded-lg border bg-slate-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Action
+          </p>
+          <div className="mt-1">
+            <AuditActionBadge action={log.action} />
+          </div>
+        </div>
         <DetailItem label="Actor" value={log.actor?.name ?? "System"} />
         <DetailItem label="Actor email" value={log.actor?.email ?? "-"} />
         <DetailItem label="Organization" value={log.organization.name} />
@@ -92,6 +99,36 @@ function DetailItem({ label, value }: { label: string; value: string }) {
       <p className="mt-1 break-words text-sm font-medium">{value}</p>
     </div>
   )
+}
+
+function AuditActionBadge({ action }: { action: string }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${getActionBadgeClass(action)}`}
+    >
+      {action}
+    </span>
+  )
+}
+
+function getActionBadgeClass(action: string) {
+  if (action.includes("delete") || action.includes("remove")) {
+    return "border-red-200 bg-red-50 text-red-700"
+  }
+  if (action.includes("login") || action.includes("auth")) {
+    return "border-amber-200 bg-amber-50 text-amber-700"
+  }
+  if (action.includes("file") || action.includes("download")) {
+    return "border-sky-200 bg-sky-50 text-sky-700"
+  }
+  if (action.includes("policy") || action.includes("grading")) {
+    return "border-violet-200 bg-violet-50 text-violet-700"
+  }
+  if (action.includes("create") || action.includes("save") || action.includes("update")) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-700"
 }
 
 function formatDateTime(value: Date) {

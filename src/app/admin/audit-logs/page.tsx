@@ -96,7 +96,9 @@ export default async function AdminAuditLogsPage({
         rows={filteredLogs.map((log) => (
           <TableRow key={log.id}>
             <TableCell>{formatDateTime(log.createdAt)}</TableCell>
-            <TableCell className="font-medium">{log.action}</TableCell>
+            <TableCell>
+              <AuditActionBadge action={log.action} />
+            </TableCell>
             <TableCell>
               <div className="max-w-[220px] truncate">
                 {log.actor?.name ?? "System"}
@@ -228,6 +230,36 @@ function getExportHref(params: {
   }
 
   return `/admin/audit-logs/export${search.size ? `?${search.toString()}` : ""}`
+}
+
+function AuditActionBadge({ action }: { action: string }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${getActionBadgeClass(action)}`}
+    >
+      {action}
+    </span>
+  )
+}
+
+function getActionBadgeClass(action: string) {
+  if (action.includes("delete") || action.includes("remove")) {
+    return "border-red-200 bg-red-50 text-red-700"
+  }
+  if (action.includes("login") || action.includes("auth")) {
+    return "border-amber-200 bg-amber-50 text-amber-700"
+  }
+  if (action.includes("file") || action.includes("download")) {
+    return "border-sky-200 bg-sky-50 text-sky-700"
+  }
+  if (action.includes("policy") || action.includes("grading")) {
+    return "border-violet-200 bg-violet-50 text-violet-700"
+  }
+  if (action.includes("create") || action.includes("save") || action.includes("update")) {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  }
+
+  return "border-slate-200 bg-slate-50 text-slate-700"
 }
 
 function getDateWhere(from: string, to: string) {

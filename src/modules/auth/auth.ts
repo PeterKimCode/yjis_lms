@@ -1,11 +1,13 @@
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { UserRole } from "@prisma/client"
+import { NotificationType, UserRole } from "@prisma/client"
 import Redis from "ioredis"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import { verifyPassword } from "@/modules/auth/password"
+import { createNotificationsForUsers } from "@/modules/notifications/service"
 
 const credentialsSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
@@ -152,6 +154,19 @@ export const authOptions: NextAuthOptions = {
 
           if (isValidPassword) {
             clearLoginAttempts(email)
+            if (
+              user.roleAssignments.some((assignment) =>
+                adminLoginRoles.has(assignment.role)
+              )
+            ) {
+              await writeLoginAudit({
+                action: "auth.admin.login.success",
+                actorUserId: user.id,
+                organizationId: user.organizationId,
+                summary: "Admin login succeeded.",
+                userId: user.id,
+              })
+            }
             return {
               id: user.id,
               email: user.email,
@@ -161,8 +176,37 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        const auditUser = usableUsers[0]
+        if (auditUser) {
+            await writeLoginAudit({
+              action: isAdminLogin
+                ? "auth.admin.login.failed"
+              : "auth.login.failed",
+            organizationId: auditUser.organizationId,
+            summary: isAdminLogin
+              ? "Admin login failed."
+              : "Login failed for an existing account.",
+            userId: auditUser.id,
+          })
+        }
+
         if (!isAdminLogin) {
-          await recordFailedLogin(email)
+          const isLocked = await recordFailedLogin(email)
+          if (isLocked && auditUser) {
+            await writeLoginAudit({
+              action: "auth.login.locked",
+              organizationId: auditUser.organizationId,
+              summary: "Account temporarily locked after repeated failed logins.",
+              userId: auditUser.id,
+            })
+            await notifySecurityAdmins({
+              actorUserId: auditUser.id,
+              body: `${auditUser.email} was temporarily locked after repeated failed login attempts.`,
+              organizationId: auditUser.organizationId,
+              title: "Repeated failed login attempts",
+              userId: auditUser.id,
+            })
+          }
         }
         return null
       },
@@ -234,8 +278,9 @@ async function recordFailedLogin(email: string) {
       if (count >= maxLoginAttempts) {
         const lockedUntil = Date.now() + loginLockoutMs
         await redis.psetex(lockKey, loginLockoutMs, String(lockedUntil))
+        return true
       }
-      return
+      return false
     } catch (error) {
       console.error("Redis login rate-limit write failed", {
         error: error instanceof Error ? error.message : String(error),
@@ -256,6 +301,7 @@ async function recordFailedLogin(email: string) {
   }
 
   loginAttemptStore.set(email, attempt)
+  return Boolean(attempt.lockedUntil && attempt.lockedUntil > now)
 }
 
 function clearLoginAttempts(email: string) {
@@ -278,4 +324,73 @@ function getLoginAttemptKey(email: string) {
 
 function getLoginLockKey(email: string) {
   return `lms:login-lock:${email}`
+}
+
+async function writeLoginAudit({
+  action,
+  actorUserId = null,
+  organizationId,
+  summary,
+  userId,
+}: {
+  action: string
+  actorUserId?: string | null
+  organizationId: string
+  summary: string
+  userId: string
+}) {
+  await writeAuditLog({
+    action,
+    actorUserId,
+    entityId: userId,
+    entityType: "User",
+    metadata: {
+      source: "credentials",
+    },
+    organizationId,
+    summary,
+  })
+}
+
+async function notifySecurityAdmins({
+  actorUserId,
+  body,
+  organizationId,
+  title,
+  userId,
+}: {
+  actorUserId: string
+  body: string
+  organizationId: string
+  title: string
+  userId: string
+}) {
+  const admins = await getPrismaClient().userRoleAssignment.findMany({
+    where: {
+      organizationId,
+      role: {
+        in: [
+          UserRole.SUPER_ADMIN,
+          UserRole.ORG_ADMIN,
+          UserRole.SCHOOL_ADMIN,
+          UserRole.ACADEMIC_STAFF,
+        ],
+      },
+      user: { isActive: true },
+    },
+    select: { userId: true },
+  })
+
+  await createNotificationsForUsers(
+    admins.map((admin) => admin.userId),
+    {
+      actionUrl: `/admin/users/${userId}`,
+      actorUserId,
+      body,
+      entityId: userId,
+      entityType: "User",
+      title,
+      type: NotificationType.SYSTEM_NOTICE,
+    }
+  )
 }

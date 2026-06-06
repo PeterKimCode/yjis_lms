@@ -203,11 +203,13 @@ What this means:
 - It is useful when checking grade release, transcript downloads, user changes, and class enrollment changes.
 - It is useful for answering parent/admin questions such as "who changed attendance?" or "who downloaded this transcript?"
 - Detail pages show the event metadata, and CSV export supports lightweight review outside the LMS.
+- Login security events are logged for admin login success/failure and repeated failed login lockouts.
+- Policy saves include before/after snapshots so admins can review what changed.
 
 Recommended next coverage:
 
-- login success/failure summaries,
-- field-level before/after diffs for policy and user changes.
+- field-level before/after diffs for user profile and enrollment changes,
+- shipping audit logs to an external log store for tamper-resistant retention.
 
 ## Permission Regression Test
 
