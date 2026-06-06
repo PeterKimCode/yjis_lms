@@ -42,9 +42,10 @@ This audit focuses on server-side authorization and data visibility for:
 - `AuditLog` stores security-sensitive server-side events.
 - Coverage includes organization/user changes, class instructor assignment,
   student enrollment, attendance updates, board moderation, file view/download,
-  final grade publish/finalize, and document PDF downloads.
+  file upload creation, policy changes, final grade publish/finalize, and
+  document PDF downloads.
 - Admins can review scoped audit events at `/admin/audit-logs`.
-- Audit logs can be filtered and exported as CSV for lightweight operational review.
+- Audit logs can be filtered, opened in a detail view, and exported as CSV for lightweight operational review.
 - Audit writes are best-effort and do not block the user-facing operation if logging fails.
 
 ### Conversations
@@ -115,7 +116,9 @@ See also:
   - board image visibility
   - parent/student data boundaries
   - direct conversation participant-only access
-- Expand structured audit logs to login summaries, policy setting changes, and file upload/delete creation events.
+- Add field-level before/after diffs for user and policy changes when schools need stricter change review.
+- Prune old audit logs only after database backup is verified:
+  `npm run audit:prune -- --days=365 --dry-run`
 - Add security headers at the deployment/proxy level:
   - `Content-Security-Policy`
   - `Referrer-Policy`

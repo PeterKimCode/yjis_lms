@@ -3,6 +3,7 @@ import "server-only"
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection } from "@/modules/auth/permissions"
 
 export async function uploadLessonVideoFile({
@@ -47,7 +48,7 @@ export async function uploadLessonVideoFile({
     })
   )
 
-  return prisma.fileAsset.create({
+  const fileAsset = await prisma.fileAsset.create({
     data: {
       organizationId: classSection.organizationId,
       campusId: classSection.campusId,
@@ -64,6 +65,23 @@ export async function uploadLessonVideoFile({
       },
     },
   })
+
+  await writeAuditLog({
+    action: "file.upload",
+    actorUserId: instructorId,
+    campusId: classSection.campusId,
+    entityId: fileAsset.id,
+    entityType: "FileAsset",
+    metadata: {
+      classSectionId,
+      contentType: fileAsset.contentType,
+      source: "lesson-video-upload",
+    },
+    organizationId: classSection.organizationId,
+    summary: `Uploaded lesson video ${fileAsset.originalName}.`,
+  })
+
+  return fileAsset
 }
 
 export function isVideoFile(name: string, contentType: string) {

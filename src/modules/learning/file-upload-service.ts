@@ -3,6 +3,7 @@ import "server-only"
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection } from "@/modules/auth/permissions"
 import { validateAssignmentAttachment } from "@/modules/files/upload-validation"
 
@@ -45,7 +46,7 @@ export async function uploadLessonAttachmentFile({
     })
   )
 
-  return prisma.fileAsset.create({
+  const fileAsset = await prisma.fileAsset.create({
     data: {
       organizationId: classSection.organizationId,
       campusId: classSection.campusId,
@@ -62,6 +63,23 @@ export async function uploadLessonAttachmentFile({
       },
     },
   })
+
+  await writeAuditLog({
+    action: "file.upload",
+    actorUserId: instructorId,
+    campusId: classSection.campusId,
+    entityId: fileAsset.id,
+    entityType: "FileAsset",
+    metadata: {
+      classSectionId,
+      contentType: fileAsset.contentType,
+      source: "lesson-file-upload",
+    },
+    organizationId: classSection.organizationId,
+    summary: `Uploaded lesson file ${fileAsset.originalName}.`,
+  })
+
+  return fileAsset
 }
 
 export class LessonFileUploadError extends Error {

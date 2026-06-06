@@ -4,6 +4,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { FileVisibility, type Prisma } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import { validateImageUpload } from "@/modules/files/image-validation"
 
 export async function uploadImageFile({
@@ -55,6 +56,22 @@ export async function uploadImageFile({
     ownerId,
     safeName: validation.safeName,
     size: file.size,
+  })
+
+  await writeAuditLog({
+    action: "file.upload",
+    actorUserId: ownerId,
+    campusId,
+    entityId: fileAsset.id,
+    entityType: "FileAsset",
+    metadata: {
+      classSectionId: classSectionId ?? null,
+      contentType: fileAsset.contentType,
+      prefix,
+      source: "image-upload",
+    },
+    organizationId,
+    summary: `Uploaded image ${fileAsset.originalName}.`,
   })
 
   return {

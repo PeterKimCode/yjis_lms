@@ -6,3 +6,6 @@
 
 # Delete backup files older than 14 days from the mounted host backup directory.
 30 2 * * * find /srv/docker/sites/lms/backups -name 'lms-*.dump' -type f -mtime +14 -delete >> /var/log/lms-backup-cleanup.log 2>&1
+
+# Prune audit logs older than 365 days after backups have already run.
+45 2 * * * cd /srv/docker/sites/lms && docker exec lms-app npm run audit:prune -- --days=365 >> /var/log/lms-audit-prune.log 2>&1

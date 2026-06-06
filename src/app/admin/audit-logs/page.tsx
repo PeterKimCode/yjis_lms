@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { getPrismaClient } from "@/lib/prisma"
 import {
   AdminPageHeader,
@@ -88,6 +90,7 @@ export default async function AdminAuditLogsPage({
           "Organization",
           "Entity",
           "Summary",
+          "Open",
         ]}
         minWidth="min-w-[980px]"
         rows={filteredLogs.map((log) => (
@@ -115,6 +118,14 @@ export default async function AdminAuditLogsPage({
             </TableCell>
             <TableCell>
               <span className="line-clamp-2">{log.summary ?? "-"}</span>
+            </TableCell>
+            <TableCell>
+              <Link
+                className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent"
+                href={`/admin/audit-logs/${log.id}`}
+              >
+                View
+              </Link>
             </TableCell>
           </TableRow>
         ))}

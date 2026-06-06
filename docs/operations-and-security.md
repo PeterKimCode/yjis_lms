@@ -186,18 +186,28 @@ Admin review page:
 /admin/audit-logs
 ```
 
+Useful audit log tools:
+
+```bash
+# Preview how many old logs would be removed.
+npm run audit:prune -- --days=365 --dry-run
+
+# Delete logs older than 365 days. Run only after backup is working.
+npm run audit:prune -- --days=365
+```
+
 What this means:
 
 - The log answers "who changed what and when?"
 - It is not a replacement for database backups.
 - It is useful when checking grade release, transcript downloads, user changes, and class enrollment changes.
 - It is useful for answering parent/admin questions such as "who changed attendance?" or "who downloaded this transcript?"
+- Detail pages show the event metadata, and CSV export supports lightweight review outside the LMS.
 
 Recommended next coverage:
 
-- direct file upload create/delete events,
 - login success/failure summaries,
-- policy setting changes by field.
+- field-level before/after diffs for policy and user changes.
 
 ## Permission Regression Test
 

@@ -1,11 +1,13 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { Prisma } from "@prisma/client"
+import { Prisma, UserRole } from "@prisma/client"
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope } from "@/modules/admin/access"
+import { writeAuditLog } from "@/modules/audit/service"
+import { requireAnyRole } from "@/modules/auth/permissions"
 import type { PolicyActionState } from "@/modules/policies/action-state"
 import { DEFAULT_DOCUMENT_POLICY, POLICY_NAMES } from "@/modules/policies/defaults"
 import {
@@ -64,9 +66,22 @@ export async function saveAttendancePolicy(
   }
 
   const data = parsed.data
+  const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
   await upsertAttendancePolicy(data)
+  await writePolicyAudit({
+    action: "policy.attendance.save",
+    actorUserId: actor.id,
+    campusId: data.campusId,
+    metadata: {
+      allowInstructorOverride: data.allowInstructorOverride,
+      countLateAsAbsence: data.countLateAsAbsence,
+      lateThresholdMinutes: data.lateThresholdMinutes,
+    },
+    organizationId: data.organizationId,
+    summary: "Saved attendance policy.",
+  })
   revalidatePath("/admin/policies")
   return { ok: true, message: "Attendance policy saved." }
 }
@@ -102,9 +117,22 @@ export async function saveVideoCompletionPolicy(
   }
 
   const data = parsed.data
+  const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
   await upsertVideoPolicy(data)
+  await writePolicyAudit({
+    action: "policy.video_completion.save",
+    actorUserId: actor.id,
+    campusId: data.campusId,
+    metadata: {
+      completionThresholdPercent: data.completionThresholdPercent,
+      minimumWatchSeconds: data.minimumWatchSeconds,
+      requireActualWatchedCoverage: data.requireActualWatchedCoverage,
+    },
+    organizationId: data.organizationId,
+    summary: "Saved video completion policy.",
+  })
   revalidatePath("/admin/policies")
   return { ok: true, message: "Video completion policy saved." }
 }
@@ -216,9 +244,24 @@ export async function saveGradingAndDocumentPolicy(
   }
 
   const data = parsed.data
+  const actor = await requirePolicyAdmin()
   await assertAdminScope(data)
   await verifyCampusBelongsToOrganization(data.organizationId, data.campusId)
   await upsertGradingPolicy(data)
+  await writePolicyAudit({
+    action: "policy.grading_document.save",
+    actorUserId: actor.id,
+    campusId: data.campusId,
+    metadata: {
+      allowLateSubmissionDefault: data.allowLateSubmissionDefault,
+      gpaScale: data.gpaScale,
+      reportCardsRequirePublishedGrades: data.reportCardsRequirePublishedGrades,
+      studentsCanSeeDraftGrades: data.studentsCanSeeDraftGrades,
+      transcriptsRequirePublishedGrades: data.transcriptsRequirePublishedGrades,
+    },
+    organizationId: data.organizationId,
+    summary: "Saved assignment, grade visibility, document, and GPA policy.",
+  })
   revalidatePath("/admin/policies")
   return { ok: true, message: "Policy saved." }
 }
@@ -257,6 +300,7 @@ export async function saveGradingScale(
   }
 
   const data = parsed.data
+  const actor = await requirePolicyAdmin()
   await assertAdminScope({ organizationId: data.organizationId })
 
   const prisma = getPrismaClient()
@@ -313,6 +357,17 @@ export async function saveGradingScale(
     }
   }
 
+  await writePolicyAudit({
+    action: "policy.grading_scale.save",
+    actorUserId: actor.id,
+    metadata: {
+      rowCount: data.rows.length,
+      scaleId: scale.id,
+      scaleName: data.name,
+    },
+    organizationId: data.organizationId,
+    summary: `Saved grading scale ${data.name}.`,
+  })
   revalidatePath("/admin/policies")
   return { ok: true, message: "Grading scale saved." }
 }
@@ -331,6 +386,7 @@ export async function initializeMissingPolicyDefaults(
   }
 
   const data = parsed.data
+  const actor = await requirePolicyAdmin()
 
   try {
     await assertAdminScope(data)
@@ -347,6 +403,15 @@ export async function initializeMissingPolicyDefaults(
       })
     }
 
+    await writePolicyAudit({
+      action: "policy.defaults.initialize",
+      actorUserId: actor.id,
+      campusId: data.campusId,
+      organizationId: data.organizationId,
+      summary: data.campusId
+        ? "Initialized missing campus policy defaults."
+        : "Initialized missing organization policy defaults.",
+    })
     revalidatePath("/admin/policies")
     return { ok: true, message: "Missing default policies initialized." }
   } catch (error) {
@@ -362,6 +427,35 @@ export async function initializeMissingPolicyDefaults(
         "Default policy initialization failed. Check the server logs and try again.",
     }
   }
+}
+
+async function requirePolicyAdmin() {
+  return requireAnyRole([
+    UserRole.SUPER_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.ACADEMIC_STAFF,
+  ])
+}
+
+async function writePolicyAudit(input: {
+  action: string
+  actorUserId: string
+  campusId?: string | null
+  metadata?: Record<string, boolean | number | string | null>
+  organizationId: string
+  summary: string
+}) {
+  await writeAuditLog({
+    action: input.action,
+    actorUserId: input.actorUserId,
+    campusId: input.campusId,
+    entityId: input.campusId ?? input.organizationId,
+    entityType: input.campusId ? "CampusPolicy" : "OrganizationPolicy",
+    metadata: input.metadata,
+    organizationId: input.organizationId,
+    summary: input.summary,
+  })
 }
 
 async function verifyCampusBelongsToOrganization(
