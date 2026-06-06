@@ -7,6 +7,7 @@ import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { assertAdminScope } from "@/modules/admin/access"
+import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection, requireAuth } from "@/modules/auth/permissions"
 import {
   BOARD_KIND_OPTIONS,
@@ -83,6 +84,7 @@ export async function saveBoard(formData: FormData) {
   }
 
   const data = parsed.data
+  const actor = await requireAuth()
   const prisma = getPrismaClient()
   let scope = {
     organizationId: data.organizationId,
@@ -165,6 +167,21 @@ export async function saveBoard(formData: FormData) {
     ? await updateExistingBoard(data.id, updateValues)
     : await prisma.board.create({ data: createValues })
 
+  await writeAuditLog({
+    action: data.id ? "board.update" : "board.create",
+    actorUserId: actor.id,
+    campusId: board.campusId,
+    entityId: board.id,
+    entityType: "Board",
+    metadata: {
+      boardKind: data.boardKind,
+      classSectionId: board.classSectionId,
+      scopeType,
+    },
+    organizationId: board.organizationId,
+    summary: `${data.id ? "Updated" : "Created"} board ${board.name}.`,
+  })
+
   revalidatePath("/admin/boards")
   revalidatePath("/admin")
   revalidateBoard(board.id, board.classSectionId)
@@ -225,7 +242,7 @@ export async function createClassBoard(formData: FormData) {
     where: { id: data.classSectionId },
     select: { organizationId: true, campusId: true },
   })
-  await prisma.board.create({
+  const board = await prisma.board.create({
     data: {
       organization: { connect: { id: classSection.organizationId } },
       ...(classSection.campusId
@@ -244,6 +261,21 @@ export async function createClassBoard(formData: FormData) {
       },
       type: getBoardTypeForKind(data.boardKind),
     },
+  })
+
+  await writeAuditLog({
+    action: "board.create",
+    actorUserId: accessUser.id,
+    campusId: board.campusId,
+    entityId: board.id,
+    entityType: "Board",
+    metadata: {
+      boardKind: data.boardKind,
+      classSectionId: board.classSectionId,
+      scopeType: board.scopeType,
+    },
+    organizationId: board.organizationId,
+    summary: `Created class board ${board.name}.`,
   })
 
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
@@ -269,6 +301,15 @@ export async function deactivateBoard(formData: FormData) {
     where: { id: access.board.id },
     data: { isActive: false },
   })
+  await writeAuditLog({
+    action: "board.deactivate",
+    actorUserId: access.user?.id,
+    campusId: access.board.campusId,
+    entityId: access.board.id,
+    entityType: "Board",
+    organizationId: access.board.organizationId,
+    summary: `Deactivated board ${access.board.name}.`,
+  })
   revalidateBoard(access.board.id, access.board.classSectionId)
   revalidatePath("/admin/boards")
   redirect(`/admin/boards/${access.board.id}?boardStatus=deactivated`)
@@ -291,6 +332,15 @@ export async function deleteBoard(formData: FormData) {
   }
 
   await getPrismaClient().board.delete({ where: { id: access.board.id } })
+  await writeAuditLog({
+    action: "board.delete",
+    actorUserId: access.user?.id,
+    campusId: access.board.campusId,
+    entityId: access.board.id,
+    entityType: "Board",
+    organizationId: access.board.organizationId,
+    summary: `Deleted empty board ${access.board.name}.`,
+  })
   revalidatePath("/admin/boards")
   if (access.board.classSectionId) {
     revalidatePath(`/instructor/classes/${access.board.classSectionId}`)
@@ -345,6 +395,19 @@ export async function createPost(formData: FormData) {
   })
 
   await attachImagesToPost(post.id, images, access.board, access.user.id)
+  await writeAuditLog({
+    action: "board.post.create",
+    actorUserId: access.user.id,
+    campusId: access.board.campusId,
+    entityId: post.id,
+    entityType: "Post",
+    metadata: {
+      boardId: access.board.id,
+      imageCount: images.length,
+    },
+    organizationId: access.board.organizationId,
+    summary: `Created post ${post.title}.`,
+  })
   await notifyBoardPostCreated({
     authorId: access.user.id,
     boardId: access.board.id,
@@ -406,6 +469,21 @@ export async function updatePost(formData: FormData) {
   if (access.board) {
     await attachImagesToPost(postId, images, access.board, access.user.id)
   }
+  if (access.board) {
+    await writeAuditLog({
+      action: "board.post.update",
+      actorUserId: access.user.id,
+      campusId: access.board.campusId,
+      entityId: postId,
+      entityType: "Post",
+      metadata: {
+        boardId: access.board.id,
+        addedImageCount: images.length,
+      },
+      organizationId: access.board.organizationId,
+      summary: `Updated post ${data.title}.`,
+    })
+  }
   if (access.board) revalidateBoard(access.board.id, access.board.classSectionId)
 }
 
@@ -431,7 +509,19 @@ export async function deletePost(formData: FormData) {
   }
 
   await getPrismaClient().post.delete({ where: { id: data.postId } })
-  if (access.board) revalidateBoard(access.board.id, access.board.classSectionId)
+  if (access.board) {
+    await writeAuditLog({
+      action: "board.post.delete",
+      actorUserId: access.user.id,
+      campusId: access.board.campusId,
+      entityId: data.postId,
+      entityType: "Post",
+      metadata: { boardId: access.board.id },
+      organizationId: access.board.organizationId,
+      summary: "Deleted board post.",
+    })
+    revalidateBoard(access.board.id, access.board.classSectionId)
+  }
 }
 
 const commentSchema = z.object({
@@ -477,6 +567,20 @@ export async function createComment(formData: FormData) {
   })
 
   await attachImagesToComment(comment.id, images, post.board, access.user.id)
+  await writeAuditLog({
+    action: "board.comment.create",
+    actorUserId: access.user.id,
+    campusId: post.board.campusId,
+    entityId: comment.id,
+    entityType: "Comment",
+    metadata: {
+      boardId: post.boardId,
+      imageCount: images.length,
+      postId: post.id,
+    },
+    organizationId: post.board.organizationId,
+    summary: "Created board comment.",
+  })
   if (post.authorId && post.authorId !== access.user.id) {
     await createNotification({
       actionUrl: "/notifications",
@@ -538,6 +642,20 @@ export async function updateComment(formData: FormData) {
       access.user.id
     )
   }
+  await writeAuditLog({
+    action: "board.comment.update",
+    actorUserId: access.user.id,
+    campusId: comment.post.board.campusId,
+    entityId: comment.id,
+    entityType: "Comment",
+    metadata: {
+      boardId: comment.post.boardId,
+      replacedImage: images.length > 0,
+      postId: comment.postId,
+    },
+    organizationId: comment.post.board.organizationId,
+    summary: "Updated board comment.",
+  })
   revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
 }
 
@@ -561,6 +679,19 @@ export async function deleteComment(formData: FormData) {
   }
 
   await getPrismaClient().comment.delete({ where: { id: comment.id } })
+  await writeAuditLog({
+    action: "board.comment.delete",
+    actorUserId: access.user.id,
+    campusId: comment.post.board.campusId,
+    entityId: comment.id,
+    entityType: "Comment",
+    metadata: {
+      boardId: comment.post.boardId,
+      postId: comment.postId,
+    },
+    organizationId: comment.post.board.organizationId,
+    summary: "Deleted board comment.",
+  })
   revalidateBoard(comment.post.boardId, comment.post.board.classSectionId)
 }
 
@@ -587,6 +718,20 @@ export async function deletePostAttachment(formData: FormData) {
 
   await getPrismaClient().postAttachment.delete({
     where: { id: attachment.id },
+  })
+  await writeAuditLog({
+    action: "board.post_image.delete",
+    actorUserId: access.user.id,
+    campusId: attachment.post.board.campusId,
+    entityId: attachment.id,
+    entityType: "PostAttachment",
+    metadata: {
+      boardId: attachment.post.boardId,
+      fileAssetId: attachment.fileAssetId,
+      postId: attachment.postId,
+    },
+    organizationId: attachment.post.board.organizationId,
+    summary: "Removed image from board post.",
   })
   revalidateBoard(attachment.post.boardId, attachment.post.board.classSectionId)
 }
@@ -620,6 +765,20 @@ export async function deleteCommentAttachment(formData: FormData) {
 
   await getPrismaClient().commentAttachment.delete({
     where: { id: attachment.id },
+  })
+  await writeAuditLog({
+    action: "board.comment_image.delete",
+    actorUserId: access.user.id,
+    campusId: attachment.comment.post.board.campusId,
+    entityId: attachment.id,
+    entityType: "CommentAttachment",
+    metadata: {
+      boardId: attachment.comment.post.boardId,
+      commentId: attachment.commentId,
+      fileAssetId: attachment.fileAssetId,
+    },
+    organizationId: attachment.comment.post.board.organizationId,
+    summary: "Removed image from board comment.",
   })
   revalidateBoard(
     attachment.comment.post.boardId,

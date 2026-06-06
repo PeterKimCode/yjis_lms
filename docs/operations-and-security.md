@@ -172,6 +172,11 @@ Current initial coverage:
 - user create/update,
 - class instructor assignment/removal,
 - student enrollment/removal,
+- attendance record changes,
+- board create/update/deactivate/delete,
+- board post/comment create/update/delete,
+- board image removal,
+- file view/download,
 - final grade publish/finalize,
 - report card/transcript PDF download.
 
@@ -186,12 +191,13 @@ What this means:
 - The log answers "who changed what and when?"
 - It is not a replacement for database backups.
 - It is useful when checking grade release, transcript downloads, user changes, and class enrollment changes.
+- It is useful for answering parent/admin questions such as "who changed attendance?" or "who downloaded this transcript?"
 
 Recommended next coverage:
 
-- attendance changes,
-- board moderation actions,
-- file upload/delete actions.
+- direct file upload create/delete events,
+- login success/failure summaries,
+- policy setting changes by field.
 
 ## Permission Regression Test
 
@@ -228,4 +234,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
-Add a Content Security Policy after confirming Google Translate and any external video providers that the school actually uses.
+The app also sends `Content-Security-Policy-Report-Only` from `next.config.ts`.
+This means the browser can report potential CSP violations without blocking the
+page yet. Keep it in report-only mode until Google Translate, YouTube/video
+lessons, and uploaded media have been tested in production.

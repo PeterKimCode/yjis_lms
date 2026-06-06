@@ -119,11 +119,14 @@ function OrganizationForm({
     logoFileAsset?: { id: string } | null
   }
 }) {
+  const formClassName = compact
+    ? "grid gap-4 lg:grid-cols-2"
+    : "grid gap-4 lg:grid-cols-3"
   const form = (
-      <form action={saveOrganization} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <form action={saveOrganization} className={formClassName}>
         <input name="id" type="hidden" value={organization?.id ?? ""} />
         {organization ? (
-          <div className="flex items-center gap-3 sm:col-span-2 xl:col-span-4">
+          <div className="flex min-w-0 items-center gap-3 lg:col-span-2">
             <OrganizationLogoPreview
               logoFileAssetId={organization.logoFileAsset?.id}
               name={organization.name}
@@ -135,19 +138,19 @@ function OrganizationForm({
             </p>
           </div>
         ) : null}
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Name</span>
           <input
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="name"
             defaultValue={organization?.name ?? ""}
             required
           />
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Slug</span>
           <input
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="slug"
             placeholder="example-school"
             defaultValue={organization?.slug ?? ""}
@@ -156,10 +159,10 @@ function OrganizationForm({
             URL-safe short name. If blank, it is generated from the name.
           </span>
         </label>
-        <label className="grid gap-1 text-sm">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Type</span>
           <select
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="institutionType"
             defaultValue={organization?.institutionType ?? InstitutionType.ONLINE_SCHOOL}
           >
@@ -170,10 +173,10 @@ function OrganizationForm({
             ))}
           </select>
         </label>
-        <label className="grid gap-1 text-sm sm:col-span-2">
+        <label className="grid min-w-0 gap-1 text-sm lg:col-span-2">
           <span className="font-medium">Homepage URL</span>
           <input
-            className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+            className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="websiteUrl"
             placeholder="https://www.school.edu"
             defaultValue={organization?.websiteUrl ?? ""}
@@ -182,16 +185,17 @@ function OrganizationForm({
             Used on generated transcript backgrounds when available.
           </span>
         </label>
-        <label className="grid gap-1 text-sm sm:col-span-2">
+        <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Organization logo</span>
           <input
             accept="image/jpeg,image/png,image/webp,image/gif"
-            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium"
+            className="min-w-0 rounded-lg border border-input bg-background px-2 py-1.5 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium"
             name="logo"
             type="file"
           />
         </label>
-        <label className="flex items-end gap-2 text-sm">
+        <div className="flex min-w-0 flex-wrap items-end gap-4">
+        <label className="flex h-9 items-center gap-2 text-sm">
           <input
             name="isActive"
             type="checkbox"
@@ -199,7 +203,6 @@ function OrganizationForm({
           />
           Active
         </label>
-        <div className="flex items-end">
           <SubmitButton />
         </div>
       </form>

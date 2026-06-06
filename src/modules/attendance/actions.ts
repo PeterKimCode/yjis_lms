@@ -10,6 +10,7 @@ import {
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection, requireAnyRole } from "@/modules/auth/permissions"
 import {
   createNotification,
@@ -347,6 +348,22 @@ export async function saveAttendanceRecords(formData: FormData) {
       ]
     })
   )
+
+  if (notifications.length) {
+    await writeAuditLog({
+      action: "attendance.records.update",
+      actorUserId: actor.id,
+      campusId: attendanceSession.campusId,
+      entityId: attendanceSession.id,
+      entityType: "AttendanceSession",
+      metadata: {
+        changedRecordCount: notifications.length,
+        classSectionId: attendanceSession.classSectionId,
+      },
+      organizationId: attendanceSession.organizationId,
+      summary: `Updated ${notifications.length} attendance record(s).`,
+    })
+  }
 
   revalidatePath(`/instructor/classes/${attendanceSession.classSectionId}`)
   revalidatePath("/notifications")

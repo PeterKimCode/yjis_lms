@@ -149,7 +149,10 @@ export function DataTable({
         <TableHeader>
           <TableRow>
             {headers.map((header) => (
-              <TableHead className="whitespace-nowrap" key={header}>
+              <TableHead
+                className="sticky top-0 z-10 whitespace-nowrap bg-white"
+                key={header}
+              >
                 {header}
               </TableHead>
             ))}

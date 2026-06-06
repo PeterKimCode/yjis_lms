@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { UserRole } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { writeAuditLog } from "@/modules/audit/service"
 import {
   canManageClassSection,
   canViewClassSection,
@@ -27,8 +28,10 @@ export async function GET(
     where: { id: fileId },
     select: {
       bucket: true,
+      campusId: true,
       id: true,
       objectKey: true,
+      organizationId: true,
       originalName: true,
       contentType: true,
       byteSize: true,
@@ -109,6 +112,20 @@ export async function GET(
       "Content-Type": file.contentType ?? "application/octet-stream",
       "Content-Length": String(file.byteSize ?? bytes.byteLength),
       "X-Content-Type-Options": "nosniff",
+    })
+
+    await writeAuditLog({
+      action: disposition === "inline" ? "file.view" : "file.download",
+      actorUserId: session.user.id,
+      campusId: file.campusId,
+      entityId: file.id,
+      entityType: "FileAsset",
+      metadata: {
+        contentType: file.contentType ?? null,
+        disposition,
+      },
+      organizationId: file.organizationId,
+      summary: `${disposition === "inline" ? "Viewed" : "Downloaded"} file ${file.originalName}.`,
     })
 
     return new Response(bytes, { headers })

@@ -2,7 +2,6 @@ import { getPrismaClient } from "@/lib/prisma"
 import {
   AdminPageHeader,
   DataTable,
-  SearchForm,
   TableCell,
   TableRow,
   matchesSearch,
@@ -15,15 +14,31 @@ import {
 export default async function AdminAuditLogsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{
+    action?: string
+    entityType?: string
+    from?: string
+    q?: string
+    to?: string
+  }>
 }) {
   const admin = await requireAdmin()
   const params = await searchParams
   const q = params.q?.trim() ?? ""
+  const action = params.action?.trim() ?? ""
+  const entityType = params.entityType?.trim() ?? ""
+  const from = params.from?.trim() ?? ""
+  const to = params.to?.trim() ?? ""
+  const dateWhere = getDateWhere(from, to)
   const logs = await getPrismaClient().auditLog.findMany({
-    where: getScopedWhereForAdmin(admin),
+    where: {
+      ...getScopedWhereForAdmin(admin),
+      ...(action ? { action } : {}),
+      ...(entityType ? { entityType } : {}),
+      ...(dateWhere ? { createdAt: dateWhere } : {}),
+    },
     orderBy: { createdAt: "desc" },
-    take: 100,
+    take: 250,
     include: {
       actor: {
         select: {
@@ -56,9 +71,12 @@ export default async function AdminAuditLogsPage({
         title="Audit Logs"
         description="Recent security-sensitive admin activity in your scope."
       />
-      <SearchForm
+      <AuditLogFilters
+        action={action}
+        entityType={entityType}
+        from={from}
         q={q}
-        placeholder="Search action, user, organization..."
+        to={to}
         resultSummary={`${filteredLogs.length} of ${logs.length} recent audit logs shown`}
       />
       <DataTable
@@ -102,11 +120,119 @@ export default async function AdminAuditLogsPage({
         ))}
       />
       <p className="text-xs text-muted-foreground">
-        Showing the latest 100 audit logs. Use database export for full
-        historical review.
+        Showing up to 250 audit logs for the selected filters. Use CSV export
+        for lightweight review; use database backups for full historical
+        retention.
       </p>
     </div>
   )
+}
+
+function AuditLogFilters({
+  action,
+  entityType,
+  from,
+  q,
+  resultSummary,
+  to,
+}: {
+  action: string
+  entityType: string
+  from: string
+  q: string
+  resultSummary: string
+  to: string
+}) {
+  const exportHref = getExportHref({ action, entityType, from, q, to })
+
+  return (
+    <form className="lms-soft-panel rounded-lg p-3" action="">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
+        <input
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm xl:col-span-2"
+          defaultValue={q}
+          name="q"
+          placeholder="Search action, user, organization..."
+        />
+        <input
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          defaultValue={action}
+          name="action"
+          placeholder="Action, e.g. user.update"
+        />
+        <input
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          defaultValue={entityType}
+          name="entityType"
+          placeholder="Entity, e.g. User"
+        />
+        <input
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          defaultValue={from}
+          name="from"
+          title="From date"
+          type="date"
+        />
+        <input
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
+          defaultValue={to}
+          name="to"
+          title="To date"
+          type="date"
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          className="h-8 rounded-lg border border-input px-3 text-sm font-medium hover:bg-accent"
+          type="submit"
+        >
+          Filter
+        </button>
+        <a className="text-sm text-muted-foreground hover:text-foreground" href="?">
+          Reset
+        </a>
+        <a
+          className="h-8 rounded-lg border border-input px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          href={exportHref}
+        >
+          Export CSV
+        </a>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{resultSummary}</p>
+    </form>
+  )
+}
+
+function getExportHref(params: {
+  action: string
+  entityType: string
+  from: string
+  q: string
+  to: string
+}) {
+  const search = new URLSearchParams()
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value)
+  }
+
+  return `/admin/audit-logs/export${search.size ? `?${search.toString()}` : ""}`
+}
+
+function getDateWhere(from: string, to: string) {
+  const where: { gte?: Date; lte?: Date } = {}
+
+  if (from) {
+    const fromDate = new Date(`${from}T00:00:00`)
+    if (!Number.isNaN(fromDate.getTime())) where.gte = fromDate
+  }
+
+  if (to) {
+    const toDate = new Date(`${to}T23:59:59.999`)
+    if (!Number.isNaN(toDate.getTime())) where.lte = toDate
+  }
+
+  return Object.keys(where).length ? where : null
 }
 
 function formatDateTime(value: Date) {

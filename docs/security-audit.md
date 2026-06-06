@@ -40,7 +40,11 @@ This audit focuses on server-side authorization and data visibility for:
 ### Audit Logs
 
 - `AuditLog` stores security-sensitive server-side events.
-- Initial coverage includes organization create/update/delete operations.
+- Coverage includes organization/user changes, class instructor assignment,
+  student enrollment, attendance updates, board moderation, file view/download,
+  final grade publish/finalize, and document PDF downloads.
+- Admins can review scoped audit events at `/admin/audit-logs`.
+- Audit logs can be filtered and exported as CSV for lightweight operational review.
 - Audit writes are best-effort and do not block the user-facing operation if logging fails.
 
 ### Conversations
@@ -64,6 +68,7 @@ This audit focuses on server-side authorization and data visibility for:
   - class-section file viewers
 - Inline rendering is restricted to image MIME types.
 - File responses include `X-Content-Type-Options: nosniff`.
+- Successful file views/downloads are recorded in `AuditLog`.
 
 ### Notifications
 
@@ -110,11 +115,11 @@ See also:
   - board image visibility
   - parent/student data boundaries
   - direct conversation participant-only access
-- Add structured audit logs for admin changes, grade publication, user edits, and document generation.
-- Expand structured audit logs to user edits, role changes, grade publication, document generation, and attendance changes.
+- Expand structured audit logs to login summaries, policy setting changes, and file upload/delete creation events.
 - Add security headers at the deployment/proxy level:
   - `Content-Security-Policy`
   - `Referrer-Policy`
   - `Permissions-Policy`
   - `Strict-Transport-Security` in HTTPS production
+- Keep application CSP in report-only mode until external translation, video, and media flows are verified.
 - Add malware scanning before accepting production file uploads.
