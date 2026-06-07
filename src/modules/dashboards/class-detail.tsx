@@ -115,13 +115,16 @@ export async function ClassSectionDetail({
         })
       : []
   const gradeWeights = getModuleWeights(section.gradingConfig)
+  const instructorNames = formatInstructorNames(section.instructors)
 
   return (
     <DashboardPage
       title={section.name}
       description={`${section.course.title} - ${
         section.campus?.name ?? "Organization-wide"
-      } - ${section.term?.name ?? "No term"}`}
+      } - ${section.term?.name ?? "No term"}${
+        instructorNames ? ` · Instructor: ${instructorNames}` : ""
+      }`}
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Students" value={section._count.enrollments} />
@@ -889,6 +892,18 @@ function AttendanceStat({
 
 function SectionBadge({ children }: { children: ReactNode }) {
   return <Badge variant="secondary">{children}</Badge>
+}
+
+function formatInstructorNames(
+  instructors: NonNullable<
+    Awaited<ReturnType<typeof getClassSectionDetail>>
+  >["instructors"]
+) {
+  const names = instructors
+    .map((assignment) => assignment.instructor.name ?? assignment.instructor.email)
+    .filter((name): name is string => Boolean(name))
+
+  return names.join(", ")
 }
 
 function toAssignmentPanelValue(

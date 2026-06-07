@@ -64,6 +64,15 @@ export async function getStudentClasses() {
           campus: true,
           course: true,
           term: true,
+          instructors: {
+            include: {
+              instructor: true,
+            },
+            orderBy: [
+              { isPrimary: "desc" },
+              { instructor: { name: "asc" } },
+            ],
+          },
           finalGrades: {
             where: {
               studentId: user.id,
@@ -304,6 +313,15 @@ export async function getPublishedLessonForStudent({
           campus: true,
           course: true,
           term: true,
+          instructors: {
+            include: {
+              instructor: true,
+            },
+            orderBy: [
+              { isPrimary: "desc" },
+              { instructor: { name: "asc" } },
+            ],
+          },
         },
       },
       videoFileAsset: true,

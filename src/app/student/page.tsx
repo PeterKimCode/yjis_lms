@@ -165,7 +165,7 @@ function StudentClassTable({
   return (
     <SimpleTable
       empty="No enrolled class sections yet."
-      headers={["Class", "Course", "Term", "Campus", "Status", "Open"]}
+      headers={["Class", "Course", "Instructor", "Term", "Campus", "Status", "Open"]}
       rows={enrollments.map((enrollment) => (
         <TableRow key={enrollment.id}>
           <LinkedCell
@@ -176,6 +176,9 @@ function StudentClassTable({
           </LinkedCell>
           <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
             {enrollment.classSection.course.title}
+          </LinkedCell>
+          <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
+            {formatInstructors(enrollment.classSection.instructors)}
           </LinkedCell>
           <LinkedCell href={`/student/classes/${enrollment.classSectionId}`}>
             {enrollment.classSection.term?.name ?? "No term"}
@@ -193,6 +196,18 @@ function StudentClassTable({
       ))}
     />
   )
+}
+
+function formatInstructors(
+  instructors: Awaited<
+    ReturnType<typeof getStudentClasses>
+  >["enrollments"][number]["classSection"]["instructors"]
+) {
+  const names = instructors
+    .map((item) => item.instructor.name ?? item.instructor.email)
+    .filter((name): name is string => Boolean(name))
+
+  return names.length ? names.join(", ") : "-"
 }
 
 function LinkedCell({

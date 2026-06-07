@@ -85,6 +85,16 @@ async function getRoleClassLinks(
         id: true,
         name: true,
         course: { select: { title: true } },
+        instructors: {
+          select: {
+            isPrimary: true,
+            instructor: { select: { name: true, email: true } },
+          },
+          orderBy: [
+            { isPrimary: "desc" },
+            { instructor: { name: "asc" } },
+          ],
+        },
       },
       orderBy: { name: "asc" },
       take: 20,
@@ -94,7 +104,7 @@ async function getRoleClassLinks(
       href: `/instructor/classes/${section.id}`,
       id: section.id,
       label: section.name,
-      subLabel: section.course.title,
+      subLabel: formatClassSubLabel(section.course.title, section.instructors),
     }))
   }
 
@@ -107,6 +117,16 @@ async function getRoleClassLinks(
             id: true,
             name: true,
             course: { select: { title: true } },
+            instructors: {
+              select: {
+                isPrimary: true,
+                instructor: { select: { name: true, email: true } },
+              },
+              orderBy: [
+                { isPrimary: "desc" },
+                { instructor: { name: "asc" } },
+              ],
+            },
           },
         },
       },
@@ -118,7 +138,10 @@ async function getRoleClassLinks(
       href: `/student/classes/${classSection.id}`,
       id: classSection.id,
       label: classSection.name,
-      subLabel: classSection.course.title,
+      subLabel: formatClassSubLabel(
+        classSection.course.title,
+        classSection.instructors
+      ),
     }))
   }
 
@@ -155,6 +178,21 @@ async function getRoleClassLinks(
       subLabel: `${relation.student.name ?? "Linked student"} · ${classSection.course.title}`,
     }))
   )
+}
+
+function formatClassSubLabel(
+  courseTitle: string,
+  instructors: {
+    instructor: { name: string | null; email: string | null }
+  }[]
+) {
+  const instructorNames = instructors
+    .map((item) => item.instructor.name ?? item.instructor.email)
+    .filter((name): name is string => Boolean(name))
+
+  return instructorNames.length
+    ? `${courseTitle} · ${instructorNames.join(", ")}`
+    : courseTitle
 }
 
 function getClassSectionAnchorLinks(tone: "instructor" | "student" | "parent") {

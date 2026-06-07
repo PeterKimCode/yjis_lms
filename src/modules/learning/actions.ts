@@ -355,6 +355,66 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
   return { progressRate, completed }
 }
 
+export async function markLessonViewed(input: {
+  classSectionId: string
+  lessonId: string
+}) {
+  const student = await requireAnyRole([UserRole.STUDENT])
+
+  if (!(await canViewClassSection(student.id, input.classSectionId))) {
+    throw new Error("Forbidden")
+  }
+
+  const lesson = await getPrismaClient().lesson.findFirstOrThrow({
+    where: {
+      id: input.lessonId,
+      classSectionId: input.classSectionId,
+      isPublished: true,
+    },
+    select: {
+      contentType: true,
+      organizationId: true,
+    },
+  })
+
+  if (lesson.contentType === LessonContentType.VIDEO) {
+    return
+  }
+
+  const existing = await getPrismaClient().videoProgress.findFirst({
+    where: {
+      lessonId: input.lessonId,
+      studentId: student.id,
+    },
+  })
+  const now = new Date()
+  const values = {
+    organizationId: lesson.organizationId,
+    lessonId: input.lessonId,
+    studentId: student.id,
+    watchedSeconds: 0,
+    durationSeconds: 0,
+    totalSeconds: 0,
+    progressRate: "100.00",
+    percentComplete: "100.00",
+    completed: true,
+    completedAt: existing?.completedAt ?? now,
+    lastPositionSeconds: 0,
+    lastWatchedAt: now,
+  }
+
+  if (existing) {
+    await getPrismaClient().videoProgress.update({
+      where: { id: existing.id },
+      data: values,
+    })
+  } else {
+    await getPrismaClient().videoProgress.create({
+      data: values,
+    })
+  }
+}
+
 async function getCompletionThreshold(input: {
   organizationId: string
   campusId?: string | null

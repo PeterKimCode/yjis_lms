@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { EmptyState, SectionBlock } from "@/modules/dashboards/components"
 import { getPublishedLessonForStudent } from "@/modules/dashboards/data"
 import { requireAnyRole } from "@/modules/auth/permissions"
+import { markLessonViewed } from "@/modules/learning/actions"
 import { VideoProgressPlayer } from "@/modules/learning/video-progress-player"
 import { YouTubePlayer } from "@/modules/learning/youtube-player"
 import { parseYouTubeVideoId } from "@/modules/learning/video"
@@ -25,6 +26,10 @@ export default async function StudentLessonPage({
 
   if (!lesson) {
     notFound()
+  }
+
+  if (lesson.contentType !== "VIDEO") {
+    await markLessonViewed({ classSectionId, lessonId: lesson.id })
   }
 
   const progress = lesson.videoProgress[0]
@@ -55,7 +60,15 @@ export default async function StudentLessonPage({
           ) : null}
         </div>
 
-        <SectionBlock title={lesson.contentType === "FILE" ? "Lesson file" : "Lesson video"}>
+        <SectionBlock
+          title={
+            lesson.contentType === "FILE"
+              ? "Lesson file"
+              : lesson.contentType === "VIDEO"
+                ? "Lesson video"
+                : "Lesson content"
+          }
+        >
           {lesson.contentType === "FILE" ? (
             lesson.videoFileAsset ? (
               <div className="rounded-lg border bg-background p-4">
@@ -75,6 +88,19 @@ export default async function StudentLessonPage({
             ) : (
               <EmptyState>No file has been attached to this lesson yet.</EmptyState>
             )
+          ) : lesson.contentType !== "VIDEO" ? (
+            <div className="rounded-lg border bg-background p-4">
+              <p className="font-medium">Marked complete</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Opening this {lesson.contentType.toLowerCase()} lesson records it
+                as completed.
+              </p>
+              {lesson.description ? (
+                <p className="mt-4 whitespace-pre-wrap text-sm">
+                  {lesson.description}
+                </p>
+              ) : null}
+            </div>
           ) : youtubeVideoId ? (
             <YouTubePlayer
               classSectionId={classSectionId}

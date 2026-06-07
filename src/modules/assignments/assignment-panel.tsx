@@ -122,15 +122,40 @@ export function AssignmentPanel({
                     : "-"}
                 </TableCell>
                 <TableCell>
-                  <details className="min-w-[260px]">
-                    <summary className="cursor-pointer text-primary underline-offset-4 hover:underline">
-                      Open
-                    </summary>
-                    <div className="mt-3 space-y-3 rounded-md border bg-background p-3">
+                  <FormDialog
+                    title={assignment.title}
+                    description="View assignment details, update your response, and upload an attachment."
+                    trigger={ownSubmission ? "View / update" : "Open"}
+                    variant="outline"
+                  >
+                    <div className="space-y-4">
+                      <div className="grid gap-3 rounded-lg border bg-muted/20 p-3 text-sm sm:grid-cols-3">
+                        <SubmissionMeta
+                          label="Due"
+                          value={formatDateTime(assignment.dueAt)}
+                        />
+                        <SubmissionMeta
+                          label="Max score"
+                          value={assignment.pointsPossible ?? "-"}
+                        />
+                        <SubmissionMeta
+                          label="Status"
+                          value={getSubmissionStatus({
+                            dueAt: assignment.dueAt,
+                            score: ownSubmission?.score,
+                            submittedAt: ownSubmission?.submittedAt,
+                          })}
+                        />
+                      </div>
                       {assignment.description ? (
-                        <p className="text-sm text-muted-foreground">
-                          {assignment.description}
-                        </p>
+                        <div className="rounded-lg border bg-background p-3">
+                          <div className="text-xs font-medium uppercase text-muted-foreground">
+                            Instructions
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap text-sm">
+                            {assignment.description}
+                          </p>
+                        </div>
                       ) : null}
                       {ownSubmission?.feedback ? (
                         <div className="rounded-md border p-3 text-sm">
@@ -149,7 +174,7 @@ export function AssignmentPanel({
                         submission={ownSubmission}
                       />
                     </div>
-                  </details>
+                  </FormDialog>
                 </TableCell>
               </TableRow>
             )
