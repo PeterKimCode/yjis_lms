@@ -29,6 +29,7 @@ import {
   AssignmentPanel,
   type AssignmentPanelValue,
 } from "@/modules/assignments/assignment-panel"
+import { StudentListDialog } from "@/modules/dashboards/student-list-dialog"
 import {
   ExamPanel,
   QuizPanel,
@@ -127,7 +128,19 @@ export async function ClassSectionDetail({
       }`}
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Students" value={section._count.enrollments} />
+        {mode === "instructor" ? (
+          <StudentListDialog
+            count={section._count.enrollments}
+            students={section.enrollments.map((enrollment) => ({
+              email: enrollment.student.email ?? "-",
+              id: enrollment.studentId,
+              name: enrollment.student.name,
+              status: enrollment.status,
+            }))}
+          />
+        ) : (
+          <MetricCard label="Students" value={section._count.enrollments} />
+        )}
         <MetricCard label="Lessons" value={section.lessons.length} />
         <MetricCard label="Assignments" value={section.assignments.length} />
         <MetricCard label="Quizzes" value={section.quizzes.length} />
