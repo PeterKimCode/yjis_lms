@@ -27,13 +27,13 @@ export function DashboardPage({
   tone?: "default" | "admin" | "instructor" | "student" | "parent"
 }) {
   return (
-    <main className={`flex-1 px-4 py-8 ${getPageToneClass(tone)}`}>
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+    <main className={`min-w-0 flex-1 px-4 py-8 ${getPageToneClass(tone)}`}>
+      <div className="mx-auto min-w-0 w-full max-w-6xl space-y-6">
         <div className="lms-soft-panel animate-in fade-in-50 slide-in-from-bottom-2 flex flex-col gap-3 rounded-xl p-5 duration-500 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
+          <div className="min-w-0 space-y-1">
             <div className="h-1.5 w-16 rounded-full bg-primary/70" />
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <h1 className="break-words text-2xl font-semibold tracking-tight">{title}</h1>
+            <p className="break-words text-sm text-muted-foreground">{description}</p>
           </div>
           {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>

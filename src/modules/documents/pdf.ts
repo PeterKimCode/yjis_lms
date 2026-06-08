@@ -2,8 +2,8 @@ import "server-only"
 
 import { DocumentStatus, DocumentType, FinalGradeStatus, UserRole } from "@prisma/client"
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import fontkit from "@pdf-lib/fontkit"
 import { readFile } from "node:fs/promises"
-import path from "node:path"
 import {
   PDFDocument,
   PDFImage,
@@ -33,6 +33,7 @@ type PdfContext = {
   doc: PDFDocument
   fonts: PdfFonts
   page: PDFPage
+  supportsUnicode: boolean
   y: number
 }
 
@@ -233,7 +234,6 @@ export async function generateReportCardPdf(input: {
     ctx,
     "Student and parent downloads include published/finalized grades only. Administrative previews may include draft grades."
   )
-  drawNote(ctx, "TODO: Embed Korean fonts later for production-quality Korean PDF output.")
   drawFooter(ctx, generatedAt)
 
   await createGeneratedDocumentMetadata({
@@ -390,15 +390,50 @@ function hasAdminRole(assignments: SessionRoleAssignment[]) {
 
 async function createPdfContext(): Promise<PdfContext> {
   const doc = await PDFDocument.create()
-  const regular = await doc.embedFont(StandardFonts.Helvetica)
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold)
+  const embeddedFonts = await loadDocumentFonts(doc)
   const page = doc.addPage(pageSize)
 
   return {
     doc,
-    fonts: { bold, regular },
+    fonts: {
+      bold: embeddedFonts.bold,
+      regular: embeddedFonts.regular,
+    },
     page,
+    supportsUnicode: embeddedFonts.supportsUnicode,
     y: pageSize[1] - margin,
+  }
+}
+
+async function loadDocumentFonts(doc: PDFDocument) {
+  const fontBytes = await readBundledPdfFont()
+
+  if (fontBytes) {
+    doc.registerFontkit(fontkit)
+    const regular = await doc.embedFont(fontBytes, { subset: true })
+
+    return {
+      bold: regular,
+      regular,
+      supportsUnicode: true,
+    }
+  }
+
+  const regular = await doc.embedFont(StandardFonts.Helvetica)
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold)
+
+  return {
+    bold,
+    regular,
+    supportsUnicode: false,
+  }
+}
+
+async function readBundledPdfFont() {
+  try {
+    return await readFile("public/fonts/NotoSansCJKkr-Regular.otf")
+  } catch {
+    return null
   }
 }
 
@@ -725,7 +760,7 @@ function drawText(
 ) {
   const font = options.font ?? ctx.fonts.regular
   const size = options.size ?? 9
-  ctx.page.drawText(toPdfSafeText(text), {
+  ctx.page.drawText(normalizePdfText(ctx, text), {
     color: options.color ?? textColor,
     font,
     maxWidth: options.maxWidth,
@@ -761,7 +796,7 @@ function wrapText(
   size: number,
   maxLines: number
 ) {
-  const safe = toPdfSafeText(value)
+  const safe = normalizePdfTextForFont(font, value)
   const words = safe.split(/\s+/).filter(Boolean)
   const lines: string[] = []
   let current = ""
@@ -790,9 +825,23 @@ function wrapText(
   return lines
 }
 
+function normalizePdfText(ctx: PdfContext, value: string) {
+  return ctx.supportsUnicode ? normalizeUnicodePdfText(value) : toPdfSafeText(value)
+}
+
+function normalizePdfTextForFont(font: PDFFont, value: string) {
+  return font.name.includes("Helvetica")
+    ? toPdfSafeText(value)
+    : normalizeUnicodePdfText(value)
+}
+
+function normalizeUnicodePdfText(value: string) {
+  return value.replace(/\s+/g, " ").trim()
+}
+
 function toPdfSafeText(value: string) {
   // pdf-lib built-in StandardFonts use WinAnsi encoding. Replace unsupported
-  // characters for MVP reliability. TODO: embed a Korean font for production PDFs.
+  // characters only when a Unicode font could not be loaded.
   return value
     .replace(/[^\u0020-\u00ff]/g, "?")
     .replace(/\s+/g, " ")
@@ -995,7 +1044,7 @@ async function getOrganizationLogoBytes(organizationId: string) {
     }
   }
 
-  return readFile(path.join(process.cwd(), "public", "brand", "gtcc-logo.png"))
+  return readFile("public/brand/gtcc-logo.png")
 }
 
 async function createGeneratedDocumentMetadata(input: {

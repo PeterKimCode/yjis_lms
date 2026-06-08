@@ -48,7 +48,7 @@ export async function RoleSidebarLayout({
   const sectionLinks = getClassSectionAnchorLinks(tone)
 
   return (
-    <div className={`${toneClass.bg} flex flex-1`}>
+    <div className={`${toneClass.bg} flex flex-1 flex-col md:flex-row`}>
       <RoleSidebarNav
         classLinks={classLinks}
         description={description}
@@ -60,7 +60,7 @@ export async function RoleSidebarLayout({
         tone={tone}
         userEmail={user.email}
       />
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section className="flex min-w-0 w-full flex-1 flex-col">
         {children}
       </section>
     </div>
