@@ -22,7 +22,6 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { GoogleTranslateControl } from "@/components/google-translate-control"
 import { Badge } from "@/components/ui/badge"
 import { LogoutButton } from "@/modules/auth/logout-button"
 
@@ -352,13 +351,10 @@ function SidebarAccountActions({ collapsed = false }: { collapsed?: boolean }) {
       <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
         Account
       </p>
-      <div className="grid gap-2">
-        <GoogleTranslateControl className="w-full justify-between border-white/10 bg-white/10 text-slate-100" />
-        <LogoutButton
-          className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
-          size="sm"
-        />
-      </div>
+      <LogoutButton
+        className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
+        size="sm"
+      />
     </div>
   )
 }
