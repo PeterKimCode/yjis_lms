@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useId } from "react"
 import { Languages } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -20,24 +20,37 @@ declare global {
 }
 
 const GOOGLE_TRANSLATE_SCRIPT_ID = "google-translate-element-script"
+const GOOGLE_TRANSLATE_WIDGET_SELECTOR = ".google-translate-widget[data-translate-widget='true']"
 
 export function GoogleTranslateControl({ className }: { className?: string }) {
+  const elementId = `google_translate_${useId().replace(/:/g, "")}`
+
   useEffect(() => {
-    window.googleTranslateElementInit = () => {
+    function initializeWidgets() {
       if (!window.google?.translate?.TranslateElement) return
 
-      new window.google.translate.TranslateElement(
-        {
-          autoDisplay: false,
-          includedLanguages: "en,ko,es,ja,zh-CN",
-          pageLanguage: "en",
-        },
-        "google_translate_element"
-      )
+      document
+        .querySelectorAll<HTMLElement>(GOOGLE_TRANSLATE_WIDGET_SELECTOR)
+        .forEach((element) => {
+          if (!element.id || element.dataset.initialized === "true") return
+
+          element.dataset.initialized = "true"
+
+          new window.google!.translate!.TranslateElement!(
+            {
+              autoDisplay: false,
+              includedLanguages: "en,ko,es,ja,zh-CN",
+              pageLanguage: "en",
+            },
+            element.id
+          )
+        })
     }
 
+    window.googleTranslateElementInit = initializeWidgets
+
     if (document.getElementById(GOOGLE_TRANSLATE_SCRIPT_ID)) {
-      window.googleTranslateElementInit()
+      initializeWidgets()
       return
     }
 
@@ -47,7 +60,7 @@ export function GoogleTranslateControl({ className }: { className?: string }) {
       "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
     script.async = true
     document.body.appendChild(script)
-  }, [])
+  }, [elementId])
 
   return (
     <div
@@ -60,7 +73,8 @@ export function GoogleTranslateControl({ className }: { className?: string }) {
       <div
         aria-label="Google Translate"
         className="google-translate-widget"
-        id="google_translate_element"
+        data-translate-widget="true"
+        id={elementId}
       />
     </div>
   )

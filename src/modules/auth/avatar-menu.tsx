@@ -27,7 +27,25 @@ export function AvatarMenu({
     initialState
   )
   const [open, setOpen] = useState(false)
+  const detailsRef = useRef<HTMLDetailsElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !detailsRef.current?.contains(event.target)
+      ) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown)
+
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [open])
 
   useEffect(() => {
     if (state.ok && state.message) {
@@ -41,6 +59,7 @@ export function AvatarMenu({
     <details
       className="relative"
       open={open}
+      ref={detailsRef}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
       <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center overflow-hidden rounded-full border border-white/20 bg-white shadow-sm">
@@ -59,7 +78,8 @@ export function AvatarMenu({
           </span>
         )}
       </summary>
-      <div className="absolute right-0 z-50 mt-2 w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
+      <div className="absolute right-0 top-full z-50 mt-3 w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
+        <span className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t bg-white" />
         <p className="text-sm font-semibold">{userName}</p>
         {roleSummary ? (
           <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">

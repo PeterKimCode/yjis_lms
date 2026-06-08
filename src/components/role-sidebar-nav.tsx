@@ -22,7 +22,9 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { GoogleTranslateControl } from "@/components/google-translate-control"
 import { Badge } from "@/components/ui/badge"
+import { LogoutButton } from "@/modules/auth/logout-button"
 
 type SidebarLink = {
   href: string
@@ -262,6 +264,7 @@ export function RoleSidebarNav({
             </div>
           </div>
         ) : null}
+        <SidebarAccountActions collapsed={collapsed} />
         <HelpContact collapsed={collapsed} />
       </aside>
       <header className="border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur md:hidden">
@@ -332,6 +335,7 @@ export function RoleSidebarNav({
                 )
               })}
             </nav>
+            <SidebarAccountActions />
             <HelpContact />
           </aside>
         </div>
@@ -340,9 +344,28 @@ export function RoleSidebarNav({
   )
 }
 
+function SidebarAccountActions({ collapsed = false }: { collapsed?: boolean }) {
+  if (collapsed) return null
+
+  return (
+    <div className="mt-auto border-t border-white/10 pt-4">
+      <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Account
+      </p>
+      <div className="grid gap-2">
+        <GoogleTranslateControl className="w-full justify-between border-white/10 bg-white/10 text-slate-100" />
+        <LogoutButton
+          className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
+          size="sm"
+        />
+      </div>
+    </div>
+  )
+}
+
 function HelpContact({ collapsed = false }: { collapsed?: boolean }) {
   return (
-    <details className="mt-auto pt-6">
+    <details className={collapsed ? "mt-auto pt-6" : "pt-4"}>
       <summary
         className={`flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white ${
           collapsed ? "justify-center px-0" : ""
