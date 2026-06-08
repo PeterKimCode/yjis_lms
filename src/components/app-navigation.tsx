@@ -6,7 +6,6 @@ import { GoogleTranslateControl } from "@/components/google-translate-control"
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
 import { AvatarMenu } from "@/modules/auth/avatar-menu"
-import { LogoutButton } from "@/modules/auth/logout-button"
 import { getCurrentSession } from "@/modules/auth/session"
 import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
@@ -31,12 +30,13 @@ export async function AppNavigation() {
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:px-4">
         <Link
-          className="max-w-[42vw] truncate text-sm font-semibold tracking-tight text-white sm:max-w-none sm:text-base"
+          className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-white sm:text-base"
           href="/"
         >
-          Learning Management System
+          <span className="sm:hidden">LMS</span>
+          <span className="hidden sm:inline">Learning Management System</span>
         </Link>
-        <nav className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+        <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {session?.user ? (
             <>
               <Button
@@ -82,19 +82,21 @@ export async function AppNavigation() {
                 avatarUrl={
                   avatar ? `/api/files/${avatar.id}/download?disposition=inline` : null
                 }
+                roleSummary={roleSummary}
                 userName={session.user.name ?? session.user.email ?? "User"}
               />
-              <BackButton className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white" />
-              <LogoutButton
-                className="hidden border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white sm:inline-flex"
-                size="sm"
+              <BackButton
+                className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                showLabel={false}
               />
-              <GoogleTranslateControl />
             </>
           ) : (
             <>
-              <BackButton className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white" />
-              <GoogleTranslateControl />
+              <BackButton
+                className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                showLabel={false}
+              />
+              <GoogleTranslateControl className="hidden sm:flex" />
               <Button asChild size="sm">
                 <Link href="/login">
                   <LogIn />

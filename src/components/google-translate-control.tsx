@@ -3,6 +3,8 @@
 import { useEffect } from "react"
 import { Languages } from "lucide-react"
 
+import { cn } from "@/lib/utils"
+
 declare global {
   interface Window {
     google?: {
@@ -19,7 +21,7 @@ declare global {
 
 const GOOGLE_TRANSLATE_SCRIPT_ID = "google-translate-element-script"
 
-export function GoogleTranslateControl() {
+export function GoogleTranslateControl({ className }: { className?: string }) {
   useEffect(() => {
     window.googleTranslateElementInit = () => {
       if (!window.google?.translate?.TranslateElement) return
@@ -48,7 +50,12 @@ export function GoogleTranslateControl() {
   }, [])
 
   return (
-    <div className="hidden min-h-8 items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200 sm:flex">
+    <div
+      className={cn(
+        "flex min-h-8 items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-200",
+        className
+      )}
+    >
       <Languages className="h-3.5 w-3.5" />
       <div
         aria-label="Google Translate"

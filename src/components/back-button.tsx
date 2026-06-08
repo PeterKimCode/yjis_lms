@@ -4,18 +4,24 @@ import { ArrowLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
-export function BackButton({ className }: { className?: string }) {
+export function BackButton({
+  className,
+  showLabel = true,
+}: {
+  className?: string
+  showLabel?: boolean
+}) {
   return (
     <Button
       aria-label="Go back"
       className={className}
-      size="sm"
+      size={showLabel ? "sm" : "icon-sm"}
       type="button"
       variant="outline"
       onClick={() => window.history.back()}
     >
       <ArrowLeft />
-      Back
+      {showLabel ? "Back" : <span className="sr-only">Back</span>}
     </Button>
   )
 }
