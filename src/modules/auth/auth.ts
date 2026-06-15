@@ -10,7 +10,7 @@ import { verifyPassword } from "@/modules/auth/password"
 import { createNotificationsForUsers } from "@/modules/notifications/service"
 
 const credentialsSchema = z.object({
-  email: z.string().email().transform((value) => value.toLowerCase()),
+  email: z.string().trim().min(1),
   password: z.string().min(1),
 })
 
@@ -80,9 +80,9 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET ?? "local-development-only-nextauth-secret",
   providers: [
     CredentialsProvider({
-      name: "Email and password",
+      name: "Login ID and password",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Login ID", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {

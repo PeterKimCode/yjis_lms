@@ -254,7 +254,11 @@ const userSchema = z.object({
   organizationId: optionalString,
   campusId: optionalString,
   name: requiredString,
-  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Login ID is required.")
+    .max(191, "Login ID must be 191 characters or fewer."),
   password: z.string().trim().optional().default(""),
   role: z.nativeEnum(UserRole),
   currentGradeLevelId: optionalString,
@@ -325,7 +329,7 @@ export async function saveUser(formData: FormData) {
     }
   }
 
-  const duplicateEmailUser = await prisma.user.findFirst({
+  const duplicateLoginUser = await prisma.user.findFirst({
     where: {
       email: userValues.email,
       ...(id ? { id: { not: id } } : {}),
@@ -333,8 +337,8 @@ export async function saveUser(formData: FormData) {
     select: { id: true },
   })
 
-  if (duplicateEmailUser) {
-    throw new Error("This email is already used by another user.")
+  if (duplicateLoginUser) {
+    throw new Error("This login ID is already used by another user.")
   }
 
   if (campusId) {

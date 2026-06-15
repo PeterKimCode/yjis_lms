@@ -133,9 +133,9 @@ export function UserForm({
         </label>
         <Field label="Name" name="name" defaultValue={user?.name} required />
         <Field
-          label="Email"
+          label="Login ID"
           name="email"
-          type="email"
+          type="text"
           defaultValue={user?.email}
           required
         />

@@ -28,7 +28,7 @@ export function LoginForm({
   hasError: boolean
 }) {
   const [error, setError] = useState(
-    hasError ? "Invalid email or password." : ""
+    hasError ? "Invalid login ID or password." : ""
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [email, setEmail] = useState("")
@@ -66,7 +66,7 @@ export function LoginForm({
       return
     }
 
-    const message = "Invalid email or password."
+    const message = "Invalid login ID or password."
     setError(message)
     window.dispatchEvent(
       new CustomEvent("lms-toast", {
@@ -81,13 +81,13 @@ export function LoginForm({
         <CardContent className="space-y-5 pt-6 pb-3">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">
-              Email
+              Login ID
             </label>
             <Input
               id="email"
               name="email"
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required

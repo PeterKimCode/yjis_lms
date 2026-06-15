@@ -320,20 +320,90 @@ export function RoleSidebarNav({
             </div>
             <nav className="grid gap-1">
               {links.map((link) => {
+                const active =
+                  pathname === link.href ||
+                  (link.href !== `/${tone}` && pathname.startsWith(`${link.href}/`))
                 const Icon = getSidebarIcon(link.label)
                 return (
-                  <Link
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
-                    href={link.href}
-                    key={link.href}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {link.label}
-                  </Link>
+                  <div key={link.href}>
+                    <Link
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                        active
+                          ? toneClass.active
+                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                      }`}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {link.label}
+                    </Link>
+                    {link.label === "Classes" && classLinks.length ? (
+                      <div className="ml-3 mt-1 grid gap-1 border-l border-white/10 pl-2">
+                        {classLinks.map((classLink) => {
+                          const classActive =
+                            pathname === classLink.href ||
+                            pathname.startsWith(`${classLink.href}/`)
+
+                          return (
+                            <Link
+                              className={`flex gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
+                                classActive
+                                  ? toneClass.active
+                                  : "text-slate-400 hover:bg-white/10 hover:text-white"
+                              }`}
+                              href={classLink.href}
+                              key={classLink.id}
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              <School className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                              <span className="min-w-0">
+                                <span
+                                  className="block whitespace-normal break-words font-medium leading-snug"
+                                  style={{
+                                    WebkitBoxOrient: "vertical",
+                                    WebkitLineClamp: 2,
+                                    display: "-webkit-box",
+                                    overflow: "hidden",
+                                  }}
+                                >
+                                  {classLink.label}
+                                </span>
+                                {classLink.subLabel ? (
+                                  <span className="block truncate text-[11px] opacity-75">
+                                    {classLink.subLabel}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 )
               })}
             </nav>
+            {isClassRoute && sectionLinks.length ? (
+              <div className="mt-5 border-t border-white/10 pt-4">
+                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Class sections
+                </p>
+                <div className="grid gap-1">
+                  {sectionLinks.map((section) => (
+                    <Link
+                      className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                      href={section.href}
+                      key={section.href}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {sectionIcon(section.label)}
+                      {section.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <SidebarAccountActions />
             <HelpContact />
           </aside>
