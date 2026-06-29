@@ -17,6 +17,7 @@ import {
   getUserWhereForAdmin,
   requireAdmin,
 } from "@/modules/admin/access"
+import { adminRoles, hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import type { AdminFormState } from "@/modules/admin/form-state"
 import { writeAuditLog } from "@/modules/audit/service"
 import { hashPassword } from "@/modules/auth/password"
@@ -307,6 +308,10 @@ export async function saveUser(formData: FormData) {
 
   await assertAdminScope({ organizationId: userValues.organizationId, campusId })
   const adminUser = await requireAdmin()
+
+  if (adminRoles.includes(role) && !hasSuperAdminRole(adminUser.roleAssignments)) {
+    throw new Error("Only super admins can create or assign admin accounts.")
+  }
 
   if (!id && password.length < 8) {
     throw new Error("Password must be at least 8 characters.")

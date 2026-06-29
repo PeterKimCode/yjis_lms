@@ -16,6 +16,7 @@ import {
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
+import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import { UserForm } from "@/modules/admin/user-form"
 
 export default async function UsersPage({
@@ -69,6 +70,7 @@ export default async function UsersPage({
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <UserForm
+        canManageAdminRoles={hasSuperAdminRole(admin.user.roleAssignments)}
         campusOptions={admin.campusOptions}
         gradeLevelOptions={admin.gradeLevelOptions}
         homeroomOptions={admin.homeroomOptions}

@@ -239,6 +239,7 @@ export async function getClassSectionDetail(
         include: {
           category: true,
           scores: {
+            where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
             include: {
               student: true,
             },

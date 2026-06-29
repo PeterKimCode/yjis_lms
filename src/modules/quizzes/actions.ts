@@ -5,6 +5,7 @@ import { NotificationType, Prisma, QuestionType, UserRole } from "@prisma/client
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { parseDateTimeLocalInTimeZone } from "@/lib/timezone"
 import {
   canManageClassSection,
   canViewClassSection,
@@ -22,8 +23,11 @@ const optionalString = z.preprocess(
   z.string().transform((value) => (value.length ? value : null))
 )
 const requiredString = z.string().trim().min(1)
-const optionalDate = optionalString.transform((value) =>
-  value ? new Date(value) : null
+const optionalDate = optionalString.refine(
+  (value) =>
+    value === null ||
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.test(value),
+  "Enter a valid date and time."
 )
 const optionalPositiveInt = z
   .preprocess((value) => {
@@ -109,9 +113,23 @@ export async function saveQuiz(
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
     where: { id: data.classSectionId },
-    select: { organizationId: true },
+    select: {
+      organization: { select: { timezone: true } },
+      organizationId: true,
+    },
   })
-  const { id, ...values } = data
+  const { id, opensAt, closesAt, ...rawValues } = data
+  const values = {
+    ...rawValues,
+    closesAt: parseDateTimeLocalInTimeZone(
+      closesAt,
+      classSection.organization.timezone
+    ),
+    opensAt: parseDateTimeLocalInTimeZone(
+      opensAt,
+      classSection.organization.timezone
+    ),
+  }
   const previous = id
     ? await prisma.quiz.findUnique({
         where: { id },
@@ -634,9 +652,23 @@ export async function saveExam(
   await requireQuizManager(data.classSectionId)
   const classSection = await getPrismaClient().classSection.findUniqueOrThrow({
     where: { id: data.classSectionId },
-    select: { organizationId: true },
+    select: {
+      organization: { select: { timezone: true } },
+      organizationId: true,
+    },
   })
-  const { id, ...values } = data
+  const { id, startsAt, endsAt, ...rawValues } = data
+  const values = {
+    ...rawValues,
+    endsAt: parseDateTimeLocalInTimeZone(
+      endsAt,
+      classSection.organization.timezone
+    ),
+    startsAt: parseDateTimeLocalInTimeZone(
+      startsAt,
+      classSection.organization.timezone
+    ),
+  }
 
   await getPrismaClient().exam.upsert({
     where: { id: id ?? "__new_exam__" },

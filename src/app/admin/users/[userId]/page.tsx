@@ -5,7 +5,9 @@ import { AttendanceStatus, FinalGradeStatus, UserRole } from "@prisma/client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { requireAdmin } from "@/modules/admin/access"
 import { getAdminUserDetail } from "@/modules/admin/data"
+import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
 import {
   ActiveBadge,
@@ -34,6 +36,7 @@ export default async function AdminUserDetailPage({
   params: Promise<{ userId: string }>
 }) {
   const { userId } = await params
+  const currentAdmin = await requireAdmin()
   const detail = await getAdminUserDetail(userId)
 
   if (!detail) {
@@ -103,6 +106,7 @@ export default async function AdminUserDetailPage({
           userName={user.name}
         />
         <UserForm
+          canManageAdminRoles={hasSuperAdminRole(currentAdmin.roleAssignments)}
           campusOptions={detail.campusOptions}
           gradeLevelOptions={detail.gradeLevelOptions}
           homeroomOptions={detail.homeroomOptions}

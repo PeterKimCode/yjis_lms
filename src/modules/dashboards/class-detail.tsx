@@ -639,19 +639,21 @@ export async function ClassSectionDetail({
           />
         </SectionBlock>
 
-        {mode === "instructor" ? (
-          <SectionBlock
-            description="Scheduled exams for this class section."
+        <SectionBlock
+            description="Scheduled exams and published exam scores for this class section."
             id="exams"
             meta={<SectionBadge>{section.exams.length} exams</SectionBadge>}
             title={`Exams · ${gradeWeights.examsWeight}%`}
           >
-            <ExamPanel
+            {mode === "instructor" ? (
+              <ExamPanel
               classSectionId={section.id}
               exams={section.exams.map(toExamPanelValue)}
-            />
+              />
+            ) : (
+              <StudentExamTable section={section} studentId={userId} />
+            )}
           </SectionBlock>
-        ) : null}
 
         <SectionBlock
           description="Set module weights, calculate final grades, and publish results."
@@ -1049,6 +1051,61 @@ function toExamPanelValue(
     weight: exam.weight?.toString() ?? null,
     description: exam.description,
   }
+}
+
+function StudentExamTable({
+  section,
+  studentId,
+}: {
+  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>
+  studentId: string
+}) {
+  return (
+    <SimpleTable
+      empty="No exams yet."
+      headers={["Exam", "Type", "Date", "Max score", "Score", "Status"]}
+      rows={section.exams.map((exam) => {
+        const gradeItems = section.gradeItems.filter(
+          (item) => item.examId === exam.id
+        )
+        const earned = gradeItems.reduce((total, item) => {
+          const score = item.scores.find((entry) => entry.studentId === studentId)
+          return total + Number(score?.score ?? 0)
+        }, 0)
+        const possible = gradeItems.reduce(
+          (total, item) => total + Number(item.pointsPossible),
+          0
+        )
+        const hasScore = gradeItems.some((item) =>
+          item.scores.some((score) => score.studentId === studentId)
+        )
+
+        return (
+          <TableRow key={exam.id}>
+            <TableCell className="font-medium">{exam.title}</TableCell>
+            <TableCell>{exam.examType ?? "CUSTOM"}</TableCell>
+            <TableCell>{formatDateTime(exam.startsAt)}</TableCell>
+            <TableCell>
+              {possible
+                ? possible.toFixed(2)
+                : exam.pointsPossible?.toString() ?? "-"}
+            </TableCell>
+            <TableCell>
+              {hasScore
+                ? `${earned.toFixed(2)}${possible ? ` / ${possible.toFixed(2)}` : ""}`
+                : "Not graded yet"}
+            </TableCell>
+            <TableCell>
+              <StatusBadge
+                label={hasScore ? "Graded" : "Pending"}
+                value={hasScore ? "PUBLISHED" : "DRAFT"}
+              />
+            </TableCell>
+          </TableRow>
+        )
+      })}
+    />
+  )
 }
 
 function toGradebookPanelValue(

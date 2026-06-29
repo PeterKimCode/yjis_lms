@@ -39,12 +39,14 @@ export type AdminUserFormValue = {
 }
 
 export function UserForm({
+  canManageAdminRoles = false,
   organizationOptions,
   campusOptions,
   gradeLevelOptions,
   homeroomOptions,
   user,
 }: {
+  canManageAdminRoles?: boolean
   organizationOptions: Option[]
   campusOptions: ScopedOption[]
   gradeLevelOptions: ScopedOption[]
@@ -62,6 +64,24 @@ export function UserForm({
   )
   const [campusId, setCampusId] = useState(primaryRole?.campusId ?? "")
   const isStudent = role === UserRole.STUDENT
+  const adminRoleSet = useMemo(
+    () =>
+      new Set<UserRole>([
+        UserRole.SUPER_ADMIN,
+        UserRole.ORG_ADMIN,
+        UserRole.SCHOOL_ADMIN,
+        UserRole.ACADEMIC_STAFF,
+      ]),
+    []
+  )
+  const availableRoles = useMemo(
+    () =>
+      Object.values(UserRole).filter(
+        (item) =>
+          canManageAdminRoles || !adminRoleSet.has(item) || item === role
+      ),
+    [adminRoleSet, canManageAdminRoles, role]
+  )
   const scopedCampusOptions = useMemo(
     () => campusOptions.filter((option) => option.organizationId === organizationId),
     [campusOptions, organizationId]
@@ -153,7 +173,7 @@ export function UserForm({
             value={role}
             onChange={(event) => setRole(event.target.value as UserRole)}
           >
-            {Object.values(UserRole).map((item) => (
+            {availableRoles.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
