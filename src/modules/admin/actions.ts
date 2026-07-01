@@ -18,6 +18,7 @@ import {
   requireAdmin,
 } from "@/modules/admin/access"
 import { adminRoles, hasSuperAdminRole } from "@/modules/admin/scope-rules"
+import { isSelectableUserRole } from "@/modules/admin/role-options"
 import type { AdminFormState } from "@/modules/admin/form-state"
 import { writeAuditLog } from "@/modules/audit/service"
 import { hashPassword } from "@/modules/auth/password"
@@ -308,6 +309,10 @@ export async function saveUser(formData: FormData) {
 
   await assertAdminScope({ organizationId: userValues.organizationId, campusId })
   const adminUser = await requireAdmin()
+
+  if (!isSelectableUserRole(role)) {
+    throw new Error("This role is no longer available for user accounts.")
+  }
 
   if (adminRoles.includes(role) && !hasSuperAdminRole(adminUser.roleAssignments)) {
     throw new Error("Only super admins can create or assign admin accounts.")

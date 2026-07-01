@@ -16,6 +16,7 @@ import {
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
+import { getSelectableUserRoles } from "@/modules/admin/role-options"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import { UserForm } from "@/modules/admin/user-form"
 
@@ -83,6 +84,7 @@ export default async function UsersPage({
       return true
     })
     .sort((a, b) => compareUsers(a, b, sort, dir))
+  const canManageAdminRoles = hasSuperAdminRole(admin.user.roleAssignments)
 
   return (
     <div className="space-y-6">
@@ -96,13 +98,14 @@ export default async function UsersPage({
         organizationOptions={admin.organizationOptions}
         q={q}
         role={role}
+        roleOptions={getSelectableUserRoles({ canManageAdminRoles })}
         sort={sort}
         status={status}
         resultSummary={`${filteredUsers.length} of ${users.length} users shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <UserForm
-        canManageAdminRoles={hasSuperAdminRole(admin.user.roleAssignments)}
+        canManageAdminRoles={canManageAdminRoles}
         campusOptions={admin.campusOptions}
         gradeLevelOptions={admin.gradeLevelOptions}
         homeroomOptions={admin.homeroomOptions}
@@ -283,6 +286,7 @@ function UserFilters({
   q,
   resultSummary,
   role,
+  roleOptions,
   sort,
   status,
 }: {
@@ -292,11 +296,12 @@ function UserFilters({
   q: string
   resultSummary: string
   role: string
+  roleOptions: readonly UserRole[]
   sort: UserSort
   status: string
 }) {
   return (
-    <form action="" className="lms-soft-panel rounded-lg p-3">
+    <form action="/admin/users#user-results" className="lms-soft-panel rounded-lg p-3">
       <input name="sort" type="hidden" value={sort} />
       <input name="dir" type="hidden" value={dir} />
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
@@ -324,7 +329,7 @@ function UserFilters({
           name="role"
         >
           <option value="">All roles</option>
-          {Object.values(UserRole).map((item) => (
+          {roleOptions.map((item) => (
             <option key={item} value={item}>
               {item}
             </option>
@@ -341,14 +346,15 @@ function UserFilters({
         </select>
         <div className="flex gap-2">
           <Button type="submit" variant="outline">
-            Filter
+            Search
           </Button>
           <Button asChild type="button" variant="ghost">
-            <Link href="/admin/users">Reset</Link>
+            <Link href="/admin/users#user-results">Reset</Link>
           </Button>
         </div>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{resultSummary}</p>
+      <div id="user-results" />
     </form>
   )
 }
@@ -383,7 +389,7 @@ function SortHeader({
   return (
     <Link
       className="inline-flex items-center gap-1 font-semibold text-foreground hover:text-primary"
-      href={`/admin/users?${search.toString()}`}
+      href={`/admin/users?${search.toString()}#user-results`}
     >
       {label}
       <span className="text-xs text-muted-foreground">

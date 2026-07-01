@@ -6,6 +6,7 @@ import { UserRole } from "@prisma/client"
 import { ActionFeedback } from "@/components/action-feedback"
 import { saveUserWithState } from "@/modules/admin/actions"
 import { initialAdminFormState } from "@/modules/admin/form-state"
+import { getSelectableUserRoles } from "@/modules/admin/role-options"
 import {
   AdminSelect,
   Field,
@@ -58,30 +59,21 @@ export function UserForm({
     initialAdminFormState
   )
   const primaryRole = user?.roleAssignments[0]
-  const [role, setRole] = useState<UserRole>(primaryRole?.role ?? UserRole.STUDENT)
+  const selectableRoles = useMemo(
+    () => getSelectableUserRoles({ canManageAdminRoles }),
+    [canManageAdminRoles]
+  )
+  const initialRole =
+    primaryRole &&
+    (selectableRoles as readonly UserRole[]).includes(primaryRole.role)
+      ? primaryRole.role
+      : selectableRoles[0] ?? UserRole.STUDENT
+  const [role, setRole] = useState<UserRole>(initialRole)
   const [organizationId, setOrganizationId] = useState(
     primaryRole?.organizationId ?? user?.organizationId ?? organizationOptions[0]?.id ?? ""
   )
   const [campusId, setCampusId] = useState(primaryRole?.campusId ?? "")
   const isStudent = role === UserRole.STUDENT
-  const adminRoleSet = useMemo(
-    () =>
-      new Set<UserRole>([
-        UserRole.SUPER_ADMIN,
-        UserRole.ORG_ADMIN,
-        UserRole.SCHOOL_ADMIN,
-        UserRole.ACADEMIC_STAFF,
-      ]),
-    []
-  )
-  const availableRoles = useMemo(
-    () =>
-      Object.values(UserRole).filter(
-        (item) =>
-          canManageAdminRoles || !adminRoleSet.has(item) || item === role
-      ),
-    [adminRoleSet, canManageAdminRoles, role]
-  )
   const scopedCampusOptions = useMemo(
     () => campusOptions.filter((option) => option.organizationId === organizationId),
     [campusOptions, organizationId]
@@ -173,7 +165,7 @@ export function UserForm({
             value={role}
             onChange={(event) => setRole(event.target.value as UserRole)}
           >
-            {availableRoles.map((item) => (
+            {selectableRoles.map((item) => (
               <option key={item} value={item}>
                 {item}
               </option>
