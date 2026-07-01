@@ -134,7 +134,7 @@ export function DataTable({
   empty,
   minWidth = "min-w-[760px]",
 }: {
-  headers: string[]
+  headers: ReactNode[]
   rows: ReactNode[]
   empty: string
   minWidth?: string
@@ -148,10 +148,10 @@ export function DataTable({
       <Table className={minWidth}>
         <TableHeader>
           <TableRow>
-            {headers.map((header) => (
+            {headers.map((header, index) => (
               <TableHead
                 className="sticky top-0 z-10 whitespace-nowrap bg-white"
-                key={header}
+                key={index}
               >
                 {header}
               </TableHead>

@@ -31,6 +31,7 @@ export default async function AdminAuditLogDetailPage({
       organization: {
         select: {
           name: true,
+          timezone: true,
         },
       },
     },
@@ -50,7 +51,10 @@ export default async function AdminAuditLogDetailPage({
         description="A single security-sensitive event recorded by the LMS."
       />
       <section className="grid gap-4 rounded-xl border bg-white p-5 shadow-sm md:grid-cols-2">
-        <DetailItem label="Time" value={formatDateTime(log.createdAt)} />
+        <DetailItem
+          label="Time"
+          value={formatDateTime(log.createdAt, log.organization.timezone)}
+        />
         <div className="min-w-0 rounded-lg border bg-slate-50 p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Action
@@ -131,9 +135,11 @@ function getActionBadgeClass(action: string) {
   return "border-slate-200 bg-slate-50 text-slate-700"
 }
 
-function formatDateTime(value: Date) {
+function formatDateTime(value: Date, timeZone: string | null | undefined) {
   return value.toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "medium",
+    timeZone: timeZone || undefined,
+    timeZoneName: "short",
   })
 }

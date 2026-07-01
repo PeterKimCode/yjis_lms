@@ -51,6 +51,7 @@ export default async function AdminAuditLogsPage({
       organization: {
         select: {
           name: true,
+          timezone: true,
         },
       },
     },
@@ -95,7 +96,7 @@ export default async function AdminAuditLogsPage({
         minWidth="min-w-[980px]"
         rows={filteredLogs.map((log) => (
           <TableRow key={log.id}>
-            <TableCell>{formatDateTime(log.createdAt)}</TableCell>
+            <TableCell>{formatDateTime(log.createdAt, log.organization.timezone)}</TableCell>
             <TableCell>
               <AuditActionBadge action={log.action} />
             </TableCell>
@@ -278,9 +279,11 @@ function getDateWhere(from: string, to: string) {
   return Object.keys(where).length ? where : null
 }
 
-function formatDateTime(value: Date) {
+function formatDateTime(value: Date, timeZone: string | null | undefined) {
   return value.toLocaleString("en-US", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: timeZone || undefined,
+    timeZoneName: "short",
   })
 }
