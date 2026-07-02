@@ -95,7 +95,13 @@ export default async function ParentStudentDetailPage({
           </p>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          <TranscriptDownloadButton studentId={student.id} />
+          {student.generatedDocuments.length > 0 ? (
+            <TranscriptDownloadButton studentId={student.id} />
+          ) : (
+            <span className="rounded-md border border-dashed px-3 py-1.5 text-sm text-muted-foreground">
+              Transcript available after admin approval.
+            </span>
+          )}
           {termOptions.length ? (
             termOptions.map((term) => (
               <Button asChild key={term.id} size="sm" variant="outline">

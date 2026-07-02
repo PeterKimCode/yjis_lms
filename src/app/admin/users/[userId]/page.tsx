@@ -5,6 +5,7 @@ import { AttendanceStatus, FinalGradeStatus, UserRole } from "@prisma/client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import { requireAdmin } from "@/modules/admin/access"
 import { getAdminUserDetail } from "@/modules/admin/data"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
@@ -206,7 +207,12 @@ function StudentDocuments({ user }: { user: DetailUser }) {
             <TableCell>
               <Badge variant="secondary">{document.status}</Badge>
             </TableCell>
-            <TableCell>{document.generatedAt?.toLocaleString("en-US") ?? "-"}</TableCell>
+            <TableCell>
+              {formatDateTimeInTimeZone(
+                document.generatedAt,
+                user.organization.timezone
+              )}
+            </TableCell>
             <TableCell>{document.fileAssetId ? "Stored" : "Direct PDF"}</TableCell>
           </TableRow>
         ))}

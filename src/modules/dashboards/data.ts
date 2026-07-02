@@ -504,6 +504,14 @@ export async function getParentStudentDetail(parentId: string, studentId: string
         orderBy: { createdAt: "desc" },
         take: 10,
       },
+      generatedDocuments: {
+        where: {
+          documentType: "TRANSCRIPT",
+          status: "GENERATED",
+        },
+        select: { id: true },
+        take: 1,
+      },
     },
   })
 }

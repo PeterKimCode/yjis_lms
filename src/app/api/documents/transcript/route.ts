@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server"
-import { DocumentType } from "@prisma/client"
+import { DocumentStatus, DocumentType } from "@prisma/client"
 
 import { getPrismaClient } from "@/lib/prisma"
 import { getCurrentSession } from "@/modules/auth/session"
 import { writeAuditLog } from "@/modules/audit/service"
+import { startOfTodayInTimeZone } from "@/lib/timezone"
 import {
   assertStudentDocumentAccess,
   generateTranscriptPdf,
@@ -29,8 +30,32 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
+    const student = await getPrismaClient().user.findUnique({
+      where: { id: studentId },
+      select: { organization: { select: { timezone: true } }, organizationId: true },
+    })
+
+    if (!student) {
+      return NextResponse.json({ error: "Student not found" }, { status: 404 })
+    }
+
     if (!access.canPreviewDrafts) {
-      const downloadsToday = await getTodayTranscriptDownloadCount(studentId)
+      const hasApprovedTranscript = await getApprovedTranscriptCount(studentId)
+
+      if (!hasApprovedTranscript) {
+        return NextResponse.json(
+          {
+            error:
+              "Transcript download is not available yet. An admin must approve it first.",
+          },
+          { status: 403 }
+        )
+      }
+
+      const downloadsToday = await getTodayTranscriptDownloadCount(
+        studentId,
+        student.organization.timezone
+      )
 
       if (downloadsToday >= 3) {
         return NextResponse.json(
@@ -75,14 +100,24 @@ export async function GET(request: Request) {
   }
 }
 
-async function getTodayTranscriptDownloadCount(studentId: string) {
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
-
+async function getTodayTranscriptDownloadCount(
+  studentId: string,
+  timeZone: string | null | undefined
+) {
   return getPrismaClient().generatedDocument.count({
     where: {
-      createdAt: { gte: startOfDay },
+      createdAt: { gte: startOfTodayInTimeZone(timeZone) },
       documentType: DocumentType.TRANSCRIPT,
+      studentId,
+    },
+  })
+}
+
+async function getApprovedTranscriptCount(studentId: string) {
+  return getPrismaClient().generatedDocument.count({
+    where: {
+      documentType: DocumentType.TRANSCRIPT,
+      status: DocumentStatus.GENERATED,
       studentId,
     },
   })

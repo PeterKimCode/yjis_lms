@@ -15,6 +15,7 @@ import {
 } from "pdf-lib"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import type { SessionRoleAssignment } from "@/modules/auth/auth"
 import { canManageStudentData } from "@/modules/auth/permissions"
 import { resolvePolicies } from "@/modules/policies/resolve"
@@ -588,7 +589,7 @@ function drawStudentInfo(
   student: {
     email: string | null
     name: string
-    organization: { name: string }
+    organization: { name: string; timezone?: string | null }
     studentProfile: {
       campus: { name: string } | null
       currentGradeLevel: { name: string } | null
@@ -613,7 +614,10 @@ function drawStudentInfo(
         .filter(Boolean)
         .join(" / ") || "-",
     ],
-    ["Generated at", generatedAt.toLocaleString("en-US")],
+    [
+      "Generated at",
+      formatDateTimeInTimeZone(generatedAt, student.organization.timezone),
+    ],
   ])
   ctx.y -= 8
 }
@@ -733,7 +737,7 @@ function drawNote(ctx: PdfContext, note: string) {
 }
 
 function drawFooter(ctx: PdfContext, generatedAt: Date) {
-  drawText(ctx, `Generated ${generatedAt.toLocaleString("en-US")}`, margin, 24, {
+  drawText(ctx, `Generated ${formatDateTimeInTimeZone(generatedAt, "Asia/Seoul")}`, margin, 24, {
     color: mutedColor,
     size: 8,
   })
