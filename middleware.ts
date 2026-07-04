@@ -25,8 +25,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     isSchoolAdminOnly &&
-    pathname !== "/admin/users" &&
-    !pathname.startsWith("/admin/users/")
+    !isAllowedSchoolAdminPath(pathname)
   ) {
     const url = request.nextUrl.clone()
     url.pathname = "/admin/users"
@@ -35,6 +34,17 @@ export async function middleware(request: NextRequest) {
   }
 
   return NextResponse.next()
+}
+
+function isAllowedSchoolAdminPath(pathname: string) {
+  return (
+    pathname === "/admin/courses" ||
+    pathname.startsWith("/admin/courses/") ||
+    pathname === "/admin/class-sections" ||
+    pathname.startsWith("/admin/class-sections/") ||
+    pathname === "/admin/users" ||
+    pathname.startsWith("/admin/users/")
+  )
 }
 
 export const config = {

@@ -36,7 +36,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       (assignment) => assignment.role === UserRole.SUPER_ADMIN
     )
   const visiblePrimaryLinks = isSchoolAdminOnly
-    ? adminPrimaryLinks.filter(([href]) => href === "/admin/users")
+    ? adminPrimaryLinks.filter(([, label]) =>
+        ["Courses", "Class Sections", "Users"].includes(label)
+      )
     : adminPrimaryLinks
 
   return (
