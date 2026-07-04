@@ -29,7 +29,7 @@ export async function AppNavigation() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
-      <div className="flex h-14 w-full items-center justify-between gap-2 px-3 sm:h-16 sm:px-4 md:pl-72 md:pr-6">
+      <div className="flex h-14 w-full items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
         <Link
           className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-white sm:text-base"
           href="/"
