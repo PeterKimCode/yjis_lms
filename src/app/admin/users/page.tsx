@@ -140,20 +140,20 @@ export default async function UsersPage({
       {canManageAdminRoles ? (
         <PendingUserDeletionRequests requests={pendingDeletionRequests} />
       ) : null}
-      {!isSchoolAdminOnly ? (
-        <UserForm
-          canManageAdminRoles={canManageAdminRoles}
-          campusOptions={admin.campusOptions}
-          gradeLevelOptions={admin.gradeLevelOptions}
-          homeroomOptions={admin.homeroomOptions}
-          organizationOptions={admin.organizationOptions}
-        />
-      ) : (
+      {isSchoolAdminOnly ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-          School admins can view and edit users in their scope. User deletion is
-          sent to a super admin for approval.
+          School admins can create instructor, parent, and student accounts in
+          their scope. Admin accounts and user deletion require super admin
+          approval.
         </div>
-      )}
+      ) : null}
+      <UserForm
+        canManageAdminRoles={canManageAdminRoles}
+        campusOptions={admin.campusOptions}
+        gradeLevelOptions={admin.gradeLevelOptions}
+        homeroomOptions={admin.homeroomOptions}
+        organizationOptions={admin.organizationOptions}
+      />
       <DataTable
         empty="No users are available for your scope."
         headers={[

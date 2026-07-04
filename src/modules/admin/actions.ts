@@ -337,15 +337,6 @@ export async function saveUser(formData: FormData) {
     throw new Error("Only super admins can create or assign admin accounts.")
   }
 
-  const isSchoolAdminOnly =
-    adminUser.roleAssignments.some(
-      (assignment) => assignment.role === UserRole.SCHOOL_ADMIN
-    ) && !hasSuperAdminRole(adminUser.roleAssignments)
-
-  if (!id && isSchoolAdminOnly) {
-    throw new Error("School admins can view and edit users, but cannot create users.")
-  }
-
   if (!id && password.length < 8) {
     throw new Error("Password must be at least 8 characters.")
   }
