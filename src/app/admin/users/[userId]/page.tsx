@@ -39,6 +39,11 @@ export default async function AdminUserDetailPage({
   const { userId } = await params
   const currentAdmin = await requireAdmin()
   const detail = await getAdminUserDetail(userId)
+  const canManageAdminRoles = hasSuperAdminRole(currentAdmin.roleAssignments)
+  const isSchoolAdminOnly =
+    currentAdmin.roleAssignments.some(
+      (assignment) => assignment.role === UserRole.SCHOOL_ADMIN
+    ) && !canManageAdminRoles
 
   if (!detail) {
     notFound()
@@ -88,9 +93,11 @@ export default async function AdminUserDetailPage({
         </div>
       </div>
 
-      {isStudent ? <StudentAcademicOverview user={user} /> : null}
+      {isStudent && !isSchoolAdminOnly ? (
+        <StudentAcademicOverview user={user} />
+      ) : null}
 
-      {isStudent ? (
+      {isStudent && !isSchoolAdminOnly ? (
         <DetailsSection title="Documents" defaultOpen>
           <StudentDocuments user={user} />
         </DetailsSection>
@@ -107,7 +114,7 @@ export default async function AdminUserDetailPage({
           userName={user.name}
         />
         <UserForm
-          canManageAdminRoles={hasSuperAdminRole(currentAdmin.roleAssignments)}
+          canManageAdminRoles={canManageAdminRoles}
           campusOptions={detail.campusOptions}
           gradeLevelOptions={detail.gradeLevelOptions}
           homeroomOptions={detail.homeroomOptions}
@@ -116,7 +123,7 @@ export default async function AdminUserDetailPage({
         />
       </DetailsSection>
 
-      {isParent ? (
+      {isParent && !isSchoolAdminOnly ? (
         <DetailsSection title="Linked students" defaultOpen>
           <ParentLinks
             parentId={user.id}
@@ -126,7 +133,7 @@ export default async function AdminUserDetailPage({
         </DetailsSection>
       ) : null}
 
-      {isStudent ? (
+      {isStudent && !isSchoolAdminOnly ? (
         <DetailsSection title="Linked parents" defaultOpen>
           <StudentLinks
             parentOptions={parentOptions}

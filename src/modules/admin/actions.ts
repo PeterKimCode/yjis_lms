@@ -6,7 +6,9 @@ import {
   DeliveryMode,
   EnrollmentStatus,
   InstitutionType,
+  NotificationType,
   Prisma,
+  UserDeletionRequestStatus,
   UserRole,
 } from "@prisma/client"
 import { z } from "zod"
@@ -23,6 +25,7 @@ import type { AdminFormState } from "@/modules/admin/form-state"
 import { writeAuditLog } from "@/modules/audit/service"
 import { hashPassword } from "@/modules/auth/password"
 import { uploadImageFile } from "@/modules/files/upload"
+import { createNotificationsForUsers } from "@/modules/notifications/service"
 import { ensureDefaultOrganization } from "@/modules/organizations/default-organization"
 import { ensureDefaultPoliciesForCampus } from "@/modules/policies/initialize"
 
@@ -69,6 +72,21 @@ function maybeId(value: string | null | undefined) {
 
 function redirectWithAdminError(path: string, message: string): never {
   redirect(`${path}?saveError=${encodeURIComponent(message)}`)
+}
+
+function isSchoolAdminOnly(roleAssignments: { role: UserRole }[]) {
+  return (
+    roleAssignments.some((assignment) => assignment.role === UserRole.SCHOOL_ADMIN) &&
+    !roleAssignments.some((assignment) => assignment.role === UserRole.SUPER_ADMIN)
+  )
+}
+
+async function assertSchoolAdminUserOnly() {
+  const admin = await requireAdmin()
+  if (isSchoolAdminOnly(admin.roleAssignments)) {
+    throw new Error("School admins can only view and edit users.")
+  }
+  return admin
 }
 
 async function revalidateAdmin(path: string) {
@@ -124,7 +142,7 @@ export async function saveOrganization(formData: FormData) {
     isActive: formData.get("isActive"),
   })
   const { id, slug, ...values } = data
-  const admin = await requireAdmin()
+  const admin = await assertSchoolAdminUserOnly()
   const logo = formData.get("logo")
   const canCreateOrganization = admin.roleAssignments.some(
     (assignment) => assignment.role === UserRole.SUPER_ADMIN
@@ -209,6 +227,7 @@ const campusSchema = z.object({
 })
 
 export async function saveCampus(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = campusSchema.parse({
     ...readForm(formData),
     isActive: formData.get("isActive"),
@@ -316,6 +335,15 @@ export async function saveUser(formData: FormData) {
 
   if (adminRoles.includes(role) && !hasSuperAdminRole(adminUser.roleAssignments)) {
     throw new Error("Only super admins can create or assign admin accounts.")
+  }
+
+  const isSchoolAdminOnly =
+    adminUser.roleAssignments.some(
+      (assignment) => assignment.role === UserRole.SCHOOL_ADMIN
+    ) && !hasSuperAdminRole(adminUser.roleAssignments)
+
+  if (!id && isSchoolAdminOnly) {
+    throw new Error("School admins can view and edit users, but cannot create users.")
   }
 
   if (!id && password.length < 8) {
@@ -615,6 +643,7 @@ const parentStudentRelationSchema = z.object({
 })
 
 export async function saveParentStudentRelation(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = parentStudentRelationSchema.parse({
     ...readForm(formData),
     isPrimary: formData.get("isPrimary"),
@@ -672,6 +701,7 @@ const removeParentStudentRelationSchema = z.object({
 })
 
 export async function removeParentStudentRelation(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = removeParentStudentRelationSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const relation = await prisma.parentStudentRelation.findUniqueOrThrow({
@@ -702,6 +732,7 @@ const academicYearSchema = z.object({
 })
 
 export async function saveAcademicYear(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = academicYearSchema.parse({
     ...readForm(formData),
     isActive: formData.get("isActive"),
@@ -730,6 +761,7 @@ const termSchema = z.object({
 })
 
 export async function saveTerm(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = termSchema.parse({
     ...readForm(formData),
     isActive: formData.get("isActive"),
@@ -756,6 +788,7 @@ const gradeLevelSchema = z.object({
 })
 
 export async function saveGradeLevel(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = gradeLevelSchema.parse(readForm(formData))
   const { id, ...values } = data
 
@@ -779,6 +812,7 @@ const homeroomSchema = z.object({
 })
 
 export async function saveHomeroom(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = homeroomSchema.parse(readForm(formData))
   const { id, ...values } = data
 
@@ -803,6 +837,7 @@ const departmentSchema = z.object({
 })
 
 export async function saveDepartment(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = departmentSchema.parse(readForm(formData))
   const { id, ...values } = data
 
@@ -828,6 +863,7 @@ const courseSchema = z.object({
 })
 
 export async function saveCourse(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = courseSchema.parse(readForm(formData))
   const { id, ...values } = data
 
@@ -886,6 +922,7 @@ function withDeleteMessage(path: string, key: "deleted" | "deleteError", entity:
 export async function deleteAdminEntity(formData: FormData) {
   const data = deleteAdminEntitySchema.parse(readForm(formData))
   const returnPath = safeReturnPath(data.returnPath)
+  await assertSchoolAdminUserOnly()
   const prisma = getPrismaClient()
   let redirectTo = withDeleteMessage(returnPath, "deleted", data.entity)
 
@@ -1035,6 +1072,9 @@ export async function deleteAdminEntity(formData: FormData) {
       }
       case "user": {
         const admin = await requireAdmin()
+        if (!hasSuperAdminRole(admin.roleAssignments)) {
+          throw new Error("Only super admins can delete users. Please request deletion approval.")
+        }
         if (admin.id === data.id) {
           throw new Error("You cannot delete your own signed-in account.")
         }
@@ -1069,7 +1109,198 @@ export async function deleteAdminEntity(formData: FormData) {
   redirect(redirectTo)
 }
 
+const requestUserDeletionSchema = z.object({
+  id: optionalString,
+  userId: optionalString,
+  returnPath: requiredString,
+})
+
+export async function requestUserDeletion(formData: FormData) {
+  const data = requestUserDeletionSchema.parse(readForm(formData))
+  const userId = data.userId ?? data.id
+  if (!userId) {
+    redirect("/admin/users?requestError=user")
+  }
+  const returnPath = safeReturnPath(data.returnPath)
+  const admin = await requireAdmin()
+  const prisma = getPrismaClient()
+
+  if (hasSuperAdminRole(admin.roleAssignments)) {
+    redirect(`${returnPath}?requestError=user`)
+  }
+
+  if (admin.id === userId) {
+    redirect(`${returnPath}?requestError=user`)
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      id: userId,
+      ...getUserWhereForAdmin(admin),
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      organizationId: true,
+    },
+  })
+
+  if (!user) {
+    redirect(`${returnPath}?requestError=user`)
+  }
+
+  await assertAdminScope({ organizationId: user.organizationId })
+
+  const existing = await prisma.userDeletionRequest.findFirst({
+    where: {
+      targetUserId: user.id,
+      status: UserDeletionRequestStatus.PENDING,
+    },
+    select: { id: true },
+  })
+
+  if (existing) {
+    redirect(`${returnPath}?deleteRequested=user`)
+  }
+
+  const request = await prisma.userDeletionRequest.create({
+    data: {
+      organizationId: user.organizationId,
+      requestedById: admin.id,
+      targetUserId: user.id,
+      targetUserLoginId: user.email,
+      targetUserName: user.name,
+    },
+    select: { id: true },
+  })
+
+  const superAdmins = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      roleAssignments: {
+        some: { role: UserRole.SUPER_ADMIN },
+      },
+    },
+    select: { id: true },
+  })
+
+  await createNotificationsForUsers(
+    superAdmins.map((item) => item.id),
+    {
+      actionUrl: "/admin/users",
+      actorUserId: admin.id,
+      body: `${admin.name} requested deletion approval for ${user.name}.`,
+      entityId: request.id,
+      entityType: "UserDeletionRequest",
+      title: "User deletion approval requested",
+      type: NotificationType.SYSTEM_NOTICE,
+    }
+  )
+
+  await writeAuditLog({
+    action: "user.delete.request",
+    actorUserId: admin.id,
+    entityId: user.id,
+    entityType: "User",
+    organizationId: user.organizationId,
+    summary: `Requested deletion approval for user ${user.email ?? user.name}.`,
+  })
+
+  await revalidateAdmin("/admin/users")
+  redirect(`${returnPath}?deleteRequested=user`)
+}
+
+const reviewUserDeletionRequestSchema = z.object({
+  requestId: requiredString,
+  decision: z.enum(["approve", "reject"]),
+  returnPath: requiredString,
+})
+
+export async function reviewUserDeletionRequest(formData: FormData) {
+  const data = reviewUserDeletionRequestSchema.parse(readForm(formData))
+  const returnPath = safeReturnPath(data.returnPath)
+  const admin = await requireAdmin()
+
+  if (!hasSuperAdminRole(admin.roleAssignments)) {
+    redirect(`${returnPath}?reviewError=user`)
+  }
+
+  const prisma = getPrismaClient()
+  const request = await prisma.userDeletionRequest.findUnique({
+    where: { id: data.requestId },
+    include: {
+      targetUser: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          organizationId: true,
+        },
+      },
+    },
+  })
+
+  if (!request || request.status !== UserDeletionRequestStatus.PENDING) {
+    redirect(`${returnPath}?reviewError=user`)
+  }
+
+  if (data.decision === "reject") {
+    await prisma.userDeletionRequest.update({
+      where: { id: request.id },
+      data: {
+        reviewedAt: new Date(),
+        reviewedById: admin.id,
+        status: UserDeletionRequestStatus.REJECTED,
+      },
+    })
+    await writeAuditLog({
+      action: "user.delete.reject",
+      actorUserId: admin.id,
+      entityId: request.targetUserId,
+      entityType: "User",
+      organizationId: request.organizationId,
+      summary: `Rejected deletion request for user ${request.targetUserLoginId ?? request.targetUserName}.`,
+    })
+    await revalidateAdmin("/admin/users")
+    redirect(`${returnPath}?reviewed=rejected`)
+  }
+
+  if (!request.targetUser) {
+    redirect(`${returnPath}?reviewError=user`)
+  }
+
+  if (request.targetUser.id === admin.id) {
+    redirect(`${returnPath}?reviewError=user`)
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.userDeletionRequest.update({
+      where: { id: request.id },
+      data: {
+        reviewedAt: new Date(),
+        reviewedById: admin.id,
+        status: UserDeletionRequestStatus.APPROVED,
+      },
+    })
+    await tx.user.delete({ where: { id: request.targetUser!.id } })
+  })
+
+  await writeAuditLog({
+    action: "user.delete.approve",
+    actorUserId: admin.id,
+    entityId: request.targetUser.id,
+    entityType: "User",
+    organizationId: request.targetUser.organizationId,
+    summary: `Approved deletion request and deleted user ${request.targetUser.email ?? request.targetUser.name}.`,
+  })
+
+  await revalidateAdmin("/admin/users")
+  redirect(`${returnPath}?reviewed=approved`)
+}
+
 export async function saveClassSection(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const parsed = classSectionSchema.safeParse(readForm(formData))
   if (!parsed.success) {
     redirectWithAdminError(
@@ -1164,6 +1395,7 @@ const instructorAssignmentSchema = z.object({
 })
 
 export async function assignClassSectionInstructor(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = instructorAssignmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
@@ -1238,6 +1470,7 @@ const removeInstructorAssignmentSchema = z.object({
 })
 
 export async function removeClassSectionInstructor(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = removeInstructorAssignmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const assignment = await prisma.classSectionInstructor.findUniqueOrThrow({
@@ -1274,6 +1507,7 @@ const enrollmentSchema = z.object({
 })
 
 export async function saveEnrollment(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = enrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
@@ -1338,6 +1572,7 @@ const removeEnrollmentSchema = z.object({
 })
 
 export async function removeEnrollment(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = removeEnrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const enrollment = await prisma.enrollment.findUniqueOrThrow({
@@ -1373,6 +1608,7 @@ const homeroomPlacementSchema = z.object({
 })
 
 export async function assignStudentToHomeroom(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = homeroomPlacementSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const homeroom = await prisma.homeroom.findUniqueOrThrow({
@@ -1422,6 +1658,7 @@ const removeStudentHomeroomSchema = z.object({
 })
 
 export async function removeStudentFromHomeroom(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = removeStudentHomeroomSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const homeroom = await prisma.homeroom.findUniqueOrThrow({
@@ -1451,6 +1688,7 @@ const bulkHomeroomEnrollmentSchema = z.object({
 })
 
 export async function enrollHomeroomInClassSection(formData: FormData) {
+  await assertSchoolAdminUserOnly()
   const data = bulkHomeroomEnrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({

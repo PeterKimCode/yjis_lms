@@ -1,9 +1,13 @@
 import Link from "next/link"
-import { UserRole } from "@prisma/client"
+import { UserDeletionRequestStatus, UserRole } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
-import { deleteAdminEntity } from "@/modules/admin/actions"
+import {
+  deleteAdminEntity,
+  requestUserDeletion,
+  reviewUserDeletionRequest,
+} from "@/modules/admin/actions"
 import { getUserWhereForAdmin } from "@/modules/admin/access"
 import {
   ActiveBadge,
@@ -25,10 +29,14 @@ export default async function UsersPage({
 }: {
   searchParams: Promise<{
     deleted?: string
+    deleteRequested?: string
     deleteError?: string
     dir?: string
     organizationId?: string
     q?: string
+    requestError?: string
+    reviewed?: string
+    reviewError?: string
     role?: string
     sort?: string
     status?: string
@@ -42,6 +50,11 @@ export default async function UsersPage({
   const status = params.status?.trim() ?? ""
   const sort = getUserSort(params.sort)
   const dir = params.dir === "desc" ? "desc" : "asc"
+  const canManageAdminRoles = hasSuperAdminRole(admin.user.roleAssignments)
+  const isSchoolAdminOnly =
+    admin.user.roleAssignments.some(
+      (assignment) => assignment.role === UserRole.SCHOOL_ADMIN
+    ) && !canManageAdminRoles
   const users = await getPrismaClient().user.findMany({
     where: getUserWhereForAdmin(admin.user),
     include: {
@@ -84,7 +97,26 @@ export default async function UsersPage({
       return true
     })
     .sort((a, b) => compareUsers(a, b, sort, dir))
-  const canManageAdminRoles = hasSuperAdminRole(admin.user.roleAssignments)
+  const pendingDeletionRequests = await getPrismaClient().userDeletionRequest.findMany({
+    where: {
+      status: UserDeletionRequestStatus.PENDING,
+      ...(canManageAdminRoles ? {} : { requestedById: admin.user.id }),
+      ...(users.length
+        ? { targetUserId: { in: users.map((user) => user.id) } }
+        : { targetUserId: "__none__" }),
+    },
+    include: {
+      organization: { select: { name: true } },
+      requestedBy: { select: { email: true, name: true } },
+      targetUser: { select: { id: true, email: true, name: true } },
+    },
+    orderBy: { requestedAt: "desc" },
+  })
+  const pendingDeletionByUserId = new Map(
+    pendingDeletionRequests
+      .filter((request) => request.targetUserId)
+      .map((request) => [request.targetUserId as string, request])
+  )
 
   return (
     <div className="space-y-6">
@@ -104,13 +136,24 @@ export default async function UsersPage({
         resultSummary={`${filteredUsers.length} of ${users.length} users shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
-      <UserForm
-        canManageAdminRoles={canManageAdminRoles}
-        campusOptions={admin.campusOptions}
-        gradeLevelOptions={admin.gradeLevelOptions}
-        homeroomOptions={admin.homeroomOptions}
-        organizationOptions={admin.organizationOptions}
-      />
+      <UserDeletionStatusBanners params={params} />
+      {canManageAdminRoles ? (
+        <PendingUserDeletionRequests requests={pendingDeletionRequests} />
+      ) : null}
+      {!isSchoolAdminOnly ? (
+        <UserForm
+          canManageAdminRoles={canManageAdminRoles}
+          campusOptions={admin.campusOptions}
+          gradeLevelOptions={admin.gradeLevelOptions}
+          homeroomOptions={admin.homeroomOptions}
+          organizationOptions={admin.organizationOptions}
+        />
+      ) : (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          School admins can view and edit users in their scope. User deletion is
+          sent to a super admin for approval.
+        </div>
+      )}
       <DataTable
         empty="No users are available for your scope."
         headers={[
@@ -219,19 +262,143 @@ export default async function UsersPage({
               </Button>
             </TableCell>
             <TableCell>
-              <ConfirmDeleteForm
-                action={deleteAdminEntity}
-                entity="user"
-                id={user.id}
-                message={`Delete user "${user.name}"? This cannot be undone if no related records block deletion.`}
-                returnPath="/admin/users"
-              />
+              {canManageAdminRoles ? (
+                <ConfirmDeleteForm
+                  action={deleteAdminEntity}
+                  entity="user"
+                  id={user.id}
+                  message={`Delete user "${user.name}"? This cannot be undone if no related records block deletion.`}
+                  returnPath="/admin/users"
+                />
+              ) : pendingDeletionByUserId.has(user.id) ? (
+                <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                  Delete requested
+                </span>
+              ) : (
+                <ConfirmDeleteForm
+                  action={requestUserDeletion}
+                  entity="user"
+                  id={user.id}
+                  label="Request delete"
+                  message={`Request super admin approval to delete "${user.name}"? The user will not be deleted until a super admin approves.`}
+                  returnPath="/admin/users"
+                  warning="This sends an approval request only. A super admin must approve before the user is deleted."
+                />
+              )}
             </TableCell>
           </TableRow>
         ))}
         minWidth="min-w-[980px]"
       />
     </div>
+  )
+}
+
+function UserDeletionStatusBanners({
+  params,
+}: {
+  params: {
+    deleteRequested?: string
+    requestError?: string
+    reviewed?: string
+    reviewError?: string
+  }
+}) {
+  return (
+    <div className="space-y-2">
+      {params.deleteRequested ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          User deletion request sent to super admins for approval.
+        </div>
+      ) : null}
+      {params.requestError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Could not request user deletion. Check your scope or try again.
+        </div>
+      ) : null}
+      {params.reviewed === "approved" ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          User deletion request approved and the user was deleted.
+        </div>
+      ) : null}
+      {params.reviewed === "rejected" ? (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          User deletion request rejected.
+        </div>
+      ) : null}
+      {params.reviewError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          Could not review the user deletion request.
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function PendingUserDeletionRequests({
+  requests,
+}: {
+  requests: Array<{
+    id: string
+    organization: { name: string }
+    requestedAt: Date
+    requestedBy: { email: string | null; name: string } | null
+    targetUser: { id: string; email: string | null; name: string } | null
+    targetUserLoginId: string | null
+    targetUserName: string
+  }>
+}) {
+  if (!requests.length) return null
+
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+      <div className="mb-3">
+        <h2 className="font-semibold text-amber-950">Pending user deletion requests</h2>
+        <p className="text-sm text-amber-800">
+          Review requests from school admins before any user is deleted.
+        </p>
+      </div>
+      <div className="grid gap-2">
+        {requests.map((request) => (
+          <div
+            className="flex flex-col gap-3 rounded-lg border bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+            key={request.id}
+          >
+            <div className="min-w-0">
+              <p className="font-medium">
+                {request.targetUser?.name ?? request.targetUserName}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {request.targetUser?.email ?? request.targetUserLoginId ?? "-"} ·{" "}
+                {request.organization.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Requested by {request.requestedBy?.name ?? "Unknown admin"} on{" "}
+                {request.requestedAt.toLocaleString()}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <form action={reviewUserDeletionRequest}>
+                <input name="requestId" type="hidden" value={request.id} />
+                <input name="decision" type="hidden" value="approve" />
+                <input name="returnPath" type="hidden" value="/admin/users" />
+                <Button size="sm" type="submit" variant="destructive">
+                  Approve delete
+                </Button>
+              </form>
+              <form action={reviewUserDeletionRequest}>
+                <input name="requestId" type="hidden" value={request.id} />
+                <input name="decision" type="hidden" value="reject" />
+                <input name="returnPath" type="hidden" value="/admin/users" />
+                <Button size="sm" type="submit" variant="outline">
+                  Reject
+                </Button>
+              </form>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -393,8 +560,9 @@ function SortHeader({
     >
       {label}
       <span className="text-xs text-muted-foreground">
-        {sort === value ? (dir === "asc" ? "↑" : "↓") : "↕"}
+        {sort === value ? (dir === "asc" ? "ASC" : "DESC") : "Sort"}
       </span>
     </Link>
   )
 }
+

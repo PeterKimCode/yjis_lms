@@ -23,10 +23,21 @@ import {
 } from "@/modules/admin/components"
 import { requireAdmin } from "@/modules/admin/access"
 import { getOrganizationLogoUrl } from "@/modules/branding/organization-logo"
+import { UserRole } from "@prisma/client"
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin()
   const logoUrl = await getOrganizationLogoUrl(user.organizationId)
+  const isSchoolAdminOnly =
+    user.roleAssignments.some(
+      (assignment) => assignment.role === UserRole.SCHOOL_ADMIN
+    ) &&
+    !user.roleAssignments.some(
+      (assignment) => assignment.role === UserRole.SUPER_ADMIN
+    )
+  const visiblePrimaryLinks = isSchoolAdminOnly
+    ? adminPrimaryLinks.filter(([href]) => href === "/admin/users")
+    : adminPrimaryLinks
 
   return (
     <div className="role-admin-surface flex flex-1">
@@ -49,16 +60,20 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <p className="text-xs text-slate-400">{user.email}</p>
         </div>
         <nav className="space-y-3">
-          <NavGroup links={adminPrimaryLinks} />
-          <details className="rounded-md border border-white/10 p-2" open>
-            <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
-              Academic setup
-            </summary>
-            <div className="mt-2 grid gap-1">
-              <NavGroup links={adminSetupLinks} />
-            </div>
-          </details>
-          <NavGroup links={adminCommunicationLinks} />
+          <NavGroup links={visiblePrimaryLinks} />
+          {!isSchoolAdminOnly ? (
+            <>
+              <details className="rounded-md border border-white/10 p-2" open>
+                <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
+                  Academic setup
+                </summary>
+                <div className="mt-2 grid gap-1">
+                  <NavGroup links={adminSetupLinks} />
+                </div>
+              </details>
+              <NavGroup links={adminCommunicationLinks} />
+            </>
+          ) : null}
         </nav>
         <HelpContact />
       </aside>

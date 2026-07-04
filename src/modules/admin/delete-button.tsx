@@ -14,6 +14,7 @@ export function ConfirmDeleteForm({
   label = "Delete",
   message,
   returnPath,
+  warning = "This action can remove data permanently if there are no related records blocking deletion.",
 }: {
   action: DeleteAction
   entity: string
@@ -21,6 +22,7 @@ export function ConfirmDeleteForm({
   label?: string
   message: string
   returnPath: string
+  warning?: string
 }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -63,7 +65,7 @@ export function ConfirmDeleteForm({
               <p className="text-base font-semibold">Delete this item?</p>
               <p className="text-sm text-muted-foreground">{message}</p>
               <p className="text-xs text-destructive">
-                This action can remove data permanently if there are no related records blocking deletion.
+                {warning}
               </p>
             </div>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
