@@ -12,11 +12,11 @@ import { getUnreadNotificationCount } from "@/modules/notifications/service"
 
 export async function AppNavigation() {
   const session = await getCurrentSession()
-  const [unreadMessages, unreadNotifications, avatar] = session?.user
+  const [unreadMessages, unreadNotifications, headerUser] = session?.user
     ? await Promise.all([
         getUnreadMessageCount(session.user.id),
         getUnreadNotificationCount(session.user.id),
-        getUserAvatar(session.user.id),
+        getHeaderUser(session.user.id),
       ])
     : [0, 0, null]
   const roleSummary =
@@ -25,6 +25,7 @@ export async function AppNavigation() {
   const dashboardHref = session?.user
     ? getDashboardHref(session.user.roleAssignments.map((assignment) => assignment.role))
     : "/"
+  const headerTitle = headerUser?.organization?.name ?? "Learning Management System"
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
@@ -32,9 +33,12 @@ export async function AppNavigation() {
         <Link
           className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-white sm:text-base"
           href="/"
+          title={headerTitle}
         >
-          <span className="sm:hidden">LMS</span>
-          <span className="hidden sm:inline">Learning Management System</span>
+          <span className="block truncate sm:hidden">
+            {session?.user ? headerTitle : "LMS"}
+          </span>
+          <span className="hidden truncate sm:block">{headerTitle}</span>
         </Link>
         <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {session?.user ? (
@@ -80,7 +84,9 @@ export async function AppNavigation() {
               </div>
               <AvatarMenu
                 avatarUrl={
-                  avatar ? `/api/files/${avatar.id}/download?disposition=inline` : null
+                  headerUser?.avatarFileAsset
+                    ? `/api/files/${headerUser.avatarFileAsset.id}/download?disposition=inline`
+                    : null
                 }
                 roleSummary={roleSummary}
                 userName={session.user.name ?? session.user.email ?? "User"}
@@ -111,17 +117,20 @@ export async function AppNavigation() {
   )
 }
 
-async function getUserAvatar(userId: string) {
+async function getHeaderUser(userId: string) {
   const user = await getPrismaClient().user.findUnique({
     where: { id: userId },
     select: {
       avatarFileAsset: {
         select: { id: true },
       },
+      organization: {
+        select: { name: true },
+      },
     },
   })
 
-  return user?.avatarFileAsset ?? null
+  return user
 }
 
 function NavBadge({ count }: { count: number }) {
