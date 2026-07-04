@@ -1,10 +1,12 @@
+import { UserDeletionRequestStatus } from "@prisma/client"
+
 import { FormDialog } from "@/components/form-dialog"
+import { getPrismaClient } from "@/lib/prisma"
 import {
   CourseForm,
   type CourseFormData,
   type CourseFormValue,
 } from "@/modules/admin/course-form"
-import { deleteAdminEntity } from "@/modules/admin/actions"
 import {
   AdminPageHeader,
   DataTable,
@@ -15,12 +17,25 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
-import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
+import {
+  PendingResourceDeletionRequests,
+  ResourceDeleteControl,
+  ResourceDeletionStatusBanners,
+} from "@/modules/admin/resource-deletion-components"
+import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 
 export default async function CoursesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
+  searchParams: Promise<{
+    deleted?: string
+    deleteError?: string
+    deleteRequested?: string
+    q?: string
+    requestError?: string
+    reviewed?: string
+    reviewError?: string
+  }>
 }) {
   const data = await getAcademicSetupOptions()
   const formData = toCourseFormData(data)
@@ -37,6 +52,25 @@ export default async function CoursesPage({
         ?.name,
     ])
   )
+  const canDeleteDirectly = hasSuperAdminRole(data.user.roleAssignments)
+  const pendingDeletionRequests = await getPrismaClient().resourceDeletionRequest.findMany({
+    where: {
+      entityType: "course",
+      status: UserDeletionRequestStatus.PENDING,
+      ...(canDeleteDirectly ? {} : { requestedById: data.user.id }),
+      ...(data.courses.length
+        ? { entityId: { in: data.courses.map((course) => course.id) } }
+        : { entityId: "__none__" }),
+    },
+    include: {
+      organization: { select: { name: true } },
+      requestedBy: { select: { email: true, name: true } },
+    },
+    orderBy: { requestedAt: "desc" },
+  })
+  const pendingDeletionByCourseId = new Map(
+    pendingDeletionRequests.map((request) => [request.entityId, request])
+  )
 
   return (
     <div className="space-y-6">
@@ -50,6 +84,14 @@ export default async function CoursesPage({
         resultSummary={`${courses.length} of ${data.courses.length} courses shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
+      <ResourceDeletionStatusBanners entityLabel="Course" params={params} />
+      {canDeleteDirectly ? (
+        <PendingResourceDeletionRequests
+          requests={pendingDeletionRequests}
+          returnPath="/admin/courses"
+          title="Pending course deletion requests"
+        />
+      ) : null}
       <CourseForm data={formData} />
       <DataTable
         empty="No courses yet."
@@ -76,11 +118,12 @@ export default async function CoursesPage({
               </FormDialog>
             </TableCell>
             <TableCell>
-              <ConfirmDeleteForm
-                action={deleteAdminEntity}
+              <ResourceDeleteControl
+                canDeleteDirectly={canDeleteDirectly}
                 entity="course"
                 id={course.id}
-                message={`Delete course "${course.title}"? Related class sections may prevent deletion.`}
+                isRequested={pendingDeletionByCourseId.has(course.id)}
+                label={course.title}
                 returnPath="/admin/courses"
               />
             </TableCell>

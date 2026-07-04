@@ -1290,6 +1290,237 @@ export async function reviewUserDeletionRequest(formData: FormData) {
   redirect(`${returnPath}?reviewed=approved`)
 }
 
+const resourceDeletionEntitySchema = z.enum(["course", "classSection"])
+
+const resourceDeletionPathByEntity = {
+  course: "/admin/courses",
+  classSection: "/admin/class-sections",
+} satisfies Record<z.infer<typeof resourceDeletionEntitySchema>, string>
+
+async function getDeletionResourceTarget(
+  entity: z.infer<typeof resourceDeletionEntitySchema>,
+  id: string
+) {
+  const prisma = getPrismaClient()
+
+  if (entity === "course") {
+    const course = await prisma.course.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        campusId: true,
+        organizationId: true,
+        title: true,
+      },
+    })
+
+    return course
+      ? {
+          campusId: course.campusId,
+          entityId: course.id,
+          entityName: course.title,
+          entityType: entity,
+          organizationId: course.organizationId,
+        }
+      : null
+  }
+
+  const section = await prisma.classSection.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      campusId: true,
+      name: true,
+      organizationId: true,
+    },
+  })
+
+  return section
+    ? {
+        campusId: section.campusId,
+        entityId: section.id,
+        entityName: section.name,
+        entityType: entity,
+        organizationId: section.organizationId,
+      }
+    : null
+}
+
+const requestResourceDeletionSchema = z.object({
+  entity: resourceDeletionEntitySchema,
+  id: requiredString,
+  returnPath: requiredString,
+})
+
+export async function requestResourceDeletion(formData: FormData) {
+  const data = requestResourceDeletionSchema.parse(readForm(formData))
+  const returnPath = safeReturnPath(data.returnPath)
+  const admin = await requireAdmin()
+
+  if (hasSuperAdminRole(admin.roleAssignments)) {
+    redirect(`${returnPath}?requestError=${data.entity}`)
+  }
+
+  const target = await getDeletionResourceTarget(data.entity, data.id)
+  if (!target) {
+    redirect(`${returnPath}?requestError=${data.entity}`)
+  }
+
+  await assertAdminScope(target)
+  const prisma = getPrismaClient()
+  const existing = await prisma.resourceDeletionRequest.findFirst({
+    where: {
+      entityId: target.entityId,
+      entityType: target.entityType,
+      status: UserDeletionRequestStatus.PENDING,
+    },
+    select: { id: true },
+  })
+
+  if (existing) {
+    redirect(`${returnPath}?deleteRequested=${target.entityType}`)
+  }
+
+  const request = await prisma.resourceDeletionRequest.create({
+    data: {
+      campusId: target.campusId,
+      entityId: target.entityId,
+      entityName: target.entityName,
+      entityType: target.entityType,
+      organizationId: target.organizationId,
+      requestedById: admin.id,
+    },
+    select: { id: true },
+  })
+
+  const superAdmins = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      roleAssignments: {
+        some: { role: UserRole.SUPER_ADMIN },
+      },
+    },
+    select: { id: true },
+  })
+
+  await createNotificationsForUsers(
+    superAdmins.map((item) => item.id),
+    {
+      actionUrl: resourceDeletionPathByEntity[target.entityType],
+      actorUserId: admin.id,
+      body: `${admin.name} requested deletion approval for ${target.entityName}.`,
+      entityId: request.id,
+      entityType: "ResourceDeletionRequest",
+      title: "Deletion approval requested",
+      type: NotificationType.SYSTEM_NOTICE,
+    }
+  )
+
+  await writeAuditLog({
+    action: `${target.entityType}.delete.request`,
+    actorUserId: admin.id,
+    entityId: target.entityId,
+    entityType: target.entityType,
+    organizationId: target.organizationId,
+    campusId: target.campusId,
+    summary: `Requested deletion approval for ${target.entityType} ${target.entityName}.`,
+  })
+
+  await revalidateAdmin(resourceDeletionPathByEntity[target.entityType])
+  redirect(`${returnPath}?deleteRequested=${target.entityType}`)
+}
+
+const reviewResourceDeletionRequestSchema = z.object({
+  requestId: requiredString,
+  decision: z.enum(["approve", "reject"]),
+  returnPath: requiredString,
+})
+
+export async function reviewResourceDeletionRequest(formData: FormData) {
+  const data = reviewResourceDeletionRequestSchema.parse(readForm(formData))
+  const returnPath = safeReturnPath(data.returnPath)
+  const admin = await requireAdmin()
+
+  if (!hasSuperAdminRole(admin.roleAssignments)) {
+    redirect(`${returnPath}?reviewError=resource`)
+  }
+
+  const prisma = getPrismaClient()
+  const request = await prisma.resourceDeletionRequest.findUnique({
+    where: { id: data.requestId },
+  })
+
+  if (!request || request.status !== UserDeletionRequestStatus.PENDING) {
+    redirect(`${returnPath}?reviewError=resource`)
+  }
+
+  const entity = resourceDeletionEntitySchema.safeParse(request.entityType)
+  if (!entity.success) {
+    redirect(`${returnPath}?reviewError=resource`)
+  }
+
+  if (data.decision === "reject") {
+    await prisma.resourceDeletionRequest.update({
+      where: { id: request.id },
+      data: {
+        reviewedAt: new Date(),
+        reviewedById: admin.id,
+        status: UserDeletionRequestStatus.REJECTED,
+      },
+    })
+    await writeAuditLog({
+      action: `${request.entityType}.delete.reject`,
+      actorUserId: admin.id,
+      entityId: request.entityId,
+      entityType: request.entityType,
+      organizationId: request.organizationId,
+      campusId: request.campusId,
+      summary: `Rejected deletion request for ${request.entityType} ${request.entityName}.`,
+    })
+    await revalidateAdmin(resourceDeletionPathByEntity[entity.data])
+    redirect(`${returnPath}?reviewed=rejected`)
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (entity.data === "course") {
+        await tx.course.delete({ where: { id: request.entityId } })
+      } else {
+        await tx.classSection.delete({ where: { id: request.entityId } })
+      }
+
+      await tx.resourceDeletionRequest.update({
+        where: { id: request.id },
+        data: {
+          reviewedAt: new Date(),
+          reviewedById: admin.id,
+          status: UserDeletionRequestStatus.APPROVED,
+        },
+      })
+    })
+  } catch (error) {
+    console.error("Resource deletion approval failed", {
+      entityId: request.entityId,
+      entityType: request.entityType,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    redirect(`${returnPath}?reviewError=${request.entityType}`)
+  }
+
+  await writeAuditLog({
+    action: `${request.entityType}.delete.approve`,
+    actorUserId: admin.id,
+    entityId: request.entityId,
+    entityType: request.entityType,
+    organizationId: request.organizationId,
+    campusId: request.campusId,
+    summary: `Approved deletion request and deleted ${request.entityType} ${request.entityName}.`,
+  })
+
+  await revalidateAdmin(resourceDeletionPathByEntity[entity.data])
+  redirect(`${returnPath}?reviewed=approved`)
+}
+
 export async function saveClassSection(formData: FormData) {
   await assertSchoolAdminUserOnly()
   const parsed = classSectionSchema.safeParse(readForm(formData))

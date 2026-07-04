@@ -1,7 +1,8 @@
 import Link from "next/link"
+import { UserDeletionRequestStatus } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
-import { deleteAdminEntity } from "@/modules/admin/actions"
+import { getPrismaClient } from "@/lib/prisma"
 import { ClassSectionForm } from "@/modules/admin/academic-management"
 import {
   AdminPageHeader,
@@ -13,7 +14,12 @@ import {
   TableRow,
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
-import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
+import {
+  PendingResourceDeletionRequests,
+  ResourceDeleteControl,
+  ResourceDeletionStatusBanners,
+} from "@/modules/admin/resource-deletion-components"
+import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 
 export default async function ClassSectionsPage({
   searchParams,
@@ -21,7 +27,11 @@ export default async function ClassSectionsPage({
   searchParams: Promise<{
     deleted?: string
     deleteError?: string
+    deleteRequested?: string
     q?: string
+    requestError?: string
+    reviewed?: string
+    reviewError?: string
     saveError?: string
   }>
 }) {
@@ -39,6 +49,25 @@ export default async function ClassSectionsPage({
       section.instructors.map((item) => item.instructor.name).join(" "),
     ])
   )
+  const canDeleteDirectly = hasSuperAdminRole(data.user.roleAssignments)
+  const pendingDeletionRequests = await getPrismaClient().resourceDeletionRequest.findMany({
+    where: {
+      entityType: "classSection",
+      status: UserDeletionRequestStatus.PENDING,
+      ...(canDeleteDirectly ? {} : { requestedById: data.user.id }),
+      ...(data.classSections.length
+        ? { entityId: { in: data.classSections.map((section) => section.id) } }
+        : { entityId: "__none__" }),
+    },
+    include: {
+      organization: { select: { name: true } },
+      requestedBy: { select: { email: true, name: true } },
+    },
+    orderBy: { requestedAt: "desc" },
+  })
+  const pendingDeletionBySectionId = new Map(
+    pendingDeletionRequests.map((request) => [request.entityId, request])
+  )
 
   return (
     <div className="space-y-6">
@@ -52,6 +81,14 @@ export default async function ClassSectionsPage({
         resultSummary={`${classSections.length} of ${data.classSections.length} class sections shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
+      <ResourceDeletionStatusBanners entityLabel="Class section" params={params} />
+      {canDeleteDirectly ? (
+        <PendingResourceDeletionRequests
+          requests={pendingDeletionRequests}
+          returnPath="/admin/class-sections"
+          title="Pending class section deletion requests"
+        />
+      ) : null}
       {params.saveError ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {params.saveError}
@@ -124,11 +161,12 @@ export default async function ClassSectionsPage({
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/admin/class-sections/${section.id}`}>View</Link>
                   </Button>
-                  <ConfirmDeleteForm
-                    action={deleteAdminEntity}
+                  <ResourceDeleteControl
+                    canDeleteDirectly={canDeleteDirectly}
                     entity="classSection"
                     id={section.id}
-                    message={`Delete class section "${section.name}"? Related class records may be removed or prevent deletion.`}
+                    isRequested={pendingDeletionBySectionId.has(section.id)}
+                    label={section.name}
                     returnPath="/admin/class-sections"
                   />
                 </div>

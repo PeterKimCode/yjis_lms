@@ -165,73 +165,74 @@ enum UserDeletionRequestStatus {
 }
 
 model Organization {
-  id                      String                   @id @default(cuid())
-  name                    String
-  slug                    String                   @unique
-  institutionType         InstitutionType
-  logoFileAssetId         String?
-  websiteUrl              String?
-  defaultLocale           String                   @default("ko-KR")
-  timezone                String                   @default("Asia/Seoul")
-  isActive                Boolean                  @default(true)
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  logoFileAsset           FileAsset?                @relation("OrganizationLogo", fields: [logoFileAssetId], references: [id], onDelete: SetNull)
-  campuses                Campus[]
-  users                   User[]
-  roleAssignments         UserRoleAssignment[]
-  academicYears           AcademicYear[]
-  terms                   Term[]
-  gradeLevels             GradeLevel[]
-  homerooms               Homeroom[]
-  departments             Department[]
-  programs                Program[]
-  subjects                Subject[]
-  courses                 Course[]
-  classSections           ClassSection[]
-  classSessions           ClassSession[]
-  enrollments             Enrollment[]
-  lessons                 Lesson[]
-  learningMaterials       LearningMaterial[]
-  videoProgress           VideoProgress[]
-  attendanceSessions      AttendanceSession[]
-  attendanceRecords       AttendanceRecord[]
-  assignments             Assignment[]
-  submissions             AssignmentSubmission[]
-  quizzes                 Quiz[]
-  questions               Question[]
-  quizAttempts            QuizAttempt[]
-  exams                   Exam[]
-  gradeCategories         GradeCategory[]
-  gradeItems              GradeItem[]
-  gradeScores             GradeScore[]
-  gradingScales           GradingScale[]
-  finalGrades             FinalGrade[]
-  transcripts             Transcript[]
-  transcriptTerms         TranscriptTerm[]
-  transcriptItems         TranscriptItem[]
-  reportCards             ReportCard[]
-  reportCardItems         ReportCardItem[]
-  generatedDocuments      GeneratedDocument[]
-  boards                  Board[]
-  posts                   Post[]
-  comments                Comment[]
-  conversations           Conversation[]
-  messages                Message[]
-  notifications           Notification[]
-  notificationPreferences NotificationPreference[]
-  auditLogs               AuditLog[]
-  academicPolicies        AcademicPolicy[]
-  attendancePolicies      AttendancePolicy[]
-  videoCompletionPolicies VideoCompletionPolicy[]
-  gradingPolicies         GradingPolicy[]
-  messagingPolicies       MessagingPolicy[]
-  fileAssets              FileAsset[]
-  studentProfiles         StudentProfile[]
-  instructorProfiles      InstructorProfile[]
-  parentStudentRelations  ParentStudentRelation[]
-  classSectionInstructors ClassSectionInstructor[]
-  userDeletionRequests    UserDeletionRequest[]
+  id                       String                    @id @default(cuid())
+  name                     String
+  slug                     String                    @unique
+  institutionType          InstitutionType
+  logoFileAssetId          String?
+  websiteUrl               String?
+  defaultLocale            String                    @default("ko-KR")
+  timezone                 String                    @default("Asia/Seoul")
+  isActive                 Boolean                   @default(true)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  logoFileAsset            FileAsset?                @relation("OrganizationLogo", fields: [logoFileAssetId], references: [id], onDelete: SetNull)
+  campuses                 Campus[]
+  users                    User[]
+  roleAssignments          UserRoleAssignment[]
+  academicYears            AcademicYear[]
+  terms                    Term[]
+  gradeLevels              GradeLevel[]
+  homerooms                Homeroom[]
+  departments              Department[]
+  programs                 Program[]
+  subjects                 Subject[]
+  courses                  Course[]
+  classSections            ClassSection[]
+  classSessions            ClassSession[]
+  enrollments              Enrollment[]
+  lessons                  Lesson[]
+  learningMaterials        LearningMaterial[]
+  videoProgress            VideoProgress[]
+  attendanceSessions       AttendanceSession[]
+  attendanceRecords        AttendanceRecord[]
+  assignments              Assignment[]
+  submissions              AssignmentSubmission[]
+  quizzes                  Quiz[]
+  questions                Question[]
+  quizAttempts             QuizAttempt[]
+  exams                    Exam[]
+  gradeCategories          GradeCategory[]
+  gradeItems               GradeItem[]
+  gradeScores              GradeScore[]
+  gradingScales            GradingScale[]
+  finalGrades              FinalGrade[]
+  transcripts              Transcript[]
+  transcriptTerms          TranscriptTerm[]
+  transcriptItems          TranscriptItem[]
+  reportCards              ReportCard[]
+  reportCardItems          ReportCardItem[]
+  generatedDocuments       GeneratedDocument[]
+  boards                   Board[]
+  posts                    Post[]
+  comments                 Comment[]
+  conversations            Conversation[]
+  messages                 Message[]
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  auditLogs                AuditLog[]
+  academicPolicies         AcademicPolicy[]
+  attendancePolicies       AttendancePolicy[]
+  videoCompletionPolicies  VideoCompletionPolicy[]
+  gradingPolicies          GradingPolicy[]
+  messagingPolicies        MessagingPolicy[]
+  fileAssets               FileAsset[]
+  studentProfiles          StudentProfile[]
+  instructorProfiles       InstructorProfile[]
+  parentStudentRelations   ParentStudentRelation[]
+  classSectionInstructors  ClassSectionInstructor[]
+  userDeletionRequests     UserDeletionRequest[]
+  resourceDeletionRequests ResourceDeletionRequest[]
 
   @@index([institutionType])
   @@index([logoFileAssetId])
@@ -278,55 +279,57 @@ model Campus {
 }
 
 model User {
-  id                          String                    @id @default(cuid())
-  organizationId              String
-  email                       String?
-  username                    String?
-  passwordHash                String?
-  name                        String
-  phone                       String?
-  avatarFileAssetId           String?
-  isActive                    Boolean                   @default(true)
-  lastLoginAt                 DateTime?
-  createdAt                   DateTime                  @default(now())
-  updatedAt                   DateTime                  @updatedAt
-  organization                Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  avatarFileAsset             FileAsset?                @relation("UserAvatar", fields: [avatarFileAssetId], references: [id], onDelete: SetNull)
-  roleAssignments             UserRoleAssignment[]
-  studentProfile              StudentProfile?
-  instructorProfile           InstructorProfile?
-  parentRelations             ParentStudentRelation[]   @relation("ParentRelations")
-  studentParentRelations      ParentStudentRelation[]   @relation("StudentRelations")
-  sectionInstructors          ClassSectionInstructor[]
-  enrollments                 Enrollment[]
-  createdLessons              Lesson[]                  @relation("LessonCreator")
-  videoProgress               VideoProgress[]
-  attendanceRecords           AttendanceRecord[]
-  assignmentSubmissions       AssignmentSubmission[]
-  gradedAssignmentSubmissions AssignmentSubmission[]    @relation("GradedAssignmentSubmissions")
-  gradedQuizAttempts          QuizAttempt[]             @relation("GradedQuizAttempts")
-  gradedQuizAnswers           QuizAnswer[]              @relation("GradedQuizAnswers")
-  gradedGradeScores           GradeScore[]              @relation("GradedGradeScores")
-  quizAttempts                QuizAttempt[]
-  quizAnswers                 QuizAnswer[]
-  gradeScores                 GradeScore[]
-  finalGrades                 FinalGrade[]
-  transcripts                 Transcript[]
-  reportCards                 ReportCard[]
-  generatedDocuments          GeneratedDocument[]
-  posts                       Post[]
-  comments                    Comment[]
-  conversationParticipants    ConversationParticipant[]
-  sentMessages                Message[]                 @relation("SentMessages")
-  readReceipts                MessageReadReceipt[]
-  notifications               Notification[]
-  notificationPreferences     NotificationPreference[]
-  auditLogs                   AuditLog[]                 @relation("AuditActor")
-  uploadedFiles               FileAsset[]               @relation("UploadedFiles")
-  homerooms                   Homeroom[]
-  deletionRequestsRequested   UserDeletionRequest[]    @relation("UserDeletionRequestedBy")
-  deletionRequestsReviewed    UserDeletionRequest[]    @relation("UserDeletionReviewedBy")
-  deletionRequestsTargeted    UserDeletionRequest[]    @relation("UserDeletionTarget")
+  id                                String                    @id @default(cuid())
+  organizationId                    String
+  email                             String?
+  username                          String?
+  passwordHash                      String?
+  name                              String
+  phone                             String?
+  avatarFileAssetId                 String?
+  isActive                          Boolean                   @default(true)
+  lastLoginAt                       DateTime?
+  createdAt                         DateTime                  @default(now())
+  updatedAt                         DateTime                  @updatedAt
+  organization                      Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  avatarFileAsset                   FileAsset?                @relation("UserAvatar", fields: [avatarFileAssetId], references: [id], onDelete: SetNull)
+  roleAssignments                   UserRoleAssignment[]
+  studentProfile                    StudentProfile?
+  instructorProfile                 InstructorProfile?
+  parentRelations                   ParentStudentRelation[]   @relation("ParentRelations")
+  studentParentRelations            ParentStudentRelation[]   @relation("StudentRelations")
+  sectionInstructors                ClassSectionInstructor[]
+  enrollments                       Enrollment[]
+  createdLessons                    Lesson[]                  @relation("LessonCreator")
+  videoProgress                     VideoProgress[]
+  attendanceRecords                 AttendanceRecord[]
+  assignmentSubmissions             AssignmentSubmission[]
+  gradedAssignmentSubmissions       AssignmentSubmission[]    @relation("GradedAssignmentSubmissions")
+  gradedQuizAttempts                QuizAttempt[]             @relation("GradedQuizAttempts")
+  gradedQuizAnswers                 QuizAnswer[]              @relation("GradedQuizAnswers")
+  gradedGradeScores                 GradeScore[]              @relation("GradedGradeScores")
+  quizAttempts                      QuizAttempt[]
+  quizAnswers                       QuizAnswer[]
+  gradeScores                       GradeScore[]
+  finalGrades                       FinalGrade[]
+  transcripts                       Transcript[]
+  reportCards                       ReportCard[]
+  generatedDocuments                GeneratedDocument[]
+  posts                             Post[]
+  comments                          Comment[]
+  conversationParticipants          ConversationParticipant[]
+  sentMessages                      Message[]                 @relation("SentMessages")
+  readReceipts                      MessageReadReceipt[]
+  notifications                     Notification[]
+  notificationPreferences           NotificationPreference[]
+  auditLogs                         AuditLog[]                @relation("AuditActor")
+  uploadedFiles                     FileAsset[]               @relation("UploadedFiles")
+  homerooms                         Homeroom[]
+  deletionRequestsRequested         UserDeletionRequest[]     @relation("UserDeletionRequestedBy")
+  deletionRequestsReviewed          UserDeletionRequest[]     @relation("UserDeletionReviewedBy")
+  deletionRequestsTargeted          UserDeletionRequest[]     @relation("UserDeletionTarget")
+  resourceDeletionRequestsRequested ResourceDeletionRequest[] @relation("ResourceDeletionRequestedBy")
+  resourceDeletionRequestsReviewed  ResourceDeletionRequest[] @relation("ResourceDeletionReviewedBy")
 
   @@unique([organizationId, email])
   @@unique([organizationId, username])
@@ -354,6 +357,33 @@ model UserDeletionRequest {
 
   @@index([organizationId])
   @@index([targetUserId])
+  @@index([requestedById])
+  @@index([reviewedById])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+model ResourceDeletionRequest {
+  id             String                    @id @default(cuid())
+  organizationId String
+  campusId       String?
+  entityType     String
+  entityId       String
+  entityName     String
+  requestedById  String?
+  reviewedById   String?
+  reason         String?
+  status         UserDeletionRequestStatus @default(PENDING)
+  requestedAt    DateTime                  @default(now())
+  reviewedAt     DateTime?
+  updatedAt      DateTime                  @updatedAt
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy    User?                     @relation("ResourceDeletionRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  reviewedBy     User?                     @relation("ResourceDeletionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([campusId])
+  @@index([entityType, entityId])
   @@index([requestedById])
   @@index([reviewedById])
   @@index([status])
@@ -1441,19 +1471,19 @@ model PostAttachment {
 }
 
 model Comment {
-  id             String       @id @default(cuid())
+  id             String              @id @default(cuid())
   organizationId String
   postId         String
   authorId       String?
   parentId       String?
   body           String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  post           Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author         User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  parent         Comment?     @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
-  replies        Comment[]    @relation("CommentThread")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  post           Post                @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author         User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parent         Comment?            @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies        Comment[]           @relation("CommentThread")
   attachments    CommentAttachment[]
 
   @@index([organizationId])

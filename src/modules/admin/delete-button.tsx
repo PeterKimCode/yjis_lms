@@ -13,7 +13,10 @@ export function ConfirmDeleteForm({
   id,
   label = "Delete",
   message,
+  pendingLabel,
+  confirmLabel = "Confirm delete",
   returnPath,
+  title = "Delete this item?",
   warning = "This action can remove data permanently if there are no related records blocking deletion.",
 }: {
   action: DeleteAction
@@ -21,7 +24,10 @@ export function ConfirmDeleteForm({
   id: string
   label?: string
   message: string
+  pendingLabel?: string
+  confirmLabel?: string
   returnPath: string
+  title?: string
   warning?: string
 }) {
   const formRef = useRef<HTMLFormElement>(null)
@@ -51,7 +57,7 @@ export function ConfirmDeleteForm({
         <input name="entity" type="hidden" value={entity} />
         <input name="id" type="hidden" value={id} />
         <input name="returnPath" type="hidden" value={returnPath} />
-        <DeleteSubmit label={label} />
+        <DeleteSubmit label={label} pendingLabel={pendingLabel} />
       </form>
 
       {isConfirmOpen ? (
@@ -62,7 +68,7 @@ export function ConfirmDeleteForm({
         >
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border bg-background p-5 shadow-2xl sm:p-6">
             <div className="space-y-2">
-              <p className="text-base font-semibold">Delete this item?</p>
+              <p className="text-base font-semibold">{title}</p>
               <p className="whitespace-normal break-words text-sm leading-6 text-muted-foreground">
                 {message}
               </p>
@@ -75,7 +81,7 @@ export function ConfirmDeleteForm({
                 Cancel
               </Button>
               <Button size="sm" type="button" variant="destructive" onClick={submitConfirmedDelete}>
-                Confirm delete
+                {confirmLabel}
               </Button>
             </div>
           </div>
@@ -85,12 +91,18 @@ export function ConfirmDeleteForm({
   )
 }
 
-function DeleteSubmit({ label }: { label: string }) {
+function DeleteSubmit({
+  label,
+  pendingLabel = "Deleting...",
+}: {
+  label: string
+  pendingLabel?: string
+}) {
   const { pending } = useFormStatus()
 
   return (
     <Button disabled={pending} size="sm" type="submit" variant="destructive">
-      {pending ? "Deleting..." : label}
+      {pending ? pendingLabel : label}
     </Button>
   )
 }
