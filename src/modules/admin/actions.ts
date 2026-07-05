@@ -84,7 +84,7 @@ function isSchoolAdminOnly(roleAssignments: { role: UserRole }[]) {
 async function assertSchoolAdminUserOnly() {
   const admin = await requireAdmin()
   if (isSchoolAdminOnly(admin.roleAssignments)) {
-    throw new Error("School admins can only view and edit users.")
+    throw new Error("School admins cannot perform this administrative action.")
   }
   return admin
 }
@@ -854,16 +854,25 @@ const courseSchema = z.object({
 })
 
 export async function saveCourse(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = courseSchema.parse(readForm(formData))
   const { id, ...values } = data
+  const prisma = getPrismaClient()
 
   await assertAdminScope(data)
-  await getPrismaClient().course.upsert({
-    where: { id: maybeId(id) ?? "__new_course__" },
-    update: values,
-    create: values,
-  })
+  if (id) {
+    const existing = await prisma.course.findUniqueOrThrow({
+      where: { id },
+      select: { campusId: true, organizationId: true },
+    })
+    await assertAdminScope(existing)
+    await prisma.course.update({
+      where: { id },
+      data: values,
+    })
+  } else {
+    await prisma.course.create({ data: values })
+  }
   await revalidateAdmin("/admin/courses")
 }
 
@@ -1522,7 +1531,7 @@ export async function reviewResourceDeletionRequest(formData: FormData) {
 }
 
 export async function saveClassSection(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const parsed = classSectionSchema.safeParse(readForm(formData))
   if (!parsed.success) {
     redirectWithAdminError(
@@ -1536,6 +1545,26 @@ export async function saveClassSection(formData: FormData) {
 
   await assertAdminScope(data)
   const prisma = getPrismaClient()
+  if (id) {
+    const existing = await prisma.classSection.findUniqueOrThrow({
+      where: { id },
+      select: { campusId: true, organizationId: true },
+    })
+    await assertAdminScope(existing)
+  }
+  const course = await prisma.course.findUniqueOrThrow({
+    where: { id: rawValues.courseId },
+    select: { campusId: true, organizationId: true },
+  })
+  if (
+    course.organizationId !== rawValues.organizationId ||
+    (course.campusId && rawValues.campusId && course.campusId !== rawValues.campusId)
+  ) {
+    redirectWithAdminError(
+      "/admin/class-sections",
+      "Class section could not be saved. The selected course does not belong to the selected organization or campus."
+    )
+  }
   const academicYearId =
     rawValues.academicYearId ??
     (await ensureDefaultAcademicYearForClassSection({
@@ -1617,7 +1646,7 @@ const instructorAssignmentSchema = z.object({
 })
 
 export async function assignClassSectionInstructor(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = instructorAssignmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
@@ -1634,6 +1663,8 @@ export async function assignClassSectionInstructor(formData: FormData) {
         {
           roleAssignments: {
             some: {
+              organizationId: classSection.organizationId,
+              ...(classSection.campusId ? { campusId: classSection.campusId } : {}),
               role: {
                 in: [
                   UserRole.INSTRUCTOR,
@@ -1644,7 +1675,14 @@ export async function assignClassSectionInstructor(formData: FormData) {
             },
           },
         },
-        { instructorProfile: { isNot: null } },
+        {
+          instructorProfile: {
+            is: {
+              organizationId: classSection.organizationId,
+              ...(classSection.campusId ? { campusId: classSection.campusId } : {}),
+            },
+          },
+        },
       ],
     },
     select: { id: true },
@@ -1692,7 +1730,7 @@ const removeInstructorAssignmentSchema = z.object({
 })
 
 export async function removeClassSectionInstructor(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = removeInstructorAssignmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const assignment = await prisma.classSectionInstructor.findUniqueOrThrow({
@@ -1729,7 +1767,7 @@ const enrollmentSchema = z.object({
 })
 
 export async function saveEnrollment(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = enrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
@@ -1742,9 +1780,26 @@ export async function saveEnrollment(formData: FormData) {
   const student = await prisma.user.findFirstOrThrow({
     where: {
       id: data.studentId,
-      roleAssignments: {
-        some: { role: UserRole.STUDENT },
-      },
+      organizationId: classSection.organizationId,
+      OR: [
+        {
+          roleAssignments: {
+            some: {
+              organizationId: classSection.organizationId,
+              ...(classSection.campusId ? { campusId: classSection.campusId } : {}),
+              role: UserRole.STUDENT,
+            },
+          },
+        },
+        {
+          studentProfile: {
+            is: {
+              organizationId: classSection.organizationId,
+              ...(classSection.campusId ? { campusId: classSection.campusId } : {}),
+            },
+          },
+        },
+      ],
     },
     select: { id: true },
   })
@@ -1794,7 +1849,7 @@ const removeEnrollmentSchema = z.object({
 })
 
 export async function removeEnrollment(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = removeEnrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const enrollment = await prisma.enrollment.findUniqueOrThrow({
@@ -1910,7 +1965,7 @@ const bulkHomeroomEnrollmentSchema = z.object({
 })
 
 export async function enrollHomeroomInClassSection(formData: FormData) {
-  await assertSchoolAdminUserOnly()
+  await requireAdmin()
   const data = bulkHomeroomEnrollmentSchema.parse(readForm(formData))
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
@@ -1920,10 +1975,25 @@ export async function enrollHomeroomInClassSection(formData: FormData) {
 
   await assertAdminScope(classSection)
 
+  const homeroom = await prisma.homeroom.findUniqueOrThrow({
+    where: { id: data.homeroomId },
+    select: { organizationId: true, campusId: true },
+  })
+  if (
+    homeroom.organizationId !== classSection.organizationId ||
+    (classSection.campusId && homeroom.campusId !== classSection.campusId)
+  ) {
+    redirectWithAdminError(
+      `/admin/class-sections/${data.classSectionId}`,
+      "Students could not be enrolled. The selected homeroom does not belong to this class section scope."
+    )
+  }
+
   const students = await prisma.studentProfile.findMany({
     where: {
       homeroomId: data.homeroomId,
       organizationId: classSection.organizationId,
+      ...(classSection.campusId ? { campusId: classSection.campusId } : {}),
     },
     select: {
       userId: true,
