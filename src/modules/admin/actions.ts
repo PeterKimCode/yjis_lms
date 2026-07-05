@@ -876,6 +876,18 @@ export async function saveCourse(formData: FormData) {
   await revalidateAdmin("/admin/courses")
 }
 
+export async function saveCourseWithState(
+  _previousState: AdminFormState,
+  formData: FormData
+): Promise<AdminFormState> {
+  try {
+    await saveCourse(formData)
+    return { ok: true, message: "Course saved." }
+  } catch (error) {
+    return { ok: false, message: getActionErrorMessage(error) }
+  }
+}
+
 const classSectionSchema = z.object({
   id: optionalString,
   organizationId: requiredString,

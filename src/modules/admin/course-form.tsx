@@ -1,10 +1,12 @@
 "use client"
 
 import { DeliveryMode } from "@prisma/client"
-import { useMemo, useState } from "react"
+import { useActionState, useMemo, useState } from "react"
 
-import { saveCourse } from "@/modules/admin/actions"
+import { ActionFeedback } from "@/components/action-feedback"
+import { saveCourseWithState } from "@/modules/admin/actions"
 import { Field, FormCard, SubmitButton } from "@/modules/admin/components"
+import { initialAdminFormState } from "@/modules/admin/form-state"
 
 type Option = { id: string; label: string }
 type ScopedOption = Option & {
@@ -37,6 +39,10 @@ export function CourseForm({
   data: CourseFormData
   course?: CourseFormValue
 }) {
+  const [state, formAction, pending] = useActionState(
+    saveCourseWithState,
+    initialAdminFormState
+  )
   const [organizationId, setOrganizationId] = useState(
     course?.organizationId ?? data.organizationOptions[0]?.id ?? ""
   )
@@ -70,8 +76,11 @@ export function CourseForm({
   }
 
   const form = (
-    <form action={saveCourse} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <form action={formAction} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <input name="id" type="hidden" value={course?.id ?? ""} />
+      <div className="sm:col-span-2 xl:col-span-4">
+        <ActionFeedback closeOnSuccess={Boolean(course)} state={state} />
+      </div>
       <label className="grid min-w-0 gap-1 text-sm">
         <span className="font-medium">Organization</span>
         <select
@@ -152,7 +161,7 @@ export function CourseForm({
         defaultValue={course?.description}
       />
       <div className="flex items-end">
-        <SubmitButton />
+        <SubmitButton label={pending ? "Saving..." : "Save"} />
       </div>
     </form>
   )

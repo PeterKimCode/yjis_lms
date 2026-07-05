@@ -107,7 +107,7 @@ export function UserForm({
   return (
     <FormCard title={user ? "Edit user" : "Create user"}>
       <div className="mb-3">
-        <ActionFeedback state={state} />
+        <ActionFeedback closeOnSuccess={Boolean(user)} state={state} />
       </div>
       <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <input name="id" type="hidden" value={user?.id ?? ""} />
