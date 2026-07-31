@@ -1,9 +1,12 @@
 import Link from "next/link"
-import { UserRole } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
-import { requireAdmin } from "@/modules/admin/access"
+import {
+  getScopedWhereForAdmin,
+  isSuperAdmin,
+  requireAdmin,
+} from "@/modules/admin/access"
 import {
   AdminPageHeader,
   DataTable,
@@ -18,58 +21,46 @@ export default async function AdminFilesPage({
   searchParams: Promise<{ q?: string }>
 }) {
   const admin = await requireAdmin()
-  const isSuperAdmin = admin.roleAssignments.some(
-    (assignment) => assignment.role === UserRole.SUPER_ADMIN
-  )
-
-  if (!isSuperAdmin) {
-    return (
-      <div className="space-y-6">
-        <AdminPageHeader
-          title="Files"
-          description="Uploaded LMS files are available to super admins only."
-        />
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          This file library is restricted to Super Admin accounts.
-        </div>
-      </div>
-    )
-  }
+  const canSeeAllFiles = isSuperAdmin(admin)
 
   const { q = "" } = await searchParams
   const query = q.trim()
+  const scopedWhere = getScopedWhereForAdmin(admin)
+  const searchWhere = query
+    ? {
+        OR: [
+          { originalName: { contains: query, mode: "insensitive" as const } },
+          { contentType: { contains: query, mode: "insensitive" as const } },
+          {
+            organization: {
+              name: { contains: query, mode: "insensitive" as const },
+            },
+          },
+          {
+            campus: {
+              name: { contains: query, mode: "insensitive" as const },
+            },
+          },
+          {
+            classSection: {
+              name: { contains: query, mode: "insensitive" as const },
+            },
+          },
+          {
+            uploadedBy: {
+              OR: [
+                { name: { contains: query, mode: "insensitive" as const } },
+                { email: { contains: query, mode: "insensitive" as const } },
+              ],
+            },
+          },
+        ],
+      }
+    : {}
   const files = await getPrismaClient().fileAsset.findMany({
-    where: query
-      ? {
-          OR: [
-            { originalName: { contains: query, mode: "insensitive" } },
-            { contentType: { contains: query, mode: "insensitive" } },
-            {
-              organization: {
-                name: { contains: query, mode: "insensitive" },
-              },
-            },
-            {
-              campus: {
-                name: { contains: query, mode: "insensitive" },
-              },
-            },
-            {
-              classSection: {
-                name: { contains: query, mode: "insensitive" },
-              },
-            },
-            {
-              uploadedBy: {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { email: { contains: query, mode: "insensitive" } },
-                ],
-              },
-            },
-          ],
-        }
-      : undefined,
+    where: {
+      AND: [scopedWhere, searchWhere],
+    },
     orderBy: { createdAt: "desc" },
     select: {
       byteSize: true,
@@ -90,8 +81,14 @@ export default async function AdminFilesPage({
     <div className="space-y-6">
       <AdminPageHeader
         title="Files"
-        description="Super admin library for uploaded LMS videos, PDFs, images, and lesson materials."
+        description="Uploaded LMS files in your admin scope, including videos, PDFs, images, and lesson materials."
       />
+      {!canSeeAllFiles ? (
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+          School Admin view is limited to files in your assigned organization
+          and campus scope.
+        </div>
+      ) : null}
       <SearchForm
         q={q}
         placeholder="Search filename, type, organization, campus, class, uploader..."

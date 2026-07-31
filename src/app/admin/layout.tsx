@@ -38,7 +38,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     )
   const visiblePrimaryLinks = isSchoolAdminOnly
     ? adminPrimaryLinks.filter(([, label]) =>
-        ["Courses", "Class Sections", "Users"].includes(label)
+        ["Courses", "Class Sections", "Users", "Files"].includes(label)
       )
     : adminPrimaryLinks
 

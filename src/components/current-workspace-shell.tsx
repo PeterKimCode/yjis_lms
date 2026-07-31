@@ -46,7 +46,7 @@ export async function CurrentWorkspaceShell({
       roles.includes(UserRole.SCHOOL_ADMIN) && !roles.includes(UserRole.SUPER_ADMIN)
     const visiblePrimaryLinks = isSchoolAdminOnly
       ? adminPrimaryLinks.filter(([, label]) =>
-          ["Courses", "Class Sections", "Users"].includes(label)
+          ["Courses", "Class Sections", "Users", "Files"].includes(label)
         )
       : adminPrimaryLinks
 

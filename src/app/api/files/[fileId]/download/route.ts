@@ -13,6 +13,8 @@ import {
 import { getCurrentSession } from "@/modules/auth/session"
 import { getBoardAccess } from "@/modules/boards/permissions"
 
+const VIDEO_RANGE_CHUNK_BYTES = 8 * 1024 * 1024
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ fileId: string }> }
@@ -91,8 +93,11 @@ export async function GET(
       canRenderInline && (requestedInline || file.contentType?.startsWith("video/"))
         ? "inline"
         : "attachment"
+    const isVideo = file.contentType?.startsWith("video/") ?? false
     const totalSize = file.byteSize ? Number(file.byteSize) : null
-    const range = parseRangeHeader(request.headers.get("range"), totalSize)
+    const range = parseRangeHeader(request.headers.get("range"), totalSize, {
+      maxChunkBytes: isVideo ? VIDEO_RANGE_CHUNK_BYTES : undefined,
+    })
 
     if (range?.invalid) {
       return new Response("Requested range not satisfiable", {
@@ -133,6 +138,8 @@ export async function GET(
       "Content-Type": file.contentType ?? "application/octet-stream",
       "X-Content-Type-Options": "nosniff",
       "Accept-Ranges": "bytes",
+      "Cache-Control": "private, no-store",
+      "X-Accel-Buffering": "no",
     })
 
     if (contentLength !== undefined) {
@@ -143,19 +150,21 @@ export async function GET(
       headers.set("Content-Range", `bytes ${range.start}-${range.end}/${totalSize}`)
     }
 
-    await writeAuditLog({
-      action: disposition === "inline" ? "file.view" : "file.download",
-      actorUserId: session.user.id,
-      campusId: file.campusId,
-      entityId: file.id,
-      entityType: "FileAsset",
-      metadata: {
-        contentType: file.contentType ?? null,
-        disposition,
-      },
-      organizationId: file.organizationId,
-      summary: `${disposition === "inline" ? "Viewed" : "Downloaded"} file ${file.originalName}.`,
-    })
+    if (!range) {
+      await writeAuditLog({
+        action: disposition === "inline" ? "file.view" : "file.download",
+        actorUserId: session.user.id,
+        campusId: file.campusId,
+        entityId: file.id,
+        entityType: "FileAsset",
+        metadata: {
+          contentType: file.contentType ?? null,
+          disposition,
+        },
+        organizationId: file.organizationId,
+        summary: `${disposition === "inline" ? "Viewed" : "Downloaded"} file ${file.originalName}.`,
+      })
+    }
 
     return new Response(body, { headers, status: range ? 206 : 200 })
   } catch (error) {
@@ -394,7 +403,11 @@ function isMissingObjectError(error: unknown) {
   return ["NoSuchKey", "NotFound", "NoSuchBucket"].includes(error.name)
 }
 
-function parseRangeHeader(rangeHeader: string | null, totalSize: number | null) {
+function parseRangeHeader(
+  rangeHeader: string | null,
+  totalSize: number | null,
+  options: { maxChunkBytes?: number } = {}
+) {
   if (!rangeHeader) return null
   if (!totalSize || !Number.isFinite(totalSize) || totalSize <= 0) {
     return { invalid: true as const }
@@ -429,6 +442,10 @@ function parseRangeHeader(rangeHeader: string | null, totalSize: number | null) 
     start >= totalSize
   ) {
     return { invalid: true as const }
+  }
+
+  if (options.maxChunkBytes && end - start + 1 > options.maxChunkBytes) {
+    end = start + options.maxChunkBytes - 1
   }
 
   return {
