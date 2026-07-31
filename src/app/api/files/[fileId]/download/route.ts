@@ -1,5 +1,5 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
-import type { Readable } from "node:stream"
+import { Readable } from "node:stream"
 import { NextResponse } from "next/server"
 import { UserRole } from "@prisma/client"
 
@@ -83,16 +83,34 @@ export async function GET(
 
     const requestedInline =
       new URL(request.url).searchParams.get("disposition") === "inline"
+    const canRenderInline =
+      file.contentType?.startsWith("image/") ||
+      file.contentType?.startsWith("video/") ||
+      file.contentType === "application/pdf"
     const disposition =
-      requestedInline &&
-      (file.contentType?.startsWith("image/") ||
-        file.contentType?.startsWith("video/"))
+      canRenderInline && (requestedInline || file.contentType?.startsWith("video/"))
         ? "inline"
         : "attachment"
+    const totalSize = file.byteSize ? Number(file.byteSize) : null
+    const range = parseRangeHeader(request.headers.get("range"), totalSize)
+
+    if (range?.invalid) {
+      return new Response("Requested range not satisfiable", {
+        status: 416,
+        headers: totalSize
+          ? {
+              "Content-Range": `bytes */${totalSize}`,
+              "Accept-Ranges": "bytes",
+            }
+          : undefined,
+      })
+    }
+
     const object = await createS3Client().send(
       new GetObjectCommand({
         Bucket: file.bucket,
         Key: file.objectKey,
+        Range: range ? `bytes=${range.start}-${range.end}` : undefined,
       })
     )
 
@@ -103,16 +121,27 @@ export async function GET(
       )
     }
 
-    const bytes = await readS3Body(object.Body)
+    const body = toResponseBody(object.Body)
+    const contentLength = range
+      ? range.end - range.start + 1
+      : (totalSize ?? object.ContentLength)
     const headers = new Headers({
       "Content-Disposition": getContentDisposition(
         file.originalName,
         disposition
       ),
       "Content-Type": file.contentType ?? "application/octet-stream",
-      "Content-Length": String(file.byteSize ?? bytes.byteLength),
       "X-Content-Type-Options": "nosniff",
+      "Accept-Ranges": "bytes",
     })
+
+    if (contentLength !== undefined) {
+      headers.set("Content-Length", String(contentLength))
+    }
+
+    if (range && totalSize) {
+      headers.set("Content-Range", `bytes ${range.start}-${range.end}/${totalSize}`)
+    }
 
     await writeAuditLog({
       action: disposition === "inline" ? "file.view" : "file.download",
@@ -128,7 +157,7 @@ export async function GET(
       summary: `${disposition === "inline" ? "Viewed" : "Downloaded"} file ${file.originalName}.`,
     })
 
-    return new Response(bytes, { headers })
+    return new Response(body, { headers, status: range ? 206 : 200 })
   } catch (error) {
     if (isMissingObjectError(error)) {
       return NextResponse.json(
@@ -178,6 +207,10 @@ async function canDownloadFile(
   }
 ) {
   if (file.uploadedById === userId) {
+    return true
+  }
+
+  if (await userHasSuperAdminRole(userId)) {
     return true
   }
 
@@ -291,6 +324,21 @@ async function canDownloadFile(
   return false
 }
 
+async function userHasSuperAdminRole(userId: string) {
+  const user = await getPrismaClient().user.findUnique({
+    where: { id: userId },
+    select: {
+      roleAssignments: {
+        where: { role: UserRole.SUPER_ADMIN },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  })
+
+  return Boolean(user?.roleAssignments.length)
+}
+
 function getContentDisposition(name: string, disposition: "attachment" | "inline") {
   const extension = getSafeExtension(name)
   const asciiFallback = `download${extension}`.replace(/["\r\n]/g, "_")
@@ -307,34 +355,26 @@ function getSafeExtension(name: string) {
   return match?.[0] ?? ""
 }
 
-async function readS3Body(body: unknown) {
+function toResponseBody(body: unknown): BodyInit {
   if (
     body &&
     typeof body === "object" &&
-    "transformToByteArray" in body &&
-    typeof body.transformToByteArray === "function"
+    "transformToWebStream" in body &&
+    typeof body.transformToWebStream === "function"
   ) {
-    return await body.transformToByteArray()
+    return body.transformToWebStream() as ReadableStream<Uint8Array>
   }
 
   if (body instanceof Uint8Array) {
-    return body
+    return new Uint8Array(body).buffer
   }
 
   if (body instanceof ReadableStream) {
-    return new Uint8Array(await new Response(body).arrayBuffer())
+    return body
   }
 
   if (isNodeReadable(body)) {
-    const chunks: Uint8Array[] = []
-
-    for await (const chunk of body) {
-      chunks.push(
-        typeof chunk === "string" ? new TextEncoder().encode(chunk) : chunk
-      )
-    }
-
-    return concatChunks(chunks)
+    return Readable.toWeb(body) as ReadableStream<Uint8Array>
   }
 
   throw new Error("Unsupported file body stream")
@@ -348,23 +388,53 @@ function isNodeReadable(value: unknown): value is Readable {
   return Symbol.asyncIterator in value
 }
 
-function concatChunks(chunks: Uint8Array[]) {
-  const totalLength = chunks.reduce((total, chunk) => total + chunk.byteLength, 0)
-  const bytes = new Uint8Array(totalLength)
-  let offset = 0
-
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-
-  return bytes
-}
-
 function isMissingObjectError(error: unknown) {
   if (!(error instanceof Error)) return false
 
   return ["NoSuchKey", "NotFound", "NoSuchBucket"].includes(error.name)
+}
+
+function parseRangeHeader(rangeHeader: string | null, totalSize: number | null) {
+  if (!rangeHeader) return null
+  if (!totalSize || !Number.isFinite(totalSize) || totalSize <= 0) {
+    return { invalid: true as const }
+  }
+
+  const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim())
+  if (!match) return { invalid: true as const }
+
+  const [, rawStart, rawEnd] = match
+  if (!rawStart && !rawEnd) return { invalid: true as const }
+
+  let start: number
+  let end: number
+
+  if (!rawStart) {
+    const suffixLength = Number(rawEnd)
+    if (!Number.isInteger(suffixLength) || suffixLength <= 0) {
+      return { invalid: true as const }
+    }
+    start = Math.max(totalSize - suffixLength, 0)
+    end = totalSize - 1
+  } else {
+    start = Number(rawStart)
+    end = rawEnd ? Number(rawEnd) : totalSize - 1
+  }
+
+  if (
+    !Number.isInteger(start) ||
+    !Number.isInteger(end) ||
+    start < 0 ||
+    end < start ||
+    start >= totalSize
+  ) {
+    return { invalid: true as const }
+  }
+
+  return {
+    start,
+    end: Math.min(end, totalSize - 1),
+  }
 }
 
 function createS3Client() {

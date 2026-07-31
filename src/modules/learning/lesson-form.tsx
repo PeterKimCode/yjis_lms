@@ -378,7 +378,7 @@ export function LessonForm({
                   </span>
                   <span className="block text-xs text-sky-800">
                     Upload through the LMS so FileAsset metadata exists for the
-                    dropdown.
+                    dropdown. MP4, WebM, MOV, or M4V only. Max 500MB.
                   </span>
                   <Input
                     id={`lesson-video-file-${classSectionId}-${lesson?.id ?? "new"}`}

@@ -6,6 +6,8 @@ import { getPrismaClient } from "@/lib/prisma"
 import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection } from "@/modules/auth/permissions"
 
+export const MAX_LESSON_VIDEO_UPLOAD_BYTES = 500 * 1024 * 1024
+
 export async function uploadLessonVideoFile({
   classSectionId,
   file,
@@ -21,6 +23,10 @@ export async function uploadLessonVideoFile({
 
   if (file.size === 0) {
     throw new LessonVideoUploadError("Choose a video file to upload.", 400)
+  }
+
+  if (file.size > MAX_LESSON_VIDEO_UPLOAD_BYTES) {
+    throw new LessonVideoUploadError("Video must be 500MB or smaller.", 400)
   }
 
   if (!isVideoFile(file.name, file.type)) {

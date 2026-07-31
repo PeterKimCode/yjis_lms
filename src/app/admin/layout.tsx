@@ -6,6 +6,7 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
+  FileText,
   GraduationCap,
   Home,
   Layers,
@@ -153,6 +154,7 @@ function AdminNavIcon({ label }: { label: string }) {
   if (normalized.includes("course")) return <BookOpen className={className} />
   if (normalized.includes("user")) return <Users className={className} />
   if (normalized.includes("board")) return <Layers className={className} />
+  if (normalized.includes("file")) return <FileText className={className} />
   if (normalized.includes("organization")) return <Building2 className={className} />
   if (normalized.includes("campus")) return <School className={className} />
   if (normalized.includes("year") || normalized.includes("term")) {

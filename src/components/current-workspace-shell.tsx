@@ -6,6 +6,7 @@ import {
   BookOpen,
   Building2,
   CalendarDays,
+  FileText,
   GraduationCap,
   Home,
   Layers,
@@ -41,6 +42,14 @@ export async function CurrentWorkspaceShell({
   ])
 
   if (roles.some((role) => adminRoles.includes(role))) {
+    const isSchoolAdminOnly =
+      roles.includes(UserRole.SCHOOL_ADMIN) && !roles.includes(UserRole.SUPER_ADMIN)
+    const visiblePrimaryLinks = isSchoolAdminOnly
+      ? adminPrimaryLinks.filter(([, label]) =>
+          ["Courses", "Class Sections", "Users"].includes(label)
+        )
+      : adminPrimaryLinks
+
     return (
       <div className="role-admin-surface flex flex-1">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:block">
@@ -62,16 +71,20 @@ export async function CurrentWorkspaceShell({
             <p className="text-xs text-slate-400">{user.email}</p>
           </div>
           <nav className="space-y-3">
-            <NavGroup links={adminPrimaryLinks} />
-            <details className="rounded-md border border-white/10 p-2" open>
-              <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
-                Academic setup
-              </summary>
-              <div className="mt-2 grid gap-1">
-                <NavGroup links={adminSetupLinks} />
-              </div>
-            </details>
-            <NavGroup links={adminCommunicationLinks} />
+            <NavGroup links={visiblePrimaryLinks} />
+            {!isSchoolAdminOnly ? (
+              <>
+                <details className="rounded-md border border-white/10 p-2" open>
+                  <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
+                    Academic setup
+                  </summary>
+                  <div className="mt-2 grid gap-1">
+                    <NavGroup links={adminSetupLinks} />
+                  </div>
+                </details>
+                <NavGroup links={adminCommunicationLinks} />
+              </>
+            ) : null}
             {messageLinks.length ? (
               <div className="ml-3 grid gap-1 border-l border-white/10 pl-2">
                 {messageLinks.map((message) => (
@@ -233,6 +246,7 @@ function AdminNavIcon({ label }: { label: string }) {
   if (normalized.includes("course")) return <BookOpen className={className} />
   if (normalized.includes("user")) return <Users className={className} />
   if (normalized.includes("board")) return <Layers className={className} />
+  if (normalized.includes("file")) return <FileText className={className} />
   if (normalized.includes("organization")) return <Building2 className={className} />
   if (normalized.includes("campus")) return <School className={className} />
   if (normalized.includes("year") || normalized.includes("term")) {
