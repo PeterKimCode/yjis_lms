@@ -126,9 +126,12 @@ export default async function AdminFilesPage({
         ]}
         rows={files.map((file) => {
           const canOpenInline = canOpenInBrowser(file.contentType)
-          const href = `/api/files/${file.id}/download${
-            canOpenInline ? "?disposition=inline" : ""
-          }`
+          const isVideo = file.contentType?.startsWith("video/") ?? false
+          const href = isVideo
+            ? `/admin/files/${file.id}/preview`
+            : `/api/files/${file.id}/download${
+                canOpenInline ? "?disposition=inline" : ""
+              }`
 
           return (
             <TableRow key={file.id}>
@@ -148,7 +151,7 @@ export default async function AdminFilesPage({
               <TableCell>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button asChild size="sm" variant="outline">
-                    <Link href={href} target="_blank">
+                    <Link href={href} target={isVideo ? undefined : "_blank"}>
                       {canOpenInline ? "Open" : "Download"}
                     </Link>
                   </Button>

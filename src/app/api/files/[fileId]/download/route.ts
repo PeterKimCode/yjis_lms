@@ -95,11 +95,11 @@ export async function GET(
         : "attachment"
     const isVideo = file.contentType?.startsWith("video/") ?? false
     const totalSize = file.byteSize ? Number(file.byteSize) : null
-    const range = parseRangeHeader(request.headers.get("range"), totalSize, {
+    const requestedRange = parseRangeHeader(request.headers.get("range"), totalSize, {
       maxChunkBytes: isVideo ? VIDEO_RANGE_CHUNK_BYTES : undefined,
     })
 
-    if (range?.invalid) {
+    if (requestedRange?.invalid) {
       return new Response("Requested range not satisfiable", {
         status: 416,
         headers: totalSize
@@ -110,6 +110,15 @@ export async function GET(
           : undefined,
       })
     }
+
+    const initialVideoRange =
+      !requestedRange && isVideo && totalSize
+        ? {
+            start: 0,
+            end: Math.min(VIDEO_RANGE_CHUNK_BYTES - 1, totalSize - 1),
+          }
+        : null
+    const range = requestedRange ?? initialVideoRange
 
     const object = await createS3Client().send(
       new GetObjectCommand({
