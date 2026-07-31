@@ -281,9 +281,12 @@ function getDateWhere(from: string, to: string) {
 
 function formatDateTime(value: Date, timeZone: string | null | undefined) {
   return value.toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
     timeZone: timeZone || undefined,
     timeZoneName: "short",
+    year: "numeric",
   })
 }

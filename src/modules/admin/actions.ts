@@ -641,14 +641,14 @@ export async function saveParentStudentRelation(formData: FormData) {
   })
   const prisma = getPrismaClient()
   const [parent, student] = await Promise.all([
-    prisma.user.findFirstOrThrow({
+    prisma.user.findFirst({
       where: {
         id: data.parentId,
         roleAssignments: { some: { role: UserRole.PARENT } },
       },
       select: { id: true, organizationId: true },
     }),
-    prisma.user.findFirstOrThrow({
+    prisma.user.findFirst({
       where: {
         id: data.studentId,
         roleAssignments: { some: { role: UserRole.STUDENT } },
@@ -656,6 +656,13 @@ export async function saveParentStudentRelation(formData: FormData) {
       select: { id: true, organizationId: true },
     }),
   ])
+
+  if (!parent || !student) {
+    redirectWithAdminError(
+      "/admin/users",
+      "Selected parent or student could not be found. Refresh the page and try again."
+    )
+  }
 
   if (parent.organizationId !== student.organizationId) {
     throw new Error("Parent and student must belong to the same organization.")
@@ -1668,7 +1675,7 @@ export async function assignClassSectionInstructor(formData: FormData) {
 
   await assertAdminScope(classSection)
 
-  const instructor = await prisma.user.findFirstOrThrow({
+  const instructor = await prisma.user.findFirst({
     where: {
       id: data.instructorId,
       OR: [
@@ -1699,6 +1706,13 @@ export async function assignClassSectionInstructor(formData: FormData) {
     },
     select: { id: true },
   })
+
+  if (!instructor) {
+    redirectWithAdminError(
+      `/admin/class-sections/${data.classSectionId}`,
+      "Selected instructor could not be found in this class section scope. Refresh the page and try again."
+    )
+  }
 
   await prisma.classSectionInstructor.upsert({
     where: {
@@ -1789,7 +1803,7 @@ export async function saveEnrollment(formData: FormData) {
 
   await assertAdminScope(classSection)
 
-  const student = await prisma.user.findFirstOrThrow({
+  const student = await prisma.user.findFirst({
     where: {
       id: data.studentId,
       organizationId: classSection.organizationId,
@@ -1815,6 +1829,14 @@ export async function saveEnrollment(formData: FormData) {
     },
     select: { id: true },
   })
+
+  if (!student) {
+    redirectWithAdminError(
+      `/admin/class-sections/${data.classSectionId}`,
+      "Selected student could not be found in this class section scope. Refresh the page and try again."
+    )
+  }
+
   const statusDates = enrollmentStatusDates(data.status)
 
   await prisma.enrollment.upsert({
@@ -1908,7 +1930,7 @@ export async function assignStudentToHomeroom(formData: FormData) {
       gradeLevelId: true,
     },
   })
-  const student = await prisma.user.findFirstOrThrow({
+  const student = await prisma.user.findFirst({
     where: {
       id: data.studentId,
       roleAssignments: {
@@ -1917,6 +1939,13 @@ export async function assignStudentToHomeroom(formData: FormData) {
     },
     select: { id: true },
   })
+
+  if (!student) {
+    redirectWithAdminError(
+      `/admin/homerooms/${data.homeroomId}`,
+      "Selected student could not be found. Refresh the page and try again."
+    )
+  }
 
   await assertAdminScope(homeroom)
   await prisma.studentProfile.upsert({

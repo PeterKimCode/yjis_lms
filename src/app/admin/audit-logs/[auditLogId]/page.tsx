@@ -137,9 +137,13 @@ function getActionBadgeClass(action: string) {
 
 function formatDateTime(value: Date, timeZone: string | null | undefined) {
   return value.toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "medium",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    second: "2-digit",
     timeZone: timeZone || undefined,
     timeZoneName: "short",
+    year: "numeric",
   })
 }
