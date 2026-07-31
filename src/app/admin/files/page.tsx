@@ -14,16 +14,21 @@ import {
   TableCell,
   TableRow,
 } from "@/modules/admin/components"
+import { DeleteFileButton } from "@/app/admin/files/delete-file-button"
 
 export default async function AdminFilesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{
+    deleteError?: string
+    deleteSuccess?: string
+    q?: string
+  }>
 }) {
   const admin = await requireAdmin()
   const canSeeAllFiles = isSuperAdmin(admin)
 
-  const { q = "" } = await searchParams
+  const { deleteError, deleteSuccess, q = "" } = await searchParams
   const query = q.trim()
   const scopedWhere = getScopedWhereForAdmin(admin)
   const searchWhere = query
@@ -89,6 +94,16 @@ export default async function AdminFilesPage({
           and campus scope.
         </div>
       ) : null}
+      {deleteSuccess ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          {deleteSuccess}
+        </div>
+      ) : null}
+      {deleteError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {deleteError}
+        </div>
+      ) : null}
       <SearchForm
         q={q}
         placeholder="Search filename, type, organization, campus, class, uploader..."
@@ -131,11 +146,19 @@ export default async function AdminFilesPage({
               <TableCell>{formatDate(file.createdAt)}</TableCell>
               <TableCell>{file.visibility}</TableCell>
               <TableCell>
-                <Button asChild size="sm" variant="outline">
-                  <Link href={href} target="_blank">
-                    {canOpenInline ? "Open" : "Download"}
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={href} target="_blank">
+                      {canOpenInline ? "Open" : "Download"}
+                    </Link>
+                  </Button>
+                  {canSeeAllFiles ? (
+                    <DeleteFileButton
+                      fileId={file.id}
+                      fileName={file.originalName}
+                    />
+                  ) : null}
+                </div>
               </TableCell>
             </TableRow>
           )
