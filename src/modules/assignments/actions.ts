@@ -14,6 +14,10 @@ import {
 import type { AssignmentActionState } from "@/modules/assignments/action-state"
 import { validateAssignmentAttachment } from "@/modules/files/upload-validation"
 import {
+  PdfUploadError,
+  uploadClassPdfAttachment,
+} from "@/modules/files/pdf-upload"
+import {
   createNotification,
   notifyClassInstructors,
   notifyClassStudents,
@@ -69,6 +73,7 @@ export async function saveAssignment(
     UserRole.HOMEROOM_TEACHER,
   ])
   const data = parsed.data
+  const pdfAttachment = formData.get("pdfAttachmentFile")
 
   if (!(await canManageClassSection(user.id, data.classSectionId))) {
     return {
@@ -87,6 +92,7 @@ export async function saveAssignment(
   }
   const { id, ...values } = data
 
+  let assignmentId = id
   if (id) {
     const assignment = await prisma.assignment.findUnique({
       where: { id },
@@ -115,6 +121,7 @@ export async function saveAssignment(
         pointsPossible: new Prisma.Decimal(values.pointsPossible),
       },
     })
+    assignmentId = assignment.id
     await notifyClassStudents(data.classSectionId, {
       actionUrl: `/student/classes/${data.classSectionId}`,
       actorUserId: user.id,
@@ -126,9 +133,74 @@ export async function saveAssignment(
     })
   }
 
+  if (assignmentId && pdfAttachment instanceof File && pdfAttachment.size > 0) {
+    try {
+      const fileAsset = await uploadClassPdfAttachment({
+        actorUserId: user.id,
+        classSectionId: data.classSectionId,
+        file: pdfAttachment,
+        organizationId: classSection.organizationId,
+        prefix: "assignments",
+      })
+      await prisma.assignmentAttachment.create({
+        data: {
+          assignmentId,
+          fileAssetId: fileAsset.id,
+        },
+      })
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof PdfUploadError
+            ? error.message
+            : "Assignment was saved, but the PDF attachment could not be uploaded.",
+      }
+    }
+  }
+
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
   revalidatePath(`/student/classes/${data.classSectionId}`)
   return { ok: true, message: id ? "Assignment saved." : "Assignment created." }
+}
+
+export async function removeAssignmentAttachment(
+  _previousState: AssignmentActionState,
+  formData: FormData
+): Promise<AssignmentActionState> {
+  const user = await requireAnyRole([
+    UserRole.SUPER_ADMIN,
+    UserRole.ORG_ADMIN,
+    UserRole.SCHOOL_ADMIN,
+    UserRole.ACADEMIC_STAFF,
+    UserRole.INSTRUCTOR,
+    UserRole.HOMEROOM_TEACHER,
+  ])
+  const fileAssetId = String(formData.get("fileAssetId") ?? "").trim()
+  const attachment = await getPrismaClient().assignmentAttachment.findFirst({
+    where: { fileAssetId },
+    include: {
+      assignment: { select: { classSectionId: true } },
+    },
+  })
+
+  if (!attachment) {
+    return { ok: false, message: "PDF attachment was not found." }
+  }
+
+  if (!(await canManageClassSection(user.id, attachment.assignment.classSectionId))) {
+    return {
+      ok: false,
+      message: "You do not have permission to remove this PDF attachment.",
+    }
+  }
+
+  await getPrismaClient().assignmentAttachment.delete({
+    where: { id: attachment.id },
+  })
+  revalidatePath(`/instructor/classes/${attachment.assignment.classSectionId}`)
+  revalidatePath(`/student/classes/${attachment.assignment.classSectionId}`)
+  return { ok: true, message: "PDF attachment removed." }
 }
 
 export async function deleteAssignment(

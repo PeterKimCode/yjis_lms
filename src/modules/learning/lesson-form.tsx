@@ -13,21 +13,22 @@ import {
   saveLesson,
 } from "@/modules/learning/actions"
 
-const contentTypes = [
+const selectableContentTypes = [
   "VIDEO",
   "TEXT",
-  "FILE",
-  "QUIZ",
-  "ASSIGNMENT",
-  "LIVE_SESSION",
 ] as const
 
 const videoProviders = [
-  ["HTML5", "HTML5 / Direct video or MinIO"],
-  ["YOUTUBE", "YouTube"],
+  ["YOUTUBE", "Video: YouTube"],
+  ["HTML5", "Video: Upload"],
 ] as const
 
-type ContentType = (typeof contentTypes)[number]
+type ContentType =
+  | (typeof selectableContentTypes)[number]
+  | "FILE"
+  | "QUIZ"
+  | "ASSIGNMENT"
+  | "LIVE_SESSION"
 type VideoProvider = (typeof videoProviders)[number][0]
 
 export type LessonFormValue = {
@@ -62,7 +63,7 @@ export function LessonForm({
     lesson?.contentType ?? "TEXT"
   )
   const [videoProvider, setVideoProvider] = useState<VideoProvider>(
-    lesson?.videoProvider ?? "HTML5"
+    lesson?.videoProvider === "YOUTUBE" ? "YOUTUBE" : "HTML5"
   )
   const [selectedUploadFileName, setSelectedUploadFileName] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -84,6 +85,8 @@ export function LessonForm({
   const isEditing = Boolean(lesson)
   const isVideo = contentType === "VIDEO"
   const isFile = contentType === "FILE"
+  const isLegacyType =
+    !selectableContentTypes.includes(contentType as (typeof selectableContentTypes)[number])
   const effectiveVideoFileOptions = useMemo(() => {
     if (uploadedVideo && !videoFileOptions.some((option) => option.id === uploadedVideo.id)) {
       return [...videoFileOptions, uploadedVideo]
@@ -281,22 +284,32 @@ export function LessonForm({
           ) : null}
           <label className="space-y-1 text-sm">
             <span className="font-medium">Content type</span>
-            <select
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-              name="contentType"
-              value={contentType}
-              onChange={(event) => setContentType(event.target.value as ContentType)}
-            >
-              {contentTypes.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            {isLegacyType ? (
+              <>
+                <input name="contentType" type="hidden" value={contentType} />
+                <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                  {contentType} (legacy)
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Existing legacy lessons are preserved. New lessons can be Text
+                  or Video only.
+                </span>
+              </>
+            ) : (
+              <select
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                name="contentType"
+                value={contentType}
+                onChange={(event) => setContentType(event.target.value as ContentType)}
+              >
+                <option value="TEXT">Text</option>
+                <option value="VIDEO">Video</option>
+              </select>
+            )}
           </label>
           {isVideo ? (
             <label className="space-y-1 text-sm">
-              <span className="font-medium">Video provider</span>
+              <span className="font-medium">Video source</span>
               <select
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm"
                 name="videoProvider"
@@ -328,19 +341,20 @@ export function LessonForm({
               </span>
             </label>
           ) : null}
-          {isVideo ? (
+          {isVideo && videoProvider === "YOUTUBE" ? (
             <label className="space-y-1 text-sm md:col-span-2">
-              <span className="font-medium">Video URL</span>
+              <span className="font-medium">YouTube URL</span>
               <Input
                 name="videoUrl"
-                placeholder="https://example.com/video.mp4 or YouTube URL"
+                placeholder="https://www.youtube.com/watch?v=..."
                 defaultValue={lesson?.videoUrl ?? ""}
               />
               <span className="text-xs text-muted-foreground">
-                For YouTube, select YouTube provider. For direct video, select
-                HTML5.
+                Paste a YouTube link. Uploaded videos use the Upload mode below.
               </span>
             </label>
+          ) : isVideo ? (
+            <input name="videoUrl" type="hidden" value="" />
           ) : null}
           {isVideo && videoProvider === "HTML5" ? (
             <div className="space-y-2 text-sm md:col-span-2">

@@ -17,6 +17,10 @@ import {
   notifyClassStudents,
   notifyLinkedParentsForStudent,
 } from "@/modules/notifications/service"
+import {
+  PdfUploadError,
+  uploadClassPdfAttachment,
+} from "@/modules/files/pdf-upload"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -110,6 +114,7 @@ export async function saveQuiz(
 
   const data = parsed.data
   const manager = await requireQuizManager(data.classSectionId)
+  const pdfAttachment = formData.get("pdfAttachmentFile")
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUniqueOrThrow({
     where: { id: data.classSectionId },
@@ -137,6 +142,7 @@ export async function saveQuiz(
       })
     : null
 
+  let quizId = id
   if (id) {
     await prisma.quiz.update({ where: { id }, data: values })
   } else {
@@ -146,6 +152,7 @@ export async function saveQuiz(
         organizationId: classSection.organizationId,
       },
     })
+    quizId = quiz.id
     const questionResult = await createInitialQuizQuestions({
       formData,
       organizationId: classSection.organizationId,
@@ -167,6 +174,29 @@ export async function saveQuiz(
     }
   }
 
+  if (quizId && pdfAttachment instanceof File && pdfAttachment.size > 0) {
+    try {
+      const fileAsset = await uploadClassPdfAttachment({
+        actorUserId: manager.id,
+        classSectionId: data.classSectionId,
+        file: pdfAttachment,
+        organizationId: classSection.organizationId,
+        prefix: "quizzes",
+      })
+      await prisma.quizAttachment.create({
+        data: { quizId, fileAssetId: fileAsset.id },
+      })
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof PdfUploadError
+            ? error.message
+            : "Quiz was saved, but the PDF attachment could not be uploaded.",
+      }
+    }
+  }
+
   if (id && data.isPublished && previous && !previous.isPublished) {
     await notifyClassStudents(data.classSectionId, {
       actionUrl: `/student/classes/${data.classSectionId}`,
@@ -185,6 +215,30 @@ export async function saveQuiz(
   }
   revalidatePath(`/student/classes/${data.classSectionId}`)
   return { ok: true, message: id ? "Quiz saved." : "Quiz created." }
+}
+
+export async function removeQuizAttachment(
+  _previousState: QuizActionState,
+  formData: FormData
+): Promise<QuizActionState> {
+  const fileAssetId = String(formData.get("fileAssetId") ?? "").trim()
+  const attachment = await getPrismaClient().quizAttachment.findFirst({
+    where: { fileAssetId },
+    include: { quiz: { select: { classSectionId: true, id: true } } },
+  })
+
+  if (!attachment) {
+    return { ok: false, message: "PDF attachment was not found." }
+  }
+
+  await requireQuizManager(attachment.quiz.classSectionId)
+  await getPrismaClient().quizAttachment.delete({ where: { id: attachment.id } })
+  revalidatePath(`/instructor/classes/${attachment.quiz.classSectionId}`)
+  revalidatePath(
+    `/instructor/classes/${attachment.quiz.classSectionId}/quizzes/${attachment.quiz.id}`
+  )
+  revalidatePath(`/student/classes/${attachment.quiz.classSectionId}`)
+  return { ok: true, message: "PDF attachment removed." }
 }
 
 async function createInitialQuizQuestions({
@@ -649,8 +703,10 @@ export async function saveExam(
   }
 
   const data = parsed.data
-  await requireQuizManager(data.classSectionId)
-  const classSection = await getPrismaClient().classSection.findUniqueOrThrow({
+  const manager = await requireQuizManager(data.classSectionId)
+  const prisma = getPrismaClient()
+  const pdfAttachment = formData.get("pdfAttachmentFile")
+  const classSection = await prisma.classSection.findUniqueOrThrow({
     where: { id: data.classSectionId },
     select: {
       organization: { select: { timezone: true } },
@@ -670,17 +726,65 @@ export async function saveExam(
     ),
   }
 
-  await getPrismaClient().exam.upsert({
-    where: { id: id ?? "__new_exam__" },
-    update: values,
-    create: {
-      ...values,
-      organizationId: classSection.organizationId,
-    },
-  })
+  let examId = id
+  if (id) {
+    await prisma.exam.update({ where: { id }, data: values })
+  } else {
+    const exam = await prisma.exam.create({
+      data: {
+        ...values,
+        organizationId: classSection.organizationId,
+      },
+    })
+    examId = exam.id
+  }
+
+  if (examId && pdfAttachment instanceof File && pdfAttachment.size > 0) {
+    try {
+      const fileAsset = await uploadClassPdfAttachment({
+        actorUserId: manager.id,
+        classSectionId: data.classSectionId,
+        file: pdfAttachment,
+        organizationId: classSection.organizationId,
+        prefix: "exams",
+      })
+      await prisma.examAttachment.create({
+        data: { examId, fileAssetId: fileAsset.id },
+      })
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof PdfUploadError
+            ? error.message
+            : "Exam was saved, but the PDF attachment could not be uploaded.",
+      }
+    }
+  }
 
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
   return { ok: true, message: id ? "Exam saved." : "Exam created." }
+}
+
+export async function removeExamAttachment(
+  _previousState: QuizActionState,
+  formData: FormData
+): Promise<QuizActionState> {
+  const fileAssetId = String(formData.get("fileAssetId") ?? "").trim()
+  const attachment = await getPrismaClient().examAttachment.findFirst({
+    where: { fileAssetId },
+    include: { exam: { select: { classSectionId: true } } },
+  })
+
+  if (!attachment) {
+    return { ok: false, message: "PDF attachment was not found." }
+  }
+
+  await requireQuizManager(attachment.exam.classSectionId)
+  await getPrismaClient().examAttachment.delete({ where: { id: attachment.id } })
+  revalidatePath(`/instructor/classes/${attachment.exam.classSectionId}`)
+  revalidatePath(`/student/classes/${attachment.exam.classSectionId}`)
+  return { ok: true, message: "PDF attachment removed." }
 }
 
 function getAnswerKey(data: z.infer<typeof questionSchema>) {

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 
 import { GoogleTranslateControl } from "@/components/google-translate-control"
+import { SessionCountdown } from "@/components/session-countdown"
 import { Button } from "@/components/ui/button"
 import {
   type AvatarUploadState,
@@ -89,6 +90,9 @@ export function AvatarMenu({
         <p className="mt-1 text-xs text-muted-foreground">
           Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.
         </p>
+        <div className="mt-3">
+          <SessionCountdown />
+        </div>
         <form action={formAction} className="mt-3 grid gap-2" ref={formRef}>
           <input
             accept="image/jpeg,image/png,image/webp,image/gif"

@@ -199,6 +199,10 @@ export async function getClassSectionDetail(
       assignments: {
         orderBy: { dueAt: "asc" },
         include: {
+          attachments: {
+            include: { fileAsset: true },
+            orderBy: { createdAt: "desc" },
+          },
           submissions: {
             include: {
               student: true,
@@ -214,6 +218,10 @@ export async function getClassSectionDetail(
         where: options.publishedLessonsOnly ? { isPublished: true } : undefined,
         orderBy: { opensAt: "asc" },
         include: {
+          attachments: {
+            include: { fileAsset: true },
+            orderBy: { createdAt: "desc" },
+          },
           questions: {
             include: { options: { orderBy: { sequence: "asc" } } },
             orderBy: { sequence: "asc" },
@@ -229,6 +237,12 @@ export async function getClassSectionDetail(
       },
       exams: {
         orderBy: { startsAt: "asc" },
+        include: {
+          attachments: {
+            include: { fileAsset: true },
+            orderBy: { createdAt: "desc" },
+          },
+        },
       },
       gradingConfig: true,
       gradeCategories: {

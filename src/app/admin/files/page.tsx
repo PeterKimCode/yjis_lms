@@ -22,13 +22,14 @@ export default async function AdminFilesPage({
   searchParams: Promise<{
     deleteError?: string
     deleteSuccess?: string
+    organizationId?: string
     q?: string
   }>
 }) {
   const admin = await requireAdmin()
   const canSeeAllFiles = isSuperAdmin(admin)
 
-  const { deleteError, deleteSuccess, q = "" } = await searchParams
+  const { deleteError, deleteSuccess, organizationId = "", q = "" } = await searchParams
   const query = q.trim()
   const scopedWhere = getScopedWhereForAdmin(admin)
   const searchWhere = query
@@ -64,7 +65,11 @@ export default async function AdminFilesPage({
     : {}
   const files = await getPrismaClient().fileAsset.findMany({
     where: {
-      AND: [scopedWhere, searchWhere],
+      AND: [
+        scopedWhere,
+        organizationId ? { organizationId } : {},
+        searchWhere,
+      ],
     },
     orderBy: { createdAt: "desc" },
     select: {
@@ -105,8 +110,12 @@ export default async function AdminFilesPage({
         </div>
       ) : null}
       <SearchForm
+        hiddenFields={{ organizationId }}
         q={q}
         placeholder="Search filename, type, organization, campus, class, uploader..."
+        resetHref={
+          organizationId ? `/admin/files?organizationId=${organizationId}` : "?"
+        }
         resultSummary={`${files.length} file${files.length === 1 ? "" : "s"} shown`}
       />
       <DataTable

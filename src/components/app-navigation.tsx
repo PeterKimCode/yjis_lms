@@ -3,6 +3,7 @@ import { Bell, Home, LogIn, MessageSquare } from "lucide-react"
 
 import { BackButton } from "@/components/back-button"
 import { GoogleTranslateControl } from "@/components/google-translate-control"
+import { SessionCountdown } from "@/components/session-countdown"
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
 import { AvatarMenu } from "@/modules/auth/avatar-menu"
@@ -54,6 +55,7 @@ export async function AppNavigation() {
                   <span className="sr-only">Dashboard</span>
                 </Link>
               </Button>
+              <SessionCountdown compact />
               <Button
                 asChild
                 className="relative text-slate-100 hover:bg-white/10 hover:text-white"

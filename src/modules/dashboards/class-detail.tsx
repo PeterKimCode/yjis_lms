@@ -933,6 +933,10 @@ function toAssignmentPanelValue(
     dueAt: assignment.dueAt?.toISOString() ?? null,
     pointsPossible: assignment.pointsPossible?.toString() ?? null,
     acceptsLate: assignment.acceptsLate,
+    attachments: assignment.attachments.map((attachment) => ({
+      id: attachment.fileAsset.id,
+      name: attachment.fileAsset.originalName,
+    })),
     submissions: assignment.submissions.map((submission) => ({
       id: submission.id,
       studentId: submission.studentId,
@@ -987,6 +991,10 @@ function toQuizPanelValue(
     isPublished: quiz.isPublished,
     showResultsToStudents: quiz.showResultsToStudents,
     shuffleQuestions: quiz.shuffleQuestions,
+    attachments: quiz.attachments.map((attachment) => ({
+      id: attachment.fileAsset.id,
+      name: attachment.fileAsset.originalName,
+    })),
     questions: quiz.questions.map((question) => ({
       id: question.id,
       type: question.type,
@@ -1050,6 +1058,10 @@ function toExamPanelValue(
     pointsPossible: exam.pointsPossible?.toString() ?? null,
     weight: exam.weight?.toString() ?? null,
     description: exam.description,
+    attachments: exam.attachments.map((attachment) => ({
+      id: attachment.fileAsset.id,
+      name: attachment.fileAsset.originalName,
+    })),
   }
 }
 

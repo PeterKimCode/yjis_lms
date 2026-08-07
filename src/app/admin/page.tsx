@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPrismaClient } from "@/lib/prisma"
@@ -8,6 +9,7 @@ import {
   getClassSectionWhereForAdmin,
   getCourseWhereForAdmin,
   getUserWhereForAdmin,
+  isSuperAdmin,
 } from "@/modules/admin/access"
 import { getAdminData } from "@/modules/admin/data"
 import { AdminLinkGrid, AdminPageHeader } from "@/modules/admin/components"
@@ -15,9 +17,44 @@ import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { ActionCard, ActionPanel } from "@/modules/dashboards/components"
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ organizationId?: string }>
+}) {
   const admin = await getAdminData()
+  const params = await searchParams
   const prisma = getPrismaClient()
+  const canFilterOrganizations = isSuperAdmin(admin.user)
+  const organizationCards = canFilterOrganizations
+    ? await prisma.organization.findMany({
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          _count: {
+            select: {
+              campuses: true,
+              users: true,
+              courses: true,
+              classSections: true,
+              fileAssets: true,
+            },
+          },
+        },
+      })
+    : []
+  const selectedOrganizationId =
+    organizationCards.find(
+      (organization) => organization.id === params.organizationId?.trim()
+    )?.id ?? ""
+  const selectedOrganization = organizationCards.find(
+    (organization) => organization.id === selectedOrganizationId
+  )
+  const organizationFilter = selectedOrganizationId
+    ? { organizationId: selectedOrganizationId }
+    : {}
   const [
     campusCount,
     yearCount,
@@ -27,26 +64,49 @@ export default async function AdminPage() {
     unreadMessages,
     unreadNotifications,
   ] = await Promise.all([
-    prisma.campus.count({ where: getCampusWhereForAdmin(admin.user) }),
+    prisma.campus.count({
+      where: {
+        AND: [getCampusWhereForAdmin(admin.user), organizationFilter],
+      },
+    }),
     prisma.academicYear.count({
-      where: getAcademicYearWhereForAdmin(admin.user),
+      where: {
+        AND: [getAcademicYearWhereForAdmin(admin.user), organizationFilter],
+      },
     }),
-    prisma.course.count({ where: getCourseWhereForAdmin(admin.user) }),
+    prisma.course.count({
+      where: {
+        AND: [getCourseWhereForAdmin(admin.user), organizationFilter],
+      },
+    }),
     prisma.classSection.count({
-      where: getClassSectionWhereForAdmin(admin.user),
+      where: {
+        AND: [getClassSectionWhereForAdmin(admin.user), organizationFilter],
+      },
     }),
-    prisma.user.count({ where: getUserWhereForAdmin(admin.user) }),
+    prisma.user.count({
+      where: {
+        AND: [getUserWhereForAdmin(admin.user), organizationFilter],
+      },
+    }),
     getUnreadMessageCount(admin.user.id),
     getUnreadNotificationCount(admin.user.id),
   ])
+  const organizationQuery = selectedOrganizationId
+    ? `?organizationId=${selectedOrganizationId}`
+    : ""
 
   const metrics = [
-    ["Organizations", admin.organizations.length, "/admin/organizations"],
+    [
+      "Organizations",
+      selectedOrganization ? 1 : admin.organizations.length,
+      "/admin/organizations",
+    ],
     ["Campuses", campusCount, "/admin/campuses"],
     ["Academic Years", yearCount, "/admin/academic-years"],
-    ["Courses", courseCount, "/admin/courses"],
-    ["Class Sections", classSectionCount, "/admin/class-sections"],
-    ["Users", userCount, "/admin/users"],
+    ["Courses", courseCount, `/admin/courses${organizationQuery}`],
+    ["Class Sections", classSectionCount, `/admin/class-sections${organizationQuery}`],
+    ["Users", userCount, `/admin/users${organizationQuery}`],
     ["Messages", unreadMessages ? `${unreadMessages} unread` : "Open", "/messages"],
     [
       "Notifications",
@@ -61,6 +121,19 @@ export default async function AdminPage() {
         title="Admin overview"
         description="Start with academic years, terms, courses, and class sections."
       />
+      {selectedOrganization ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+          <span className="font-medium text-primary">
+            Viewing: {selectedOrganization.name}
+          </span>
+          <Link
+            className="font-medium text-primary underline-offset-4 hover:underline"
+            href="/admin"
+          >
+            Reset organization
+          </Link>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map(([label, value, href]) => (
           <Link href={href} key={label}>
@@ -104,6 +177,116 @@ export default async function AdminPage() {
         />
       </ActionPanel>
       <AdminLinkGrid />
+      {organizationCards.length ? (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">Organizations</h2>
+            <p className="text-sm text-muted-foreground">
+              Choose an organization card to filter this dashboard and related
+              admin pages.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {organizationCards.map((organization) => {
+              const isSelected = organization.id === selectedOrganizationId
+
+              return (
+                <Card
+                  className={`lms-card lms-card-hover ${
+                    isSelected ? "border-primary ring-2 ring-primary/20" : ""
+                  }`}
+                  key={organization.id}
+                >
+                  <Link
+                    className="block"
+                    href={`/admin?organizationId=${organization.id}`}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {organization.name}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        {organization.slug}
+                      </p>
+                    </CardHeader>
+                  </Link>
+                  <CardContent className="space-y-4">
+                    <Link
+                      className="block"
+                      href={`/admin?organizationId=${organization.id}`}
+                    >
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <OrgMetric
+                          label="Campuses"
+                          value={organization._count.campuses}
+                        />
+                        <OrgMetric
+                          label="Users"
+                          value={organization._count.users}
+                        />
+                        <OrgMetric
+                          label="Courses"
+                          value={organization._count.courses}
+                        />
+                        <OrgMetric
+                          label="Classes"
+                          value={organization._count.classSections}
+                        />
+                        <OrgMetric
+                          label="Files"
+                          value={organization._count.fileAssets}
+                        />
+                      </div>
+                    </Link>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <OrgLink href={`/admin/users?organizationId=${organization.id}`}>
+                        Users
+                      </OrgLink>
+                      <OrgLink href={`/admin/courses?organizationId=${organization.id}`}>
+                        Courses
+                      </OrgLink>
+                      <OrgLink
+                        href={`/admin/class-sections?organizationId=${organization.id}`}
+                      >
+                        Classes
+                      </OrgLink>
+                      <OrgLink href={`/admin/files?organizationId=${organization.id}`}>
+                        Files
+                      </OrgLink>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
     </div>
+  )
+}
+
+function OrgMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border bg-white/70 p-2">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold">{value}</p>
+    </div>
+  )
+}
+
+function OrgLink({
+  children,
+  href,
+}: {
+  children: ReactNode
+  href: string
+}) {
+  return (
+    <Link
+      className="rounded-md border bg-background px-3 py-1.5 font-medium text-primary hover:bg-primary/5"
+      href={href}
+    >
+      {children}
+    </Link>
   )
 }

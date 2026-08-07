@@ -14,7 +14,7 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 })
 
-const sessionMaxAgeSeconds = 8 * 60 * 60
+const sessionMaxAgeSeconds = 60 * 60
 const loginWindowMs = 5 * 60 * 1000
 const loginLockoutMs = 15 * 60 * 1000
 const maxLoginAttempts = 5
@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: sessionMaxAgeSeconds,
-    updateAge: 60 * 60,
+    updateAge: 5 * 60,
   },
   jwt: {
     maxAge: sessionMaxAgeSeconds,

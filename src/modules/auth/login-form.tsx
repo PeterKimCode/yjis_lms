@@ -23,12 +23,14 @@ const loginErrorMessages: Record<string, string> = {
 export function LoginForm({
   callbackUrl,
   hasError,
+  initialMessage,
 }: {
   callbackUrl: string
   hasError: boolean
+  initialMessage?: string
 }) {
   const [error, setError] = useState(
-    hasError ? "Invalid login ID or password." : ""
+    initialMessage ?? (hasError ? "Invalid login ID or password." : "")
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [email, setEmail] = useState("")
