@@ -21,6 +21,8 @@ import { initialQuizActionState } from "@/modules/quizzes/action-state"
 import {
   deleteQuestion,
   gradeQuizAnswer,
+  removeExamAttachment,
+  removeQuizAttachment,
   saveExam,
   saveQuestion,
   saveQuiz,
@@ -45,6 +47,7 @@ export type QuizPanelValue = {
   isPublished: boolean
   showResultsToStudents: boolean
   shuffleQuestions: boolean
+  attachments: { id: string; name: string }[]
   questions: QuestionValue[]
   attempts: AttemptValue[]
 }
@@ -59,6 +62,7 @@ export type ExamPanelValue = {
   pointsPossible: string | null
   weight: string | null
   description: string | null
+  attachments: { id: string; name: string }[]
 }
 
 type QuestionValue = {
@@ -219,6 +223,16 @@ export function QuizPanel({
                             {quiz.description}
                           </p>
                         ) : null}
+                        {quiz.attachments.length ? (
+                          <div className="rounded-md border bg-muted/20 p-3">
+                            <div className="text-xs font-medium uppercase text-muted-foreground">
+                              Quiz PDFs
+                            </div>
+                            <div className="mt-2">
+                              <AttachmentLinks attachments={quiz.attachments} />
+                            </div>
+                          </div>
+                        ) : null}
                         {latestAttempt && shouldShowQuizResults(quiz) ? (
                           <StudentResult quiz={quiz} attempt={latestAttempt} />
                         ) : latestAttempt ? (
@@ -255,6 +269,15 @@ export function QuizManagePanel({
           Quiz settings/edit
         </summary>
         <div className="pt-4">
+          {quiz.attachments.length ? (
+            <div className="mb-4 rounded-md border bg-muted/20 p-3 text-sm">
+              <div className="mb-2 font-medium">Teacher PDFs</div>
+              <AttachmentLinks
+                attachments={quiz.attachments}
+                removeKind="quiz"
+              />
+            </div>
+          ) : null}
           <QuizForm classSectionId={classSectionId} quiz={quiz} />
         </div>
       </details>
@@ -411,6 +434,13 @@ function QuizForm({
           placeholder="Describe what this quiz covers."
           defaultValue={quiz?.description ?? ""}
         />
+      </Field>
+      <Field
+        label="PDF attachment"
+        help="Optional teacher PDF for students and parents. PDF only, max 20 MB."
+        className="md:col-span-2 xl:col-span-4"
+      >
+        <Input accept="application/pdf,.pdf" name="pdfAttachmentFile" type="file" />
       </Field>
       {!quiz ? (
         <div className="space-y-3 rounded-lg border bg-muted/20 p-3 md:col-span-2 xl:col-span-4">
@@ -1056,7 +1086,7 @@ export function ExamPanel({
       </FormDialog>
       <SimpleTable
         empty="No exams yet."
-        headers={["Title", "Type", "Starts", "Ends", "Max score", "Location"]}
+        headers={["Title", "Type", "Starts", "Ends", "Max score", "Location", "PDFs"]}
         rows={exams.map((exam) => (
           <TableRow key={exam.id}>
             <TableCell className="font-medium">{exam.title}</TableCell>
@@ -1065,6 +1095,16 @@ export function ExamPanel({
             <TableCell>{formatDateTime(exam.endsAt)}</TableCell>
             <TableCell>{exam.pointsPossible ?? "-"}</TableCell>
             <TableCell>{exam.location ?? "-"}</TableCell>
+            <TableCell>
+              {exam.attachments.length ? (
+                <AttachmentLinks
+                  attachments={exam.attachments}
+                  removeKind="exam"
+                />
+              ) : (
+                "-"
+              )}
+            </TableCell>
           </TableRow>
         ))}
       />
@@ -1127,6 +1167,13 @@ function ExamForm({ classSectionId }: { classSectionId: string }) {
       <Field label="Description" className="md:col-span-2 xl:col-span-4">
         <Textarea name="description" rows={2} />
       </Field>
+      <Field
+        label="PDF attachment"
+        help="Optional teacher PDF for students and parents. PDF only, max 20 MB."
+        className="md:col-span-2 xl:col-span-4"
+      >
+        <Input accept="application/pdf,.pdf" name="pdfAttachmentFile" type="file" />
+      </Field>
       <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
@@ -1176,6 +1223,62 @@ function CheckField({
       </span>
       <span className="text-xs text-muted-foreground">{help}</span>
     </label>
+  )
+}
+
+function AttachmentLinks({
+  attachments,
+  removeKind,
+}: {
+  attachments: { id: string; name: string }[]
+  removeKind?: "quiz" | "exam"
+}) {
+  return (
+    <div className="space-y-1">
+      {attachments.map((attachment) => (
+        <div className="flex flex-wrap items-center gap-2" key={attachment.id}>
+          <a
+            className="block max-w-[260px] truncate text-primary underline-offset-4 hover:underline"
+            href={`/api/files/${attachment.id}/download`}
+            title={attachment.name}
+          >
+            {attachment.name}
+          </a>
+          {removeKind ? (
+            <RemoveAttachmentForm
+              fileAssetId={attachment.id}
+              removeKind={removeKind}
+            />
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RemoveAttachmentForm({
+  fileAssetId,
+  removeKind,
+}: {
+  fileAssetId: string
+  removeKind: "quiz" | "exam"
+}) {
+  const [state, formAction, pending] = useActionState(
+    removeKind === "quiz" ? removeQuizAttachment : removeExamAttachment,
+    initialQuizActionState
+  )
+
+  return (
+    <form action={formAction} className="inline-flex items-center gap-2">
+      <input name="fileAssetId" type="hidden" value={fileAssetId} />
+      <ActionFeedback state={state} />
+      <ConfirmSubmitButton
+        confirmMessage={`Remove this ${removeKind} PDF attachment?`}
+        disabled={pending}
+      >
+        Remove PDF
+      </ConfirmSubmitButton>
+    </form>
   )
 }
 

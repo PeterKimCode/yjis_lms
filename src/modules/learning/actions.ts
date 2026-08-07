@@ -45,6 +45,19 @@ const lessonSchema = z.object({
   durationSeconds: optionalInt,
   isPublished: z.boolean(),
 }).superRefine((data, context) => {
+  if (
+    !data.id &&
+    data.contentType !== LessonContentType.TEXT &&
+    data.contentType !== LessonContentType.VIDEO
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "New lessons can be Text or Video only.",
+      path: ["contentType"],
+    })
+    return
+  }
+
   if (data.contentType === LessonContentType.FILE) {
     if (!data.videoFileAssetId) {
       context.addIssue({
@@ -74,8 +87,8 @@ const lessonSchema = z.object({
   if (!data.videoUrl && !data.videoFileAssetId) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "HTML5 video lessons require a direct video URL or uploaded video file.",
-      path: ["videoUrl"],
+      message: "Uploaded video lessons require a selected uploaded video file.",
+      path: ["videoFileAssetId"],
     })
     return
   }

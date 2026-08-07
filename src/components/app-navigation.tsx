@@ -3,6 +3,7 @@ import { Bell, Home, LogIn, MessageSquare } from "lucide-react"
 
 import { BackButton } from "@/components/back-button"
 import { GoogleTranslateControl } from "@/components/google-translate-control"
+import { SessionCountdown } from "@/components/session-countdown"
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
 import { AvatarMenu } from "@/modules/auth/avatar-menu"
@@ -81,6 +82,9 @@ export async function AppNavigation() {
               <div className="hidden text-right md:block">
                 <p className="text-sm font-medium text-white">{session.user.name}</p>
                 <p className="text-xs text-slate-400">{roleSummary}</p>
+              </div>
+              <div className="hidden lg:block">
+                <SessionCountdown compact />
               </div>
               <AvatarMenu
                 avatarUrl={

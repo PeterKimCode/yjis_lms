@@ -13,6 +13,7 @@ import {
   gradeSubmission,
   saveAssignment,
   submitAssignment,
+  removeAssignmentAttachment,
 } from "@/modules/assignments/actions"
 import { initialAssignmentActionState } from "@/modules/assignments/action-state"
 import { getSubmissionStatus } from "@/modules/assignments/status"
@@ -31,6 +32,7 @@ export type AssignmentPanelValue = {
   dueAt: string | null
   pointsPossible: string | null
   acceptsLate: boolean
+  attachments: { id: string; name: string }[]
   submissions: AssignmentSubmissionValue[]
 }
 
@@ -76,10 +78,6 @@ export function AssignmentPanel({
               defaultAcceptsLate={defaultAcceptsLate}
             />
           </FormDialog>
-          <p className="text-xs text-muted-foreground">
-            Instructor-provided assignment attachments are not in the current
-            schema yet. Student submission attachments are supported below.
-          </p>
         </>
       ) : null}
       {mode === "instructor" ? (
@@ -155,6 +153,16 @@ export function AssignmentPanel({
                           <p className="mt-2 whitespace-pre-wrap text-sm">
                             {assignment.description}
                           </p>
+                        </div>
+                      ) : null}
+                      {assignment.attachments.length ? (
+                        <div className="rounded-lg border bg-background p-3">
+                          <div className="text-xs font-medium uppercase text-muted-foreground">
+                            Assignment PDFs
+                          </div>
+                          <div className="mt-2">
+                            <AttachmentLinks attachments={assignment.attachments} />
+                          </div>
                         </div>
                       ) : null}
                       {ownSubmission?.feedback ? (
@@ -243,6 +251,15 @@ function InstructorAssignmentList({
                 Manage assignment
               </summary>
               <div className="mt-3 grid gap-3">
+                {assignment.attachments.length ? (
+                  <div className="rounded-md border bg-muted/20 p-3 text-sm">
+                    <div className="mb-2 font-medium">Teacher PDFs</div>
+                    <AttachmentLinks
+                      attachments={assignment.attachments}
+                      removable
+                    />
+                  </div>
+                ) : null}
                 <FormDialog
                   title={`Edit assignment: ${assignment.title}`}
                   description="Update assignment details and grading settings."
@@ -350,6 +367,17 @@ function AssignmentForm({
           rows={3}
           defaultValue={assignment?.description ?? ""}
         />
+      </label>
+      <label className="grid gap-1 text-sm md:col-span-2 xl:col-span-4">
+        <span className="font-medium">PDF attachment</span>
+        <Input
+          accept="application/pdf,.pdf"
+          name="pdfAttachmentFile"
+          type="file"
+        />
+        <span className="text-xs text-muted-foreground">
+          Optional teacher PDF for students and parents. PDF only, max 20 MB.
+        </span>
       </label>
       <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
@@ -558,22 +586,48 @@ function SubmissionMeta({ label, value }: { label: string; value: string }) {
 
 function AttachmentLinks({
   attachments,
+  removable = false,
 }: {
   attachments: { id: string; name: string }[]
+  removable?: boolean
 }) {
   return (
     <div className="space-y-1">
       {attachments.map((attachment) => (
-        <a
-          className="block max-w-[220px] truncate text-primary underline-offset-4 hover:underline"
-          href={`/api/files/${attachment.id}/download`}
-          key={attachment.id}
-          title={attachment.name}
-        >
-          {attachment.name}
-        </a>
+        <div className="flex flex-wrap items-center gap-2" key={attachment.id}>
+          <a
+            className="block max-w-[260px] truncate text-primary underline-offset-4 hover:underline"
+            href={`/api/files/${attachment.id}/download`}
+            title={attachment.name}
+          >
+            {attachment.name}
+          </a>
+          {removable ? (
+            <RemoveAssignmentAttachmentForm fileAssetId={attachment.id} />
+          ) : null}
+        </div>
       ))}
     </div>
+  )
+}
+
+function RemoveAssignmentAttachmentForm({ fileAssetId }: { fileAssetId: string }) {
+  const [state, formAction, pending] = useActionState(
+    removeAssignmentAttachment,
+    initialAssignmentActionState
+  )
+
+  return (
+    <form action={formAction} className="inline-flex items-center gap-2">
+      <input name="fileAssetId" type="hidden" value={fileAssetId} />
+      <ActionFeedback state={state} />
+      <ConfirmSubmitButton
+        confirmMessage="Remove this PDF attachment from the assignment?"
+        disabled={pending}
+      >
+        Remove PDF
+      </ConfirmSubmitButton>
+    </form>
   )
 }
 

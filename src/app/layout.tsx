@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppNavigation } from "@/components/app-navigation";
+import { SessionProvider } from "@/components/session-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ToastProvider } from "@/components/toast-provider";
 import "./globals.css";
@@ -34,10 +35,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppNavigation />
-        {children}
-        <SiteFooter />
-        <ToastProvider />
+        <SessionProvider>
+          <AppNavigation />
+          {children}
+          <SiteFooter />
+          <ToastProvider />
+        </SessionProvider>
       </body>
     </html>
   );

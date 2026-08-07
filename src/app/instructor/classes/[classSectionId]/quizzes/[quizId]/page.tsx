@@ -67,6 +67,12 @@ export default async function InstructorQuizManagePage({
         },
         orderBy: { createdAt: "desc" },
       },
+      attachments: {
+        include: {
+          fileAsset: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   })
 
@@ -156,6 +162,11 @@ type QuizManageData = Prisma.QuizGetPayload<{
         }
       }
     }
+    attachments: {
+      include: {
+        fileAsset: true
+      }
+    }
   }
 }>
 
@@ -172,6 +183,10 @@ function toQuizPanelValue(quiz: QuizManageData) {
     isPublished: quiz.isPublished,
     showResultsToStudents: quiz.showResultsToStudents,
     shuffleQuestions: quiz.shuffleQuestions,
+    attachments: quiz.attachments.map(({ fileAsset }) => ({
+      id: fileAsset.id,
+      name: fileAsset.originalName,
+    })),
     questions: quiz.questions.map((question) => ({
       id: question.id,
       type: question.type,

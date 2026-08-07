@@ -970,11 +970,25 @@ model Assignment {
   classSection   ClassSection           @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
   lesson         Lesson?                @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   submissions    AssignmentSubmission[]
+  attachments    AssignmentAttachment[]
   gradeItems     GradeItem[]
 
   @@index([organizationId])
   @@index([classSectionId])
   @@index([createdAt])
+}
+
+model AssignmentAttachment {
+  id           String     @id @default(cuid())
+  assignmentId String
+  fileAssetId  String
+  createdAt    DateTime   @default(now())
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  fileAsset    FileAsset  @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, fileAssetId])
+  @@index([assignmentId])
+  @@index([fileAssetId])
 }
 
 model AssignmentSubmission {
@@ -1025,12 +1039,26 @@ model Quiz {
   lesson                Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
   questions             Question[]
   attempts              QuizAttempt[]
+  attachments           QuizAttachment[]
   gradeItems            GradeItem[]
   exams                 Exam[]
 
   @@index([organizationId])
   @@index([classSectionId])
   @@index([createdAt])
+}
+
+model QuizAttachment {
+  id          String    @id @default(cuid())
+  quizId      String
+  fileAssetId String
+  createdAt   DateTime  @default(now())
+  quiz        Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, fileAssetId])
+  @@index([quizId])
+  @@index([fileAssetId])
 }
 
 model Question {
@@ -1135,11 +1163,25 @@ model Exam {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   classSection   ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
   quiz           Quiz?        @relation(fields: [quizId], references: [id], onDelete: SetNull)
+  attachments    ExamAttachment[]
   gradeItems     GradeItem[]
 
   @@index([organizationId])
   @@index([classSectionId])
   @@index([createdAt])
+}
+
+model ExamAttachment {
+  id          String    @id @default(cuid())
+  examId      String
+  fileAssetId String
+  createdAt   DateTime  @default(now())
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  fileAsset   FileAsset @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, fileAssetId])
+  @@index([examId])
+  @@index([fileAssetId])
 }
 
 model GradeCategory {
@@ -1745,6 +1787,9 @@ model FileAsset {
   learningMaterials      LearningMaterial[]
   assignmentSubmission   AssignmentSubmission? @relation(fields: [assignmentSubmissionId], references: [id], onDelete: SetNull)
   assignmentSubmissionId String?
+  assignmentAttachments  AssignmentAttachment[]
+  quizAttachments        QuizAttachment[]
+  examAttachments        ExamAttachment[]
   postAttachments        PostAttachment[]
   commentAttachments     CommentAttachment[]
   messageAttachments     MessageAttachment[]

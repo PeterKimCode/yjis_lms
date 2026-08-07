@@ -8,7 +8,7 @@ import { getCurrentSession } from "@/modules/auth/session"
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>
+  searchParams: Promise<{ callbackUrl?: string; error?: string; expired?: string }>
 }) {
   const session = await getCurrentSession()
   const params = await searchParams
@@ -30,6 +30,11 @@ export default async function LoginPage({
           <LoginForm
             callbackUrl="/login/redirect"
             hasError={params.error === "CredentialsSignin"}
+            initialMessage={
+              params.expired === "1"
+                ? "Session expired. Please log in again."
+                : undefined
+            }
           />
         </div>
         <LoginHeroSlider />

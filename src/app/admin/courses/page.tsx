@@ -31,6 +31,7 @@ export default async function CoursesPage({
     deleted?: string
     deleteError?: string
     deleteRequested?: string
+    organizationId?: string
     q?: string
     requestError?: string
     reviewed?: string
@@ -40,18 +41,21 @@ export default async function CoursesPage({
   const data = await getAcademicSetupOptions()
   const formData = toCourseFormData(data)
   const params = await searchParams
+  const organizationId = params.organizationId?.trim() ?? ""
   const q = params.q?.trim() ?? ""
-  const courses = data.courses.filter((course) =>
-    matchesSearch(q, [
-      course.title,
-      course.code,
-      course.description,
-      course.campus?.name,
-      course.organization.name,
-      data.departments.find((department) => department.id === course.departmentId)
-        ?.name,
-    ])
-  )
+  const courses = data.courses
+    .filter((course) => !organizationId || course.organizationId === organizationId)
+    .filter((course) =>
+      matchesSearch(q, [
+        course.title,
+        course.code,
+        course.description,
+        course.campus?.name,
+        course.organization.name,
+        data.departments.find((department) => department.id === course.departmentId)
+          ?.name,
+      ])
+    )
   const canDeleteDirectly = hasSuperAdminRole(data.user.roleAssignments)
   const pendingDeletionRequests = await getPrismaClient().resourceDeletionRequest.findMany({
     where: {
