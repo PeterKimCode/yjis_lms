@@ -110,8 +110,12 @@ export default async function AdminFilesPage({
         </div>
       ) : null}
       <SearchForm
+        hiddenFields={{ organizationId }}
         q={q}
         placeholder="Search filename, type, organization, campus, class, uploader..."
+        resetHref={
+          organizationId ? `/admin/files?organizationId=${organizationId}` : "?"
+        }
         resultSummary={`${files.length} file${files.length === 1 ? "" : "s"} shown`}
       />
       <DataTable

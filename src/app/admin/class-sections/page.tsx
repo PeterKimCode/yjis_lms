@@ -80,8 +80,14 @@ export default async function ClassSectionsPage({
         description="Open course sections, assigned instructors, and enrollment counts."
       />
       <SearchForm
+        hiddenFields={{ organizationId }}
         q={q}
         placeholder="Search sections, courses, terms..."
+        resetHref={
+          organizationId
+            ? `/admin/class-sections?organizationId=${organizationId}`
+            : "?"
+        }
         resultSummary={`${classSections.length} of ${data.classSections.length} class sections shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />

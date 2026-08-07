@@ -71,11 +71,9 @@ export function SessionCountdown({ compact = false }: { compact?: boolean }) {
       title="Session automatically expires after 1 hour."
     >
       <Clock className="h-3.5 w-3.5" />
-      <span className={compact ? "sr-only sm:not-sr-only" : ""}>
-        {formatRemaining(remainingSeconds)}
-      </span>
+      <span>{formatRemaining(remainingSeconds)}</span>
       <Button
-        className="h-6 px-2 text-xs"
+        className={`h-6 px-2 text-xs ${compact ? "hidden sm:inline-flex" : ""}`}
         onClick={extendSession}
         size="sm"
         type="button"

@@ -83,8 +83,12 @@ export default async function CoursesPage({
         description="Create reusable course records with credits and delivery defaults."
       />
       <SearchForm
+        hiddenFields={{ organizationId }}
         q={q}
         placeholder="Search courses..."
+        resetHref={
+          organizationId ? `/admin/courses?organizationId=${organizationId}` : "?"
+        }
         resultSummary={`${courses.length} of ${data.courses.length} courses shown`}
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />

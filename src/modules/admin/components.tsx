@@ -166,16 +166,27 @@ export function DataTable({
 }
 
 export function SearchForm({
+  hiddenFields,
   q,
   placeholder = "Search...",
   resultSummary,
+  resetHref = "?",
 }: {
+  hiddenFields?: Record<string, string | undefined>
   q: string
   placeholder?: string
   resultSummary?: string
+  resetHref?: string
 }) {
   return (
     <form className="lms-soft-panel rounded-lg p-3" action="">
+      {hiddenFields
+        ? Object.entries(hiddenFields).map(([name, value]) =>
+            value ? (
+              <input key={name} name={name} type="hidden" value={value} />
+            ) : null
+          )
+        : null}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           className="sm:max-w-sm"
@@ -189,7 +200,7 @@ export function SearchForm({
           </Button>
           {q ? (
             <Button asChild type="button" variant="ghost">
-              <Link href="?">Clear</Link>
+              <Link href={resetHref}>Clear</Link>
             </Button>
           ) : null}
         </div>

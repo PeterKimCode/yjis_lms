@@ -55,6 +55,7 @@ export async function AppNavigation() {
                   <span className="sr-only">Dashboard</span>
                 </Link>
               </Button>
+              <SessionCountdown compact />
               <Button
                 asChild
                 className="relative text-slate-100 hover:bg-white/10 hover:text-white"
@@ -82,9 +83,6 @@ export async function AppNavigation() {
               <div className="hidden text-right md:block">
                 <p className="text-sm font-medium text-white">{session.user.name}</p>
                 <p className="text-xs text-slate-400">{roleSummary}</p>
-              </div>
-              <div className="hidden lg:block">
-                <SessionCountdown compact />
               </div>
               <AvatarMenu
                 avatarUrl={
