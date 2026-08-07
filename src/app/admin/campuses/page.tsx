@@ -23,22 +23,29 @@ export default async function CampusesPage({
     createdWithPolicies?: string
     deleted?: string
     deleteError?: string
+    organizationId?: string
     policyInitFailed?: string
     q?: string
   }>
 }) {
   const { campuses, organizationOptions } = await getAdminData()
   const params = await searchParams
+  const organizationId = params.organizationId?.trim() ?? ""
   const q = params.q?.trim() ?? ""
-  const filteredCampuses = campuses.filter((campus) =>
-    matchesSearch(q, [
-      campus.name,
-      campus.code,
-      campus.address,
-      campus.phone,
-      campus.organization.name,
-    ])
-  )
+  const filteredCampuses = campuses
+    .filter((campus) => !organizationId || campus.organizationId === organizationId)
+    .filter((campus) =>
+      matchesSearch(q, [
+        campus.name,
+        campus.code,
+        campus.address,
+        campus.phone,
+        campus.organization.name,
+      ])
+    )
+  const scopedOrganizationOptions = organizationId
+    ? organizationOptions.filter((option) => option.id === organizationId)
+    : organizationOptions
 
   return (
     <div className="space-y-6">
@@ -58,8 +65,15 @@ export default async function CampusesPage({
         </p>
       ) : null}
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
-      <SearchForm q={q} placeholder="Search campuses..." />
-      <CampusForm organizationOptions={organizationOptions} />
+      <SearchForm
+        hiddenFields={{ organizationId }}
+        q={q}
+        placeholder="Search campuses..."
+        resetHref={
+          organizationId ? `/admin/campuses?organizationId=${organizationId}` : "?"
+        }
+      />
+      <CampusForm organizationOptions={scopedOrganizationOptions} />
       <DataTable
         empty="No campuses are available for your scope."
         headers={["Name", "Code", "Organization", "Address", "Status", "Edit", "Delete"]}
@@ -73,7 +87,10 @@ export default async function CampusesPage({
               <ActiveBadge active={campus.isActive} />
             </TableCell>
             <TableCell>
-              <CampusForm campus={campus} organizationOptions={organizationOptions} />
+              <CampusForm
+                campus={campus}
+                organizationOptions={scopedOrganizationOptions}
+              />
             </TableCell>
             <TableCell>
               <ConfirmDeleteForm

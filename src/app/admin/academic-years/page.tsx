@@ -19,14 +19,28 @@ import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 export default async function AcademicYearsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ deleted?: string; deleteError?: string; q?: string }>
+  searchParams: Promise<{
+    deleted?: string
+    deleteError?: string
+    organizationId?: string
+    q?: string
+  }>
 }) {
   const data = await getAcademicSetupOptions()
   const params = await searchParams
+  const organizationId = params.organizationId?.trim() ?? ""
   const q = params.q?.trim() ?? ""
-  const academicYears = data.academicYears.filter((year) =>
-    matchesSearch(q, [year.name, year.campus?.name, year.organization.name])
-  )
+  const academicYears = data.academicYears
+    .filter((year) => !organizationId || year.organizationId === organizationId)
+    .filter((year) =>
+      matchesSearch(q, [year.name, year.campus?.name, year.organization.name])
+    )
+  const organizationOptions = organizationId
+    ? data.organizationOptions.filter((option) => option.id === organizationId)
+    : data.organizationOptions
+  const campusOptions = organizationId
+    ? data.campusOptions.filter((option) => option.organizationId === organizationId)
+    : data.campusOptions
 
   return (
     <div className="space-y-6">
@@ -35,10 +49,19 @@ export default async function AcademicYearsPage({
         description="Create and edit school years for K-12, academy, or university terms."
       />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
-      <SearchForm q={q} placeholder="Search academic years..." />
+      <SearchForm
+        hiddenFields={{ organizationId }}
+        q={q}
+        placeholder="Search academic years..."
+        resetHref={
+          organizationId
+            ? `/admin/academic-years?organizationId=${organizationId}`
+            : "?"
+        }
+      />
       <AcademicYearForm
-        campusOptions={data.campusOptions}
-        organizationOptions={data.organizationOptions}
+        campusOptions={campusOptions}
+        organizationOptions={organizationOptions}
       />
       <DataTable
         empty="No academic years yet."
@@ -59,8 +82,8 @@ export default async function AcademicYearsPage({
             </TableCell>
             <TableCell>
               <AcademicYearForm
-                campusOptions={data.campusOptions}
-                organizationOptions={data.organizationOptions}
+                campusOptions={campusOptions}
+                organizationOptions={organizationOptions}
                 year={year}
               />
             </TableCell>

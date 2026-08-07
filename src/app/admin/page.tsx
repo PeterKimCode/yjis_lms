@@ -100,10 +100,10 @@ export default async function AdminPage({
     [
       "Organizations",
       selectedOrganization ? 1 : admin.organizations.length,
-      "/admin/organizations",
+      `/admin/organizations${organizationQuery}`,
     ],
-    ["Campuses", campusCount, "/admin/campuses"],
-    ["Academic Years", yearCount, "/admin/academic-years"],
+    ["Campuses", campusCount, `/admin/campuses${organizationQuery}`],
+    ["Academic Years", yearCount, `/admin/academic-years${organizationQuery}`],
     ["Courses", courseCount, `/admin/courses${organizationQuery}`],
     ["Class Sections", classSectionCount, `/admin/class-sections${organizationQuery}`],
     ["Users", userCount, `/admin/users${organizationQuery}`],
@@ -176,7 +176,7 @@ export default async function AdminPage({
           title="Notifications"
         />
       </ActionPanel>
-      <AdminLinkGrid />
+      <AdminLinkGrid organizationId={selectedOrganizationId} />
       {organizationCards.length ? (
         <section className="space-y-3">
           <div>
@@ -241,6 +241,21 @@ export default async function AdminPage({
                     <div className="flex flex-wrap gap-2 text-sm">
                       <OrgLink href={`/admin/users?organizationId=${organization.id}`}>
                         Users
+                      </OrgLink>
+                      <OrgLink
+                        href={`/admin/organizations?organizationId=${organization.id}`}
+                      >
+                        Organization
+                      </OrgLink>
+                      <OrgLink
+                        href={`/admin/campuses?organizationId=${organization.id}`}
+                      >
+                        Campuses
+                      </OrgLink>
+                      <OrgLink
+                        href={`/admin/academic-years?organizationId=${organization.id}`}
+                      >
+                        Years
                       </OrgLink>
                       <OrgLink href={`/admin/courses?organizationId=${organization.id}`}>
                         Courses

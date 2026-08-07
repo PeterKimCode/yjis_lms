@@ -23,20 +23,24 @@ export default async function OrganizationsPage({
   searchParams: Promise<{
     deleted?: string
     deleteError?: string
+    organizationId?: string
     q?: string
     saveError?: string
   }>
 }) {
   const { isSuperAdmin, organizations } = await getAdminData()
   const params = await searchParams
+  const organizationId = params.organizationId?.trim() ?? ""
   const q = params.q?.trim() ?? ""
-  const filteredOrganizations = organizations.filter((organization) =>
-    matchesSearch(q, [
-      organization.name,
-      organization.slug,
-      organization.institutionType,
-    ])
-  )
+  const filteredOrganizations = organizations
+    .filter((organization) => !organizationId || organization.id === organizationId)
+    .filter((organization) =>
+      matchesSearch(q, [
+        organization.name,
+        organization.slug,
+        organization.institutionType,
+      ])
+    )
 
   return (
     <div className="space-y-6">
@@ -44,7 +48,16 @@ export default async function OrganizationsPage({
         title="Organizations"
         description="Tenant organizations available in your admin scope."
       />
-      <SearchForm q={q} placeholder="Search organizations..." />
+      <SearchForm
+        hiddenFields={{ organizationId }}
+        q={q}
+        placeholder="Search organizations..."
+        resetHref={
+          organizationId
+            ? `/admin/organizations?organizationId=${organizationId}`
+            : "?"
+        }
+      />
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       {params.saveError ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">

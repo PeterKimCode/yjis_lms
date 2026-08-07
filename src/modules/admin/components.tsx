@@ -301,20 +301,39 @@ export function SubmitButton({ label = "Save" }: { label?: string }) {
   )
 }
 
-export function AdminLinkGrid() {
+export function AdminLinkGrid({ organizationId = "" }: { organizationId?: string }) {
+  const linksWithOrganization = (links: readonly (readonly [string, string])[]) =>
+    links.map(([href, label]) => [
+      withOrganizationQuery(href, organizationId),
+      label,
+    ] as const)
+
   return (
     <div className="space-y-4">
       <AdminLinkSection
-        links={adminPrimaryLinks.filter(([href]) => href !== "/admin")}
+        links={linksWithOrganization(
+          adminPrimaryLinks.filter(([href]) => href !== "/admin")
+        )}
         title="Core admin"
       />
-      <AdminLinkSection links={adminSetupLinks} title="Academic setup" />
+      <AdminLinkSection
+        links={linksWithOrganization(adminSetupLinks)}
+        title="Academic setup"
+      />
       <AdminLinkSection
         links={adminCommunicationLinks}
         title="Communication"
       />
     </div>
   )
+}
+
+function withOrganizationQuery(href: string, organizationId: string) {
+  if (!organizationId) return href
+  if (!href.startsWith("/admin")) return href
+  if (href === "/admin") return `/admin?organizationId=${organizationId}`
+  const separator = href.includes("?") ? "&" : "?"
+  return `${href}${separator}organizationId=${organizationId}`
 }
 
 function AdminLinkSection({
