@@ -14,7 +14,7 @@ import {
   isSuperAdmin,
 } from "@/modules/admin/access"
 import { getAdminData } from "@/modules/admin/data"
-import { AdminLinkGrid, AdminPageHeader } from "@/modules/admin/components"
+import { AdminPageHeader } from "@/modules/admin/components"
 import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { ActionCard, ActionPanel } from "@/modules/dashboards/components"
@@ -211,7 +211,6 @@ export default async function AdminPage({
           title="Notifications"
         />
       </ActionPanel>
-      <AdminLinkGrid organizationId={selectedOrganizationId} />
       {organizationCards.length ? (
         <section className="space-y-3">
           <div>
@@ -240,10 +239,10 @@ export default async function AdminPage({
                   key={organization.id}
                 >
                   <Link
-                    className="block"
+                    className="block rounded-lg p-1 transition-colors hover:bg-primary/5"
                     href={`/admin?organizationId=${organization.id}`}
                   >
-                    <CardHeader className="flex-row items-center gap-3 space-y-0">
+                    <CardHeader className="flex-row items-center gap-3 space-y-0 px-3 py-3">
                       <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border bg-white">
                         <Image
                           alt={`${organization.name} logo`}

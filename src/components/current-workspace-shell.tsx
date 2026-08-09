@@ -25,6 +25,7 @@ import {
   adminPrimaryLinks,
   adminSetupLinks,
 } from "@/modules/admin/components"
+import { LogoutButton } from "@/modules/auth/logout-button"
 import { requireAuth } from "@/modules/auth/permissions"
 import { getOrganizationLogoUrl } from "@/modules/branding/organization-logo"
 import { getConversationSidebarLinksForUser } from "@/modules/messages/data"
@@ -52,7 +53,7 @@ export async function CurrentWorkspaceShell({
 
     return (
       <div className="role-admin-surface flex flex-1">
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:block">
+        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:flex">
           <div className="mb-4 grid place-items-center">
             <Link aria-label="Go to admin overview" href="/admin">
               <Image
@@ -70,42 +71,45 @@ export async function CurrentWorkspaceShell({
             <p className="text-sm font-semibold">Admin workspace</p>
             <p className="text-xs text-slate-400">{user.email}</p>
           </div>
-          <nav className="space-y-3">
-            <NavGroup links={visiblePrimaryLinks} />
-            {!isSchoolAdminOnly ? (
-              <>
-                <details className="rounded-md border border-white/10 p-2" open>
-                  <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
-                    Academic setup
-                  </summary>
-                  <div className="mt-2 grid gap-1">
-                    <NavGroup links={adminSetupLinks} />
-                  </div>
-                </details>
-                <NavGroup links={adminCommunicationLinks} />
-              </>
-            ) : null}
-            {messageLinks.length ? (
-              <div className="ml-3 grid gap-1 border-l border-white/10 pl-2">
-                {messageLinks.map((message) => (
-                  <Link
-                    className="flex gap-2 rounded-md px-2 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                    href={message.href}
-                    key={message.id}
-                  >
-                    <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">
-                        {message.label}
+          <nav className="flex flex-1 flex-col">
+            <div className="space-y-3">
+              <NavGroup links={visiblePrimaryLinks} />
+              {!isSchoolAdminOnly ? (
+                <>
+                  <details className="rounded-md border border-white/10 p-2" open>
+                    <summary className="cursor-pointer px-1 text-xs font-medium text-slate-400">
+                      Academic setup
+                    </summary>
+                    <div className="mt-2 grid gap-1">
+                      <NavGroup links={adminSetupLinks} />
+                    </div>
+                  </details>
+                  <NavGroup links={adminCommunicationLinks} />
+                </>
+              ) : null}
+              {messageLinks.length ? (
+                <div className="ml-3 grid gap-1 border-l border-white/10 pl-2">
+                  {messageLinks.map((message) => (
+                    <Link
+                      className="flex gap-2 rounded-md px-2 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                      href={message.href}
+                      key={message.id}
+                    >
+                      <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">
+                          {message.label}
+                        </span>
+                        <span className="block truncate text-[11px] opacity-75">
+                          {message.preview}
+                        </span>
                       </span>
-                      <span className="block truncate text-[11px] opacity-75">
-                        {message.preview}
-                      </span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <AdminSidebarAccountActions />
             <HelpContact />
           </nav>
         </aside>
@@ -184,9 +188,23 @@ export async function CurrentWorkspaceShell({
   return <>{children}</>
 }
 
+function AdminSidebarAccountActions() {
+  return (
+    <div className="mt-auto border-t border-white/10 pt-4">
+      <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Account
+      </p>
+      <LogoutButton
+        className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
+        size="sm"
+      />
+    </div>
+  )
+}
+
 function HelpContact() {
   return (
-    <details className="mt-8">
+    <details className="pt-4">
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white">
         <Settings className="h-4 w-4 shrink-0" />
         Help & Contact
