@@ -11,7 +11,12 @@ const warningThresholdSeconds = 5 * 60
 export function SessionCountdown({ compact = false }: { compact?: boolean }) {
   const { data: session, status, update } = useSession()
   const [now, setNow] = useState(() => Date.now())
-  const expiresAt = session?.expires ? new Date(session.expires).getTime() : null
+  const expiresAt =
+    typeof session?.fixedSessionExpiresAt === "number"
+      ? session.fixedSessionExpiresAt
+      : session?.expires
+        ? new Date(session.expires).getTime()
+        : null
   const remainingSeconds = expiresAt
     ? Math.max(0, Math.floor((expiresAt - now) / 1000))
     : null

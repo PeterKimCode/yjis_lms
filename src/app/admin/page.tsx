@@ -1,5 +1,7 @@
 import Link from "next/link"
+import Image from "next/image"
 import type { ReactNode } from "react"
+import { Prisma, UserRole } from "@prisma/client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPrismaClient } from "@/lib/prisma"
@@ -45,6 +47,39 @@ export default async function AdminPage({
         },
       })
     : []
+  const organizationLogoRows = organizationCards.length
+    ? await prisma.$queryRaw<
+        Array<{ id: string; logoFileAssetId: string | null }>
+      >`
+        SELECT "id", "logoFileAssetId"
+        FROM "Organization"
+        WHERE "id" IN (${Prisma.join(organizationCards.map((organization) => organization.id))})
+      `
+    : []
+  const roleRows = organizationCards.length
+    ? await prisma.userRoleAssignment.groupBy({
+        by: ["organizationId", "role"],
+        where: {
+          organizationId: {
+            in: organizationCards.map((organization) => organization.id),
+          },
+        },
+        _count: {
+          userId: true,
+        },
+      })
+    : []
+  const logoByOrganizationId = new Map(
+    organizationLogoRows.map((row) => [row.id, row.logoFileAssetId])
+  )
+  const roleCountsByOrganizationId = new Map<string, Map<UserRole, number>>()
+  for (const row of roleRows) {
+    const organizationRoles =
+      roleCountsByOrganizationId.get(row.organizationId) ??
+      new Map<UserRole, number>()
+    organizationRoles.set(row.role, row._count.userId)
+    roleCountsByOrganizationId.set(row.organizationId, organizationRoles)
+  }
   const selectedOrganizationId =
     organizationCards.find(
       (organization) => organization.id === params.organizationId?.trim()
@@ -189,6 +224,13 @@ export default async function AdminPage({
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {organizationCards.map((organization) => {
               const isSelected = organization.id === selectedOrganizationId
+              const roleCounts =
+                roleCountsByOrganizationId.get(organization.id) ??
+                new Map<UserRole, number>()
+              const logoFileAssetId = logoByOrganizationId.get(organization.id)
+              const logoUrl = logoFileAssetId
+                ? `/api/files/${logoFileAssetId}/download?disposition=inline`
+                : "/brand/gtcc-logo.png"
 
               return (
                 <Card
@@ -201,43 +243,71 @@ export default async function AdminPage({
                     className="block"
                     href={`/admin?organizationId=${organization.id}`}
                   >
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        {organization.name}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground">
-                        {organization.slug}
-                      </p>
+                    <CardHeader className="flex-row items-center gap-3 space-y-0">
+                      <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border bg-white">
+                        <Image
+                          alt={`${organization.name} logo`}
+                          className="h-full w-full object-contain"
+                          height={56}
+                          src={logoUrl}
+                          width={56}
+                          unoptimized={Boolean(logoFileAssetId)}
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        <CardTitle className="truncate text-base">
+                          {organization.name}
+                        </CardTitle>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {organization.slug}
+                        </p>
+                      </span>
                     </CardHeader>
                   </Link>
                   <CardContent className="space-y-4">
-                    <Link
-                      className="block"
-                      href={`/admin?organizationId=${organization.id}`}
-                    >
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <OrgMetric
-                          label="Campuses"
-                          value={organization._count.campuses}
-                        />
-                        <OrgMetric
-                          label="Users"
-                          value={organization._count.users}
-                        />
-                        <OrgMetric
-                          label="Courses"
-                          value={organization._count.courses}
-                        />
-                        <OrgMetric
-                          label="Classes"
-                          value={organization._count.classSections}
-                        />
-                        <OrgMetric
-                          label="Files"
-                          value={organization._count.fileAssets}
-                        />
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <OrgMetric
+                        href={`/admin/campuses?organizationId=${organization.id}`}
+                        label="Campuses"
+                        value={organization._count.campuses}
+                      />
+                      <OrgMetric
+                        href={`/admin/users?organizationId=${organization.id}`}
+                        label="Users"
+                        value={organization._count.users}
+                      />
+                      <OrgMetric
+                        href={`/admin/courses?organizationId=${organization.id}`}
+                        label="Courses"
+                        value={organization._count.courses}
+                      />
+                      <OrgMetric
+                        href={`/admin/class-sections?organizationId=${organization.id}`}
+                        label="Classes"
+                        value={organization._count.classSections}
+                      />
+                      <OrgMetric
+                        href={`/admin/files?organizationId=${organization.id}`}
+                        label="Files"
+                        value={organization._count.fileAssets}
+                      />
+                    </div>
+                    <div className="rounded-lg border bg-white/70 p-2">
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">
+                        Users by role
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        {organizationRoleLabels.map(([role, label]) => (
+                          <OrgMetric
+                            compact
+                            href={`/admin/users?organizationId=${organization.id}&role=${role}`}
+                            key={role}
+                            label={label}
+                            value={roleCounts.get(role) ?? 0}
+                          />
+                        ))}
                       </div>
-                    </Link>
+                    </div>
                     <div className="flex flex-wrap gap-2 text-sm">
                       <OrgLink href={`/admin/users?organizationId=${organization.id}`}>
                         Users
@@ -280,12 +350,40 @@ export default async function AdminPage({
   )
 }
 
-function OrgMetric({ label, value }: { label: string; value: number }) {
+const organizationRoleLabels: Array<[UserRole, string]> = [
+  [UserRole.SUPER_ADMIN, "Super admin"],
+  [UserRole.ORG_ADMIN, "Org admin"],
+  [UserRole.SCHOOL_ADMIN, "School admin"],
+  [UserRole.ACADEMIC_STAFF, "Staff"],
+  [UserRole.INSTRUCTOR, "Instructor"],
+  [UserRole.HOMEROOM_TEACHER, "Homeroom"],
+  [UserRole.STUDENT, "Student"],
+  [UserRole.PARENT, "Parent"],
+]
+
+function OrgMetric({
+  compact = false,
+  href,
+  label,
+  value,
+}: {
+  compact?: boolean
+  href: string
+  label: string
+  value: number
+}) {
   return (
-    <div className="rounded-lg border bg-white/70 p-2">
+    <Link
+      className={`rounded-lg border bg-white/70 p-2 transition-colors hover:border-primary/50 hover:bg-primary/5 ${
+        compact ? "flex items-center justify-between gap-2" : "block"
+      }`}
+      href={href}
+    >
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-lg font-semibold">{value}</p>
-    </div>
+      <p className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}>
+        {value}
+      </p>
+    </Link>
   )
 }
 

@@ -25,6 +25,7 @@ import {
 import { requireAdmin } from "@/modules/admin/access"
 import { getOrganizationLogoUrl } from "@/modules/branding/organization-logo"
 import { UserRole } from "@prisma/client"
+import { LogoutButton } from "@/modules/auth/logout-button"
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin()
@@ -44,7 +45,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="role-admin-surface flex flex-1">
-      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-sm shadow-slate-950/40 md:flex">
         <div className="mb-4 grid place-items-center">
           <Link aria-label="Go to admin overview" href="/admin">
             <Image
@@ -78,7 +79,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </>
           ) : null}
         </nav>
-        <HelpContact />
+        <div className="mt-auto space-y-3 pt-6">
+          <LogoutButton
+            className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
+            size="sm"
+          />
+          <HelpContact />
+        </div>
       </aside>
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur">
@@ -106,7 +113,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
 function HelpContact() {
   return (
-    <details className="mt-8">
+    <details>
       <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white">
         <Settings className="h-4 w-4 shrink-0" />
         Help & Contact

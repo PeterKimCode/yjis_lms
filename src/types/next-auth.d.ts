@@ -5,6 +5,7 @@ import type { SessionRoleAssignment } from "@/modules/auth/auth"
 
 declare module "next-auth" {
   interface Session {
+    fixedSessionExpiresAt: number | null
     user: {
       id: string
       roleAssignments: SessionRoleAssignment[]
@@ -19,6 +20,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT extends DefaultJWT {
     id: string
+    fixedSessionExpiresAt?: number | null
     roleAssignments?: SessionRoleAssignment[]
   }
 }

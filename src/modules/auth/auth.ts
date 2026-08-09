@@ -213,10 +213,14 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
         token.roleAssignments = user.roleAssignments ?? []
+        token.fixedSessionExpiresAt = Date.now() + sessionMaxAgeSeconds * 1000
+      }
+      if (trigger === "update") {
+        token.fixedSessionExpiresAt = Date.now() + sessionMaxAgeSeconds * 1000
       }
 
       return token
@@ -226,6 +230,10 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id
         session.user.roleAssignments = token.roleAssignments ?? []
       }
+      session.fixedSessionExpiresAt =
+        typeof token.fixedSessionExpiresAt === "number"
+          ? token.fixedSessionExpiresAt
+          : null
 
       return session
     },

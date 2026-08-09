@@ -3,8 +3,17 @@ import { redirect } from "next/navigation"
 
 import { authOptions } from "@/modules/auth/auth"
 
-export function getCurrentSession() {
-  return getServerSession(authOptions)
+export async function getCurrentSession() {
+  const session = await getServerSession(authOptions)
+
+  if (
+    session?.fixedSessionExpiresAt &&
+    session.fixedSessionExpiresAt <= Date.now()
+  ) {
+    return null
+  }
+
+  return session
 }
 
 export async function requireAuth() {
