@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { ArrowUpRight } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -58,12 +59,17 @@ export function MetricCard({
 }) {
   const card = (
     <Card
-      className={`lms-card ${href ? "lms-card-hover" : ""} ${
+      className={`lms-card ${href ? "group lms-card-hover" : ""} ${
         tone === "attention" ? "border-primary/40 bg-primary/5" : ""
       }`}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
+        <CardTitle className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>{label}</span>
+          {href ? (
+            <ArrowUpRight className="h-4 w-4 text-primary/70 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          ) : null}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
         <div className="text-2xl font-semibold">{value}</div>
