@@ -32,14 +32,14 @@ export function FormDialog({
           {trigger}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl lg:max-w-5xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-y-auto border-slate-200/90 bg-white/95 p-0 shadow-2xl sm:max-w-3xl lg:max-w-5xl">
+        <DialogHeader className="border-b bg-slate-50/80 px-5 py-4">
           <DialogTitle>{title}</DialogTitle>
           {description ? (
             <DialogDescription>{description}</DialogDescription>
           ) : null}
         </DialogHeader>
-        {children}
+        <div className="px-5 pb-5">{children}</div>
       </DialogContent>
     </Dialog>
   )

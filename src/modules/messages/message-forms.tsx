@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
+import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import {
   editMessage,
@@ -197,7 +198,10 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
   const [state, formAction] = useActionState(sendMessage, initialMessageActionState)
 
   return (
-    <form action={formAction} className="grid gap-2 rounded-lg border bg-background p-4">
+    <form
+      action={formAction}
+      className="lms-soft-panel grid gap-3 rounded-2xl p-4 shadow-sm"
+    >
       <input name="conversationId" type="hidden" value={conversationId} />
       <label className="grid gap-1 text-sm">
         <span className="font-medium">Message</span>
@@ -234,25 +238,32 @@ export function EditMessageForm({
   const [state, formAction] = useActionState(editMessage, initialMessageActionState)
 
   return (
-    <details className="mt-2">
-      <summary className="cursor-pointer text-xs font-medium">Edit</summary>
-      <form action={formAction} className="mt-2 grid gap-2">
+    <FormDialog
+      description="Update this text message. Attachments are not enabled in messenger."
+      title="Edit message"
+      trigger="Edit"
+      variant="outline"
+    >
+      <form action={formAction} className="grid gap-3 pt-4">
         <input name="conversationId" type="hidden" value={conversationId} />
         <input name="messageId" type="hidden" value={messageId} />
-        <textarea
-          className="min-h-16 rounded-md border bg-background px-3 py-2 text-sm"
-          maxLength={MESSAGE_BODY_MAX_LENGTH}
-          name="body"
-          defaultValue={body}
-          required
-        />
-        <ActionFeedback state={state} />
+        <label className="grid gap-1 text-sm">
+          <span className="font-medium">Message</span>
+          <textarea
+            className="min-h-28 rounded-md border bg-background px-3 py-2 text-sm"
+            maxLength={MESSAGE_BODY_MAX_LENGTH}
+            name="body"
+            defaultValue={body}
+            required
+          />
+        </label>
+        <ActionFeedback state={state} closeOnSuccess />
         <div>
-          <Button size="sm" type="submit" variant="outline">
+          <Button size="sm" type="submit">
             Save
           </Button>
         </div>
       </form>
-    </details>
+    </FormDialog>
   )
 }

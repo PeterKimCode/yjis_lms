@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
 import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/modules/dashboards/components"
+import { EmptyState, StatusBadge } from "@/modules/dashboards/components"
 import {
   getConversationList,
   getConversationStartOptions,
@@ -62,7 +62,7 @@ export default async function MessagesPage({
             </select>
             <div className="flex gap-2">
               <Button type="submit" variant="outline">
-                Filter
+                Search
               </Button>
               <Button asChild type="button" variant="ghost">
                 <Link href="/messages">Reset</Link>
@@ -118,9 +118,9 @@ export default async function MessagesPage({
               })}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
-              No conversations yet.
-            </div>
+            <EmptyState>
+              No conversations yet. Start a message when you are ready.
+            </EmptyState>
           )}
       </div>
     </main>

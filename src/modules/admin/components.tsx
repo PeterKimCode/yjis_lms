@@ -64,9 +64,10 @@ export function AdminPageHeader({
 
 export function EmptyState({ label }: { label: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
-      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200" />
-      {label}
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white/85 p-8 text-center text-sm text-muted-foreground shadow-sm shadow-slate-200/60">
+      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-primary/20" />
+      <p className="font-medium text-slate-700">Nothing to show yet</p>
+      <p className="mt-1">{label}</p>
     </div>
   )
 }
@@ -146,12 +147,14 @@ export function DataTable({
 
   return (
     <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
-      <Table className={minWidth}>
+      <Table
+        className={`${minWidth} [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80`}
+      >
         <TableHeader>
           <TableRow>
             {headers.map((header, index) => (
               <TableHead
-                className="sticky top-0 z-10 whitespace-nowrap bg-white"
+                className="sticky top-0 z-10 whitespace-nowrap border-b bg-slate-50/95 backdrop-blur"
                 key={index}
               >
                 {header}
@@ -179,7 +182,10 @@ export function SearchForm({
   resetHref?: string
 }) {
   return (
-    <form className="lms-soft-panel rounded-lg p-3" action="">
+    <form
+      className="lms-soft-panel sticky top-16 z-20 rounded-lg p-3 supports-[backdrop-filter]:bg-white/85"
+      action=""
+    >
       {hiddenFields
         ? Object.entries(hiddenFields).map(([name, value]) =>
             value ? (

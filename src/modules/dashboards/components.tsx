@@ -79,9 +79,9 @@ export function MetricCard({
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white/80 p-8 text-center text-sm text-muted-foreground">
-      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-slate-200" />
-      <div>{children}</div>
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white/85 p-8 text-center text-sm text-muted-foreground shadow-sm shadow-slate-200/60">
+      <div className="mx-auto mb-3 h-1.5 w-14 rounded-full bg-primary/20" />
+      <div className="font-medium text-slate-700">{children}</div>
     </div>
   )
 }
@@ -153,11 +153,14 @@ export function SimpleTable({
 
   return (
     <div className="max-h-[70vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
-      <Table className="min-w-[720px]">
+      <Table className="min-w-[720px] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80">
         <TableHeader>
           <TableRow>
             {headers.map((header) => (
-              <TableHead className="whitespace-nowrap" key={header}>
+              <TableHead
+                className="sticky top-0 z-10 whitespace-nowrap border-b bg-slate-50/95 backdrop-blur"
+                key={header}
+              >
                 {header}
               </TableHead>
             ))}
