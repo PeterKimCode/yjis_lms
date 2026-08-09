@@ -242,7 +242,7 @@ export default async function AdminPage({
                     className="block rounded-lg p-1 transition-colors hover:bg-primary/5"
                     href={`/admin?organizationId=${organization.id}`}
                   >
-                    <CardHeader className="flex-row items-center gap-3 space-y-0 px-3 py-3">
+                    <div className="flex min-w-0 items-center gap-3 px-3 py-3">
                       <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border bg-white">
                         <Image
                           alt={`${organization.name} logo`}
@@ -253,7 +253,7 @@ export default async function AdminPage({
                           unoptimized={Boolean(logoFileAssetId)}
                         />
                       </span>
-                      <span className="min-w-0">
+                      <span className="min-w-0 flex-1">
                         <CardTitle className="truncate text-base">
                           {organization.name}
                         </CardTitle>
@@ -261,7 +261,7 @@ export default async function AdminPage({
                           {organization.slug}
                         </p>
                       </span>
-                    </CardHeader>
+                    </div>
                   </Link>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-2 text-sm">
