@@ -16,6 +16,7 @@ import {
 const selectableContentTypes = [
   "VIDEO",
   "TEXT",
+  "FILE",
 ] as const
 
 const videoProviders = [
@@ -291,8 +292,8 @@ export function LessonForm({
                   {contentType} (legacy)
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Existing legacy lessons are preserved. New lessons can be Text
-                  or Video only.
+                  Existing legacy lessons are preserved. New lessons can be Text,
+                  Video, or File.
                 </span>
               </>
             ) : (
@@ -304,6 +305,7 @@ export function LessonForm({
               >
                 <option value="TEXT">Text</option>
                 <option value="VIDEO">Video</option>
+                <option value="FILE">File</option>
               </select>
             )}
           </label>

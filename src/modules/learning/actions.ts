@@ -48,11 +48,12 @@ const lessonSchema = z.object({
   if (
     !data.id &&
     data.contentType !== LessonContentType.TEXT &&
-    data.contentType !== LessonContentType.VIDEO
+    data.contentType !== LessonContentType.VIDEO &&
+    data.contentType !== LessonContentType.FILE
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "New lessons can be Text or Video only.",
+      message: "New lessons can be Text, Video, or File.",
       path: ["contentType"],
     })
     return
