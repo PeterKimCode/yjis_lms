@@ -200,8 +200,8 @@ export async function saveLesson(
 
   if (id) {
     await prisma.lesson.update({
-      where: { id },
-      data: lessonValues,
+      where: { id, classSectionId: data.classSectionId },
+      data: { ...lessonValues, sequence: undefined },
     })
   } else {
     await prisma.lesson.create({
@@ -217,6 +217,33 @@ export async function saveLesson(
   return {
     ok: true,
     message: id ? "Lesson saved." : "Lesson created.",
+  }
+}
+
+export async function reorderLessons(classSectionId: string, lessonIds: string[]) {
+  const instructor = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
+  if (!(await canManageClassSection(instructor.id, classSectionId))) {
+    return { ok: false, message: "You cannot reorder lessons in this class." }
+  }
+  if (!Array.isArray(lessonIds) || lessonIds.some((id) => typeof id !== "string") || new Set(lessonIds).size !== lessonIds.length) {
+    return { ok: false, message: "Invalid lesson order." }
+  }
+  try {
+    await getPrismaClient().$transaction(async (tx) => {
+      const lessons = await tx.lesson.findMany({ where: { classSectionId }, select: { id: true } })
+      const ids = new Set(lessonIds)
+      if (lessons.length !== lessonIds.length || lessons.some((lesson) => !ids.has(lesson.id))) {
+        throw new Error("Lesson list changed")
+      }
+      for (const [index, id] of lessonIds.entries()) {
+        await tx.lesson.update({ where: { id, classSectionId }, data: { sequence: index + 1 } })
+      }
+    }, { isolationLevel: "Serializable" })
+    revalidatePath(`/instructor/classes/${classSectionId}`)
+    revalidatePath(`/student/classes/${classSectionId}`)
+    return { ok: true, message: "Lesson order saved." }
+  } catch {
+    return { ok: false, message: "Could not save lesson order. Refresh the page and try again." }
   }
 }
 

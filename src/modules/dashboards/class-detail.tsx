@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import type { ReactNode } from "react"
+import { Fragment, type ReactNode } from "react"
 import { CheckCircle2 } from "lucide-react"
 import { AttendanceStatus, DeliveryMode } from "@prisma/client"
 
@@ -37,6 +37,7 @@ import {
   type QuizPanelValue,
 } from "@/modules/quizzes/quiz-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
+import { LessonOrderTable } from "@/modules/learning/lesson-order-table"
 import {
   createAttendanceSession,
   createClassSession,
@@ -185,7 +186,11 @@ export async function ClassSectionDetail({
                 />
               </FormDialog>
             ) : null}
-            <SimpleTable
+            <LessonOrderTable
+              key={section.lessons.map((lesson) => `${lesson.id}:${lesson.sequence}`).join(",")}
+              classSectionId={section.id}
+              editable={mode === "instructor"}
+              lessons={section.lessons.map(({ id, sequence }) => ({ id, sequence }))}
               empty={
                 mode === "instructor"
                   ? "No lessons yet."
@@ -211,8 +216,7 @@ export async function ClassSectionDetail({
                 ).length
 
                 return (
-                  <TableRow key={lesson.id}>
-                    <TableCell>{lesson.sequence}</TableCell>
+                  <Fragment key={lesson.id}>
                     <TableCell className="font-medium">{lesson.title}</TableCell>
                     <TableCell>{lesson.contentType}</TableCell>
                     {mode === "instructor" ? (
@@ -271,7 +275,7 @@ export async function ClassSectionDetail({
                         </TableCell>
                       </>
                     )}
-                  </TableRow>
+                  </Fragment>
                 )
               })}
             />
