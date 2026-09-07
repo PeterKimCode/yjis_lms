@@ -38,6 +38,10 @@ import {
 } from "@/modules/quizzes/quiz-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
 import { LessonOrderTable } from "@/modules/learning/lesson-order-table"
+import { LessonQuickActions } from "@/modules/learning/lesson-quick-actions"
+import { BulkLessonUpload } from "@/modules/learning/bulk-lesson-upload"
+import { LessonCompletionList } from "@/modules/learning/lesson-completion-list"
+import { parseYouTubeVideoId } from "@/modules/learning/video"
 import {
   createAttendanceSession,
   createClassSession,
@@ -173,6 +177,7 @@ export async function ClassSectionDetail({
           title={`Lessons · ${gradeWeights.lessonsWeight}%`}
         >
           <div className="space-y-4">
+            {mode === "instructor" ? <FormDialog title="Upload lesson files" trigger="Upload files" variant="outline"><BulkLessonUpload classSectionId={section.id} /></FormDialog> : null}
             {mode === "instructor" ? (
               <FormDialog
                 title="Create lesson"
@@ -187,10 +192,10 @@ export async function ClassSectionDetail({
               </FormDialog>
             ) : null}
             <LessonOrderTable
-              key={section.lessons.map((lesson) => `${lesson.id}:${lesson.sequence}`).join(",")}
+              key={section.lessons.map((lesson) => `${lesson.id}:${lesson.week}`).sort().join(",")}
               classSectionId={section.id}
               editable={mode === "instructor"}
-              lessons={section.lessons.map(({ id, sequence }) => ({ id, sequence }))}
+              lessons={section.lessons.map(({ id, sequence, week }) => ({ id, sequence, week }))}
               empty={
                 mode === "instructor"
                   ? "No lessons yet."
@@ -201,8 +206,7 @@ export async function ClassSectionDetail({
                   ? [
                       "Order",
                       "Title",
-                      "Type",
-                      "Video",
+                      "Content",
                       "Published",
                       "Completion",
                       "Preview",
@@ -217,31 +221,25 @@ export async function ClassSectionDetail({
 
                 return (
                   <Fragment key={lesson.id}>
-                    <TableCell className="font-medium">{lesson.title}</TableCell>
-                    <TableCell>{lesson.contentType}</TableCell>
+                    <TableCell className="min-w-[220px] whitespace-normal font-medium">{lesson.title}</TableCell>
+                    <TableCell>{lesson.contentType === "VIDEO" ? (lesson.videoProvider === "YOUTUBE" ? "YouTube" : "Uploaded video") : lesson.contentType === "FILE" ? (lesson.videoFileAsset?.originalName.split(".").pop()?.toUpperCase() ?? "File") : "Text"}</TableCell>
                     {mode === "instructor" ? (
                       <>
-                        <TableCell className="max-w-[180px] truncate">
-                          {lesson.contentType === "VIDEO"
-                            ? lesson.videoProvider
-                            : "-"}
+                        <TableCell>
+                          <LessonQuickActions classSectionId={section.id} lessonId={lesson.id} published={lesson.isPublished} />
                         </TableCell>
                         <TableCell>
-                          <StatusBadge
-                            label={lesson.isPublished ? "Published" : "Draft"}
-                            value={lesson.isPublished ? "PUBLISHED" : "DRAFT"}
-                          />
+                          <FormDialog title={`Completion: ${lesson.title}`} trigger={`${completedCount}/${enrollmentCount}`} variant="outline">
+                            <LessonCompletionList students={getLessonProgressRows(section, lesson.id).map((student) => ({ studentId: student.studentId, name: student.name, status: student.status, progressRate: student.progressRate, lastViewed: formatDateTime(student.lastWatchedAt) }))} />
+                          </FormDialog>
                         </TableCell>
                         <TableCell>
-                          <Link
-                            className="text-primary underline-offset-4 hover:underline"
-                            href={`/instructor/classes/${section.id}?lessonId=${lesson.id}#lesson-progress`}
-                          >
-                            {completedCount}/{enrollmentCount}
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <LessonPreviewLink lesson={lesson} />
+                          <FormDialog title={lesson.title} trigger="Student preview" variant="outline">
+                            <p className="whitespace-pre-wrap">{lesson.description}</p>
+                            <LessonPreviewLink lesson={lesson} />
+                            {lesson.contentType === "VIDEO" && lesson.videoProvider === "YOUTUBE" && lesson.videoUrl && parseYouTubeVideoId(lesson.videoUrl) ? <iframe title={lesson.title} className="aspect-video w-full" src={`https://www.youtube.com/embed/${parseYouTubeVideoId(lesson.videoUrl)}`} allowFullScreen /> : null}
+                            {lesson.contentType === "VIDEO" && lesson.videoProvider === "HTML5" && lesson.videoFileAssetId ? <video controls preload="metadata" className="w-full" src={`/api/files/${lesson.videoFileAssetId}/download`} /> : null}
+                          </FormDialog>
                         </TableCell>
                         <TableCell>
                           <FormDialog
@@ -257,6 +255,7 @@ export async function ClassSectionDetail({
                               videoFileOptions={videoFileOptions}
                             />
                           </FormDialog>
+                          <LessonQuickActions classSectionId={section.id} lessonId={lesson.id} published={lesson.isPublished} duplicate />
                         </TableCell>
                       </>
                     ) : (
@@ -969,6 +968,7 @@ function toLessonFormValue(
     title: lesson.title,
     description: lesson.description,
     sequence: lesson.sequence,
+    week: lesson.week,
     contentType: lesson.contentType,
     videoProvider: lesson.videoProvider,
     videoUrl: lesson.videoUrl,

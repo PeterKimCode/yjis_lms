@@ -37,6 +37,7 @@ export type LessonFormValue = {
   title: string
   description: string | null
   sequence: number
+  week?: number | null
   contentType: ContentType
   videoProvider?: VideoProvider
   videoUrl: string | null
@@ -271,6 +272,10 @@ export function LessonForm({
           <input name="sequence" type="hidden" value={lesson.sequence} />
         ) : null}
         <div className="grid gap-3 md:grid-cols-2">
+          <label className="space-y-1 text-sm">
+            <span>Week</span>
+            <Input name="week" type="number" min={1} defaultValue={lesson?.week ?? ""} />
+          </label>
           <label className="space-y-1 text-sm">
             <span className="font-medium">Title</span>
             <Input name="title" required defaultValue={lesson?.title ?? ""} />

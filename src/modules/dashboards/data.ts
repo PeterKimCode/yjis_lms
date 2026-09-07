@@ -157,7 +157,7 @@ export async function getClassSectionDetail(
       },
       lessons: {
         where: options.publishedLessonsOnly ? { isPublished: true } : undefined,
-        orderBy: { sequence: "asc" },
+        orderBy: [{ week: { sort: "asc", nulls: "last" } }, { sequence: "asc" }, { id: "asc" }],
         include: {
           materials: true,
           videoFileAsset: true,

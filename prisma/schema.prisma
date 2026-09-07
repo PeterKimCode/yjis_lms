@@ -830,6 +830,7 @@ model Lesson {
   title            String
   description      String?
   sequence         Int                @default(1)
+  week             Int?
   contentType      LessonContentType  @default(TEXT)
   videoProvider    VideoProvider      @default(HTML5)
   videoUrl         String?

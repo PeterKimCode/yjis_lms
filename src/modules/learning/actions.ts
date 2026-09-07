@@ -38,6 +38,7 @@ const lessonSchema = z.object({
   title: requiredString,
   description: optionalString,
   sequence: optionalSequence,
+  week: optionalInt.refine((value) => value === null || value >= 1, "Week must be 1 or greater."),
   contentType: z.nativeEnum(LessonContentType),
   videoProvider: z.nativeEnum(VideoProvider).optional().default(VideoProvider.HTML5),
   videoUrl: optionalString,
@@ -117,6 +118,7 @@ export async function saveLesson(
     title: formData.get("title") ?? "",
     description: formData.get("description") ?? "",
     sequence: formData.get("sequence") ?? "",
+    week: formData.get("week") ?? "",
     contentType: formData.get("contentType") ?? LessonContentType.TEXT,
     videoProvider: formData.get("videoProvider") ?? VideoProvider.HTML5,
     videoUrl: formData.get("videoUrl") ?? "",
@@ -245,6 +247,28 @@ export async function reorderLessons(classSectionId: string, lessonIds: string[]
   } catch {
     return { ok: false, message: "Could not save lesson order. Refresh the page and try again." }
   }
+}
+
+export async function updateLessonQuickly(classSectionId: string, lessonId: string, operation: "duplicate" | "publish", published?: boolean) {
+  const user = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
+  if (!(await canManageClassSection(user.id, classSectionId))) throw new Error("Forbidden")
+  const db = getPrismaClient()
+  const lesson = await db.lesson.findFirstOrThrow({ where: { id: lessonId, classSectionId } })
+  if (operation === "publish" && typeof published === "boolean") {
+    await db.lesson.update({ where: { id: lesson.id }, data: { isPublished: published } })
+  } else if (operation === "duplicate") {
+    const last = await db.lesson.aggregate({ where: { classSectionId }, _max: { sequence: true } })
+    await db.lesson.create({ data: {
+      organizationId: lesson.organizationId, classSectionId, createdById: user.id,
+      title: `${lesson.title} (copy)`, description: lesson.description,
+      contentType: lesson.contentType, videoProvider: lesson.videoProvider,
+      videoUrl: lesson.videoUrl, videoFileAssetId: lesson.videoFileAssetId,
+      durationSeconds: lesson.durationSeconds, week: lesson.week,
+      sequence: (last._max.sequence ?? 0) + 1, isPublished: false,
+    } })
+  } else throw new Error("Invalid operation")
+  revalidatePath(`/instructor/classes/${classSectionId}`)
+  revalidatePath(`/student/classes/${classSectionId}`)
 }
 
 export async function deleteLesson(formData: FormData) {
