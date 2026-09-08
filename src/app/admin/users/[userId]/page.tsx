@@ -26,6 +26,8 @@ import {
 } from "@/modules/admin/actions"
 import { AdminUserAvatarForm } from "@/modules/admin/user-avatar-form"
 import { UserForm } from "@/modules/admin/user-form"
+import { getUserEnrollmentData } from "@/modules/admin/user-enrollment-data"
+import { UserEnrollmentPanel } from "@/modules/admin/user-enrollment-panel"
 
 type AdminUserDetail = NonNullable<Awaited<ReturnType<typeof getAdminUserDetail>>>
 type DetailUser = AdminUserDetail["user"]
@@ -53,6 +55,7 @@ export default async function AdminUserDetailPage({
   const roles = user.roleAssignments.map((assignment) => assignment.role)
   const isParent = roles.includes(UserRole.PARENT)
   const isStudent = roles.includes(UserRole.STUDENT)
+  const enrollmentData = await getUserEnrollmentData(user.id)
   const linkedStudentIds = new Set(
     user.parentRelations.map((relation) => relation.studentId)
   )
@@ -92,6 +95,10 @@ export default async function AdminUserDetailPage({
           </div>
         </div>
       </div>
+
+      {enrollmentData ? <DetailsSection title={enrollmentData.mode === "student" ? "Enrolled classes" : "Assigned classes / Student enrollment"} defaultOpen>
+        <UserEnrollmentPanel userId={user.id} data={enrollmentData} />
+      </DetailsSection> : null}
 
       {isStudent && !isSchoolAdminOnly ? (
         <StudentAcademicOverview user={user} />
@@ -288,7 +295,7 @@ function StudentAcademicOverview({ user }: { user: DetailUser }) {
         </div>
       </DetailsSection>
 
-      <DetailsSection title="Enrolled classes" defaultOpen>
+      <DetailsSection title="Class academic records">
         <EnrolledClassesTable enrollments={user.enrollments} studentId={user.id} />
       </DetailsSection>
     </div>
