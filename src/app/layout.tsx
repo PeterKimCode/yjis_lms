@@ -17,7 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Learning Management System",
+  title: { default: "Learning Management System", template: "%s | LMS" },
+  robots: { index: false, follow: false },
   description: "School learning, attendance, grades, and communication workflows",
   icons: {
     icon: "/icon.svg",
@@ -35,9 +36,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col pb-20 md:pb-0">
+        <a className="skip-link" href="#main-content">Skip to content</a>
         <SessionProvider>
           <AppNavigation />
-          {children}
+          <div id="main-content" tabIndex={-1} className="flex min-w-0 flex-1 flex-col outline-none">{children}</div>
           <SiteFooter />
           <ToastProvider />
         </SessionProvider>

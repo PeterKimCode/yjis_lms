@@ -38,6 +38,8 @@ export async function middleware(request: NextRequest) {
 
 function isAllowedSchoolAdminPath(pathname: string) {
   return (
+    pathname === "/admin/files" ||
+    pathname.startsWith("/admin/files/") ||
     pathname === "/admin/courses" ||
     pathname.startsWith("/admin/courses/") ||
     pathname === "/admin/class-sections" ||

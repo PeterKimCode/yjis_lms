@@ -44,8 +44,15 @@ export function AvatarMenu({
     }
 
     document.addEventListener("pointerdown", handlePointerDown)
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false)
+        detailsRef.current?.querySelector("summary")?.focus()
+      }
+    }
+    document.addEventListener("keydown", escape)
 
-    return () => document.removeEventListener("pointerdown", handlePointerDown)
+    return () => { document.removeEventListener("pointerdown", handlePointerDown); document.removeEventListener("keydown", escape) }
   }, [open])
 
   useEffect(() => {
@@ -63,7 +70,7 @@ export function AvatarMenu({
       ref={detailsRef}
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
-      <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center overflow-hidden rounded-full border border-white/20 bg-white shadow-sm">
+      <summary aria-label={`${userName} account menu`} className="grid size-11 cursor-pointer list-none place-items-center overflow-hidden rounded-full border border-white/20 bg-white shadow-sm md:size-9">
         {avatarUrl ? (
           <Image
             alt={`${userName} profile photo`}
@@ -79,7 +86,7 @@ export function AvatarMenu({
           </span>
         )}
       </summary>
-      <div className="absolute right-0 top-full z-50 mt-3 w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
+      <div className="absolute right-0 top-full z-50 mt-3 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
         <span className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t bg-white" />
         <p className="text-sm font-semibold">{userName}</p>
         {roleSummary ? (
@@ -95,6 +102,7 @@ export function AvatarMenu({
         </div>
         <form action={formAction} className="mt-3 grid gap-2" ref={formRef}>
           <input
+            aria-label="Profile photo"
             accept="image/jpeg,image/png,image/webp,image/gif"
             className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-slate-700"
             name="avatar"

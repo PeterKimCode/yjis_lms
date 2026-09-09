@@ -24,6 +24,8 @@ import {
 } from "@/modules/admin/resource-deletion-components"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 
+export const metadata = { title: "Courses" }
+
 export default async function CoursesPage({
   searchParams,
 }: {

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { LogoutButton } from "@/modules/auth/logout-button"
 
 type SidebarLink = {
@@ -94,6 +95,7 @@ export function RoleSidebarNav({
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
   const toneClass = toneClasses[tone]
   const isClassRoute =
     pathname.includes("/classes/") || pathname.endsWith("/classes")
@@ -157,6 +159,7 @@ export function RoleSidebarNav({
                       : `text-slate-300 ${toneClass.hover}`
                   }`}
                   href={link.href}
+                  aria-current={active ? "page" : undefined}
                   title={collapsed ? link.label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -177,6 +180,7 @@ export function RoleSidebarNav({
                               : "text-slate-400 hover:bg-white/10 hover:text-white"
                           }`}
                           href={classLink.href}
+                          aria-current={classActive ? "page" : undefined}
                           key={classLink.id}
                         >
                           <School className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -269,8 +273,10 @@ export function RoleSidebarNav({
       <header className="border-b border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur md:hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
+            ref={menuButton}
+            aria-expanded={mobileOpen}
             aria-label="Open sidebar menu"
-            className="grid h-9 w-9 place-items-center rounded-md border bg-white text-slate-700"
+            className="grid size-11 place-items-center rounded-md border bg-white text-slate-700"
             type="button"
             onClick={() => setMobileOpen(true)}
           >
@@ -283,15 +289,9 @@ export function RoleSidebarNav({
           <Badge variant="secondary">{tone.toUpperCase()}</Badge>
         </div>
       </header>
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            aria-label="Close sidebar menu"
-            className="absolute inset-0 bg-slate-950/60"
-            type="button"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="relative flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-xl">
+      <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
+          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-xl">
+            <DialogTitle className="sr-only">{title} menu</DialogTitle>
             <div className="mb-4 flex items-center justify-between">
               <Link
                 aria-label="Go to overview"
@@ -333,6 +333,7 @@ export function RoleSidebarNav({
                           : "text-slate-300 hover:bg-white/10 hover:text-white"
                       }`}
                       href={link.href}
+                      aria-current={active ? "page" : undefined}
                       onClick={() => setMobileOpen(false)}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
@@ -353,6 +354,7 @@ export function RoleSidebarNav({
                                   : "text-slate-400 hover:bg-white/10 hover:text-white"
                               }`}
                               href={classLink.href}
+                              aria-current={classActive ? "page" : undefined}
                               key={classLink.id}
                               onClick={() => setMobileOpen(false)}
                             >
@@ -406,9 +408,8 @@ export function RoleSidebarNav({
             ) : null}
             <SidebarAccountActions />
             <HelpContact />
-          </aside>
-        </div>
-      ) : null}
+          </DialogContent>
+      </Dialog>
     </>
   )
 }

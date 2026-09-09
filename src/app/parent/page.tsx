@@ -13,6 +13,8 @@ import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
 
+export const metadata = { title: "Parent dashboard" }
+
 export default async function ParentPage() {
   const user = await requireAuth()
   const [{ relations }, unreadMessages, unreadNotifications] = await Promise.all([

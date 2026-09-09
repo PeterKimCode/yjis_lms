@@ -17,6 +17,8 @@ import {
 import { getAdminData } from "@/modules/admin/data"
 import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
+export const metadata = { title: "Organizations" }
+
 export default async function OrganizationsPage({
   searchParams,
 }: {

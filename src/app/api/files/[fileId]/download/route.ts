@@ -12,6 +12,7 @@ import {
 } from "@/modules/auth/permissions"
 import { getCurrentSession } from "@/modules/auth/session"
 import { getBoardAccess } from "@/modules/boards/permissions"
+import { getFileThumbnail } from "@/modules/files/thumbnail"
 
 const VIDEO_RANGE_CHUNK_BYTES = 8 * 1024 * 1024
 
@@ -81,6 +82,23 @@ export async function GET(
   try {
     if (!(await canDownloadFile(session.user.id, file))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    if (new URL(request.url).searchParams.get("thumbnail") === "1") {
+      try {
+        const thumbnail = await getFileThumbnail(createS3Client(), file)
+        if (thumbnail?.Body) {
+          return new Response(toResponseBody(thumbnail.Body), { headers: {
+            "Content-Type": "image/webp",
+            "Content-Length": String(thumbnail.ContentLength),
+            "Content-Disposition": "inline",
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+          } })
+        }
+      } catch (error) {
+        console.error("Thumbnail unavailable; serving original", { fileId, error })
+      }
     }
 
     const requestedInline =

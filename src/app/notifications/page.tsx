@@ -13,6 +13,8 @@ import { MarkAllNotificationsReadButton } from "@/modules/notifications/notifica
 import { notificationFilters } from "@/modules/notifications/types"
 import { StatusBadge } from "@/modules/dashboards/components"
 
+export const metadata = { title: "Notifications" }
+
 export default async function NotificationsPage({
   searchParams,
 }: {

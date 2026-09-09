@@ -9,6 +9,8 @@ import {
 } from "@/modules/messages/data"
 import { NewMessageForm } from "@/modules/messages/message-forms"
 
+export const metadata = { title: "Messages" }
+
 export default async function MessagesPage({
   searchParams,
 }: {

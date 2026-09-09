@@ -5,8 +5,6 @@ import { DocumentStatus, DocumentType } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { getPrismaClient } from "@/lib/prisma"
 import {
-  ActionCard,
-  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
@@ -20,6 +18,8 @@ import { TranscriptDownloadButton } from "@/modules/documents/transcript-downloa
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
+
+export const metadata = { title: "Student dashboard" }
 
 export default async function StudentPage() {
   const authUser = await requireAuth()
@@ -70,7 +70,7 @@ export default async function StudentPage() {
           description="Currently enrolled"
           href="/student/classes"
           label="Classes"
-          value={enrollments.length}
+          value={enrollments.filter((item) => item.status === "ENROLLED").length}
         />
         <MetricCard
           description="Teachers and class groups"
@@ -101,33 +101,7 @@ export default async function StudentPage() {
           )}
         />
       </div>
-      <ActionPanel
-        description="Your quickest paths for classwork and school updates."
-        title="Student focus"
-      >
-        <ActionCard
-          actionLabel="Open classes"
-          badge={enrollments.length}
-          description="Continue lessons, assignments, quizzes, boards, and grades."
-          href="/student/classes"
-          title="My classes"
-        />
-        <ActionCard
-          actionLabel="Open inbox"
-          badge={unreadMessages || undefined}
-          description="Message teachers and follow class group conversations."
-          href="/messages"
-          title="Messages"
-        />
-        <ActionCard
-          actionLabel="Review alerts"
-          badge={unreadNotifications || undefined}
-          description="See new assignments, quizzes, grades, and board activity."
-          href="/notifications"
-          title="Notifications"
-        />
-      </ActionPanel>
-      <div className="rounded-lg border bg-background p-4">
+      <div className="border-t pt-4">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold">Documents</h2>
           <p className="text-sm text-muted-foreground">
@@ -181,6 +155,16 @@ function StudentClassTable({
     <SimpleTable
       empty="No enrolled class sections yet."
       headers={["Class", "Course", "Instructor", "Term", "Campus", "Status", "Open"]}
+      mobileRows={enrollments.map((enrollment) => ({
+        id: enrollment.id, title: enrollment.classSection.name, href: `/student/classes/${enrollment.classSectionId}`,
+        fields: [
+          { label: "Course", value: enrollment.classSection.course.title },
+          { label: "Instructor", value: formatInstructors(enrollment.classSection.instructors) },
+          { label: "Term", value: enrollment.classSection.term?.name ?? "No term" },
+          { label: "Campus", value: enrollment.classSection.campus?.name ?? "Organization-wide" },
+          { label: "Status", value: <StatusBadge value={enrollment.status} /> },
+        ],
+      }))}
       rows={enrollments.map((enrollment) => (
         <TableRow key={enrollment.id}>
           <LinkedCell

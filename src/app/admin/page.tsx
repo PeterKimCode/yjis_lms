@@ -17,7 +17,8 @@ import { getAdminData } from "@/modules/admin/data"
 import { AdminPageHeader } from "@/modules/admin/components"
 import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
-import { ActionCard, ActionPanel } from "@/modules/dashboards/components"
+
+export const metadata = { title: "Admin overview" }
 
 export default async function AdminPage({
   searchParams,
@@ -185,32 +186,6 @@ export default async function AdminPage({
           </Link>
         ))}
       </div>
-      <ActionPanel
-        description="Common admin workflows and activity queues."
-        title="Admin focus"
-      >
-        <ActionCard
-          actionLabel="Manage users"
-          badge={userCount}
-          description="Review students, parents, instructors, roles, and academic records."
-          href="/admin/users"
-          title="Users and student records"
-        />
-        <ActionCard
-          actionLabel="Open inbox"
-          badge={unreadMessages || undefined}
-          description="Read and respond to school conversations."
-          href="/messages"
-          title="Messages"
-        />
-        <ActionCard
-          actionLabel="Review alerts"
-          badge={unreadNotifications || undefined}
-          description="See new submissions, board activity, grades, and system notices."
-          href="/notifications"
-          title="Notifications"
-        />
-      </ActionPanel>
       {organizationCards.length ? (
         <section className="space-y-3">
           <div>
@@ -228,7 +203,7 @@ export default async function AdminPage({
                 new Map<UserRole, number>()
               const logoFileAssetId = logoByOrganizationId.get(organization.id)
               const logoUrl = logoFileAssetId
-                ? `/api/files/${logoFileAssetId}/download?disposition=inline`
+                ? `/api/files/${logoFileAssetId}/download?disposition=inline&thumbnail=1`
                 : "/brand/gtcc-logo.png"
 
               return (

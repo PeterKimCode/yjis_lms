@@ -10,6 +10,8 @@ import {
 } from "@/modules/dashboards/components"
 import { getInstructorClasses } from "@/modules/dashboards/data"
 
+export const metadata = { title: "Assigned classes" }
+
 export default async function InstructorClassesPage() {
   const { classSections } = await getInstructorClasses()
 

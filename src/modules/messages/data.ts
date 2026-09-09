@@ -1,4 +1,5 @@
 import "server-only"
+import { cache } from "react"
 
 import { ConversationType, UserRole } from "@prisma/client"
 
@@ -67,20 +68,9 @@ export async function getConversationList({
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
   })
 
-  const rows = await Promise.all(
-    conversations.map(async (conversation) => {
-      const participant = conversation.participants.find(
-        (item) => item.userId === user.id
-      )
-      const unreadCount = await prisma.message.count({
-        where: {
-          conversationId: conversation.id,
-          senderId: { not: user.id },
-          createdAt: participant?.lastReadAt
-            ? { gt: participant.lastReadAt }
-            : undefined,
-        },
-      })
+  const unreadCounts = await getUnreadCounts(user.id)
+  const rows = conversations.map((conversation) => {
+      const unreadCount = unreadCounts.get(conversation.id) ?? 0
 
       return {
         ...conversation,
@@ -89,7 +79,6 @@ export async function getConversationList({
         unreadCount,
       }
     })
-  )
 
   return {
     conversations:
@@ -350,20 +339,9 @@ export async function getConversationSidebarLinksForUser(userId: string) {
     take: 8,
   })
 
-  return Promise.all(
-    conversations.map(async (conversation) => {
-      const participant = conversation.participants.find(
-        (item) => item.userId === userId
-      )
-      const unreadCount = await prisma.message.count({
-        where: {
-          conversationId: conversation.id,
-          senderId: { not: userId },
-          createdAt: participant?.lastReadAt
-            ? { gt: participant.lastReadAt }
-            : undefined,
-        },
-      })
+  const unreadCounts = await getUnreadCounts(userId)
+  return conversations.map((conversation) => {
+      const unreadCount = unreadCounts.get(conversation.id) ?? 0
       const lastMessage = conversation.messages[0]
 
       return {
@@ -376,34 +354,25 @@ export async function getConversationSidebarLinksForUser(userId: string) {
         unreadCount,
       }
     })
-  )
 }
 
-export async function getUnreadMessageCount(userId: string) {
-  const prisma = getPrismaClient()
-  const participants = await prisma.conversationParticipant.findMany({
-    where: { userId },
-    select: {
-      conversationId: true,
-      lastReadAt: true,
-    },
-  })
-  const counts = await Promise.all(
-    participants.map((participant) =>
-      prisma.message.count({
-        where: {
-          conversationId: participant.conversationId,
-          senderId: { not: userId },
-          createdAt: participant.lastReadAt
-            ? { gt: participant.lastReadAt }
-            : undefined,
-        },
-      })
-    )
-  )
+// React cache only deduplicates this user's queries within one server render.
+const getUnreadCounts = cache(async (userId: string) => {
+  const rows = await getPrismaClient().$queryRaw<{ conversationId: string; count: bigint }[]>`
+    SELECT p."conversationId", COUNT(m."id") AS count
+    FROM "ConversationParticipant" p
+    JOIN "Message" m ON m."conversationId" = p."conversationId"
+    WHERE p."userId" = ${userId} AND m."senderId" <> ${userId}
+      AND (p."lastReadAt" IS NULL OR m."createdAt" > p."lastReadAt")
+    GROUP BY p."conversationId"
+  `
+  return new Map(rows.map((row) => [row.conversationId, Number(row.count)]))
+})
 
-  return counts.reduce((total, count) => total + count, 0)
-}
+export const getUnreadMessageCount = cache(async (userId: string) => {
+  const counts = await getUnreadCounts(userId)
+  return [...counts.values()].reduce((total, count) => total + count, 0)
+})
 
 function getConversationTitle(
   conversation: {

@@ -1,4 +1,5 @@
 import "server-only"
+import { cache } from "react"
 
 import { NotificationChannel, NotificationType } from "@prisma/client"
 
@@ -119,11 +120,11 @@ export async function notifyLinkedParentsForStudent(
   )
 }
 
-export async function getUnreadNotificationCount(userId: string) {
+export const getUnreadNotificationCount = cache(async (userId: string) => {
   return getPrismaClient().notification.count({
     where: { userId, readAt: null, archivedAt: null },
   })
-}
+})
 
 export async function markNotificationRead(notificationId: string, userId: string) {
   return getPrismaClient().notification.updateMany({

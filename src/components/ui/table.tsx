@@ -8,6 +8,9 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div
       data-slot="table-container"
+      tabIndex={0}
+      role="region"
+      aria-label="Scrollable data table"
       className="relative w-full overflow-x-auto"
     >
       <table
@@ -69,6 +72,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
+      scope="col"
       className={cn(
         "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
         className

@@ -24,6 +24,8 @@ import { getSelectableUserRoles } from "@/modules/admin/role-options"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import { UserForm } from "@/modules/admin/user-form"
 
+export const metadata = { title: "Users" }
+
 export default async function UsersPage({
   searchParams,
 }: {

@@ -2,8 +2,6 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 
 import {
-  ActionCard,
-  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
@@ -15,6 +13,8 @@ import { getInstructorClasses } from "@/modules/dashboards/data"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
+
+export const metadata = { title: "Instructor dashboard" }
 
 export default async function InstructorPage() {
   const user = await requireAuth()
@@ -52,14 +52,14 @@ export default async function InstructorPage() {
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
         />
         <MetricCard
-          label="Students"
+          label="Class enrollments"
           value={classSections.reduce(
             (total, section) => total + section._count.enrollments,
             0
           )}
         />
         <MetricCard
-          label="Open coursework"
+          label="Assignments & quizzes"
           value={classSections.reduce(
             (total, section) =>
               total + section._count.assignments + section._count.quizzes,
@@ -67,32 +67,6 @@ export default async function InstructorPage() {
           )}
         />
       </div>
-      <ActionPanel
-        description="Jump straight into the highest-frequency teaching tasks."
-        title="Teaching focus"
-      >
-        <ActionCard
-          actionLabel="Review classes"
-          badge={classSections.length}
-          description="Open lessons, attendance, assignments, quizzes, boards, and grades."
-          href="/instructor/classes"
-          title="Class management"
-        />
-        <ActionCard
-          actionLabel="Open inbox"
-          badge={unreadMessages || undefined}
-          description="Reply to student, parent, and class group messages."
-          href="/messages"
-          title="Messages"
-        />
-        <ActionCard
-          actionLabel="Review alerts"
-          badge={unreadNotifications || undefined}
-          description="See new submissions, board activity, grades, and system updates."
-          href="/notifications"
-          title="Notifications"
-        />
-      </ActionPanel>
       <InstructorClassTable classSections={classSections} />
     </DashboardPage>
   )
@@ -107,6 +81,15 @@ function InstructorClassTable({
     <SimpleTable
       empty="No assigned class sections yet."
       headers={["Class", "Course", "Term", "Campus", "Students", "Open"]}
+      mobileRows={classSections.map((section) => ({
+        id: section.id, title: section.name, href: `/instructor/classes/${section.id}`,
+        fields: [
+          { label: "Course", value: section.course.title },
+          { label: "Term", value: section.term?.name ?? "No term" },
+          { label: "Campus", value: section.campus?.name ?? "Organization-wide" },
+          { label: "Students", value: section._count.enrollments },
+        ],
+      }))}
       rows={classSections.map((section) => (
         <TableRow key={section.id}>
           <LinkedCell

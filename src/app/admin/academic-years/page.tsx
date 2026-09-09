@@ -16,6 +16,8 @@ import {
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
 
+export const metadata = { title: "Academic years" }
+
 export default async function AcademicYearsPage({
   searchParams,
 }: {

@@ -21,6 +21,8 @@ import {
 } from "@/modules/admin/resource-deletion-components"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 
+export const metadata = { title: "Class sections" }
+
 export default async function ClassSectionsPage({
   searchParams,
 }: {

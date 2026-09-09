@@ -10,6 +10,8 @@ import {
 } from "@/modules/dashboards/components"
 import { getStudentClasses } from "@/modules/dashboards/data"
 
+export const metadata = { title: "My classes" }
+
 export default async function StudentClassesPage() {
   const { enrollments } = await getStudentClasses()
 

@@ -7,6 +7,8 @@ import {
 } from "@/modules/dashboards/components"
 import { getParentStudents } from "@/modules/dashboards/data"
 
+export const metadata = { title: "Linked students" }
+
 export default async function ParentStudentsPage() {
   const { relations } = await getParentStudents()
 

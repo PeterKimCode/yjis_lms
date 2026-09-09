@@ -13,6 +13,8 @@ import {
   requireAdmin,
 } from "@/modules/admin/access"
 
+export const metadata = { title: "Audit logs" }
+
 export default async function AdminAuditLogsPage({
   searchParams,
 }: {

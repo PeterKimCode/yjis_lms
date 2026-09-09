@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans), "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -129,6 +129,44 @@
   }
   html {
     @apply font-sans;
+    scroll-padding-top: 5rem;
+  }
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #0f172a;
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+@media (max-width: 767px) {
+  [data-slot="button"], nav a, nav button, summary {
+    min-height: 44px;
+  }
+  [data-slot="button"]:has(svg):not(:has(span)) { min-width: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  body { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -180,27 +218,6 @@
     @apply border border-slate-200/80 bg-white/85 shadow-sm shadow-slate-200/60 backdrop-blur;
   }
 
-  .google-translate-widget {
-    @apply min-w-28 text-xs;
-  }
-
-  .google-translate-widget .goog-te-gadget {
-    @apply font-sans text-xs text-slate-200;
-    font-size: 0 !important;
-    line-height: 0 !important;
-  }
-
-  .google-translate-widget .goog-te-gadget span,
-  .google-translate-widget .goog-logo-link {
-    display: none;
-  }
-
-  .google-translate-widget .goog-te-combo {
-    @apply my-0 max-w-32 rounded-md border border-slate-700 bg-slate-950 px-1.5 py-1 text-xs text-slate-100 outline-none;
-    font-size: 0.75rem !important;
-    line-height: 1rem !important;
-  }
-
   body > .skiptranslate,
   iframe.goog-te-banner-frame {
     display: none !important;
@@ -210,28 +227,4 @@
     top: 0 !important;
   }
 
-  .login-slide-window {
-    @apply relative h-64 overflow-hidden;
-  }
-
-  .login-slide-card {
-    animation: login-slide-cycle 15s infinite;
-    animation-delay: calc(var(--slide-index) * 5s);
-    opacity: 0;
-    transform: translateX(2rem);
-    @apply absolute inset-0 flex flex-col justify-center;
-  }
-}
-
-@keyframes login-slide-cycle {
-  0%,
-  26% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  33%,
-  100% {
-    opacity: 0;
-    transform: translateX(-2rem);
-  }
 }

@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import { Bell, BookOpen, Home, LogIn, MessageSquare } from "lucide-react"
 
 import { BackButton } from "@/components/back-button"
+import { CurrentNavLink } from "@/components/current-nav-link"
 import { GoogleTranslateControl } from "@/components/google-translate-control"
 import { SessionCountdown } from "@/components/session-countdown"
 import { Button } from "@/components/ui/button"
@@ -43,7 +44,7 @@ export async function AppNavigation() {
             </span>
             <span className="hidden truncate sm:block">{headerTitle}</span>
           </Link>
-          <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <nav aria-label="Account navigation" className="flex shrink-0 items-center gap-1 sm:gap-2">
             {session?.user ? (
               <>
                 <SessionCountdown compact />
@@ -60,7 +61,7 @@ export async function AppNavigation() {
                 </Button>
                 <Button
                   asChild
-                  className="relative text-slate-100 hover:bg-white/10 hover:text-white"
+                  className="relative hidden text-slate-100 hover:bg-white/10 hover:text-white md:inline-flex"
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -72,7 +73,7 @@ export async function AppNavigation() {
                 </Button>
                 <Button
                   asChild
-                  className="relative text-slate-100 hover:bg-white/10 hover:text-white"
+                  className="relative hidden text-slate-100 hover:bg-white/10 hover:text-white md:inline-flex"
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -89,7 +90,7 @@ export async function AppNavigation() {
                 <AvatarMenu
                   avatarUrl={
                     headerUser?.avatarFileAsset
-                      ? `/api/files/${headerUser.avatarFileAsset.id}/download?disposition=inline`
+                      ? `/api/files/${headerUser.avatarFileAsset.id}/download?disposition=inline&thumbnail=1`
                       : null
                   }
                   roleSummary={roleSummary}
@@ -106,6 +107,10 @@ export async function AppNavigation() {
                   className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
                   showLabel={false}
                 />
+                <details className="relative sm:hidden">
+                  <summary className="cursor-pointer rounded-md px-2 py-2 text-sm">Language</summary>
+                  <div className="absolute right-0 top-full mt-2 rounded-md bg-slate-950 p-2"><GoogleTranslateControl /></div>
+                </details>
                 <GoogleTranslateControl className="hidden sm:flex" />
                 <Button asChild size="sm">
                   <Link href="/login">
@@ -166,7 +171,7 @@ function MobileBottomNavigation({
   unreadNotifications: number
 }) {
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-4 rounded-2xl border border-slate-200 bg-white/95 p-1.5 text-slate-700 shadow-2xl shadow-slate-900/20 backdrop-blur md:hidden">
+    <nav aria-label="Mobile navigation" style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }} className="fixed inset-x-3 z-40 grid grid-cols-4 rounded-xl border border-slate-200 bg-white/95 p-1.5 text-slate-700 shadow-lg md:hidden">
       <MobileNavLink href={dashboardHref} icon={<Home />} label="Home" />
       <MobileNavLink href={classHref} icon={<BookOpen />} label="Classes" />
       <MobileNavLink
@@ -197,8 +202,9 @@ function MobileNavLink({
   label: string
 }) {
   return (
-    <Link
-      className="relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium hover:bg-slate-100"
+    <CurrentNavLink
+      exact={label === "Home"}
+      className="relative flex min-w-0 flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs font-medium hover:bg-slate-100 aria-[current=page]:bg-blue-50 aria-[current=page]:text-blue-700"
       href={href}
     >
       <span className="[&_svg]:h-4 [&_svg]:w-4">{icon}</span>
@@ -208,7 +214,7 @@ function MobileNavLink({
           {badge > 99 ? "99+" : badge}
         </span>
       ) : null}
-    </Link>
+    </CurrentNavLink>
   )
 }
 

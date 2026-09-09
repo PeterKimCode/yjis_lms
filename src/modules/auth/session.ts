@@ -1,9 +1,10 @@
 import { getServerSession } from "next-auth"
+import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { authOptions } from "@/modules/auth/auth"
 
-export async function getCurrentSession() {
+export const getCurrentSession = cache(async () => {
   const session = await getServerSession(authOptions)
 
   if (
@@ -14,7 +15,7 @@ export async function getCurrentSession() {
   }
 
   return session
-}
+})
 
 export async function requireAuth() {
   const session = await getCurrentSession()

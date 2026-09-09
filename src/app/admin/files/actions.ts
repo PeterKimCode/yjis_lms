@@ -7,6 +7,7 @@ import { redirect } from "next/navigation"
 import { getPrismaClient } from "@/lib/prisma"
 import { isSuperAdmin, requireAdmin } from "@/modules/admin/access"
 import { writeAuditLog } from "@/modules/audit/service"
+import { thumbnailKey } from "@/modules/files/thumbnail"
 
 export async function deleteFileAssetAction(formData: FormData) {
   const admin = await requireAdmin()
@@ -64,6 +65,9 @@ export async function deleteFileAssetAction(formData: FormData) {
         Key: file.objectKey,
       })
     )
+    if (file.contentType?.startsWith("image/")) {
+      await createS3Client().send(new DeleteObjectCommand({ Bucket: file.bucket, Key: thumbnailKey(file.id) }))
+    }
   } catch (error) {
     console.error("File storage object delete failed", {
       bucket: file.bucket,

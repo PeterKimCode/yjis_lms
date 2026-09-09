@@ -43,6 +43,7 @@ export function LoginForm({
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
+    try {
     const result = await signIn("credentials", {
       email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
@@ -50,7 +51,6 @@ export function LoginForm({
       redirect: false,
     })
 
-    setIsSubmitting(false)
 
     if (result?.ok && result.url) {
       window.location.assign(result.url)
@@ -75,6 +75,11 @@ export function LoginForm({
         detail: { message, tone: "error" },
       })
     )
+    } catch {
+      setError("Unable to connect. Check your connection and try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -112,7 +117,7 @@ export function LoginForm({
               />
               <Button
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-1 top-1 h-8 w-8 p-0"
+                className="absolute right-0 top-0 h-full w-11 p-0 md:w-8"
                 type="button"
                 variant="ghost"
                 onClick={() => setShowPassword((value) => !value)}

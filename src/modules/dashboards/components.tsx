@@ -148,17 +148,30 @@ export function SimpleTable({
   headers,
   rows,
   empty,
+  mobileRows,
 }: {
   headers: string[]
   rows: ReactNode[]
   empty: ReactNode
+  mobileRows?: { id: string; title: string; href: string; fields: { label: string; value: ReactNode }[] }[]
 }) {
   if (rows.length === 0) {
     return <EmptyState>{empty}</EmptyState>
   }
 
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
+    <>
+    {mobileRows ? <div className="divide-y border-y md:hidden">
+      {mobileRows.map((row) => <article key={row.id} className="min-w-0 py-4">
+        <Link className="block min-h-11 break-words py-2 font-semibold text-primary underline-offset-4 hover:underline" href={row.href}>{row.title}</Link>
+        <dl className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
+          {row.fields.map((field) => <div key={field.label} className="contents">
+            <dt className="text-muted-foreground">{field.label}</dt><dd className="break-words">{field.value}</dd>
+          </div>)}
+        </dl>
+      </article>)}
+    </div> : null}
+    <div className={`${mobileRows ? "hidden md:block " : ""}max-h-[70vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60`}>
       <Table className="min-w-[720px] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80">
         <TableHeader>
           <TableRow>
@@ -175,6 +188,7 @@ export function SimpleTable({
         <TableBody>{rows}</TableBody>
       </Table>
     </div>
+    </>
   )
 }
 
