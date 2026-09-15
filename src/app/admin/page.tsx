@@ -1,9 +1,11 @@
+import { BentoGrid } from "@/modules/dashboards/bento-grid"
+import { MetricCard } from "@/modules/dashboards/components"
 import Link from "next/link"
 import Image from "next/image"
 import type { ReactNode } from "react"
 import { Prisma, UserRole } from "@prisma/client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { getPrismaClient } from "@/lib/prisma"
 import {
   getAcademicYearWhereForAdmin,
@@ -152,9 +154,9 @@ export default async function AdminPage({
   ] as const
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6">
       <AdminPageHeader
-        title="Admin overview"
+        title={`Welcome back, ${admin.user.name ?? "there"}`}
         description="Start with academic years, terms, courses, and class sections."
       />
       {selectedOrganization ? (
@@ -170,33 +172,14 @@ export default async function AdminPage({
           </Link>
         </div>
       ) : null}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {metrics.map(([label, value, href]) => (
-          <Link href={href} key={label}>
-            <Card className="lms-card lms-card-hover">
-              <CardHeader>
-                <CardTitle className="text-sm text-muted-foreground">
-                  {label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-2xl font-semibold">
-                {value}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <BentoGrid storageKey={`${admin.user.id}:admin`} title="Workspace overview" widgets={metrics.map(([label, value, href], index) => ({
+        id: label.toLowerCase().replaceAll(" ", "-"), title: label, kind: "metric", w: index < 2 ? 6 : 4, h: 4,
+        accent: index === 0 ? "blue" : index === 1 ? "mint" : "neutral",
+        content: <MetricCard label={label} value={value} href={href} />,
+      }))} />
       {organizationCards.length ? (
         <section className="space-y-3">
-          <div>
-            <h2 className="text-lg font-semibold">Organizations</h2>
-            <p className="text-sm text-muted-foreground">
-              Choose an organization card to filter this dashboard and related
-              admin pages.
-            </p>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {organizationCards.map((organization) => {
+          <BentoGrid storageKey={`${admin.user.id}:organizations`} title="Organizations" widgets={organizationCards.map((organization) => {
               const isSelected = organization.id === selectedOrganizationId
               const roleCounts =
                 roleCountsByOrganizationId.get(organization.id) ??
@@ -206,7 +189,9 @@ export default async function AdminPage({
                 ? `/api/files/${logoFileAssetId}/download?disposition=inline&thumbnail=1`
                 : "/brand/gtcc-logo.png"
 
-              return (
+              return {
+                id: organization.id, title: organization.name, w: 6, h: 14, minW: 4, minH: 10,
+                content: (
                 <Card
                   className={`lms-card lms-card-hover ${
                     isSelected ? "border-primary ring-2 ring-primary/20" : ""
@@ -266,7 +251,7 @@ export default async function AdminPage({
                         value={organization._count.fileAssets}
                       />
                     </div>
-                    <div className="rounded-lg border bg-white/70 p-2">
+                    <div className="border-t pt-3">
                       <p className="mb-2 text-xs font-medium text-muted-foreground">
                         Users by role
                       </p>
@@ -315,9 +300,9 @@ export default async function AdminPage({
                     </div>
                   </CardContent>
                 </Card>
-              )
-            })}
-          </div>
+                ),
+              }
+            })} />
         </section>
       ) : null}
     </div>
@@ -348,7 +333,7 @@ function OrgMetric({
 }) {
   return (
     <Link
-      className={`rounded-lg border bg-white/70 p-2 transition-colors hover:border-primary/50 hover:bg-primary/5 ${
+      className={`border-b border-slate-100 px-1 py-2 transition-colors hover:bg-blue-50 ${
         compact ? "flex items-center justify-between gap-2" : "block"
       }`}
       href={href}

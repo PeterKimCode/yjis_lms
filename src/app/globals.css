@@ -49,18 +49,18 @@
 }
 
 :root {
-  --background: #f6f8fb;
-  --foreground: #0f172a;
+  --background: #f5f6f8;
+  --foreground: #191c20;
   --card: oklch(1 0 0);
-  --card-foreground: #0f172a;
+  --card-foreground: #191c20;
   --popover: oklch(1 0 0);
-  --popover-foreground: #0f172a;
-  --primary: #2563eb;
+  --popover-foreground: #191c20;
+  --primary: #1458e4;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: #eef4ff;
   --secondary-foreground: #1e3a8a;
   --muted: #eef2f7;
-  --muted-foreground: #64748b;
+  --muted-foreground: #626974;
   --accent: #eaf2ff;
   --accent-foreground: #1d4ed8;
   --destructive: oklch(0.577 0.245 27.325);
@@ -72,9 +72,9 @@
   --chart-3: #d97706;
   --chart-4: #7c3aed;
   --chart-5: #e11d48;
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
+  --sidebar-foreground: #191c20;
   --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: #eef4ff;
@@ -120,12 +120,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    letter-spacing: 0;
   }
   body {
     @apply bg-background text-foreground;
-    background:
-      radial-gradient(circle at top left, rgb(219 234 254 / 0.65), transparent 30rem),
-      linear-gradient(180deg, #f8fbff 0%, #f6f8fb 34%, #f3f6fb 100%);
+    background: var(--background);
   }
   html {
     @apply font-sans;
@@ -144,7 +143,7 @@
   z-index: 100;
   padding: 0.75rem 1rem;
   background: white;
-  color: #0f172a;
+  color: #191c20;
   transform: translateY(-200%);
 }
 .skip-link:focus { transform: translateY(0); }
@@ -171,39 +170,12 @@
 }
 
 @layer components {
-  .app-shell-surface {
-    background:
-      radial-gradient(circle at 12% 0%, rgb(219 234 254 / 0.72), transparent 22rem),
-      radial-gradient(circle at 88% 8%, rgb(204 251 241 / 0.48), transparent 20rem),
-      #f6f8fb;
-  }
-
-  .role-admin-surface {
-    background:
-      radial-gradient(circle at 8% 0%, rgb(219 234 254 / 0.9), transparent 24rem),
-      radial-gradient(circle at 92% 10%, rgb(207 250 254 / 0.55), transparent 22rem),
-      #f5f8fc;
-  }
-
-  .role-instructor-surface {
-    background:
-      radial-gradient(circle at 8% 0%, rgb(204 251 241 / 0.82), transparent 24rem),
-      radial-gradient(circle at 92% 10%, rgb(220 252 231 / 0.62), transparent 22rem),
-      #f1faf7;
-  }
-
-  .role-student-surface {
-    background:
-      radial-gradient(circle at 8% 0%, rgb(224 231 255 / 0.86), transparent 24rem),
-      radial-gradient(circle at 92% 10%, rgb(219 234 254 / 0.64), transparent 22rem),
-      #f4f7ff;
-  }
-
+  .app-shell-surface,
+  .role-admin-surface,
+  .role-instructor-surface,
+  .role-student-surface,
   .role-parent-surface {
-    background:
-      radial-gradient(circle at 8% 0%, rgb(254 243 199 / 0.86), transparent 24rem),
-      radial-gradient(circle at 92% 10%, rgb(255 228 230 / 0.58), transparent 22rem),
-      #fff8f1;
+    background: #f5f6f8;
   }
 
   .lms-card {
@@ -211,11 +183,11 @@
   }
 
   .lms-card-hover {
-    @apply transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-slate-200/80;
+    @apply transition-[border-color,box-shadow] hover:border-slate-400 hover:shadow-sm;
   }
 
   .lms-soft-panel {
-    @apply border border-slate-200/80 bg-white/85 shadow-sm shadow-slate-200/60 backdrop-blur;
+    @apply border border-slate-200 bg-white;
   }
 
   body > .skiptranslate,

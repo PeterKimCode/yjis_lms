@@ -23,31 +23,34 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [] }: {
     return <div className="grid gap-1">{links.map(([href, label]) => {
       const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`))
       const Icon = icons[label as keyof typeof icons] ?? Settings
-      return <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${active ? "bg-white text-slate-950" : "text-slate-300 hover:bg-white/10 hover:text-white"}`}><Icon className="size-4 shrink-0" />{label}</Link>
+      return <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${active ? "bg-zinc-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-zinc-900"}`}><Icon className="size-4 shrink-0" />{label}</Link>
     })}</div>
   }
   function contents() {
     return <>
-      <Link href={schoolOnly ? "/admin/users" : "/admin"} aria-label="Admin home" className="mb-4 flex justify-center" onClick={() => setOpen(false)}><Image alt="Organization logo" src={logoUrl} width={112} height={112} className="size-28 rounded-full object-contain" unoptimized={logoUrl.startsWith("/api/")} /></Link>
-      <p className="text-sm font-semibold">Admin workspace</p><p className="mb-5 truncate text-xs text-slate-300">{email}</p>
+      <Link href={schoolOnly ? "/admin/users" : "/admin"} aria-label="Admin home" className="mb-7 flex min-w-0 items-center gap-3 py-3" onClick={() => setOpen(false)}>
+        <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
+        <span className="min-w-0"><span className="block text-sm font-semibold">Admin workspace</span><span className="block truncate text-xs text-slate-500">{email}</span></span>
+      </Link>
       <nav aria-label="Admin navigation" className="space-y-3">
         {group(primary)}
-        {!schoolOnly ? <details open className="rounded-md border border-white/10 p-2"><summary className="cursor-pointer px-2 py-2 text-sm">Academic setup</summary>{group(adminSetupLinks)}</details> : null}
+        {!schoolOnly ? <details open className="rounded-md border border-slate-200 p-2"><summary className="cursor-pointer px-2 py-2 text-sm">Academic setup</summary>{group(adminSetupLinks)}</details> : null}
         {group(adminCommunicationLinks)}
-        {pathname.startsWith("/messages") && messages.length ? <div className="ml-3 grid gap-1 border-l border-white/20 pl-2">{messages.map((message) => <Link key={message.id} href={message.href} onClick={() => setOpen(false)} aria-current={pathname === message.href ? "page" : undefined} className="rounded-md p-2 text-xs hover:bg-white/10"><span className="block truncate font-medium">{message.label}{message.unreadCount ? ` (${message.unreadCount})` : ""}</span><span className="block truncate text-slate-300">{message.preview}</span></Link>)}</div> : null}
+        {pathname.startsWith("/messages") && messages.length ? <div className="ml-3 grid gap-1 border-l border-slate-200 pl-2">{messages.map((message) => <Link key={message.id} href={message.href} onClick={() => setOpen(false)} aria-current={pathname === message.href ? "page" : undefined} className="rounded-md p-2 text-xs hover:bg-slate-100"><span className="block truncate font-medium">{message.label}{message.unreadCount ? ` (${message.unreadCount})` : ""}</span><span className="block truncate text-slate-500">{message.preview}</span></Link>)}</div> : null}
       </nav>
       <div className="mt-auto space-y-3 pt-6">
-        <LogoutButton size="sm" className="w-full border-white/10 bg-white/10 text-slate-100 hover:bg-white/20" />
-        <details><summary className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm"><LifeBuoy className="size-4" />Help & Contact</summary><div className="space-y-2 p-3 text-xs text-slate-300"><p>B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City Cavite</p><p>(046) 402-1779 / 0917-155-1779 / 0917-175-1779</p><a className="underline" href="mailto:gtcc2006@gmail.com">gtcc2006@gmail.com</a></div></details>
+        <LogoutButton size="sm" className="w-full border-slate-200 bg-slate-50 text-zinc-800 hover:bg-slate-100" />
+        <details><summary className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm"><LifeBuoy className="size-4" />Help & Contact</summary><div className="space-y-2 p-3 text-xs text-slate-500"><p>B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City Cavite</p><p>(046) 402-1779 / 0917-155-1779 / 0917-175-1779</p><a className="underline" href="mailto:gtcc2006@gmail.com">gtcc2006@gmail.com</a></div></details>
       </div>
     </>
   }
   return <>
-    <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-64 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-4 text-slate-100 md:flex">{contents()}</aside>
+    <div aria-hidden="true" className="hidden w-64 shrink-0 md:block" />
+    <aside className="fixed bottom-0 left-0 top-16 z-30 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 text-zinc-800 md:flex">{contents()}</aside>
     <div className="border-b bg-white px-4 py-2 md:hidden">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild><Button variant="outline" aria-label="Open admin menu"><Menu />Menu</Button></DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="fixed top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-[min(20rem,90vw)] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none bg-slate-950 p-4 text-slate-100 sm:max-w-sm">
+        <DialogContent aria-describedby={undefined} className="fixed top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-[min(20rem,90vw)] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none bg-white p-4 text-zinc-800 sm:max-w-sm">
           <DialogTitle className="sr-only">Admin menu</DialogTitle>{contents()}
         </DialogContent>
       </Dialog>

@@ -1,6 +1,5 @@
+import { BentoGrid } from "@/modules/dashboards/bento-grid"
 import {
-  ActionCard,
-  ActionPanel,
   DashboardPage,
   MetricCard,
   OpenButton,
@@ -25,70 +24,45 @@ export default async function ParentPage() {
 
   return (
     <DashboardPage
+      userName={user.name ?? "there"}
       title="Parent dashboard"
       description="Linked students and their current learning activity."
       tone="parent"
     >
-      <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard
+      <BentoGrid storageKey={`${user.id}:parent`} widgets={[
+        { id: "students", title: "Students", kind: "metric", w: 6, h: 4, accent: "blue", content: (<MetricCard
           description="Linked to your account"
           href="/parent/students"
           label="Students"
           value={relations.length}
-        />
-        <MetricCard
+        />) },
+        { id: "messages", title: "Messages", kind: "metric", w: 6, h: 4, accent: "mint", content: (<MetricCard
           description="Teacher conversations"
           href="/messages"
           label="Messages"
           tone={unreadMessages ? "attention" : "default"}
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
-        />
-        <MetricCard
+        />) },
+        { id: "notifications", title: "Notifications", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           description="Student activity alerts"
           href="/notifications"
           label="Notifications"
           tone={unreadNotifications ? "attention" : "default"}
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
-        />
-        <MetricCard
+        />) },
+        { id: "classes", title: "Classes", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           label="Classes"
           value={relations.reduce(
             (total, relation) => total + relation.student.enrollments.length,
             0
           )}
-        />
-        <MetricCard
+        />) },
+        { id: "primary-links", title: "Primary links", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           label="Primary links"
           value={relations.filter((relation) => relation.isPrimary).length}
-        />
-      </div>
-      <ActionPanel
-        description="Follow each linked student's class activity from one place."
-        title="Parent focus"
-      >
-        <ActionCard
-          actionLabel="View students"
-          badge={relations.length}
-          description="Open linked student profiles, classes, documents, and progress."
-          href="/parent/students"
-          title="Linked students"
-        />
-        <ActionCard
-          actionLabel="Open inbox"
-          badge={unreadMessages || undefined}
-          description="Continue parent-teacher conversations."
-          href="/messages"
-          title="Messages"
-        />
-        <ActionCard
-          actionLabel="Review alerts"
-          badge={unreadNotifications || undefined}
-          description="See class, assignment, grade, and document updates."
-          href="/notifications"
-          title="Notifications"
-        />
-      </ActionPanel>
-      <ParentStudentsTable relations={relations} />
+        />) },
+        { id: "student-list", title: "Linked students", w: 12, h: 9, minW: 6, content: <ParentStudentsTable relations={relations} /> },
+      ]} />
     </DashboardPage>
   )
 }

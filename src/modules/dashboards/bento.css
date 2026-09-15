@@ -1,0 +1,40 @@
+.bento-section { min-width: 0; margin-block: 2rem; }
+.bento-container { min-width: 0; }
+.bento-widget {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border: 1px solid #dfe3e8; border-radius: 8px; background: #fff;
+  box-shadow: 0 2px 0 #eceef1; color: #191c20;
+}
+.bento-widget[data-accent="blue"] { background: #eaf1ff; border-color: #d2dff5; }
+.bento-widget[data-accent="mint"] { background: #eaf7ee; border-color: #d5e8da; }
+.bento-widget[data-accent="rose"] { background: #fcf0f1; border-color: #eddfe1; }
+.bento-widget-header {
+  display: flex; align-items: center; gap: 10px; flex: 0 0 auto;
+  min-height: 48px; padding: 10px 18px; border-bottom: 1px solid rgb(24 24 27 / 7%);
+}
+.bento-marker { width: 9px; height: 9px; border: 2px solid #191c20; border-radius: 2px; flex-shrink: 0; }
+.bento-widget[data-accent="blue"] .bento-marker { background: #3476f6; }
+.bento-widget[data-accent="mint"] .bento-marker { background: #a0cf8c; }
+.bento-widget-body { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px; border-radius: 0 0 8px 8px; scrollbar-width: thin; }
+.bento-widget-body > [data-slot="card"], .bento-widget-body > a > [data-slot="card"] { border: 0; background: transparent; box-shadow: none; padding: 0; gap: 0; }
+.bento-widget-body > a { display: block; height: 100%; }
+.bento-widget[data-kind="metric"] [data-slot="card-header"] { display: none; }
+.bento-widget[data-kind="metric"] [data-slot="card-content"] { padding: 0; }
+.bento-widget[data-kind="metric"] [data-slot="card-content"] > div { font-size: 32px; line-height: 1.2; overflow-wrap: anywhere; }
+.bento-widget[data-kind="metric"] [data-slot="card-content"] > p { margin-top: 12px; font-size: 13px; }
+.bento-drag-handle { display: grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; touch-action: none; cursor: grab; color: #444; border-radius: 4px; }
+.bento-drag-handle:active { cursor: grabbing; }
+.is-editing .bento-widget { border: 1px dashed #52637a; }
+.is-editing .bento-widget-header { background: rgb(255 255 255 / 60%); }
+.bento-container .react-grid-item.react-grid-placeholder { background: #b3cffa; opacity: .4; border: 2px dashed #2563eb; border-radius: 8px; }
+.bento-container .react-resizable-handle { width: 26px; height: 26px; touch-action: none; z-index: 5; }
+.bento-container .react-resizable-handle::after { border-color: #191c20; right: 7px; bottom: 7px; width: 7px; height: 7px; }
+.bento-container .react-grid-item.react-draggable-dragging { box-shadow: 4px 6px 0 rgb(24 24 27 / 20%); }
+@media (max-width: 599px) {
+  .bento-widget-body { padding: 16px; }
+  .bento-drag-handle { width: 44px; height: 44px; }
+  .bento-widget-header { padding: 8px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-container .react-grid-item { transition: none !important; }
+}

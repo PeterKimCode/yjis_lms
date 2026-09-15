@@ -93,9 +93,9 @@ export function GoogleTranslateControl({ className }: { className?: string }) {
     setEnabled(true)
   }
 
-  return <div className={cn("flex flex-wrap items-center gap-2 rounded-md border border-slate-700 bg-slate-900 p-2 text-slate-100", className)}>
+  return <div className={cn("flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-zinc-800", className)}>
     <Languages className="size-4 shrink-0" aria-hidden="true" />
-    <select aria-label="Language" className="min-w-0 flex-1 rounded-md border border-slate-600 bg-slate-950 px-2 py-1 text-sm text-white" value={language} onChange={(event) => change(event.target.value)}>
+    <select aria-label="Language" className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-zinc-900" value={language} onChange={(event) => change(event.target.value)}>
       {options.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
     </select>
     <div id={id} ref={host} hidden aria-hidden="true" />

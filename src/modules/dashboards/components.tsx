@@ -20,21 +20,23 @@ export function DashboardPage({
   actions,
   children,
   tone = "default",
+  userName,
 }: {
   title: string
   description: string
   actions?: ReactNode
   children: ReactNode
   tone?: "default" | "admin" | "instructor" | "student" | "parent"
+  userName?: string
 }) {
   return (
-    <main className={`min-w-0 flex-1 px-4 py-8 ${getPageToneClass(tone)}`}>
-      <div className="mx-auto min-w-0 w-full max-w-6xl space-y-6">
-        <div className="lms-soft-panel animate-in fade-in-50 slide-in-from-bottom-2 flex flex-col gap-3 rounded-xl p-5 duration-500 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-1">
-            <div className="h-1.5 w-16 rounded-full bg-primary/70" />
-            <h1 className="break-words text-2xl font-semibold tracking-tight">{title}</h1>
-            <p className="break-words text-sm text-muted-foreground">{description}</p>
+    <main className={`min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10 ${getPageToneClass(tone)}`}>
+      <div className="mx-auto min-w-0 w-full max-w-[1600px] space-y-6">
+        <div className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-3">
+            {userName ? <p className="text-sm font-medium text-muted-foreground">{title}</p> : null}
+            <h1 className="break-words text-2xl font-semibold sm:text-3xl">{userName ? `Welcome back, ${userName}` : title}</h1>
+            <p className="max-w-2xl break-words text-sm leading-relaxed text-muted-foreground">{description}</p>
           </div>
           {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
@@ -59,7 +61,7 @@ export function MetricCard({
 }) {
   const card = (
     <Card
-      className={`lms-card ${href ? "group lms-card-hover" : ""} ${
+      className={`lms-card h-full ${href ? "group lms-card-hover" : ""} ${
         tone === "attention" ? "border-primary/40 bg-primary/5" : ""
       }`}
     >
@@ -80,7 +82,7 @@ export function MetricCard({
     </Card>
   )
 
-  return href ? <Link href={href}>{card}</Link> : card
+  return href ? <Link className="block h-full" href={href} aria-label={`${label}: ${value}`}>{card}</Link> : card
 }
 
 export function EmptyState({ children }: { children: ReactNode }) {

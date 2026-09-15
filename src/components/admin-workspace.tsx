@@ -12,6 +12,6 @@ export async function AdminWorkspace({ children, communication = false }: { chil
   ])
   return <div className="role-admin-surface flex min-w-0 flex-1 flex-col md:flex-row">
     <AdminSidebar logoUrl={logoUrl} email={user.email} schoolOnly={!isSuperAdmin(user) && user.roleAssignments.some((assignment) => assignment.role === "SCHOOL_ADMIN")} messages={messages} />
-    <section className={`flex min-w-0 flex-1 flex-col ${communication ? "" : "p-4 md:p-6"}`}>{children}</section>
+    <section className={`flex min-w-0 flex-1 flex-col ${communication ? "" : "px-4 py-8 sm:px-6 lg:px-10 lg:py-10"}`}>{children}</section>
   </div>
 }

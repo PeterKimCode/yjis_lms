@@ -5,6 +5,9 @@ import { SessionProvider } from "@/components/session-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ToastProvider } from "@/components/toast-provider";
 import "./globals.css";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+import "@/modules/dashboards/bento.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

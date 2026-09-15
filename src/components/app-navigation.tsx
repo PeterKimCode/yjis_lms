@@ -32,10 +32,10 @@ export async function AppNavigation() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-950 text-slate-100 shadow-sm shadow-slate-950/20">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white text-zinc-900">
         <div className="flex h-14 w-full items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
           <Link
-            className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-white sm:text-base"
+            className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-900 sm:text-base"
             href="/"
             title={headerTitle}
           >
@@ -50,7 +50,7 @@ export async function AppNavigation() {
                 <SessionCountdown compact />
                 <Button
                   asChild
-                  className="text-slate-100 hover:bg-white/10 hover:text-white"
+                  className="text-zinc-700 hover:bg-slate-100 hover:text-black"
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -61,7 +61,7 @@ export async function AppNavigation() {
                 </Button>
                 <Button
                   asChild
-                  className="relative hidden text-slate-100 hover:bg-white/10 hover:text-white md:inline-flex"
+                  className="relative hidden text-zinc-700 hover:bg-slate-100 hover:text-black md:inline-flex"
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -73,7 +73,7 @@ export async function AppNavigation() {
                 </Button>
                 <Button
                   asChild
-                  className="relative hidden text-slate-100 hover:bg-white/10 hover:text-white md:inline-flex"
+                  className="relative hidden text-zinc-700 hover:bg-slate-100 hover:text-black md:inline-flex"
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -84,8 +84,8 @@ export async function AppNavigation() {
                   </Link>
                 </Button>
                 <div className="hidden text-right md:block">
-                  <p className="text-sm font-medium text-white">{session.user.name}</p>
-                  <p className="text-xs text-slate-400">{roleSummary}</p>
+                  <p className="text-sm font-medium text-zinc-900">{session.user.name}</p>
+                  <p className="text-xs text-slate-500">{roleSummary}</p>
                 </div>
                 <AvatarMenu
                   avatarUrl={
@@ -97,19 +97,19 @@ export async function AppNavigation() {
                   userName={session.user.name ?? session.user.email ?? "User"}
                 />
                 <BackButton
-                  className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                  className="border-slate-300 bg-white text-zinc-800 hover:bg-slate-100"
                   showLabel={false}
                 />
               </>
             ) : (
               <>
                 <BackButton
-                  className="border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+                  className="border-slate-300 bg-white text-zinc-800 hover:bg-slate-100"
                   showLabel={false}
                 />
                 <details className="relative sm:hidden">
                   <summary className="cursor-pointer rounded-md px-2 py-2 text-sm">Language</summary>
-                  <div className="absolute right-0 top-full mt-2 rounded-md bg-slate-950 p-2"><GoogleTranslateControl /></div>
+                  <div className="absolute right-0 top-full mt-2 rounded-md border bg-white p-2"><GoogleTranslateControl /></div>
                 </details>
                 <GoogleTranslateControl className="hidden sm:flex" />
                 <Button asChild size="sm">
@@ -153,7 +153,7 @@ async function getHeaderUser(userId: string) {
 
 function NavBadge({ count }: { count: number }) {
   return count ? (
-    <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground ring-2 ring-slate-950">
+    <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] leading-none text-primary-foreground ring-2 ring-white">
       {count > 99 ? "99+" : count}
     </span>
   ) : null

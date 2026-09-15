@@ -18,6 +18,8 @@ import {
   Menu,
   MessageSquare,
   NotebookTabs,
+  PanelLeftClose,
+  PanelLeftOpen,
   School,
   type LucideIcon,
 } from "lucide-react"
@@ -65,18 +67,18 @@ type RoleSidebarNavProps = {
 
 const toneClasses = {
   instructor: {
-    active: "bg-white text-slate-950 shadow-sm",
-    hover: "hover:bg-white/10 hover:text-white",
+    active: "bg-zinc-900 text-white",
+    hover: "hover:bg-slate-100 hover:text-zinc-900",
     dot: "bg-emerald-500",
   },
   parent: {
-    active: "bg-white text-slate-950 shadow-sm",
-    hover: "hover:bg-white/10 hover:text-white",
+    active: "bg-zinc-900 text-white",
+    hover: "hover:bg-slate-100 hover:text-zinc-900",
     dot: "bg-amber-500",
   },
   student: {
-    active: "bg-white text-slate-950 shadow-sm",
-    hover: "hover:bg-white/10 hover:text-white",
+    active: "bg-zinc-900 text-white",
+    hover: "hover:bg-slate-100 hover:text-zinc-900",
     dot: "bg-blue-500",
   },
 } as const
@@ -102,46 +104,21 @@ export function RoleSidebarNav({
 
   return (
     <>
+      <div aria-hidden="true" className={`hidden shrink-0 md:block ${collapsed ? "w-20" : "w-64"}`} />
       <aside
-        className={`sticky top-16 hidden h-[calc(100vh-4rem)] shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-slate-950 p-3 text-slate-100 shadow-sm shadow-slate-950/40 transition-[width] md:flex ${
-          collapsed ? "w-16" : "w-64"
+        className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-y-auto border-r border-slate-200 bg-white p-3 text-zinc-800 transition-[width] md:flex ${
+          collapsed ? "w-20" : "w-64"
         }`}
       >
-        <div className={`mb-4 grid place-items-center ${collapsed ? "px-0" : "px-3"}`}>
-          <Link aria-label="Go to overview" href={`/${tone}`}>
-            <Image
-              alt="Learning Management System"
-              className={`rounded-full object-contain transition-transform hover:scale-105 ${
-                collapsed ? "h-10 w-10" : "h-28 w-28"
-              }`}
-              height={112}
-              loading="eager"
-              src={logoUrl}
-              width={112}
-              unoptimized={logoUrl.startsWith("/api/")}
-            />
+        <div className={`mb-7 flex items-center gap-2 py-3 ${collapsed ? "flex-col" : ""}`}>
+          <Link aria-label="Go to overview" className="flex min-w-0 flex-1 items-center gap-3" href={`/${tone}`}>
+            <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
+            {!collapsed ? <span className="min-w-0"><span className="block text-sm font-semibold">{title}</span><span className="block truncate text-xs text-muted-foreground">{userEmail}</span></span> : null}
           </Link>
-        </div>
-        <div className="mb-5 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${toneClass.dot}`} />
-              {!collapsed ? (
-                <p className="truncate text-sm font-semibold">{title}</p>
-              ) : null}
-            </div>
-            <button
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-white/10 bg-white/10 text-xs text-slate-300 transition-colors hover:bg-white/20 hover:text-white"
-              type="button"
-              onClick={() => setCollapsed((value) => !value)}
-            >
-              {collapsed ? ">" : "<"}
-            </button>
-          </div>
-          {!collapsed ? (
-            <p className="truncate text-xs text-slate-400">{userEmail}</p>
-          ) : null}
+          <button aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="grid size-8 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100" type="button" onClick={() => setCollapsed(!collapsed)}>
+            {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          </button>
         </div>
         <nav className="grid gap-1">
           {links.map((link) => {
@@ -156,7 +133,7 @@ export function RoleSidebarNav({
                   className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                     active
                       ? toneClass.active
-                      : `text-slate-300 ${toneClass.hover}`
+                      : `text-slate-600 ${toneClass.hover}`
                   }`}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
@@ -166,7 +143,7 @@ export function RoleSidebarNav({
                   <span className={collapsed ? "sr-only" : ""}>{link.label}</span>
                 </Link>
                 {!collapsed && link.label === "Classes" && classLinks.length ? (
-                  <div className="ml-3 mt-1 grid gap-1 border-l border-white/10 pl-2">
+                  <div className="ml-3 mt-1 grid gap-1 border-l border-slate-200 pl-2">
                     {classLinks.map((classLink) => {
                       const classActive =
                         pathname === classLink.href ||
@@ -177,7 +154,7 @@ export function RoleSidebarNav({
                           className={`flex gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
                             classActive
                               ? toneClass.active
-                              : "text-slate-400 hover:bg-white/10 hover:text-white"
+                              : "text-slate-500 hover:bg-slate-100 hover:text-zinc-900"
                           }`}
                           href={classLink.href}
                           aria-current={classActive ? "page" : undefined}
@@ -211,7 +188,7 @@ export function RoleSidebarNav({
                 link.label === "Messages" &&
                 pathname.startsWith("/messages") &&
                 messageLinks.length ? (
-                  <div className="ml-3 mt-1 grid gap-1 border-l border-white/10 pl-2">
+                  <div className="ml-3 mt-1 grid gap-1 border-l border-slate-200 pl-2">
                     {messageLinks.map((messageLink) => {
                       const messageActive = pathname === messageLink.href
 
@@ -220,7 +197,7 @@ export function RoleSidebarNav({
                           className={`rounded-md px-2 py-1.5 text-xs transition-colors ${
                             messageActive
                               ? toneClass.active
-                              : "text-slate-400 hover:bg-white/10 hover:text-white"
+                              : "text-slate-500 hover:bg-slate-100 hover:text-zinc-900"
                           }`}
                           href={messageLink.href}
                           key={messageLink.id}
@@ -249,14 +226,14 @@ export function RoleSidebarNav({
           })}
         </nav>
         {!collapsed && isClassRoute && sectionLinks.length ? (
-          <div className="mt-5 border-t border-white/10 pt-4">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="mt-5 border-t border-slate-200 pt-4">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Class sections
             </p>
             <div className="grid gap-1">
               {sectionLinks.map((section) => (
                 <Link
-                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-zinc-900"
                   href={section.href}
                   key={section.href}
                 >
@@ -290,7 +267,7 @@ export function RoleSidebarNav({
         </div>
       </header>
       <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
-          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-r border-slate-800 bg-slate-950 p-4 text-slate-100 shadow-xl">
+          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-r border-slate-200 bg-white p-4 text-zinc-800 shadow-xl">
             <DialogTitle className="sr-only">{title} menu</DialogTitle>
             <div className="mb-4 flex items-center justify-between">
               <Link
@@ -311,7 +288,7 @@ export function RoleSidebarNav({
                 <span className="text-sm font-semibold">{title}</span>
               </Link>
               <button
-                className="rounded-md border border-white/10 px-2 py-1 text-xs"
+                className="rounded-md border border-slate-200 px-2 py-1 text-xs"
                 type="button"
                 onClick={() => setMobileOpen(false)}
               >
@@ -330,7 +307,7 @@ export function RoleSidebarNav({
                       className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
                         active
                           ? toneClass.active
-                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-zinc-900"
                       }`}
                       href={link.href}
                       aria-current={active ? "page" : undefined}
@@ -340,7 +317,7 @@ export function RoleSidebarNav({
                       {link.label}
                     </Link>
                     {link.label === "Classes" && classLinks.length ? (
-                      <div className="ml-3 mt-1 grid gap-1 border-l border-white/10 pl-2">
+                      <div className="ml-3 mt-1 grid gap-1 border-l border-slate-200 pl-2">
                         {classLinks.map((classLink) => {
                           const classActive =
                             pathname === classLink.href ||
@@ -351,7 +328,7 @@ export function RoleSidebarNav({
                               className={`flex gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
                                 classActive
                                   ? toneClass.active
-                                  : "text-slate-400 hover:bg-white/10 hover:text-white"
+                                  : "text-slate-500 hover:bg-slate-100 hover:text-zinc-900"
                               }`}
                               href={classLink.href}
                               aria-current={classActive ? "page" : undefined}
@@ -387,14 +364,14 @@ export function RoleSidebarNav({
               })}
             </nav>
             {isClassRoute && sectionLinks.length ? (
-              <div className="mt-5 border-t border-white/10 pt-4">
-                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <div className="mt-5 border-t border-slate-200 pt-4">
+                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Class sections
                 </p>
                 <div className="grid gap-1">
                   {sectionLinks.map((section) => (
                     <Link
-                      className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                      className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-zinc-900"
                       href={section.href}
                       key={section.href}
                       onClick={() => setMobileOpen(false)}
@@ -418,12 +395,12 @@ function SidebarAccountActions({ collapsed = false }: { collapsed?: boolean }) {
   if (collapsed) return null
 
   return (
-    <div className="mt-auto border-t border-white/10 pt-4">
-      <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <div className="mt-auto border-t border-slate-200 pt-4">
+      <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
         Account
       </p>
       <LogoutButton
-        className="w-full justify-center border-white/10 bg-white/10 text-slate-100 hover:bg-white/20 hover:text-white"
+        className="w-full justify-center border-slate-200 bg-slate-50 text-zinc-800 hover:bg-slate-200 hover:text-zinc-900"
         size="sm"
       />
     </div>
@@ -434,7 +411,7 @@ function HelpContact({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <details className={collapsed ? "mt-auto pt-6" : "pt-4"}>
       <summary
-        className={`flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white ${
+        className={`flex cursor-pointer list-none items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-zinc-900 ${
           collapsed ? "justify-center px-0" : ""
         }`}
         title={collapsed ? "Help & Contact" : undefined}
@@ -443,8 +420,8 @@ function HelpContact({ collapsed = false }: { collapsed?: boolean }) {
         {collapsed ? <span className="sr-only">Help & Contact</span> : "Help & Contact"}
       </summary>
       {!collapsed ? (
-        <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
-          <p className="font-semibold text-white">ADDRESS</p>
+        <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="font-semibold text-zinc-900">ADDRESS</p>
           <p className="mt-1">
             B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City
             Cavite

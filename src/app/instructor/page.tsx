@@ -1,3 +1,4 @@
+import { BentoGrid } from "@/modules/dashboards/bento-grid"
 import Link from "next/link"
 import type { ReactNode } from "react"
 
@@ -26,48 +27,49 @@ export default async function InstructorPage() {
 
   return (
     <DashboardPage
+      userName={user.name ?? "there"}
       title="Instructor dashboard"
       description="Assigned class sections, learning activity, and teaching setup."
       tone="instructor"
     >
-      <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard
+      <BentoGrid storageKey={`${user.id}:instructor`} widgets={[
+        { id: "classes", title: "Classes", kind: "metric", w: 6, h: 4, accent: "blue", content: (<MetricCard
           description="Assigned to you"
           href="/instructor/classes"
           label="Classes"
           value={classSections.length}
-        />
-        <MetricCard
+        />) },
+        { id: "messages", title: "Messages", kind: "metric", w: 6, h: 4, accent: "mint", content: (<MetricCard
           description="Direct and class conversations"
           href="/messages"
           label="Messages"
           tone={unreadMessages ? "attention" : "default"}
           value={unreadMessages ? `${unreadMessages} unread` : "Open"}
-        />
-        <MetricCard
+        />) },
+        { id: "notifications", title: "Notifications", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           description="LMS activity alerts"
           href="/notifications"
           label="Notifications"
           tone={unreadNotifications ? "attention" : "default"}
           value={unreadNotifications ? `${unreadNotifications} unread` : "Open"}
-        />
-        <MetricCard
+        />) },
+        { id: "class-enrollments", title: "Class enrollments", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           label="Class enrollments"
           value={classSections.reduce(
             (total, section) => total + section._count.enrollments,
             0
           )}
-        />
-        <MetricCard
+        />) },
+        { id: "assignments-quizzes", title: "Assignments & quizzes", kind: "metric", w: 4, h: 4, accent: "neutral", content: (<MetricCard
           label="Assignments & quizzes"
           value={classSections.reduce(
             (total, section) =>
               total + section._count.assignments + section._count.quizzes,
             0
           )}
-        />
-      </div>
-      <InstructorClassTable classSections={classSections} />
+        />) },
+        { id: "class-list", title: "Your classes", w: 12, h: 9, minW: 6, content: <InstructorClassTable classSections={classSections} /> },
+      ]} />
     </DashboardPage>
   )
 }
