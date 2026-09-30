@@ -196,7 +196,7 @@ function formatClassSubLabel(
 }
 
 function getClassSectionAnchorLinks(tone: "instructor" | "student" | "parent") {
-  if (tone === "parent") return []
+  if (tone === "parent" || tone === "instructor") return []
 
   return [
     { href: "#lessons", label: "Lessons" },

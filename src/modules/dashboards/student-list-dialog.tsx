@@ -18,8 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { StatusBadge } from "@/modules/dashboards/components"
+import { Button } from "@/components/ui/button"
 
 type StudentListDialogProps = {
+  compact?: boolean
   count: number
   students: {
     email: string
@@ -29,11 +31,11 @@ type StudentListDialogProps = {
   }[]
 }
 
-export function StudentListDialog({ count, students }: StudentListDialogProps) {
+export function StudentListDialog({ count, students, compact = false }: StudentListDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button
+        {compact ? <Button type="button" size="sm" variant="outline">Students · {count}</Button> : <button
           className="block w-full text-left"
           type="button"
         >
@@ -48,7 +50,7 @@ export function StudentListDialog({ count, students }: StudentListDialogProps) {
               <p className="text-xs text-primary">View student list</p>
             </CardContent>
           </Card>
-        </button>
+        </button>}
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>

@@ -1,18 +1,20 @@
 "use client"
 
-import { useRef, useState, type ReactNode } from "react"
+import { Fragment, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { GripVertical } from "lucide-react"
-import { SimpleTable, TableCell, TableRow } from "@/modules/dashboards/components"
+import { ArrowDown, ArrowUp, GripVertical } from "lucide-react"
+import { EmptyState, SimpleTable, TableCell, TableRow } from "@/modules/dashboards/components"
+import { Button } from "@/components/ui/button"
 import { reorderLessons } from "@/modules/learning/actions"
 
-export function LessonOrderTable({ classSectionId, editable, lessons, headers, rows, empty }: {
+export function LessonOrderTable({ classSectionId, editable, lessons, headers, rows, empty, mobileCards }: {
   classSectionId: string
   editable: boolean
   lessons: { id: string; sequence: number; week?: number | null }[]
   headers: string[]
   rows: ReactNode[]
   empty: ReactNode
+  mobileCards?: ReactNode[]
 }) {
   const router = useRouter()
   const [order, setOrder] = useState(lessons.map((lesson) => lesson.id))
@@ -58,6 +60,32 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
       } catch { window.dispatchEvent(new CustomEvent("lms-toast", { detail: { message: "Undo failed. Please try again.", tone: "error" } })) }
       finally { setSaving(false) }
     }}>Undo order change</button> : null}
+    {mobileCards ? <div className="space-y-3 md:hidden">
+      {order.length === 0 ? <EmptyState>{empty}</EmptyState> : null}
+      {order.map((id, index) => {
+        const sourceIndex = lessons.findIndex((lesson) => lesson.id === id)
+        const week = lessons[sourceIndex].week ?? 0
+        const previousWeek = index ? lessons.find((lesson) => lesson.id === order[index - 1])?.week ?? 0 : -1
+        const canMove = (offset: number) => {
+          const destination = lessons.find((lesson) => lesson.id === order[index + offset])
+          return destination && (destination.week ?? 0) === week
+        }
+        return <Fragment key={id}>
+          {previousWeek !== week ? <button type="button" aria-expanded={!collapsed.includes(week)} className="min-h-11 w-full py-2 text-left text-sm font-medium" onClick={() => setCollapsed((values) => values.includes(week) ? values.filter((value) => value !== week) : [...values, week])}>{collapsed.includes(week) ? "+" : "−"} {week ? `Week ${week}` : "Ungrouped"}</button> : null}
+          {!collapsed.includes(week) ? <article className="min-w-0 rounded-lg border bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>Lesson {index + 1}</span>
+              {editable ? <div className="flex gap-1">
+                <Button type="button" size="icon-sm" variant="ghost" aria-label={`Move lesson ${index + 1} up`} disabled={saving || !canMove(-1)} onClick={() => { void move(id, order[index - 1]) }}><ArrowUp /></Button>
+                <Button type="button" size="icon-sm" variant="ghost" aria-label={`Move lesson ${index + 1} down`} disabled={saving || !canMove(1)} onClick={() => { void move(id, order[index + 1]) }}><ArrowDown /></Button>
+              </div> : null}
+            </div>
+            {mobileCards[sourceIndex]}
+          </article> : null}
+        </Fragment>
+      })}
+    </div> : null}
+    <div className={mobileCards ? "hidden md:block" : undefined}>
     <SimpleTable headers={headers} empty={empty} rows={order.flatMap((id, index) => {
       const sourceIndex = lessons.findIndex((lesson) => lesson.id === id)
       const week = lessons[sourceIndex].week ?? 0
@@ -107,6 +135,7 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
         {rows[sourceIndex]}
       </TableRow>]
     })} />
+    </div>
     {saving ? <p role="status" className="mt-2 text-sm text-muted-foreground">Saving lesson order...</p> : null}
   </div>
 }

@@ -86,8 +86,7 @@ export function AvatarMenu({
           </span>
         )}
       </summary>
-      <div className="absolute right-0 top-full z-50 mt-3 max-h-[calc(100dvh-6rem)] w-[min(18rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border bg-white p-3 text-slate-950 shadow-lg">
-        <span className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t bg-white" />
+      <div className="fixed inset-x-3 top-16 z-50 max-h-[calc(100dvh-4.75rem-env(safe-area-inset-bottom))] min-w-0 overflow-y-auto overscroll-contain rounded-xl border bg-white p-3 text-slate-950 shadow-lg [overflow-wrap:anywhere] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:max-h-[calc(100dvh-6rem)] sm:w-72">
         <p className="text-sm font-semibold">{userName}</p>
         {roleSummary ? (
           <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">
@@ -100,11 +99,11 @@ export function AvatarMenu({
         <div className="mt-3">
           <SessionCountdown />
         </div>
-        <form action={formAction} className="mt-3 grid gap-2" ref={formRef}>
+        <form action={formAction} className="mt-3 grid min-w-0 grid-cols-1 gap-2" ref={formRef}>
           <input
             aria-label="Profile photo"
             accept="image/jpeg,image/png,image/webp,image/gif"
-            className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-slate-700"
+            className="w-full min-w-0 max-w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium file:text-slate-700"
             name="avatar"
             type="file"
           />

@@ -209,16 +209,13 @@ export function SectionBlock({
 }) {
   return (
     <Card
-      className={`lms-card animate-in fade-in-50 slide-in-from-bottom-2 scroll-mt-24 overflow-hidden duration-500 ${getSectionAccentClass(title)}`}
+      className="lms-card animate-in fade-in-50 slide-in-from-bottom-2 scroll-mt-24 overflow-hidden duration-500"
       id={id}
     >
       <CardHeader className="gap-2 border-b border-slate-100/90 bg-white/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-[var(--section-accent,#2563eb)]" />
-              {title}
-            </CardTitle>
+            <CardTitle>{title}</CardTitle>
             {description ? (
               <p className="text-sm text-muted-foreground">{description}</p>
             ) : null}
@@ -335,9 +332,4 @@ function getPageToneClass(tone: "default" | "admin" | "instructor" | "student" |
     default:
       return "app-shell-surface"
   }
-}
-
-function getSectionAccentClass(title: string) {
-  void title
-  return "[--section-accent:#0f3f83] border-l-4 border-l-[#0f3f83]"
 }

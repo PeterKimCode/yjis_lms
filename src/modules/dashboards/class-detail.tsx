@@ -38,6 +38,9 @@ import {
 } from "@/modules/quizzes/quiz-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
 import { LessonOrderTable } from "@/modules/learning/lesson-order-table"
+import { InstructorClassTabs } from "@/modules/dashboards/instructor-class-tabs"
+import { resolveInstructorClassSelection, type InstructorClassSelection } from "@/modules/dashboards/instructor-class-navigation"
+import { LessonActionsMenu } from "@/modules/learning/lesson-actions-menu"
 import { LessonQuickActions } from "@/modules/learning/lesson-quick-actions"
 import { BulkLessonUpload } from "@/modules/learning/bulk-lesson-upload"
 import { LessonCompletionList } from "@/modules/learning/lesson-completion-list"
@@ -70,11 +73,13 @@ export async function ClassSectionDetail({
   classSectionId,
   mode = "student",
   selectedLessonId,
+  instructorSelection = resolveInstructorClassSelection(),
 }: {
   userId: string
   classSectionId: string
   mode?: ClassSectionDetailMode
   selectedLessonId?: string
+  instructorSelection?: InstructorClassSelection
 }) {
   const section = await getClassSectionDetail(userId, classSectionId, {
     publishedLessonsOnly: mode === "student",
@@ -104,8 +109,9 @@ export async function ClassSectionDetail({
     mode === "instructor" && selectedLessonId
       ? section.lessons.find((lesson) => lesson.id === selectedLessonId)
       : null
+  const showLessons = mode === "instructor" && instructorSelection.section === "lessons"
   const videoFileOptions =
-    mode === "instructor"
+    showLessons
       ? await getVideoFileOptionsForClassSection({
           classSectionId: section.id,
           organizationId: section.organizationId,
@@ -113,18 +119,43 @@ export async function ClassSectionDetail({
         })
       : []
   const lessonFileOptions =
-    mode === "instructor"
+    showLessons
       ? await getLessonFileOptionsForClassSection({
           classSectionId: section.id,
           organizationId: section.organizationId,
           campusId: section.campusId,
         })
       : []
-  const gradeWeights = getModuleWeights(section.gradingConfig)
   const instructorNames = formatInstructorNames(section.instructors)
+  const showSection = (id: string) => mode === "student" || instructorSelection.section === id
+
+  const instructorLessonContent = showLessons ? section.lessons.map((lesson) => {
+    const completedCount = lesson.videoProgress.filter((progress) => progress.completed).length
+    const completion = <FormDialog title={`Completion: ${lesson.title}`} trigger={`${completedCount}/${enrollmentCount}`} variant="outline">
+      <LessonCompletionList students={getLessonProgressRows(section, lesson.id).map((student) => ({ studentId: student.studentId, name: student.name, status: student.status, progressRate: student.progressRate, lastViewed: formatDateTime(student.lastWatchedAt) }))} />
+    </FormDialog>
+    const actions = <LessonActionsMenu classSectionId={section.id} lessonId={lesson.id} title={lesson.title}
+      edit={<LessonForm classSectionId={section.id} fileAssetOptions={lessonFileOptions} lesson={toLessonFormValue(lesson)} videoFileOptions={videoFileOptions} />}
+      preview={<div className="space-y-3">
+        <p className="whitespace-pre-wrap">{lesson.description}</p>
+        <LessonPreviewLink lesson={lesson} />
+        {lesson.contentType === "VIDEO" && lesson.videoProvider === "YOUTUBE" && lesson.videoUrl && parseYouTubeVideoId(lesson.videoUrl) ? <iframe title={lesson.title} className="aspect-video w-full" src={`https://www.youtube.com/embed/${parseYouTubeVideoId(lesson.videoUrl)}`} allowFullScreen /> : null}
+        {lesson.contentType === "VIDEO" && lesson.videoProvider === "HTML5" && lesson.videoFileAssetId ? <video controls preload="metadata" className="w-full" src={`/api/files/${lesson.videoFileAssetId}/download`} /> : null}
+      </div>}
+    />
+    const card = <div className="min-w-0 space-y-3 [overflow-wrap:anywhere]">
+      <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h3 className="font-medium">{lesson.title}</h3><p className="text-xs text-muted-foreground">{lesson.contentType === "VIDEO" ? (lesson.videoProvider === "YOUTUBE" ? "YouTube" : "Uploaded video") : lesson.contentType === "FILE" ? (lesson.videoFileAsset?.originalName.split(".").pop()?.toUpperCase() ?? "File") : "Text"}</p></div>{actions}</div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><LessonQuickActions classSectionId={section.id} lessonId={lesson.id} published={lesson.isPublished} /><div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Completion</span>{completion}</div></div>
+    </div>
+    return { completion, actions, card }
+  }) : []
 
   return (
     <DashboardPage
+      actions={mode === "instructor" ? <>
+        <StudentListDialog compact count={section._count.enrollments} students={section.enrollments.map((enrollment) => ({ email: enrollment.student.email ?? "-", id: enrollment.studentId, name: enrollment.student.name, status: enrollment.status }))} />
+        <form action={openClassConversation}><input name="classSectionId" type="hidden" value={section.id} /><Button size="sm" type="submit" variant="outline">Class conversation</Button></form>
+      </> : undefined}
       title={section.name}
       description={`${section.course.title} - ${
         section.campus?.name ?? "Organization-wide"
@@ -132,20 +163,9 @@ export async function ClassSectionDetail({
         instructorNames ? ` · Instructor: ${instructorNames}` : ""
       }`}
     >
+      {mode === "instructor" ? <InstructorClassTabs classSectionId={section.id} selection={instructorSelection} /> : <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {mode === "instructor" ? (
-          <StudentListDialog
-            count={section._count.enrollments}
-            students={section.enrollments.map((enrollment) => ({
-              email: enrollment.student.email ?? "-",
-              id: enrollment.studentId,
-              name: enrollment.student.name,
-              status: enrollment.status,
-            }))}
-          />
-        ) : (
-          <MetricCard label="Students" value={section._count.enrollments} />
-        )}
+        <MetricCard label="Students" value={section._count.enrollments} />
         <MetricCard label="Lessons" value={section.lessons.length} />
         <MetricCard label="Assignments" value={section.assignments.length} />
         <MetricCard label="Quizzes" value={section.quizzes.length} />
@@ -155,30 +175,22 @@ export async function ClassSectionDetail({
         <Button asChild size="sm" variant="outline">
           <Link href="/messages">Messages</Link>
         </Button>
-        {mode === "instructor" ? (
-          <form action={openClassConversation}>
-            <input name="classSectionId" type="hidden" value={section.id} />
-            <Button size="sm" type="submit" variant="outline">
-              Open class conversation
-            </Button>
-          </form>
-        ) : (
-          <Button asChild size="sm" variant="outline">
+        <Button asChild size="sm" variant="outline">
             <Link href="/messages">Message teacher</Link>
           </Button>
-        )}
       </div>
 
+      </>}
+
       <div className="flex flex-col gap-6">
-        <SectionBlock
+        {showSection("lessons") ? (<SectionBlock
           description="Create, publish, and review lesson completion."
           id="lessons"
           meta={<SectionBadge>{section.lessons.length} lessons</SectionBadge>}
-          title={`Lessons · ${gradeWeights.lessonsWeight}%`}
+          title="Lessons"
         >
           <div className="space-y-4">
-            {mode === "instructor" ? <FormDialog title="Upload lesson files" trigger="Upload files" variant="outline"><BulkLessonUpload classSectionId={section.id} /></FormDialog> : null}
-            {mode === "instructor" ? (
+            {mode === "instructor" ? <div className="flex flex-wrap gap-2">
               <FormDialog
                 title="Create lesson"
                 description="Add a text, video, or file lesson. Lesson order is assigned automatically."
@@ -190,7 +202,8 @@ export async function ClassSectionDetail({
                   videoFileOptions={videoFileOptions}
                 />
               </FormDialog>
-            ) : null}
+              <FormDialog title="Upload lesson files" trigger="Upload files" variant="outline"><BulkLessonUpload classSectionId={section.id} /></FormDialog>
+            </div> : null}
             <LessonOrderTable
               key={section.lessons.map((lesson) => `${lesson.id}:${lesson.week}`).sort().join(",")}
               classSectionId={section.id}
@@ -209,16 +222,12 @@ export async function ClassSectionDetail({
                       "Content",
                       "Published",
                       "Completion",
-                      "Preview",
-                      "Edit",
+                      "More",
                     ]
                   : ["Order", "Title", "Type", "Progress", "Open"]
               }
-              rows={section.lessons.map((lesson) => {
-                const completedCount = lesson.videoProgress.filter(
-                  (progress) => progress.completed
-                ).length
-
+              mobileCards={mode === "instructor" ? instructorLessonContent.map((item) => item.card) : undefined}
+              rows={section.lessons.map((lesson, index) => {
                 return (
                   <Fragment key={lesson.id}>
                     <TableCell className="min-w-[220px] whitespace-normal font-medium">{lesson.title}</TableCell>
@@ -229,34 +238,9 @@ export async function ClassSectionDetail({
                           <LessonQuickActions classSectionId={section.id} lessonId={lesson.id} published={lesson.isPublished} />
                         </TableCell>
                         <TableCell>
-                          <FormDialog title={`Completion: ${lesson.title}`} trigger={`${completedCount}/${enrollmentCount}`} variant="outline">
-                            <LessonCompletionList students={getLessonProgressRows(section, lesson.id).map((student) => ({ studentId: student.studentId, name: student.name, status: student.status, progressRate: student.progressRate, lastViewed: formatDateTime(student.lastWatchedAt) }))} />
-                          </FormDialog>
+                          {instructorLessonContent[index]?.completion}
                         </TableCell>
-                        <TableCell>
-                          <FormDialog title={lesson.title} trigger="Student preview" variant="outline">
-                            <p className="whitespace-pre-wrap">{lesson.description}</p>
-                            <LessonPreviewLink lesson={lesson} />
-                            {lesson.contentType === "VIDEO" && lesson.videoProvider === "YOUTUBE" && lesson.videoUrl && parseYouTubeVideoId(lesson.videoUrl) ? <iframe title={lesson.title} className="aspect-video w-full" src={`https://www.youtube.com/embed/${parseYouTubeVideoId(lesson.videoUrl)}`} allowFullScreen /> : null}
-                            {lesson.contentType === "VIDEO" && lesson.videoProvider === "HTML5" && lesson.videoFileAssetId ? <video controls preload="metadata" className="w-full" src={`/api/files/${lesson.videoFileAssetId}/download`} /> : null}
-                          </FormDialog>
-                        </TableCell>
-                        <TableCell>
-                          <FormDialog
-                            title={`Edit lesson: ${lesson.title}`}
-                            description="Update lesson content, publication, and attached video or file."
-                            trigger="Edit"
-                            variant="outline"
-                          >
-                            <LessonForm
-                              classSectionId={section.id}
-                              fileAssetOptions={lessonFileOptions}
-                              lesson={toLessonFormValue(lesson)}
-                              videoFileOptions={videoFileOptions}
-                            />
-                          </FormDialog>
-                          <LessonQuickActions classSectionId={section.id} lessonId={lesson.id} published={lesson.isPublished} duplicate />
-                        </TableCell>
+                        <TableCell>{instructorLessonContent[index]?.actions}</TableCell>
                       </>
                     ) : (
                       <>
@@ -330,9 +314,9 @@ export async function ClassSectionDetail({
               </div>
             ) : null}
           </div>
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("sessions") ? (<SectionBlock
           description="Scheduled class meetings and attendance setup."
           id="sessions"
           meta={<SectionBadge>{section.sessions.length} sessions</SectionBadge>}
@@ -442,9 +426,9 @@ export async function ClassSectionDetail({
               </TableRow>
             ))}
           />
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("attendance") ? (<SectionBlock
           description="Attendance summaries use the active school attendance policy."
           id="attendance"
           meta={
@@ -452,7 +436,7 @@ export async function ClassSectionDetail({
               {attendanceSummary.attendanceRate.toFixed(1)}% rate
             </SectionBadge>
           }
-          title={`Attendance · ${gradeWeights.attendanceWeight}%`}
+          title="Attendance"
         >
           <div className="space-y-4">
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
@@ -609,13 +593,13 @@ export async function ClassSectionDetail({
               />
             )}
           </div>
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("assignments") ? (<SectionBlock
           description="Manage assignments, student submissions, and grading feedback."
           id="assignments"
           meta={<SectionBadge>{section.assignments.length} assignments</SectionBadge>}
-          title={`Assignments · ${gradeWeights.assignmentsWeight}%`}
+          title="Assignments"
         >
           <AssignmentPanel
             assignments={section.assignments.map(toAssignmentPanelValue)}
@@ -625,13 +609,13 @@ export async function ClassSectionDetail({
             now={new Date().toISOString()}
             userId={userId}
           />
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("quizzes") ? (<SectionBlock
           description="Create quizzes, review attempts, and handle manual grading."
           id="quizzes"
           meta={<SectionBadge>{section.quizzes.length} quizzes</SectionBadge>}
-          title={`Quizzes · ${gradeWeights.quizzesWeight}%`}
+          title="Quizzes"
         >
           <QuizPanel
             classSectionId={section.id}
@@ -640,13 +624,13 @@ export async function ClassSectionDetail({
             quizzes={section.quizzes.map(toQuizPanelValue)}
             userId={userId}
           />
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("exams") ? (<SectionBlock
             description="Scheduled exams and published exam scores for this class section."
             id="exams"
             meta={<SectionBadge>{section.exams.length} exams</SectionBadge>}
-            title={`Exams · ${gradeWeights.examsWeight}%`}
+            title="Exams"
           >
             {mode === "instructor" ? (
               <ExamPanel
@@ -656,9 +640,9 @@ export async function ClassSectionDetail({
             ) : (
               <StudentExamTable section={section} studentId={userId} />
             )}
-          </SectionBlock>
+          </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("grades") ? (<SectionBlock
           description="Set module weights, calculate final grades, and publish results."
           id="grades"
           meta={<SectionBadge>{section.finalGrades.length} final grades</SectionBadge>}
@@ -670,9 +654,9 @@ export async function ClassSectionDetail({
             userId={userId}
             value={toGradebookPanelValue(section)}
           />
-        </SectionBlock>
+        </SectionBlock>) : null}
 
-        <SectionBlock
+        {showSection("boards") ? (<SectionBlock
           description="Class announcements, Q&A, resources, and discussion spaces."
           id="boards"
           meta={<SectionBadge>{section.boards.length} boards</SectionBadge>}
@@ -776,7 +760,7 @@ export async function ClassSectionDetail({
               <EmptyState>No boards yet.</EmptyState>
             )}
             </div>
-        </SectionBlock>
+        </SectionBlock>) : null}
       </div>
     </DashboardPage>
   )
