@@ -45,7 +45,7 @@ export async function RoleSidebarLayout({
     getConversationSidebarLinksForUser(user.id),
     getOrganizationLogoUrl(user.organizationId),
   ])
-  const sectionLinks = getClassSectionAnchorLinks(tone)
+  const sectionLinks: SidebarLink[] = []
 
   return (
     <div className={`${toneClass.bg} flex flex-1 flex-col md:flex-row`}>
@@ -172,7 +172,7 @@ async function getRoleClassLinks(
 
   return relations.flatMap((relation) =>
     relation.student.enrollments.map(({ classSection }) => ({
-      href: `/parent/students/${relation.student.id}`,
+      href: `/parent/students/${relation.student.id}/classes/${classSection.id}`,
       id: `${relation.student.id}-${classSection.id}`,
       label: classSection.name,
       subLabel: `${relation.student.name ?? "Linked student"} · ${classSection.course.title}`,
@@ -193,19 +193,4 @@ function formatClassSubLabel(
   return instructorNames.length
     ? `${courseTitle} · ${instructorNames.join(", ")}`
     : courseTitle
-}
-
-function getClassSectionAnchorLinks(tone: "instructor" | "student" | "parent") {
-  if (tone === "parent" || tone === "instructor") return []
-
-  return [
-    { href: "#lessons", label: "Lessons" },
-    { href: "#sessions", label: "Sessions" },
-    { href: "#attendance", label: "Attendance" },
-    { href: "#assignments", label: "Assignments" },
-    { href: "#quizzes", label: "Quizzes" },
-    { href: "#exams", label: "Exams" },
-    { href: "#grades", label: "Grades" },
-    { href: "#boards", label: "Boards" },
-  ]
 }

@@ -7,6 +7,7 @@ import {
   addWatchedInterval,
   getWatchedSeconds,
   isLikelySeek,
+  readWatchedIntervals,
   type WatchedInterval,
 } from "@/modules/learning/watch-intervals"
 
@@ -17,6 +18,7 @@ export function VideoProgressPlayer({
   durationSeconds,
   initialLastPositionSeconds = 0,
   initialWatchedSeconds = 0,
+  initialWatchedIntervals,
   initialProgressRate = 0,
   initialCompleted = false,
 }: {
@@ -25,12 +27,13 @@ export function VideoProgressPlayer({
   videoUrl: string
   durationSeconds?: number | null
   initialLastPositionSeconds?: number
+  initialWatchedIntervals?: unknown
   initialWatchedSeconds?: number
   initialProgressRate?: number
   initialCompleted?: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const intervalsRef = useRef<WatchedInterval[]>([])
+  const intervalsRef = useRef<WatchedInterval[]>(readWatchedIntervals(initialWatchedIntervals, initialWatchedSeconds))
   const lastSampleRef = useRef<number | null>(null)
   const watchedRef = useRef(Math.max(0, initialWatchedSeconds))
   const [watchedSeconds, setWatchedSeconds] = useState(
@@ -48,6 +51,11 @@ export function VideoProgressPlayer({
     const video = videoRef.current
     if (!video) return
 
+    const previousTime = lastSampleRef.current
+    if (previousTime !== null && !video.seeking && video.currentTime > previousTime && !isLikelySeek(previousTime, video.currentTime, 5)) {
+      intervalsRef.current = addWatchedInterval(intervalsRef.current, previousTime, video.currentTime)
+    }
+    lastSampleRef.current = video.currentTime
     const measuredDuration = Number.isFinite(video.duration)
       ? Math.floor(video.duration)
       : 0
@@ -66,6 +74,7 @@ export function VideoProgressPlayer({
         classSectionId,
         lessonId,
         watchedSeconds: nextWatchedSeconds,
+        watchedIntervals: intervalsRef.current,
         durationSeconds: measuredDuration || durationSeconds || 0,
         lastPositionSeconds: measuredPosition || lastPositionSeconds,
       })
@@ -110,13 +119,16 @@ export function VideoProgressPlayer({
         }}
         onPause={() => void persist()}
         onPlay={(event) => {
-          lastSampleRef.current = event.currentTarget.currentTime
+          lastSampleRef.current = event.currentTarget.currentTime < 1 ? 0 : event.currentTarget.currentTime
         }}
+        onSeeking={() => { lastSampleRef.current = null }}
+        onSeeked={(event) => { lastSampleRef.current = event.currentTarget.currentTime }}
         onTimeUpdate={(event) => {
           const position = Math.floor(event.currentTarget.currentTime)
           const previousTime = lastSampleRef.current
 
           if (
+            !event.currentTarget.seeking &&
             previousTime !== null &&
             event.currentTarget.currentTime > previousTime &&
             !isLikelySeek(previousTime, event.currentTarget.currentTime, 5)

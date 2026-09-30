@@ -111,6 +111,7 @@ export default async function StudentLessonPage({
               initialPositionSeconds={progress?.lastPositionSeconds ?? 0}
               initialProgressRate={Number(progress?.progressRate ?? 0)}
               initialWatchedSeconds={progress?.watchedSeconds ?? 0}
+              initialWatchedIntervals={progress?.watchedIntervals}
               lessonId={lesson.id}
               videoId={youtubeVideoId}
             />
@@ -124,6 +125,7 @@ export default async function StudentLessonPage({
               initialLastPositionSeconds={progress?.lastPositionSeconds ?? 0}
               initialProgressRate={Number(progress?.progressRate ?? 0)}
               initialWatchedSeconds={progress?.watchedSeconds ?? 0}
+              initialWatchedIntervals={progress?.watchedIntervals}
               lessonId={lesson.id}
               videoUrl={html5VideoUrl}
             />

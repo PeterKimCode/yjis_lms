@@ -3,6 +3,23 @@ export type WatchedInterval = {
   end: number
 }
 
+export function readWatchedIntervals(value: unknown, legacyWatchedSeconds = 0): WatchedInterval[] {
+  if (!Array.isArray(value)) {
+    // Previous records stored only a total. Preserve that total as the initial watched span.
+    return legacyWatchedSeconds > 0 ? [{ start: 0, end: legacyWatchedSeconds }] : []
+  }
+  return mergeWatchedIntervals(value.filter((item): item is WatchedInterval =>
+    typeof item === "object" && item !== null && Number.isFinite(item.start) && Number.isFinite(item.end) && item.start >= 0 && item.end > item.start
+  ))
+}
+
+export function getVideoCompletion(intervals: WatchedInterval[], duration: number) {
+  const bounded = duration > 0 ? mergeWatchedIntervals(intervals.map((item) => ({ start: Math.min(duration, item.start), end: Math.min(duration, item.end) }))) : mergeWatchedIntervals(intervals)
+  const watchedSeconds = getWatchedSeconds(bounded)
+  const completed = duration > 0 && watchedSeconds >= duration
+  return { intervals: bounded, watchedSeconds, completed, progressRate: duration > 0 ? Math.min(100, watchedSeconds / duration * 100) : 0 }
+}
+
 export function addWatchedInterval(
   intervals: WatchedInterval[],
   start: number,

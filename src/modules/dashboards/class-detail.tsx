@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge"
 import {
   DashboardPage,
   EmptyState,
-  MetricCard,
   OpenButton,
   SectionBlock,
   SimpleTable,
@@ -127,7 +126,7 @@ export async function ClassSectionDetail({
         })
       : []
   const instructorNames = formatInstructorNames(section.instructors)
-  const showSection = (id: string) => mode === "student" || instructorSelection.section === id
+  const showSection = (id: string) => instructorSelection.section === id
 
   const instructorLessonContent = showLessons ? section.lessons.map((lesson) => {
     const completedCount = lesson.videoProgress.filter((progress) => progress.completed).length
@@ -152,10 +151,6 @@ export async function ClassSectionDetail({
 
   return (
     <DashboardPage
-      actions={mode === "instructor" ? <>
-        <StudentListDialog compact count={section._count.enrollments} students={section.enrollments.map((enrollment) => ({ email: enrollment.student.email ?? "-", id: enrollment.studentId, name: enrollment.student.name, status: enrollment.status }))} />
-        <form action={openClassConversation}><input name="classSectionId" type="hidden" value={section.id} /><Button size="sm" type="submit" variant="outline">Class conversation</Button></form>
-      </> : undefined}
       title={section.name}
       description={`${section.course.title} - ${
         section.campus?.name ?? "Organization-wide"
@@ -163,24 +158,13 @@ export async function ClassSectionDetail({
         instructorNames ? ` · Instructor: ${instructorNames}` : ""
       }`}
     >
-      {mode === "instructor" ? <InstructorClassTabs classSectionId={section.id} selection={instructorSelection} /> : <>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Students" value={section._count.enrollments} />
-        <MetricCard label="Lessons" value={section.lessons.length} />
-        <MetricCard label="Assignments" value={section.assignments.length} />
-        <MetricCard label="Quizzes" value={section.quizzes.length} />
-      </div>
-
-      <div className="flex flex-wrap gap-2 rounded-lg border bg-background p-3">
-        <Button asChild size="sm" variant="outline">
-          <Link href="/messages">Messages</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-            <Link href="/messages">Message teacher</Link>
-          </Button>
-      </div>
-
-      </>}
+      <InstructorClassTabs classSectionId={section.id} selection={instructorSelection}
+        basePath={mode === "student" ? `/student/classes/${section.id}` : undefined}
+        actions={mode === "instructor" ? <>
+        <StudentListDialog compact count={section._count.enrollments} students={section.enrollments.map((enrollment) => ({ email: enrollment.student.email ?? "-", id: enrollment.studentId, name: enrollment.student.name, status: enrollment.status }))} />
+        <form action={openClassConversation}><input name="classSectionId" type="hidden" value={section.id} /><Button size="sm" type="submit" variant="outline">Class conversation</Button></form>
+      </> : <form action={openClassConversation}><input name="classSectionId" type="hidden" value={section.id} /><Button size="sm" type="submit" variant="outline">Class conversation</Button></form>}
+      />
 
       <div className="flex flex-col gap-6">
         {showSection("lessons") ? (<SectionBlock
@@ -193,7 +177,7 @@ export async function ClassSectionDetail({
             {mode === "instructor" ? <div className="flex flex-wrap gap-2">
               <FormDialog
                 title="Create lesson"
-                description="Add a text, video, or file lesson. Lesson order is assigned automatically."
+
                 trigger="Create lesson"
               >
                 <LessonForm

@@ -162,6 +162,7 @@ export async function getClassSectionDetail(
           materials: true,
           videoFileAsset: true,
           videoProgress: {
+            where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
             include: {
               student: true,
             },
@@ -169,6 +170,7 @@ export async function getClassSectionDetail(
         },
       },
       enrollments: {
+        where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
         include: {
           student: true,
         },
@@ -185,6 +187,7 @@ export async function getClassSectionDetail(
         include: {
           classSession: true,
           records: {
+            where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
             include: {
               student: true,
             },
@@ -204,6 +207,7 @@ export async function getClassSectionDetail(
             orderBy: { createdAt: "desc" },
           },
           submissions: {
+            where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
             include: {
               student: true,
               attachments: {
@@ -227,6 +231,7 @@ export async function getClassSectionDetail(
             orderBy: { sequence: "asc" },
           },
           attempts: {
+            where: options.publishedLessonsOnly ? { studentId: userId } : undefined,
             include: {
               student: true,
               answers: { include: { question: true, selectedOption: true } },

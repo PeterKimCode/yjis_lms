@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -11,23 +11,30 @@ import {
   type InstructorClassSelection,
 } from "./instructor-class-navigation"
 
-export function InstructorClassTabs({ classSectionId, selection }: {
+export function InstructorClassTabs({ classSectionId, selection, basePath, actions }: {
   classSectionId: string
   selection: InstructorClassSelection
+  basePath?: string
+  actions?: ReactNode
 }) {
   const router = useRouter()
+  const href = (target: InstructorClassSelection, lessonId?: string) => {
+    const original = instructorClassHref(classSectionId, target, lessonId)
+    return basePath ? `${basePath}${original.slice(original.indexOf("?"))}` : original
+  }
   useEffect(() => {
     function restoreHash() {
       const target = instructorSelectionForHash(window.location.hash)
       if (!target) return
       const lessonId = new URLSearchParams(window.location.search).get("lessonId") ?? undefined
       // Consume legacy hashes so a later menu selection cannot reopen the old section.
-      router.replace(instructorClassHref(classSectionId, target, lessonId), { scroll: false })
+      const original = instructorClassHref(classSectionId, target, lessonId)
+      router.replace(basePath ? `${basePath}${original.slice(original.indexOf("?"))}` : original, { scroll: false })
     }
     restoreHash()
     window.addEventListener("hashchange", restoreHash)
     return () => window.removeEventListener("hashchange", restoreHash)
-  }, [classSectionId, router, selection])
+  }, [basePath, classSectionId, router, selection])
 
   const views = selection.tab === "attendance"
     ? [{ id: "attendance", label: "Attendance" }, { id: "sessions", label: "Sessions" }]
@@ -38,10 +45,11 @@ export function InstructorClassTabs({ classSectionId, selection }: {
 
   return <div className="min-w-0 space-y-2">
     <nav aria-label="Class navigation" className="flex max-w-full gap-1 overflow-x-auto rounded-xl border bg-white p-1">
-      {instructorClassTabs.map((tab) => <Link key={tab.id} href={instructorClassHref(classSectionId, resolveInstructorClassSelection(tab.id))} scroll={false} aria-current={selection.tab === tab.id ? "page" : undefined} className={linkClass(selection.tab === tab.id)}>{tab.label}</Link>)}
+      {instructorClassTabs.map((tab) => <Link key={tab.id} href={href(resolveInstructorClassSelection(tab.id))} scroll={false} aria-current={selection.tab === tab.id ? "page" : undefined} className={linkClass(selection.tab === tab.id)}>{tab.label}</Link>)}
+      {actions ? <div className="flex shrink-0 items-center gap-1 [&_button]:min-h-11 [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-4 [&_button]:shadow-none">{actions}</div> : null}
     </nav>
     {views.length ? <nav aria-label={`${selection.tab === "attendance" ? "Attendance" : "Assessment"} sections`} className="flex max-w-full gap-1 overflow-x-auto">
-      {views.map((view) => <Link key={view.id} href={instructorClassHref(classSectionId, resolveInstructorClassSelection(selection.tab, view.id))} scroll={false} aria-current={selection.view === view.id ? "page" : undefined} className={linkClass(selection.view === view.id)}>{view.label}</Link>)}
+      {views.map((view) => <Link key={view.id} href={href(resolveInstructorClassSelection(selection.tab, view.id))} scroll={false} aria-current={selection.view === view.id ? "page" : undefined} className={linkClass(selection.view === view.id)}>{view.label}</Link>)}
     </nav> : null}
   </div>
 }

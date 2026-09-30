@@ -15,6 +15,7 @@ import {
   addWatchedInterval,
   getWatchedSeconds,
   isLikelySeek,
+  readWatchedIntervals,
   type WatchedInterval,
 } from "@/modules/learning/watch-intervals"
 
@@ -59,6 +60,7 @@ export function YouTubePlayer({
   videoId,
   initialPositionSeconds = 0,
   initialWatchedSeconds = 0,
+  initialWatchedIntervals,
   initialDurationSeconds = 0,
   initialProgressRate = 0,
   initialCompleted = false,
@@ -67,6 +69,7 @@ export function YouTubePlayer({
   lessonId: string
   videoId: string
   initialPositionSeconds?: number
+  initialWatchedIntervals?: unknown
   initialWatchedSeconds?: number
   initialDurationSeconds?: number
   initialProgressRate?: number
@@ -74,7 +77,7 @@ export function YouTubePlayer({
 }) {
   const elementId = `youtube-player-${useId().replace(/:/g, "")}`
   const playerRef = useRef<YouTubePlayerInstance | null>(null)
-  const intervalsRef = useRef<WatchedInterval[]>([])
+  const intervalsRef = useRef<WatchedInterval[]>(readWatchedIntervals(initialWatchedIntervals, initialWatchedSeconds))
   const watchedRef = useRef(Math.max(0, initialWatchedSeconds))
   const lastSampleRef = useRef<number | null>(null)
   const durationRef = useRef(initialDurationSeconds)
@@ -119,6 +122,7 @@ export function YouTubePlayer({
           classSectionId,
           lessonId,
           watchedSeconds: nextWatched,
+          watchedIntervals: intervalsRef.current,
           durationSeconds: measuredDuration,
           lastPositionSeconds: measuredPosition,
         })
@@ -164,7 +168,7 @@ export function YouTubePlayer({
               if (!window.YT) return
               playingRef.current = event.data === window.YT.PlayerState.PLAYING
               if (event.data === window.YT.PlayerState.PLAYING) {
-                lastSampleRef.current = event.target.getCurrentTime() || 0
+                lastSampleRef.current = event.target.getCurrentTime() < 1 ? 0 : event.target.getCurrentTime()
               }
               if (event.data === window.YT.PlayerState.PAUSED) {
                 void persist()

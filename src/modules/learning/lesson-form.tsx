@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useMemo, useRef, useState } from "react"
+import { useActionState, useEffect, useMemo, useRef, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
@@ -12,6 +12,8 @@ import {
   deleteLesson,
   saveLesson,
 } from "@/modules/learning/actions"
+
+import { uploadVideoInParts } from "@/modules/learning/upload-video"
 
 const selectableContentTypes = [
   "VIDEO",
@@ -72,7 +74,11 @@ export function LessonForm({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState("")
   const [uploadOk, setUploadOk] = useState(true)
+  const videoUploadAbortRef = useRef<AbortController | null>(null)
+  const videoFileInputRef = useRef<HTMLInputElement>(null)
+  const attachmentInputRef = useRef<HTMLInputElement>(null)
   const uploadRequestRef = useRef<XMLHttpRequest | null>(null)
+  useEffect(() => () => { videoUploadAbortRef.current?.abort(); uploadRequestRef.current?.abort() }, [])
   const [uploadedVideo, setUploadedVideo] = useState<{
     id: string
     label: string
@@ -103,93 +109,31 @@ export function LessonForm({
 
     return fileAssetOptions
   }, [fileAssetOptions, uploadedFile])
-  const note = useMemo(() => {
-    if (["QUIZ", "ASSIGNMENT", "LIVE_SESSION"].includes(contentType)) {
-      return "Detailed linking for this content type will be added in a later module."
-    }
-
-    return ""
-  }, [contentType])
-
-  function handleUploadVideo() {
-    const input = document.getElementById(
-      `lesson-video-file-${classSectionId}-${lesson?.id ?? "new"}`
-    ) as HTMLInputElement | null
-    const file = input?.files?.[0]
-
-    if (!file) {
+  async function handleUploadVideo() {
+    const file = videoFileInputRef.current?.files?.[0]
+    if (!file || isUploading) return
+    const controller = new AbortController()
+    videoUploadAbortRef.current = controller
+    setIsUploading(true)
+    setUploadProgress(0)
+    setUploadMessage("")
+    setUploadOk(true)
+    try {
+      const asset = await uploadVideoInParts(file, classSectionId, controller.signal, setUploadProgress)
+      setUploadedVideo(asset)
+      setSelectedVideoFileAssetId(asset.id)
+      setUploadMessage("Video uploaded.")
+    } catch (error) {
       setUploadOk(false)
-      setUploadMessage("Choose a video file to upload.")
-      return
-    }
-
-    const formData = new FormData()
-    formData.set("classSectionId", classSectionId)
-    formData.set("videoFile", file)
-
-    const request = new XMLHttpRequest()
-    uploadRequestRef.current = request
-    request.open("POST", "/api/learning/lesson-video-upload")
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        setUploadProgress(Math.min(99, Math.round((event.loaded / event.total) * 100)))
-      }
-    }
-    request.onloadstart = () => {
-      setIsUploading(true)
-      setUploadProgress(0)
-      setUploadMessage("")
-      setUploadOk(true)
-    }
-    request.onerror = () => {
-      uploadRequestRef.current = null
+      setUploadMessage(controller.signal.aborted ? "Video upload canceled." : error instanceof Error ? error.message : "Video upload failed. Please retry.")
+    } finally {
+      videoUploadAbortRef.current = null
       setIsUploading(false)
-      setUploadOk(false)
-      setUploadMessage("Video upload failed. Please try again.")
     }
-    request.onabort = () => {
-      uploadRequestRef.current = null
-      setIsUploading(false)
-      setUploadProgress(0)
-      setUploadOk(false)
-      setUploadMessage("Video upload canceled.")
-    }
-    request.onload = () => {
-      uploadRequestRef.current = null
-      setIsUploading(false)
-
-      try {
-        const response = JSON.parse(request.responseText) as {
-          ok?: boolean
-          message?: string
-          error?: string
-          fileAsset?: { id: string; label: string }
-        }
-
-        if (request.status >= 200 && request.status < 300 && response.fileAsset) {
-          setUploadProgress(100)
-          setUploadedVideo(response.fileAsset)
-          setSelectedVideoFileAssetId(response.fileAsset.id)
-          setUploadOk(true)
-          setUploadMessage(response.message ?? "Video uploaded.")
-          return
-        }
-
-        setUploadOk(false)
-        setUploadMessage(response.error ?? "Video upload failed. Please try again.")
-      } catch {
-        setUploadOk(false)
-        setUploadMessage("Video upload failed. Please try again.")
-      }
-    }
-    request.send(formData)
   }
 
   function handleUploadLessonFile() {
-    const input = document.getElementById(
-      `lesson-attachment-file-${classSectionId}-${lesson?.id ?? "new"}`
-    ) as HTMLInputElement | null
-    const file = input?.files?.[0]
+    const file = attachmentInputRef.current?.files?.[0]
 
     if (!file) {
       setUploadOk(false)
@@ -260,6 +204,7 @@ export function LessonForm({
   }
 
   function cancelUploadVideo() {
+    videoUploadAbortRef.current?.abort()
     uploadRequestRef.current?.abort()
   }
 
@@ -272,23 +217,23 @@ export function LessonForm({
           <input name="sequence" type="hidden" value={lesson.sequence} />
         ) : null}
         <div className="grid gap-3 md:grid-cols-2">
-          <label className="space-y-1 text-sm">
+          <label className="grid gap-1 text-sm">
             <span>Week</span>
-            <Input name="week" type="number" min={1} defaultValue={lesson?.week ?? ""} />
+            <Input className="h-9" name="week" type="number" min={1} defaultValue={lesson?.week ?? ""} />
           </label>
-          <label className="space-y-1 text-sm">
+          <label className="grid gap-1 text-sm">
             <span className="font-medium">Title</span>
-            <Input name="title" required defaultValue={lesson?.title ?? ""} />
+            <Input className="h-9" name="title" required defaultValue={lesson?.title ?? ""} />
           </label>
           {lesson ? (
-            <div className="space-y-1 text-sm">
+            <div className="grid gap-1 text-sm md:col-span-2">
               <span className="font-medium">Order</span>
               <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
                 {lesson.sequence}
               </div>
             </div>
           ) : null}
-          <label className="space-y-1 text-sm">
+          <label className="grid gap-1 text-sm">
             <span className="font-medium">Content type</span>
             {isLegacyType ? (
               <>
@@ -296,15 +241,12 @@ export function LessonForm({
                 <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm">
                   {contentType} (legacy)
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  Existing legacy lessons are preserved. New lessons can be Text,
-                  Video, or File.
-                </span>
               </>
             ) : (
               <select
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm"
                 name="contentType"
+                disabled={isUploading}
                 value={contentType}
                 onChange={(event) => setContentType(event.target.value as ContentType)}
               >
@@ -315,57 +257,29 @@ export function LessonForm({
             )}
           </label>
           {isVideo ? (
-            <label className="space-y-1 text-sm">
+            <label className="grid gap-1 text-sm">
               <span className="font-medium">Video source</span>
-              <select
-                className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                name="videoProvider"
-                value={videoProvider}
-                onChange={(event) =>
-                  setVideoProvider(event.target.value as VideoProvider)
-                }
-              >
-                {videoProviders.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
+              <select className="h-9 w-full rounded-md border bg-background px-3 text-sm" name="videoProvider" value={videoProvider} disabled={isUploading} onChange={(event) => { setVideoProvider(event.target.value as VideoProvider); setSelectedUploadFileName("") }}>
+                {videoProviders.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
           ) : null}
-          {isVideo ? (
-            <label className="space-y-1 text-sm">
-              <span className="font-medium">Video duration (seconds)</span>
-              <Input
-                min={0}
-                name="durationSeconds"
-                placeholder="Example: 5 minutes = 300"
-                type="number"
-                defaultValue={lesson?.durationSeconds ?? ""}
-              />
-              <span className="text-xs text-muted-foreground">
-                Used to calculate completion rate. Leave blank for text lessons.
-              </span>
-            </label>
-          ) : null}
           {isVideo && videoProvider === "YOUTUBE" ? (
-            <label className="space-y-1 text-sm md:col-span-2">
+            <label className="grid gap-1 text-sm md:col-span-2">
               <span className="font-medium">YouTube URL</span>
               <Input
+                className="h-9"
                 name="videoUrl"
                 placeholder="https://www.youtube.com/watch?v=..."
                 defaultValue={lesson?.videoUrl ?? ""}
               />
-              <span className="text-xs text-muted-foreground">
-                Paste a YouTube link. Uploaded videos use the Upload mode below.
-              </span>
             </label>
           ) : isVideo ? (
             <input name="videoUrl" type="hidden" value="" />
           ) : null}
           {isVideo && videoProvider === "HTML5" ? (
             <div className="space-y-2 text-sm md:col-span-2">
-              <label className="space-y-1">
+              <label className="grid gap-1">
                 <span className="font-medium">Uploaded video file</span>
                 <select
                   className="h-9 w-full rounded-md border bg-background px-3 text-sm"
@@ -378,7 +292,7 @@ export function LessonForm({
                 >
                   <option value="">
                     {effectiveVideoFileOptions.length
-                      ? "Select uploaded MinIO video"
+                      ? "Select uploaded video"
                       : "No uploaded videos yet. Upload a video below."}
                   </option>
                   {effectiveVideoFileOptions.map((option) => (
@@ -387,24 +301,21 @@ export function LessonForm({
                     </option>
                   ))}
                 </select>
-                <span className="block text-xs text-muted-foreground">
-                  Upload through the LMS so FileAsset metadata exists. Files
-                  uploaded directly in the MinIO Console do not appear here.
-                </span>
               </label>
               <div className="space-y-3 rounded-md border border-sky-200 bg-sky-50/80 p-3">
-                <label className="space-y-2 text-sm">
+                <label className="grid gap-2 text-sm">
                   <span className="font-medium text-sky-950">
                     Upload video to LMS
                   </span>
                   <span className="block text-xs text-sky-800">
-                    Upload through the LMS so FileAsset metadata exists for the
-                    dropdown. MP4, WebM, MOV, or M4V only. Max 500MB.
+                    MP4, WebM, MOV, or M4V only. Max 500MB.
                   </span>
                   <Input
+                    ref={videoFileInputRef}
+                    disabled={isUploading}
                     id={`lesson-video-file-${classSectionId}-${lesson?.id ?? "new"}`}
                     accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
-                    className="border-sky-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-sky-100 file:px-3 file:py-1 file:text-sky-800"
+                    className="h-10 border-sky-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-sky-100 file:px-3 file:py-1 file:text-sky-800"
                     onChange={(event) =>
                       setSelectedUploadFileName(
                         event.currentTarget.files?.[0]?.name ?? ""
@@ -427,14 +338,13 @@ export function LessonForm({
                       />
                     </div>
                     <p className="text-xs text-sky-800">
-                      Uploading video: {uploadProgress}%. Please keep this page
-                      open until it finishes.
+                      Uploading video: {uploadProgress}%
                     </p>
                   </div>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
-                    className="bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300"
+                    className="min-h-10 w-full px-4 sm:w-auto"
                     onClick={handleUploadVideo}
                     size="sm"
                     type="button"
@@ -466,7 +376,7 @@ export function LessonForm({
           ) : null}
           {isFile ? (
             <div className="space-y-2 text-sm md:col-span-2">
-              <label className="space-y-1">
+              <label className="grid gap-1">
                 <span className="font-medium">Uploaded lesson file</span>
                 <select
                   className="h-9 w-full rounded-md border bg-background px-3 text-sm"
@@ -488,24 +398,18 @@ export function LessonForm({
                     </option>
                   ))}
                 </select>
-                <span className="block text-xs text-muted-foreground">
-                  Allowed: PDF, Office files, text, images, CSV, and ZIP. Max
-                  20MB. Executable/script files are blocked.
-                </span>
               </label>
               <div className="space-y-3 rounded-md border border-indigo-200 bg-indigo-50/80 p-3">
-                <label className="space-y-2 text-sm">
+                <label className="grid gap-2 text-sm">
                   <span className="font-medium text-indigo-950">
                     Upload lesson file to LMS
                   </span>
-                  <span className="block text-xs text-indigo-800">
-                    Upload PPT, PDF, Word, Excel, text, image, CSV, or ZIP files
-                    for this lesson.
-                  </span>
                   <Input
+                    ref={attachmentInputRef}
+                    disabled={isUploading}
                     id={`lesson-attachment-file-${classSectionId}-${lesson?.id ?? "new"}`}
                     accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,.gif,.zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown,text/csv,image/png,image/jpeg,image/webp,image/gif,application/zip"
-                    className="border-indigo-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-indigo-100 file:px-3 file:py-1 file:text-indigo-800"
+                    className="h-10 border-indigo-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-indigo-100 file:px-3 file:py-1 file:text-indigo-800"
                     onChange={(event) =>
                       setSelectedUploadFileName(
                         event.currentTarget.files?.[0]?.name ?? ""
@@ -528,14 +432,13 @@ export function LessonForm({
                       />
                     </div>
                     <p className="text-xs text-indigo-800">
-                      Uploading file: {uploadProgress}%. Please keep this page
-                      open until it finishes.
+                      Uploading file: {uploadProgress}%
                     </p>
                   </div>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
-                    className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-slate-300"
+                    className="min-h-10 w-full px-4 sm:w-auto"
                     onClick={handleUploadLessonFile}
                     size="sm"
                     type="button"
@@ -565,7 +468,7 @@ export function LessonForm({
               </div>
             </div>
           ) : null}
-          <label className="space-y-1 text-sm md:col-span-2">
+          <label className="grid gap-1 text-sm md:col-span-2">
             <span className="font-medium">Description</span>
             <Textarea
               name="description"
@@ -575,7 +478,6 @@ export function LessonForm({
             />
           </label>
         </div>
-        {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
         <ActionFeedback closeOnSuccess state={saveState} />
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -586,7 +488,7 @@ export function LessonForm({
           />
           Published
         </label>
-        <Button size="sm" type="submit" disabled={isSaving}>
+        <Button size="sm" type="submit" disabled={isSaving || isUploading}>
           {isSaving
             ? "Saving..."
             : isEditing

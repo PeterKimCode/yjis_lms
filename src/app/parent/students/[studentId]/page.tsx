@@ -182,7 +182,7 @@ export default async function ParentStudentDetailPage({
             return (
               <TableRow key={assignment.id}>
                 <TableCell className="font-medium">
-                  {enrollment.classSection.name}
+                  <Link className="text-primary hover:underline" href={`/parent/students/${enrollment.studentId}/classes/${enrollment.classSectionId}`}>{enrollment.classSection.name}</Link>
                 </TableCell>
                 <TableCell>{assignment.title}</TableCell>
                 <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
@@ -232,7 +232,7 @@ export default async function ParentStudentDetailPage({
             return (
               <TableRow key={quiz.id}>
                 <TableCell className="font-medium">
-                  {enrollment.classSection.name}
+                  <Link className="text-primary hover:underline" href={`/parent/students/${enrollment.studentId}/classes/${enrollment.classSectionId}`}>{enrollment.classSection.name}</Link>
                 </TableCell>
                 <TableCell>{quiz.title}</TableCell>
                 <TableCell>{formatDateTime(quiz.closesAt)}</TableCell>
@@ -275,7 +275,7 @@ function ParentClassGradeRow({
   return (
     <TableRow>
       <TableCell className="font-medium">
-        {enrollment.classSection.name}
+        <Link className="text-primary hover:underline" href={`/parent/students/${enrollment.studentId}/classes/${enrollment.classSectionId}`}>{enrollment.classSection.name}</Link>
       </TableCell>
       <TableCell>{enrollment.classSection.course.title}</TableCell>
       <TableCell>{enrollment.classSection.term?.name ?? "No term"}</TableCell>

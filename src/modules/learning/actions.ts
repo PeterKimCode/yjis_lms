@@ -16,7 +16,8 @@ import {
   LessonVideoUploadError,
   uploadLessonVideoFile,
 } from "@/modules/learning/video-upload-service"
-import { resolvePolicies } from "@/modules/policies/resolve"
+
+import { getVideoCompletion, readWatchedIntervals } from "@/modules/learning/watch-intervals"
 
 const optionalString = z.preprocess(
   (value) => (typeof value === "string" ? value.trim() : ""),
@@ -339,6 +340,7 @@ const progressSchema = z.object({
   classSectionId: requiredString,
   lessonId: requiredString,
   watchedSeconds: z.coerce.number().int().min(0),
+  watchedIntervals: z.array(z.object({ start: z.number().finite().min(0), end: z.number().finite().min(0) })).max(2000).optional(),
   durationSeconds: z.coerce.number().int().min(0),
   lastPositionSeconds: z.coerce.number().int().min(0),
 })
@@ -368,28 +370,16 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
       },
     },
   })
-  const threshold = await getCompletionThreshold({
-    organizationId: lesson.organizationId,
-    campusId: lesson.classSection.campusId,
-    classSectionId: lesson.classSection.id,
-  })
-  const durationSeconds =
-    data.durationSeconds || lesson.durationSeconds || data.lastPositionSeconds || 0
   const existing = await getPrismaClient().videoProgress.findFirst({
     where: {
       lessonId: data.lessonId,
       studentId: student.id,
     },
   })
-  const watchedSeconds = Math.max(
-    existing?.watchedSeconds ?? 0,
-    data.watchedSeconds
-  )
-  const progressRate =
-    durationSeconds > 0
-      ? Math.min(100, (watchedSeconds / durationSeconds) * 100)
-      : 0
-  const completed = progressRate >= threshold
+  const durationSeconds = data.durationSeconds || lesson.durationSeconds || existing?.durationSeconds || 0
+  const history = readWatchedIntervals(existing?.watchedIntervals, existing?.watchedSeconds ?? 0)
+  const incoming = data.watchedIntervals ?? readWatchedIntervals(null, data.watchedSeconds)
+  const { watchedSeconds, progressRate, completed, intervals } = getVideoCompletion([...history, ...incoming], durationSeconds)
   const now = new Date()
   const values = {
     organizationId: lesson.organizationId,
@@ -398,6 +388,7 @@ export async function saveVideoProgress(input: z.input<typeof progressSchema>) {
     watchedSeconds,
     durationSeconds,
     totalSeconds: durationSeconds,
+    watchedIntervals: intervals,
     progressRate: progressRate.toFixed(2),
     percentComplete: progressRate.toFixed(2),
     completed,
@@ -478,13 +469,4 @@ export async function markLessonViewed(input: {
       data: values,
     })
   }
-}
-
-async function getCompletionThreshold(input: {
-  organizationId: string
-  campusId?: string | null
-  classSectionId?: string | null
-}) {
-  const policies = await resolvePolicies(input)
-  return policies.videoCompletion.completionThresholdPercent
 }

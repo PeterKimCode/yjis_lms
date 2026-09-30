@@ -887,6 +887,7 @@ model VideoProgress {
   materialId          String?
   studentId           String
   watchedSeconds      Int               @default(0)
+  watchedIntervals    Json?
   durationSeconds     Int?
   totalSeconds        Int?
   progressRate        Decimal           @default(0) @db.Decimal(5, 2)

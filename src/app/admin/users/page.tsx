@@ -20,7 +20,6 @@ import {
 } from "@/modules/admin/components"
 import { getAcademicSetupOptions } from "@/modules/admin/data"
 import { ConfirmDeleteForm } from "@/modules/admin/delete-button"
-import { getSelectableUserRoles } from "@/modules/admin/role-options"
 import { hasSuperAdminRole } from "@/modules/admin/scope-rules"
 import { UserForm } from "@/modules/admin/user-form"
 
@@ -126,13 +125,19 @@ export default async function UsersPage({
         title="Users"
         description="School-managed users. Public registration is intentionally unavailable."
       />
+      <nav aria-label="User roles" className="flex max-w-full gap-1 overflow-x-auto rounded-xl border bg-white p-1">
+        {[{ id: "", label: "All roles" }, ...Object.values(UserRole).map((id) => ({ id, label: id.toLowerCase().split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ") }))].map((item) => {
+          const query = new URLSearchParams({ q, organizationId, status, sort, dir })
+          if (item.id) query.set("role", item.id)
+          return <Link key={item.id} href={`/admin/users?${query}`} aria-current={role === item.id ? "page" : undefined} className={`flex min-h-11 shrink-0 items-center rounded-lg px-4 py-2 text-sm font-medium ${role === item.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{item.label}</Link>
+        })}
+      </nav>
       <UserFilters
         dir={dir}
         organizationId={organizationId}
         organizationOptions={admin.organizationOptions}
         q={q}
         role={role}
-        roleOptions={getSelectableUserRoles({ canManageAdminRoles })}
         sort={sort}
         status={status}
         resultSummary={`${filteredUsers.length} of ${users.length} users shown`}
@@ -455,7 +460,6 @@ function UserFilters({
   q,
   resultSummary,
   role,
-  roleOptions,
   sort,
   status,
 }: {
@@ -465,7 +469,6 @@ function UserFilters({
   q: string
   resultSummary: string
   role: string
-  roleOptions: readonly UserRole[]
   sort: UserSort
   status: string
 }) {
@@ -473,7 +476,7 @@ function UserFilters({
     <form action="/admin/users#user-results" className="lms-soft-panel rounded-lg p-3">
       <input name="sort" type="hidden" value={sort} />
       <input name="dir" type="hidden" value={dir} />
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         <input
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
           defaultValue={q}
@@ -492,18 +495,7 @@ function UserFilters({
             </option>
           ))}
         </select>
-        <select
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
-          defaultValue={role}
-          name="role"
-        >
-          <option value="">All roles</option>
-          {roleOptions.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
+        <input name="role" type="hidden" value={role} />
         <select
           className="h-9 rounded-lg border border-input bg-background px-3 text-sm"
           defaultValue={status}

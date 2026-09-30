@@ -12,7 +12,7 @@ export default async function ParentBoardPage({
 
   return (
     <BoardDetailPage
-      backHref={`/parent/students/${studentId}`}
+      backHref={`/parent/students/${studentId}/classes/${classSectionId}?tab=boards`}
       boardId={boardId}
       expectedClassSectionId={classSectionId}
       query={query}
