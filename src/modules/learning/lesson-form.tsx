@@ -109,8 +109,7 @@ export function LessonForm({
 
     return fileAssetOptions
   }, [fileAssetOptions, uploadedFile])
-  async function handleUploadVideo() {
-    const file = videoFileInputRef.current?.files?.[0]
+  async function handleUploadVideo(file = videoFileInputRef.current?.files?.[0]) {
     if (!file || isUploading) return
     const controller = new AbortController()
     videoUploadAbortRef.current = controller
@@ -209,7 +208,7 @@ export function LessonForm({
   }
 
   return (
-    <div className="space-y-3 rounded-md border bg-background p-3">
+    <div className="min-w-0 space-y-3 rounded-md border bg-background p-3 [overflow-wrap:anywhere]">
       <form action={saveAction} className="space-y-3">
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
         <input name="classSectionId" type="hidden" value={classSectionId} />
@@ -316,15 +315,16 @@ export function LessonForm({
                     id={`lesson-video-file-${classSectionId}-${lesson?.id ?? "new"}`}
                     accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v"
                     className="h-10 border-sky-300 bg-white file:mr-3 file:rounded-md file:border-0 file:bg-sky-100 file:px-3 file:py-1 file:text-sky-800"
-                    onChange={(event) =>
-                      setSelectedUploadFileName(
-                        event.currentTarget.files?.[0]?.name ?? ""
-                      )
-                    }
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0]
+                      setSelectedUploadFileName(file?.name ?? "")
+                      setSelectedVideoFileAssetId("")
+                      if (file) void handleUploadVideo(file)
+                    }}
                     type="file"
                   />
                   {selectedUploadFileName ? (
-                    <span className="block text-xs font-medium text-sky-800">
+                    <span className="block break-all text-xs font-medium text-sky-800">
                       Selected: {selectedUploadFileName}
                     </span>
                   ) : null}
@@ -343,15 +343,9 @@ export function LessonForm({
                   </div>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    className="min-h-10 w-full px-4 sm:w-auto"
-                    onClick={handleUploadVideo}
-                    size="sm"
-                    type="button"
-                    disabled={isUploading || !selectedUploadFileName}
-                  >
-                    {isUploading ? "Uploading..." : "Upload video"}
-                  </Button>
+                  {!isUploading && !uploadOk && selectedUploadFileName ? (
+                    <Button onClick={() => void handleUploadVideo()} size="sm" type="button" variant="outline">Retry upload</Button>
+                  ) : null}
                   {isUploading ? (
                     <Button
                       onClick={cancelUploadVideo}
@@ -418,7 +412,7 @@ export function LessonForm({
                     type="file"
                   />
                   {selectedUploadFileName ? (
-                    <span className="block text-xs font-medium text-indigo-800">
+                    <span className="block break-all text-xs font-medium text-indigo-800">
                       Selected: {selectedUploadFileName}
                     </span>
                   ) : null}
