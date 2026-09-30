@@ -1,5 +1,7 @@
 "use client"
 
+import { useAssessmentSave } from "@/components/assessment-save"
+
 import { useActionState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
@@ -70,7 +72,6 @@ export function AssignmentPanel({
         <>
           <FormDialog
             title="Create assignment"
-            description="Set assignment details, due date, late submission behavior, and max score."
             trigger="Create assignment"
           >
             <AssignmentForm
@@ -320,19 +321,19 @@ function AssignmentForm({
   classSectionId: string
   defaultAcceptsLate: boolean
 }) {
-  const [state, formAction, pending] = useActionState(
+  const {state, pending, onSubmit} = useAssessmentSave(
     saveAssignment,
     initialAssignmentActionState
   )
 
   return (
-    <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <form onInvalid={(event) => { const details = (event.target as HTMLElement).closest("details"); if (details) details.open = true }} onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
       <input name="id" type="hidden" value={assignment?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
       <label className="grid gap-1 text-sm">
         <span className="font-medium">Title</span>
         <Input name="title" required defaultValue={assignment?.title ?? ""} />
-      </label>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.title}</span></label>
       <label className="grid gap-1 text-sm">
         <span className="font-medium">Due at</span>
         <Input
@@ -340,8 +341,27 @@ function AssignmentForm({
           type="datetime-local"
           defaultValue={toLocalInputDate(assignment?.dueAt)}
         />
-      </label>
-      <label className="grid gap-1 text-sm">
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.dueAt}</span></label>
+      <label className="grid gap-1 text-sm md:col-span-2">
+        <span className="font-medium">Description</span>
+        <Textarea
+          name="description"
+          rows={3}
+          defaultValue={assignment?.description ?? ""}
+        />
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.description}</span></label>
+      <label className="grid gap-1 text-sm md:col-span-2">
+        <span className="font-medium">PDF attachment</span>
+        <Input
+          accept="application/pdf,.pdf"
+          name="pdfAttachmentFile"
+          type="file"
+        />
+        <span className="text-xs text-muted-foreground">
+          PDF only. Max 20MB.
+        </span>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pdfAttachmentFile}</span></label>
+      <details className="rounded-lg border p-3 md:col-span-2"><summary className="cursor-pointer text-sm font-medium">Additional settings</summary><div className="mt-3 grid gap-3 md:grid-cols-2">      <label className="grid gap-1 text-sm">
         <span className="font-medium">Max score</span>
         <Input
           min="0.01"
@@ -351,7 +371,7 @@ function AssignmentForm({
           type="number"
           defaultValue={assignment?.pointsPossible ?? "100"}
         />
-      </label>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pointsPossible}</span></label>
       <label className="flex items-end gap-2 text-sm">
         <input
           name="acceptsLate"
@@ -359,26 +379,8 @@ function AssignmentForm({
           defaultChecked={assignment?.acceptsLate ?? defaultAcceptsLate}
         />
         Allow late submission
-      </label>
-      <label className="grid gap-1 text-sm md:col-span-2 xl:col-span-4">
-        <span className="font-medium">Description</span>
-        <Textarea
-          name="description"
-          rows={3}
-          defaultValue={assignment?.description ?? ""}
-        />
-      </label>
-      <label className="grid gap-1 text-sm md:col-span-2 xl:col-span-4">
-        <span className="font-medium">PDF attachment</span>
-        <Input
-          accept="application/pdf,.pdf"
-          name="pdfAttachmentFile"
-          type="file"
-        />
-        <span className="text-xs text-muted-foreground">
-          Optional teacher PDF for students and parents. PDF only, max 20 MB.
-        </span>
-      </label>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.acceptsLate}</span></label>
+</div></details>
       <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>

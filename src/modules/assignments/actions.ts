@@ -61,6 +61,7 @@ export async function saveAssignment(
     return {
       ok: false,
       message: parsed.error.issues[0]?.message ?? "Check the assignment form.",
+      fieldErrors: Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])),
     }
   }
 

@@ -1,8 +1,11 @@
 "use client"
 
+import { useAssessmentSave } from "@/components/assessment-save"
+
 import Link from "next/link"
+import { QuizEditor } from "./quiz-editor"
 import type { ReactNode } from "react"
-import { useActionState, useState } from "react"
+import { useActionState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
@@ -19,13 +22,10 @@ import {
 } from "@/modules/dashboards/components"
 import { initialQuizActionState } from "@/modules/quizzes/action-state"
 import {
-  deleteQuestion,
   gradeQuizAnswer,
   removeExamAttachment,
   removeQuizAttachment,
   saveExam,
-  saveQuestion,
-  saveQuiz,
   submitQuiz,
 } from "@/modules/quizzes/actions"
 import {
@@ -116,13 +116,7 @@ export function QuizPanel({
   return (
     <div className="space-y-6">
       {mode === "instructor" ? (
-        <FormDialog
-          title="Create quiz"
-          description="Create quiz settings and optionally add questions before saving."
-          trigger="Create quiz"
-        >
-          <QuizForm classSectionId={classSectionId} />
-        </FormDialog>
+        <Button asChild><Link href={`/instructor/classes/${classSectionId}/quizzes/new`}>Create quiz</Link></Button>
       ) : null}
       <SimpleTable
         empty="No quizzes yet."
@@ -258,49 +252,16 @@ export function QuizPanel({
 export function QuizManagePanel({
   classSectionId,
   quiz,
+  uploadFailed,
 }: {
   classSectionId: string
   quiz: QuizPanelValue
+  uploadFailed?: boolean
 }) {
   return (
     <div className="space-y-6">
-      <details className="rounded-lg border bg-background p-4">
-        <summary className="cursor-pointer text-lg font-semibold">
-          Quiz settings/edit
-        </summary>
-        <div className="pt-4">
-          {quiz.attachments.length ? (
-            <div className="mb-4 rounded-md border bg-muted/20 p-3 text-sm">
-              <div className="mb-2 font-medium">Teacher PDFs</div>
-              <AttachmentLinks
-                attachments={quiz.attachments}
-                removeKind="quiz"
-              />
-            </div>
-          ) : null}
-          <QuizForm classSectionId={classSectionId} quiz={quiz} />
-        </div>
-      </details>
-
-      <section className="space-y-4 rounded-lg border bg-background p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Questions</h2>
-            <p className="text-sm text-muted-foreground">
-              Add auto-graded multiple-choice, true/false, and short-answer
-              questions, or use open-ended questions for manual grading.
-            </p>
-          </div>
-          <FormDialog
-            title="Add question"
-            description="Create a question with points, answer choices, and grading details."
-            trigger="Add question"
-          >
-            <QuestionForm quizId={quiz.id} />
-          </FormDialog>
-        </div>
-        <QuestionList quiz={quiz} />
-      </section>
+      {quiz.attachments.length ? <div className="rounded border bg-background p-3"><AttachmentLinks attachments={quiz.attachments} removeKind="quiz" /></div> : null}
+      <QuizEditor key={`${quiz.id}:${quiz.questions.map((question) => question.id).join(",")}:${Boolean(uploadFailed)}`} classSectionId={classSectionId} quiz={quiz} uploadFailed={uploadFailed} />
 
       <details className="rounded-lg border bg-background p-4">
         <summary className="cursor-pointer text-lg font-semibold">
@@ -315,572 +276,6 @@ export function QuizManagePanel({
         </div>
       </details>
     </div>
-  )
-}
-
-function QuizForm({
-  classSectionId,
-  quiz,
-}: {
-  classSectionId: string
-  quiz?: QuizPanelValue
-}) {
-  const [state, formAction, pending] = useActionState(
-    saveQuiz,
-    initialQuizActionState
-  )
-  const [draftQuestions, setDraftQuestions] = useState<number[]>(
-    quiz ? [] : [0]
-  )
-  const [nextDraftQuestion, setNextDraftQuestion] = useState(1)
-
-  return (
-    <form action={formAction} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <input name="id" type="hidden" value={quiz?.id ?? ""} />
-      <input name="classSectionId" type="hidden" value={classSectionId} />
-      <Field label="Title" help="Students will see this quiz title.">
-        <Input
-          name="title"
-          required
-          placeholder="Example: Week 1 Check Quiz"
-          defaultValue={quiz?.title ?? ""}
-        />
-      </Field>
-      <Field
-        label="Opens at"
-        help="Students cannot start before this time. Leave blank to open immediately."
-      >
-        <Input
-          name="opensAt"
-          type="datetime-local"
-          defaultValue={toLocalInputDate(quiz?.opensAt)}
-        />
-      </Field>
-      <Field
-        label="Closes at"
-        help="Students cannot submit after this time unless you later add an override policy."
-      >
-        <Input
-          name="closesAt"
-          type="datetime-local"
-          defaultValue={toLocalInputDate(quiz?.closesAt)}
-        />
-      </Field>
-      <Field
-        label="Time limit (minutes)"
-        help="Optional. Enter minutes. Leave blank for no time limit."
-      >
-        <Input
-          inputMode="numeric"
-          min="1"
-          name="timeLimitMinutes"
-          placeholder="Example: 30"
-          step="1"
-          type="number"
-          defaultValue={quiz?.timeLimitMinutes ?? ""}
-        />
-      </Field>
-      <Field
-        label="Maximum attempts"
-        help="How many times a student can take this quiz."
-      >
-        <Input
-          inputMode="numeric"
-          min="1"
-          name="maxAttempts"
-          placeholder="Example: 1"
-          step="1"
-          type="number"
-          defaultValue={quiz?.maxAttempts ?? "1"}
-        />
-      </Field>
-      <Field label="Points possible" help="Optional total shown for this quiz.">
-        <Input
-          inputMode="decimal"
-          min="0"
-          name="pointsPossible"
-          placeholder="Example: 100"
-          step="0.5"
-          type="number"
-          defaultValue={quiz?.pointsPossible ?? ""}
-        />
-      </Field>
-      <CheckField
-        name="isPublished"
-        label="Published"
-        help="Only published quizzes are visible to students."
-        defaultChecked={quiz?.isPublished ?? false}
-      />
-      <CheckField
-        name="showResultsToStudents"
-        label="Show results"
-        help="Students can see scores and answer feedback after submitting."
-        defaultChecked={quiz?.showResultsToStudents ?? true}
-      />
-      <CheckField
-        name="shuffleQuestions"
-        label="Shuffle questions"
-        help="Reserved for randomized delivery as quiz features grow."
-        defaultChecked={quiz?.shuffleQuestions ?? false}
-      />
-      <Field
-        label="Description"
-        help="Briefly describe what this quiz covers."
-        className="md:col-span-2 xl:col-span-4"
-      >
-        <Textarea
-          name="description"
-          rows={3}
-          placeholder="Describe what this quiz covers."
-          defaultValue={quiz?.description ?? ""}
-        />
-      </Field>
-      <Field
-        label="PDF attachment"
-        help="Optional teacher PDF for students and parents. PDF only, max 20 MB."
-        className="md:col-span-2 xl:col-span-4"
-      >
-        <Input accept="application/pdf,.pdf" name="pdfAttachmentFile" type="file" />
-      </Field>
-      {!quiz ? (
-        <div className="space-y-3 rounded-lg border bg-muted/20 p-3 md:col-span-2 xl:col-span-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-semibold">Questions</h3>
-              <p className="text-xs text-muted-foreground">
-                Optional. Add multiple-choice or open-ended questions now, or
-                manage questions later from the quiz detail page.
-              </p>
-            </div>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setDraftQuestions((items) => [...items, nextDraftQuestion])
-                setNextDraftQuestion((value) => value + 1)
-              }}
-            >
-              Add question
-            </Button>
-          </div>
-          <input
-            name="initialQuestionKeys"
-            type="hidden"
-            value={draftQuestions.join(",")}
-          />
-          <div className="space-y-3">
-            {draftQuestions.map((key, index) => (
-              <DraftQuestionFields
-                index={index}
-                key={key}
-                questionKey={key}
-                canRemove={draftQuestions.length > 1}
-                onRemove={() =>
-                  setDraftQuestions((items) =>
-                    items.filter((item) => item !== key)
-                  )
-                }
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
-      <ActionFeedback closeOnSuccess state={state} />
-      <div className="flex items-end">
-        <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving..." : quiz ? "Save quiz" : "Create quiz"}
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-function DraftQuestionFields({
-  canRemove,
-  index,
-  onRemove,
-  questionKey,
-}: {
-  canRemove: boolean
-  index: number
-  onRemove: () => void
-  questionKey: number
-}) {
-  const [type, setType] = useState<QuestionType>("MULTIPLE_CHOICE")
-  const prefix = `initialQuestion_${questionKey}`
-
-  return (
-    <div className="space-y-3 rounded-md border bg-background p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="text-sm font-medium">Question {index + 1}</h4>
-        {canRemove ? (
-          <Button size="sm" type="button" variant="outline" onClick={onRemove}>
-            Remove
-          </Button>
-        ) : null}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <Field label="Question type" help="Open ended is manually graded.">
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            name={`${prefix}_type`}
-            value={type}
-            onChange={(event) => setType(event.target.value as QuestionType)}
-          >
-            <option value="MULTIPLE_CHOICE">Multiple choice</option>
-            <option value="ESSAY">Open ended</option>
-          </select>
-        </Field>
-        <Field label="Points" help="Score for this question.">
-          <Input
-            inputMode="decimal"
-            min="0"
-            name={`${prefix}_points`}
-            placeholder="Example: 10"
-            step="0.5"
-            type="number"
-            defaultValue="1"
-          />
-        </Field>
-        <Field label="Prompt" className="md:col-span-2">
-          <Textarea
-            name={`${prefix}_prompt`}
-            placeholder="Type the question students will answer."
-            rows={2}
-          />
-        </Field>
-      </div>
-      {type === "MULTIPLE_CHOICE" ? (
-        <div className="grid gap-2">
-          {[0, 1, 2, 3].map((optionIndex) => (
-            <Input
-              key={optionIndex}
-              name={`${prefix}_option${optionIndex}`}
-              placeholder={`Answer ${optionIndex + 1}`}
-            />
-          ))}
-          <Field label="Correct answer" help="Select the correct option.">
-            <select
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              name={`${prefix}_correctOptionIndex`}
-              defaultValue="0"
-            >
-              {[0, 1, 2, 3].map((optionIndex) => (
-                <option key={optionIndex} value={optionIndex}>
-                  Answer {optionIndex + 1}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-      ) : (
-        <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-          Open-ended questions are saved as essay questions and graded manually.
-        </p>
-      )}
-    </div>
-  )
-}
-
-function QuestionForm({
-  question,
-  quizId,
-}: {
-  question?: QuestionValue
-  quizId: string
-}) {
-  const [state, formAction, pending] = useActionState(
-    saveQuestion,
-    initialQuizActionState
-  )
-  const [type, setType] = useState<QuestionType>(
-    question?.type ?? "MULTIPLE_CHOICE"
-  )
-  const key = question?.answerKey as {
-    correctOptionIndex?: number
-    correctBoolean?: boolean
-    acceptedAnswers?: string[]
-  } | null
-
-  return (
-    <form action={formAction} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <input name="id" type="hidden" value={question?.id ?? ""} />
-      <input name="quizId" type="hidden" value={quizId} />
-      <Field
-        label="Question type"
-        help="Choose how this question will be answered and graded."
-      >
-        <select
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          name="type"
-          value={type}
-          onChange={(event) => setType(event.target.value as QuestionType)}
-        >
-          {["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER", "ESSAY"].map(
-            (item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            )
-          )}
-        </select>
-      </Field>
-      <Field label="Display order" help="Lower numbers appear first.">
-        <Input
-          inputMode="numeric"
-          min="1"
-          name="sequence"
-          placeholder="Example: 1"
-          step="1"
-          type="number"
-          defaultValue={question?.sequence ?? 1}
-        />
-      </Field>
-      <Field
-        label="Points"
-        help="Score awarded for a correct answer or manual grade."
-      >
-        <Input
-          inputMode="decimal"
-          min="0"
-          name="points"
-          placeholder="Example: 10"
-          step="0.5"
-          type="number"
-          defaultValue={question?.points ?? "1"}
-        />
-      </Field>
-      <Field
-        label="Prompt"
-        help="Enter the question students will answer."
-        className="md:col-span-2 xl:col-span-4"
-      >
-        <Textarea
-          name="prompt"
-          required
-          rows={3}
-          placeholder="Enter the question students will answer."
-          defaultValue={question?.prompt ?? ""}
-        />
-      </Field>
-      <Field
-        label="Explanation"
-        help="Optional explanation shown after grading, if results are visible."
-        className="md:col-span-2 xl:col-span-4"
-      >
-        <Textarea
-          name="explanation"
-          rows={2}
-          placeholder="Optional explanation shown after grading, if results are visible."
-          defaultValue={question?.explanation ?? ""}
-        />
-      </Field>
-      {type === "MULTIPLE_CHOICE" ? (
-        <div className="grid gap-3 md:col-span-2 xl:col-span-4">
-          <p className="text-xs text-muted-foreground">
-            Select the correct option. For now, at least one correct answer is
-            required.
-          </p>
-          {[
-            "Example: VideoProgress",
-            "Example: User",
-            "Example: Course",
-            "Example: AttendanceRecord",
-          ].map((placeholder, index) => (
-            <Input
-              key={index}
-              name={`option${index}`}
-              placeholder={placeholder}
-              defaultValue={question?.options[index]?.text ?? ""}
-            />
-          ))}
-          <Field label="Correct answer" help="Choose the option that is correct.">
-            <select
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              name="correctOptionIndex"
-              defaultValue={key?.correctOptionIndex ?? 0}
-            >
-              {[0, 1, 2, 3].map((index) => (
-                <option key={index} value={index}>
-                  Option {index + 1}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-      ) : null}
-      {type === "TRUE_FALSE" ? (
-        <Field label="Correct answer" help="True/false questions are auto-graded.">
-          <select
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            name="trueFalseAnswer"
-            defaultValue={String(key?.correctBoolean ?? true)}
-          >
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
-        </Field>
-      ) : null}
-      {type === "SHORT_ANSWER" ? (
-        <Field
-          label="Accepted answer"
-          help="Exact match is used for simple auto-grading."
-          className="md:col-span-2"
-        >
-          <Textarea
-            name="acceptedAnswers"
-            rows={2}
-            placeholder="Example: VideoProgress"
-            defaultValue={(key?.acceptedAnswers ?? []).join(", ")}
-          />
-        </Field>
-      ) : null}
-      {type === "ESSAY" ? (
-        <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-4">
-          Essay questions are manually graded by the instructor.
-        </p>
-      ) : null}
-      <ActionFeedback closeOnSuccess state={state} />
-      <div className="flex items-end">
-        <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving..." : question ? "Save question" : "Add question"}
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-function QuestionList({ quiz }: { quiz: QuizPanelValue }) {
-  if (!quiz.questions.length) {
-    return <EmptyState>No questions yet.</EmptyState>
-  }
-
-  return (
-    <div className="grid gap-3">
-      {quiz.questions.map((question, index) => (
-        <article
-          className="rounded-xl border bg-white/80 p-4 shadow-sm"
-          key={question.id}
-        >
-          <div className="flex flex-wrap items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              {index + 1}
-            </div>
-            <div className="min-w-0 flex-1 space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge
-                      label={questionTypeLabel(question.type)}
-                      value={question.type}
-                    />
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                      {question.points} pts
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Order {question.sequence}
-                    </span>
-                  </div>
-                  <h3 className="mt-2 whitespace-pre-wrap text-base font-semibold">
-                    {question.prompt}
-                  </h3>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <FormDialog
-                    title="Edit question"
-                    description="Update the prompt, points, answer options, and grading details."
-                    trigger="Edit"
-                    variant="outline"
-                  >
-                    <QuestionForm quizId={quiz.id} question={question} />
-                  </FormDialog>
-                  <DeleteQuestionForm questionId={question.id} />
-                </div>
-              </div>
-              <QuestionCardDetails question={question} />
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  )
-}
-
-function QuestionCardDetails({ question }: { question: QuestionValue }) {
-  if (question.type === "MULTIPLE_CHOICE") {
-    return (
-      <div className="grid gap-2 md:grid-cols-2">
-        {question.options.map((option, index) => (
-          <div
-            className={`rounded-lg border px-3 py-2 text-sm ${
-              option.isCorrect
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "bg-background"
-            }`}
-            key={option.id}
-          >
-            <span className="font-medium">Option {index + 1}: </span>
-            {option.text}
-            {option.isCorrect ? (
-              <span className="ml-2 text-xs font-semibold">Correct</span>
-            ) : null}
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (question.type === "TRUE_FALSE") {
-    const key = question.answerKey as { correctBoolean?: boolean } | null
-
-    return (
-      <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm">
-        Correct answer:{" "}
-        <span className="font-semibold">
-          {String(key?.correctBoolean ?? true)}
-        </span>
-      </p>
-    )
-  }
-
-  if (question.type === "SHORT_ANSWER") {
-    const key = question.answerKey as { acceptedAnswers?: string[] } | null
-
-    return (
-      <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm">
-        Accepted answer:{" "}
-        <span className="font-semibold">
-          {(key?.acceptedAnswers ?? []).join(", ") || "Not set"}
-        </span>
-      </p>
-    )
-  }
-
-  return (
-    <p className="rounded-lg border bg-muted/20 px-3 py-2 text-sm text-muted-foreground">
-      Open-ended response. Grade manually after students submit.
-    </p>
-  )
-}
-
-function DeleteQuestionForm({ questionId }: { questionId: string }) {
-  const [state, formAction, pending] = useActionState(
-    deleteQuestion,
-    initialQuizActionState
-  )
-
-  return (
-    <form action={formAction} className="space-y-2">
-      <input name="questionId" type="hidden" value={questionId} />
-      <ActionFeedback state={state} />
-      <ConfirmSubmitButton
-        confirmMessage="Delete this question? Student attempts may be affected."
-        disabled={pending}
-      >
-        Delete question
-      </ConfirmSubmitButton>
-    </form>
   )
 }
 
@@ -1079,7 +474,6 @@ export function ExamPanel({
     <div className="space-y-4">
       <FormDialog
         title="Create exam"
-        description="Schedule a midterm, final, practical, oral, or custom exam."
         trigger="Create exam"
       >
         <ExamForm classSectionId={classSectionId} />
@@ -1113,17 +507,17 @@ export function ExamPanel({
 }
 
 function ExamForm({ classSectionId }: { classSectionId: string }) {
-  const [state, formAction, pending] = useActionState(
+  const {state, pending, onSubmit} = useAssessmentSave(
     saveExam,
     initialQuizActionState
   )
 
   return (
-    <form action={formAction} className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <form onInvalid={(event) => { const details = (event.target as HTMLElement).closest("details"); if (details) details.open = true }} onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
       <input name="classSectionId" type="hidden" value={classSectionId} />
       <Field label="Title">
         <Input name="title" required placeholder="Example: Midterm exam" />
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.title}</span></Field>
       <Field label="Type">
         <select
           className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -1136,17 +530,27 @@ function ExamForm({ classSectionId }: { classSectionId: string }) {
             </option>
           ))}
         </select>
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.examType}</span></Field>
       <Field label="Starts at">
         <Input name="startsAt" type="datetime-local" />
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.startsAt}</span></Field>
       <Field label="Ends at">
         <Input name="endsAt" type="datetime-local" />
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.endsAt}</span></Field>
       <Field label="Location">
         <Input name="location" placeholder="Room 101 or online" />
-      </Field>
-      <Field label="Max score">
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.location}</span></Field>
+      <Field label="Description (optional)" className="md:col-span-2">
+        <Textarea name="description" rows={2} />
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.description}</span></Field>
+      <Field
+        label="PDF attachment (optional)"
+        help="PDF only. Max 20MB."
+        className="md:col-span-2"
+      >
+        <Input accept="application/pdf,.pdf" name="pdfAttachmentFile" type="file" />
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pdfAttachmentFile}</span></Field>
+      <details className="rounded-lg border p-3 md:col-span-2"><summary className="cursor-pointer text-sm font-medium">Additional settings</summary><div className="mt-3 grid gap-3 md:grid-cols-2">      <Field label="Max score">
         <Input
           inputMode="decimal"
           min="0"
@@ -1154,7 +558,7 @@ function ExamForm({ classSectionId }: { classSectionId: string }) {
           step="0.5"
           type="number"
         />
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pointsPossible}</span></Field>
       <Field label="Weight">
         <Input
           inputMode="decimal"
@@ -1163,17 +567,8 @@ function ExamForm({ classSectionId }: { classSectionId: string }) {
           step="0.5"
           type="number"
         />
-      </Field>
-      <Field label="Description" className="md:col-span-2 xl:col-span-4">
-        <Textarea name="description" rows={2} />
-      </Field>
-      <Field
-        label="PDF attachment"
-        help="Optional teacher PDF for students and parents. PDF only, max 20 MB."
-        className="md:col-span-2 xl:col-span-4"
-      >
-        <Input accept="application/pdf,.pdf" name="pdfAttachmentFile" type="file" />
-      </Field>
+      <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.weight}</span></Field>
+</div></details>
       <ActionFeedback closeOnSuccess state={state} />
       <div className="flex items-end">
         <Button size="sm" type="submit" disabled={pending}>
@@ -1204,27 +599,6 @@ function Field({
   )
 }
 
-function CheckField({
-  defaultChecked,
-  help,
-  label,
-  name,
-}: {
-  defaultChecked: boolean
-  help: string
-  label: string
-  name: string
-}) {
-  return (
-    <label className="flex min-w-0 flex-col gap-1 text-sm">
-      <span className="flex items-center gap-2 font-medium">
-        <input name={name} type="checkbox" defaultChecked={defaultChecked} />
-        {label}
-      </span>
-      <span className="text-xs text-muted-foreground">{help}</span>
-    </label>
-  )
-}
 
 function AttachmentLinks({
   attachments,
@@ -1294,19 +668,6 @@ function availabilityLabel(quiz: QuizPanelValue, now: string) {
   return "Available"
 }
 
-function questionTypeLabel(type: QuestionType) {
-  switch (type) {
-    case "MULTIPLE_CHOICE":
-      return "Multiple choice"
-    case "TRUE_FALSE":
-      return "True/false"
-    case "SHORT_ANSWER":
-      return "Short answer"
-    case "ESSAY":
-      return "Open ended"
-  }
-}
-
 function totalPoints(quiz: QuizPanelValue) {
   return quiz.questions
     .reduce((total, question) => total + Number(question.points), 0)
@@ -1319,11 +680,4 @@ function formatDateTime(value: string | null | undefined) {
     dateStyle: "medium",
     timeStyle: "short",
   })
-}
-
-function toLocalInputDate(value: string | null | undefined) {
-  if (!value) return ""
-  const date = new Date(value)
-  const offset = date.getTimezoneOffset() * 60 * 1000
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
 }

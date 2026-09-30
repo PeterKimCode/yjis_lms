@@ -11,6 +11,7 @@ import {
   canViewClassSection,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import { saveEditorQuiz } from "./editor-service"
 import type { QuizActionState } from "@/modules/quizzes/action-state"
 import {
   createNotification,
@@ -93,6 +94,7 @@ export async function saveQuiz(
   _previousState: QuizActionState,
   formData: FormData
 ): Promise<QuizActionState> {
+  if (formData.has("editorQuestions")) return saveEditorQuiz(formData)
   const parsed = quizSchema.safeParse({
     id: formData.get("id") ?? "",
     classSectionId: formData.get("classSectionId") ?? "",
@@ -137,36 +139,31 @@ export async function saveQuiz(
   }
   const previous = id
     ? await prisma.quiz.findUnique({
-        where: { id },
+        where: { id, classSectionId: data.classSectionId },
         select: { isPublished: true },
       })
     : null
 
+  if (id && !previous) return { ok: false, message: "Quiz was not found in this class." }
   let quizId = id
   if (id) {
-    await prisma.quiz.update({ where: { id }, data: values })
+    await prisma.quiz.update({ where: { id, classSectionId: data.classSectionId }, data: values })
   } else {
-    const quiz = await prisma.quiz.create({
-      data: {
-        ...values,
-        organizationId: classSection.organizationId,
-      },
-    })
-    quizId = quiz.id
-    const questionResult = await createInitialQuizQuestions({
-      formData,
-      organizationId: classSection.organizationId,
-      quizId: quiz.id,
-    })
-    if (!questionResult.ok) {
-      return questionResult
-    }
+    try {
+      const quiz = await prisma.$transaction(async (tx) => {
+        const created = await tx.quiz.create({ data: { ...values, organizationId: classSection.organizationId } })
+        const result = await createInitialQuizQuestions({ formData, organizationId: classSection.organizationId, quizId: created.id, prisma: tx })
+        if (!result.ok) throw new Error(result.message)
+        return created
+      })
+      quizId = quiz.id
+    } catch (error) { return { ok: false, message: error instanceof Error ? error.message : "Quiz could not be saved." } }
     if (data.isPublished) {
       await notifyClassStudents(data.classSectionId, {
         actionUrl: `/student/classes/${data.classSectionId}`,
         actorUserId: manager.id,
         body: data.description ?? undefined,
-        entityId: quiz.id,
+        entityId: quizId!,
         entityType: "Quiz",
         title: `New quiz: ${data.title}`,
         type: NotificationType.NEW_QUIZ,
@@ -245,10 +242,12 @@ async function createInitialQuizQuestions({
   formData,
   organizationId,
   quizId,
+  prisma,
 }: {
   formData: FormData
   organizationId: string
   quizId: string
+  prisma: Prisma.TransactionClient
 }): Promise<QuizActionState> {
   const keys = String(formData.get("initialQuestionKeys") ?? "")
     .split(",")
@@ -257,7 +256,6 @@ async function createInitialQuizQuestions({
 
   if (!keys.length) return { ok: true, message: "" }
 
-  const prisma = getPrismaClient()
   for (const [index, key] of keys.entries()) {
     const prefix = `initialQuestion_${key}`
     const prompt = String(formData.get(`${prefix}_prompt`) ?? "").trim()
@@ -699,7 +697,7 @@ export async function saveExam(
   })
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Check exam form." }
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Check exam form.", fieldErrors: Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])) }
   }
 
   const data = parsed.data

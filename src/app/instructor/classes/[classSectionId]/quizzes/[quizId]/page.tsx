@@ -17,7 +17,9 @@ import { getQuizAttemptStatus } from "@/modules/quizzes/status"
 
 export default async function InstructorQuizManagePage({
   params,
+  searchParams,
 }: {
+  searchParams: Promise<{ uploadFailed?: string }>
   params: Promise<{ classSectionId: string; quizId: string }>
 }) {
   const user = await requireAnyRole([
@@ -29,6 +31,7 @@ export default async function InstructorQuizManagePage({
     UserRole.HOMEROOM_TEACHER,
   ])
   const { classSectionId, quizId } = await params
+  const { uploadFailed } = await searchParams
 
   if (!(await canManageClassSection(user.id, classSectionId))) {
     notFound()
@@ -94,7 +97,7 @@ export default async function InstructorQuizManagePage({
     >
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" variant="outline">
-          <Link href={`/instructor/classes/${classSectionId}`}>
+          <Link href={`/instructor/classes/${classSectionId}?tab=assessments&view=quizzes`}>
             Back to class
           </Link>
         </Button>
@@ -132,7 +135,7 @@ export default async function InstructorQuizManagePage({
         {quiz.description ? <p className="mt-3">{quiz.description}</p> : null}
       </div>
 
-      <QuizManagePanel classSectionId={classSectionId} quiz={panelQuiz} />
+      <QuizManagePanel classSectionId={classSectionId} quiz={panelQuiz} uploadFailed={uploadFailed === "1"} />
     </DashboardPage>
   )
 }
