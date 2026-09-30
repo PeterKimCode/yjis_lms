@@ -70,6 +70,7 @@ export function QuizEditor({
     )
   const back = `/instructor/classes/${classSectionId}?tab=assessments&view=quizzes`
   useEffect(() => {
+    let restoringHistory = false
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (dirty.current) {
         event.preventDefault()
@@ -84,19 +85,27 @@ export function QuizEditor({
         !event.ctrlKey &&
         !event.metaKey &&
         !event.shiftKey &&
-        !event.defaultPrevented &&
-        !window.confirm("You have unsaved changes. Leave anyway?")
+        !event.defaultPrevented
       ) {
-        event.preventDefault()
-        event.stopPropagation()
+        if (window.confirm("You have unsaved changes. Leave anyway?")) {
+          dirty.current = false
+        } else {
+          event.preventDefault()
+          event.stopPropagation()
+        }
       }
     }
     const pop = (event: PopStateEvent) => {
+      if (restoringHistory) {
+        restoringHistory = false
+        return
+      }
       if (
         dirty.current &&
         !window.confirm("You have unsaved changes. Leave anyway?")
       ) {
         event.stopImmediatePropagation()
+        restoringHistory = true
         window.history.forward()
       } else dirty.current = false
     }
