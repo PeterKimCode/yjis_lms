@@ -14,7 +14,7 @@ export const metadata = { title: "Messages" }
 export default async function MessagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; q?: string }>
+  searchParams: Promise<{ filter?: string; q?: string; classGroupUnavailable?: string }>
 }) {
   const params = await searchParams
   const [{ conversations, filter, q, user }, options] = await Promise.all([
@@ -38,6 +38,8 @@ export default async function MessagesPage({
               class groups.
             </p>
           </div>
+
+          {params.classGroupUnavailable ? <p role="status" className="rounded-lg border bg-background p-4 text-sm">Your instructor has not opened a class conversation yet.</p> : null}
 
           <NewMessageForm
             classGroupOptions={options.classGroupOptions}

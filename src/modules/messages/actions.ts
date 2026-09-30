@@ -174,11 +174,21 @@ export async function deleteMessage(formData: FormData) {
 export async function openClassConversation(formData: FormData) {
   const classSectionId = String(formData.get("classSectionId") ?? "")
   const user = await requireAuth()
-  const conversation = await createOrOpenClassGroup(
-    user.id,
-    classSectionId,
-    "Class conversation opened."
-  )
+  const prisma = getPrismaClient()
+  const manager = await canManageClassSection(user.id, classSectionId)
+  const enrollment = manager ? null : await prisma.enrollment.findUnique({
+    where: { classSectionId_studentId: { classSectionId, studentId: user.id } },
+    select: { id: true },
+  })
+  if (!manager && !enrollment) redirect("/messages")
+  const existing = await prisma.conversation.findFirst({
+    where: { classSectionId, type: ConversationType.CLASS_SECTION },
+  })
+  if (!manager && !existing) redirect("/messages?classGroupUnavailable=1")
+  const conversation = manager
+    ? await createOrOpenClassGroup(user.id, classSectionId, "Class conversation opened.")
+    : existing!
+  await ensureParticipant(conversation.id, user.id)
 
   redirect(`/messages/${conversation.id}`)
 }

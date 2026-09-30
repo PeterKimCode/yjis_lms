@@ -240,6 +240,7 @@ export function EditMessageForm({
   return (
     <FormDialog
       description="Update this text message. Attachments are not enabled in messenger."
+      triggerClassName="bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900"
       title="Edit message"
       trigger="Edit"
       variant="outline"

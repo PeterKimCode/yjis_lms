@@ -126,7 +126,7 @@ export default async function UsersPage({
         description="School-managed users. Public registration is intentionally unavailable."
       />
       <nav aria-label="User roles" className="flex max-w-full gap-1 overflow-x-auto rounded-xl border bg-white p-1">
-        {[{ id: "", label: "All roles" }, ...Object.values(UserRole).map((id) => ({ id, label: id.toLowerCase().split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ") }))].map((item) => {
+        {[{ id: "", label: "All roles" }, ...Object.values(UserRole).filter((role) => role !== UserRole.ORG_ADMIN && role !== UserRole.HOMEROOM_TEACHER).map((id) => ({ id, label: id.toLowerCase().split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ") }))].map((item) => {
           const query = new URLSearchParams({ q, organizationId, status, sort, dir })
           if (item.id) query.set("role", item.id)
           return <Link key={item.id} href={`/admin/users?${query}`} aria-current={role === item.id ? "page" : undefined} className={`flex min-h-11 shrink-0 items-center rounded-lg px-4 py-2 text-sm font-medium ${role === item.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{item.label}</Link>

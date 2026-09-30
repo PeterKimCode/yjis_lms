@@ -18,7 +18,9 @@ export function FormDialog({
   title,
   trigger,
   variant = "default",
+  triggerClassName,
 }: {
+  triggerClassName?: string
   children: ReactNode
   description?: string
   title: string
@@ -28,7 +30,7 @@ export function FormDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant={variant}>
+        <Button size="sm" variant={variant} className={triggerClassName}>
           {trigger}
         </Button>
       </DialogTrigger>

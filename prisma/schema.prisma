@@ -693,6 +693,7 @@ model ClassSection {
   gradeLevelId            String?
   homeroomId              String?
   name                    String
+  lessonGroupTitles       Json?
   sectionCode             String?
   deliveryMode            DeliveryMode               @default(OFFLINE)
   capacity                Int?

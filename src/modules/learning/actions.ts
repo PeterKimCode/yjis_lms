@@ -470,3 +470,32 @@ export async function markLessonViewed(input: {
     })
   }
 }
+
+export async function renameLessonGroup(classSectionId: string, week: number, title: string) {
+  const user = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
+  if (!(await canManageClassSection(user.id, classSectionId))) return { ok: false, message: "You cannot edit this class." }
+  if (!Number.isInteger(week) || week < 0 || !title.trim() || title.trim().length > 100) return { ok: false, message: "Enter a group title (maximum 100 characters)." }
+  await getPrismaClient().$transaction(async (tx) => {
+    const section = await tx.classSection.findUniqueOrThrow({ where: { id: classSectionId } })
+    const titles = section.lessonGroupTitles && typeof section.lessonGroupTitles === "object" && !Array.isArray(section.lessonGroupTitles) ? section.lessonGroupTitles : {}
+    await tx.classSection.update({ where: { id: classSectionId }, data: { lessonGroupTitles: { ...titles, [String(week)]: title.trim() } } })
+  }, { isolationLevel: "Serializable" })
+  revalidatePath(`/instructor/classes/${classSectionId}`)
+  revalidatePath(`/student/classes/${classSectionId}`)
+  revalidatePath("/parent", "layout")
+  return { ok: true, message: "Group title saved." }
+}
+
+export async function moveLessonToGroup(classSectionId: string, lessonId: string, week: number) {
+  const user = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
+  if (!(await canManageClassSection(user.id, classSectionId))) return { ok: false, message: "You cannot edit this class." }
+  if (!Number.isInteger(week) || week < 0) return { ok: false, message: "Invalid group." }
+  await getPrismaClient().$transaction(async (tx) => {
+    const last = await tx.lesson.aggregate({ where: { classSectionId }, _max: { sequence: true } })
+    await tx.lesson.update({ where: { id: lessonId, classSectionId }, data: { week: week || null, sequence: (last._max.sequence ?? 0) + 1 } })
+  }, { isolationLevel: "Serializable" })
+  revalidatePath(`/instructor/classes/${classSectionId}`)
+  revalidatePath(`/student/classes/${classSectionId}`)
+  revalidatePath("/parent", "layout")
+  return { ok: true, message: "Lesson moved." }
+}

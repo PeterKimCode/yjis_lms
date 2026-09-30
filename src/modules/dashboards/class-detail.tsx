@@ -191,6 +191,7 @@ export async function ClassSectionDetail({
             <LessonOrderTable
               key={section.lessons.map((lesson) => `${lesson.id}:${lesson.week}`).sort().join(",")}
               classSectionId={section.id}
+              groupTitles={section.lessonGroupTitles as Record<string, string> | null}
               editable={mode === "instructor"}
               lessons={section.lessons.map(({ id, sequence, week }) => ({ id, sequence, week }))}
               empty={
