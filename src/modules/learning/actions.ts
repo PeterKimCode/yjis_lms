@@ -223,7 +223,7 @@ export async function saveLesson(
   }
 }
 
-export async function reorderLessons(classSectionId: string, lessonIds: string[]) {
+export async function reorderLessons(classSectionId: string, lessonIds: string[], groupChange?: { lessonId: string; week: number }) {
   const instructor = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
   if (!(await canManageClassSection(instructor.id, classSectionId))) {
     return { ok: false, message: "You cannot reorder lessons in this class." }
@@ -231,6 +231,7 @@ export async function reorderLessons(classSectionId: string, lessonIds: string[]
   if (!Array.isArray(lessonIds) || lessonIds.some((id) => typeof id !== "string") || new Set(lessonIds).size !== lessonIds.length) {
     return { ok: false, message: "Invalid lesson order." }
   }
+  if (groupChange && (!lessonIds.includes(groupChange.lessonId) || !Number.isInteger(groupChange.week) || groupChange.week < 0)) return { ok: false, message: "Invalid lesson group." }
   try {
     await getPrismaClient().$transaction(async (tx) => {
       const lessons = await tx.lesson.findMany({ where: { classSectionId }, select: { id: true } })
@@ -239,7 +240,7 @@ export async function reorderLessons(classSectionId: string, lessonIds: string[]
         throw new Error("Lesson list changed")
       }
       for (const [index, id] of lessonIds.entries()) {
-        await tx.lesson.update({ where: { id, classSectionId }, data: { sequence: index + 1 } })
+        await tx.lesson.update({ where: { id, classSectionId }, data: { sequence: index + 1, ...(groupChange?.lessonId === id ? { week: groupChange.week || null } : {}) } })
       }
     }, { isolationLevel: "Serializable" })
     revalidatePath(`/instructor/classes/${classSectionId}`)

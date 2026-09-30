@@ -1,11 +1,11 @@
 "use client"
 
-import { Fragment, useRef, useState, type ReactNode } from "react"
+import { Fragment, useRef, useState, type ReactNode, type PointerEvent } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowDown, ArrowUp, GripVertical } from "lucide-react"
 import { EmptyState, SimpleTable, TableCell, TableRow } from "@/modules/dashboards/components"
 import { Button } from "@/components/ui/button"
-import { reorderLessons, renameLessonGroup, moveLessonToGroup } from "@/modules/learning/actions"
+import { reorderLessons, renameLessonGroup } from "@/modules/learning/actions"
 
 export function LessonOrderTable({ classSectionId, editable, lessons, headers, rows, empty, mobileCards, groupTitles }: {
   groupTitles?: Record<string, string> | null
@@ -40,7 +40,7 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
     finally { setSaving(false) }
   }
   function groupHeader(week: number) {
-    return <div className="flex min-w-0 flex-wrap items-center gap-2">
+    return <div data-lesson-group-week={week} className={`flex min-w-0 flex-wrap items-center gap-2 rounded ${active === `group:${week}` ? "bg-sky-100 ring-2 ring-sky-500" : ""}`}>
       {editingGroup === week ? <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); void saveChange(() => renameLessonGroup(classSectionId, week, groupTitle)) }}>
         <input aria-label="Group title" autoFocus required maxLength={100} className="min-w-0 rounded border bg-background px-2 py-1 text-foreground" value={groupTitle} onChange={(event) => setGroupTitle(event.target.value)} />
         <Button type="submit" size="sm" disabled={saving}>Save</Button><Button type="button" variant="outline" size="sm" onClick={() => setEditingGroup(null)}>Cancel</Button>
@@ -48,34 +48,54 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
       {editable ? <Button type="button" size="sm" variant="outline" disabled={saving} aria-label={`Rename ${groupLabel(week)}`} onClick={() => { setEditingGroup(week); setGroupTitle(groupLabel(week)) }}>Rename</Button> : null}</>}
     </div>
   }
-  function groupSelect(id: string, week: number) {
-    return editable ? <select aria-label={`Move lesson ${lessons.findIndex((lesson) => lesson.id === id) + 1} to group`} disabled={saving} value={week} className="max-w-40 rounded border bg-background p-1 text-xs text-foreground" onChange={(event) => { void saveChange(() => moveLessonToGroup(classSectionId, id, Number(event.target.value))) }}>
-      {groups.map((group) => <option key={group} value={group}>{groupLabel(group)}</option>)}
-    </select> : null
-  }
-
   async function move(id: string, destination: string) {
     if (saving || id === destination) return
-    if (lessons.find((lesson) => lesson.id === id)?.week !== lessons.find((lesson) => lesson.id === destination)?.week) {
-      window.dispatchEvent(new CustomEvent("lms-toast", { detail: { message: "Change the lesson's Week in Edit to move it to another week.", tone: "error" } }))
-      return
-    }
+    const destinationWeek = destination.startsWith("group:") ? Number(destination.slice(6)) : lessons.find((lesson) => lesson.id === destination)?.week ?? 0
+    const sourceWeek = lessons.find((lesson) => lesson.id === id)?.week ?? 0
+    if (destination.startsWith("group:") && destinationWeek === sourceWeek) return
     const previous = order
     const next = [...order]
     next.splice(next.indexOf(id), 1)
-    next.splice(order.indexOf(destination), 0, id)
+    const position = destination.startsWith("group:")
+      ? next.findIndex((lessonId) => (lessons.find((lesson) => lesson.id === lessonId)?.week ?? Number.MAX_SAFE_INTEGER) > (destinationWeek || Number.MAX_SAFE_INTEGER))
+      : next.indexOf(destination)
+    next.splice(position < 0 ? next.length : position, 0, id)
     setOrder(next)
     setSaving(true)
     try {
-      const result = await reorderLessons(classSectionId, next)
+      const result = await reorderLessons(classSectionId, next, sourceWeek !== destinationWeek ? { lessonId: id, week: destinationWeek } : undefined)
       if (!result.ok) setOrder(previous)
       window.dispatchEvent(new CustomEvent("lms-toast", { detail: { message: result.message, tone: result.ok ? "success" : "error" } }))
-      if (result.ok) { setUndo(previous); router.refresh() }
+      if (result.ok) { setUndo(sourceWeek === destinationWeek ? previous : null); router.refresh() }
     } catch {
       setOrder(previous)
       window.dispatchEvent(new CustomEvent("lms-toast", { detail: { message: "Could not save lesson order. Please try again.", tone: "error" } }))
     } finally {
       setSaving(false)
+    }
+  }
+
+  function dragEvents(id: string) {
+    return {
+      onPointerDown(event: PointerEvent<HTMLButtonElement>) {
+        if (saving || event.button !== 0) return
+        event.currentTarget.setPointerCapture(event.pointerId)
+        target.current = id; setActive(id)
+      },
+      onPointerMove(event: PointerEvent<HTMLButtonElement>) {
+        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+        const element = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-lesson-group-week], [data-lesson-order-id]")
+        if (element && container.current?.contains(element)) {
+          target.current = element.dataset.lessonGroupWeek !== undefined ? `group:${element.dataset.lessonGroupWeek}` : element.dataset.lessonOrderId ?? id
+          setActive(target.current); element.scrollIntoView({ block: "nearest" })
+        } else { target.current = id; setActive(id) }
+      },
+      onPointerUp(event: PointerEvent<HTMLButtonElement>) {
+        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+        event.currentTarget.releasePointerCapture(event.pointerId)
+        setActive(null); void move(id, target.current ?? id); target.current = null
+      },
+      onPointerCancel() { setActive(null); target.current = null },
     }
   }
 
@@ -101,15 +121,16 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
         }
         return <Fragment key={id}>
           {previousWeek !== week ? groupHeader(week) : null}
-          {!collapsed.includes(week) ? <article className="min-w-0 rounded-lg border bg-white p-3">
+          {!collapsed.includes(week) ? <article data-lesson-order-id={id} className={`min-w-0 rounded-lg border bg-white p-3 ${active === id ? "ring-2 ring-sky-500" : ""}`}>
             <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>Lesson {index + 1}</span>
               {editable ? <div className="flex gap-1">
+                <Button type="button" size="icon-sm" variant="ghost" className="touch-none cursor-grab" aria-label={`Drag lesson ${index + 1}`} disabled={saving} {...dragEvents(id)}><GripVertical /></Button>
                 <Button type="button" size="icon-sm" variant="ghost" aria-label={`Move lesson ${index + 1} up`} disabled={saving || !canMove(-1)} onClick={() => { void move(id, order[index - 1]) }}><ArrowUp /></Button>
                 <Button type="button" size="icon-sm" variant="ghost" aria-label={`Move lesson ${index + 1} down`} disabled={saving || !canMove(1)} onClick={() => { void move(id, order[index + 1]) }}><ArrowDown /></Button>
               </div> : null}
             </div>
-            {groupSelect(id, week)}
+
             {mobileCards[sourceIndex]}
           </article> : null}
         </Fragment>
@@ -129,29 +150,7 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
               type="button" disabled={saving || order.length < 2}
               className="touch-none cursor-grab rounded p-2 active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"
               aria-label={`Move lesson ${index + 1}`} title="Drag to reorder. Use arrow keys to move."
-              onPointerDown={(event) => {
-                if (event.button !== 0) return
-                event.currentTarget.setPointerCapture(event.pointerId)
-                target.current = id
-                setActive(id)
-              }}
-              onPointerMove={(event) => {
-                if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
-                const row = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-lesson-order-id]")
-                if (row && container.current?.contains(row)) {
-                  target.current = row.dataset.lessonOrderId ?? id
-                  setActive(target.current)
-                  row.scrollIntoView({ block: "nearest" })
-                }
-              }}
-              onPointerUp={(event) => {
-                if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
-                event.currentTarget.releasePointerCapture(event.pointerId)
-                setActive(null)
-                void move(id, target.current ?? id)
-                target.current = null
-              }}
-              onPointerCancel={() => { setActive(null); target.current = null }}
+              {...dragEvents(id)}
               onKeyDown={(event) => {
                 if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return
                 event.preventDefault()
@@ -160,13 +159,14 @@ export function LessonOrderTable({ classSectionId, editable, lessons, headers, r
               }}
             ><GripVertical className="size-4" /></button> : null}
             {editable ? index + 1 : lessons[sourceIndex].sequence}
-            {groupSelect(id, week)}
+
           </div>
         </TableCell>
         {rows[sourceIndex]}
       </TableRow>]
     })} />
     </div>
+    {groups.filter((week) => !lessons.some((lesson) => (lesson.week ?? 0) === week)).map((week) => <div key={week} className="mt-3 rounded border border-dashed p-3">{groupHeader(week)}<p className="text-xs text-muted-foreground">Drop a lesson here</p></div>)}
     {saving ? <p role="status" className="mt-2 text-sm text-muted-foreground">Saving lesson order...</p> : null}
   </div>
 }

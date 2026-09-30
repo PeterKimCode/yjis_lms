@@ -25,7 +25,7 @@ export async function enrollFromUserPage(input: z.input<typeof requestSchema>) {
   try {
     const result = await db.$transaction(async (tx) => {
       const user = await tx.user.findFirst({
-        where: { AND: [getUserWhereForAdmin(admin), { id: data.userId, roleAssignments: { some: { role: data.mode === "student" ? "STUDENT" : "INSTRUCTOR" } } }] },
+        where: { AND: [getUserWhereForAdmin(admin), ...(admin.roleAssignments.some((item) => item.role === "SUPER_ADMIN") ? [] : [{ roleAssignments: { none: { role: "SUPER_ADMIN" as const } } }]), { id: data.userId, roleAssignments: { some: { role: data.mode === "student" ? "STUDENT" : "INSTRUCTOR" } } }] },
       })
       if (!user) throw new EnrollmentInputError("User is not available in your admin scope.")
       const sectionIds = data.mode === "student" ? selected : [data.sectionId ?? ""]

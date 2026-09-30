@@ -3,7 +3,6 @@
 import { useActionState, useMemo, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
-import { FormDialog } from "@/components/form-dialog"
 import { Button } from "@/components/ui/button"
 import {
   editMessage,
@@ -226,45 +225,23 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
   )
 }
 
-export function EditMessageForm({
-  body,
-  conversationId,
-  messageId,
-}: {
-  body: string
-  conversationId: string
-  messageId: string
+export function EditMessageForm({ body, conversationId, messageId, children }: {
+  body: string; conversationId: string; messageId: string; children?: React.ReactNode
 }) {
-  const [state, formAction] = useActionState(editMessage, initialMessageActionState)
-
-  return (
-    <FormDialog
-      description="Update this text message. Attachments are not enabled in messenger."
-      triggerClassName="bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900"
-      title="Edit message"
-      trigger="Edit"
-      variant="outline"
-    >
-      <form action={formAction} className="grid gap-3 pt-4">
-        <input name="conversationId" type="hidden" value={conversationId} />
-        <input name="messageId" type="hidden" value={messageId} />
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">Message</span>
-          <textarea
-            className="min-h-28 rounded-md border bg-background px-3 py-2 text-sm"
-            maxLength={MESSAGE_BODY_MAX_LENGTH}
-            name="body"
-            defaultValue={body}
-            required
-          />
-        </label>
-        <ActionFeedback state={state} closeOnSuccess />
-        <div>
-          <Button size="sm" type="submit">
-            Save
-          </Button>
-        </div>
-      </form>
-    </FormDialog>
-  )
+  const [editing, setEditing] = useState(false)
+  const [error, setError] = useState("")
+  const [pending, setPending] = useState(false)
+  if (!editing) return <><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>
+    <div className="mt-2 flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" className="bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900" onClick={() => { setError(""); setEditing(true) }}>Edit</Button>{children}</div></>
+  return <form className="mt-2 grid gap-2" action={async (data) => {
+    setPending(true)
+    try { const result = await editMessage(initialMessageActionState, data); if (result.ok) setEditing(false); else setError(result.message) }
+    catch { setError("Could not save the message. Please try again.") }
+    finally { setPending(false) }
+  }}>
+    <input name="conversationId" type="hidden" value={conversationId} /><input name="messageId" type="hidden" value={messageId} />
+    <textarea autoFocus aria-label="Edit message" name="body" defaultValue={body} required maxLength={MESSAGE_BODY_MAX_LENGTH} disabled={pending} className="min-h-24 w-full min-w-0 rounded-md border bg-white p-2 text-sm text-slate-900" />
+    {error ? <p role="alert" className="text-sm text-white">{error}</p> : null}
+    <div className="flex gap-2"><Button type="submit" size="sm" variant="outline" disabled={pending} className="bg-white text-slate-900 hover:bg-slate-100">{pending ? "Saving..." : "Save"}</Button><Button type="button" size="sm" variant="outline" disabled={pending} className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setEditing(false)}>Cancel</Button></div>
+  </form>
 }

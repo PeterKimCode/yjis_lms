@@ -53,6 +53,7 @@ export default async function AdminUserDetailPage({
 
   const { user } = detail
   const roles = user.roleAssignments.map((assignment) => assignment.role)
+  const readOnly = roles.includes(UserRole.SUPER_ADMIN) && !canManageAdminRoles
   const isParent = roles.includes(UserRole.PARENT)
   const isStudent = roles.includes(UserRole.STUDENT)
   const enrollmentData = await getUserEnrollmentData(user.id)
@@ -96,7 +97,7 @@ export default async function AdminUserDetailPage({
         </div>
       </div>
 
-      {enrollmentData ? <DetailsSection title={enrollmentData.mode === "student" ? "Enrolled classes" : "Assigned classes / Student enrollment"} defaultOpen>
+      {enrollmentData && !readOnly ? <DetailsSection title={enrollmentData.mode === "student" ? "Enrolled classes" : "Assigned classes / Student enrollment"} defaultOpen>
         <UserEnrollmentPanel userId={user.id} data={enrollmentData} />
       </DetailsSection> : null}
 
@@ -111,6 +112,7 @@ export default async function AdminUserDetailPage({
       ) : null}
 
       <DetailsSection title="Account details" defaultOpen>
+        {readOnly ? <p className="text-sm text-muted-foreground">This Super Admin account is read-only. Only Super Admins can edit it.</p> : <>
         <AdminUserAvatarForm
           avatarUrl={
             user.avatarFileAsset
@@ -128,6 +130,7 @@ export default async function AdminUserDetailPage({
           organizationOptions={detail.organizationOptions}
           user={toUserFormValue(user)}
         />
+        </>}
       </DetailsSection>
 
       {isParent && !isSchoolAdminOnly ? (

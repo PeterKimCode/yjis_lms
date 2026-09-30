@@ -76,16 +76,13 @@ export default async function ConversationPage({
                         {message.sender?.name ?? "Unknown"} ·{" "}
                         {formatDate(message.createdAt)}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
-                        {message.body}
-                      </p>
+                      {!own ? <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{message.body}</p> : null}
                       {own ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <EditMessageForm
+                        <EditMessageForm
                             body={message.body}
                             conversationId={conversation.id}
                             messageId={message.id}
-                          />
+                          >
                           <form action={deleteMessage}>
                             <input
                               name="conversationId"
@@ -93,11 +90,11 @@ export default async function ConversationPage({
                               value={conversation.id}
                             />
                             <input name="messageId" type="hidden" value={message.id} />
-                            <ConfirmSubmitButton confirmMessage="Delete this message?">
+                            <ConfirmSubmitButton className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800" variant="outline" confirmMessage="Delete this message?">
                               Delete
                             </ConfirmSubmitButton>
                           </form>
-                        </div>
+                        </EditMessageForm>
                       ) : null}
                     </article>
                   </div>

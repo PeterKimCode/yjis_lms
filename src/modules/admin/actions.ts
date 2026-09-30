@@ -350,8 +350,10 @@ export async function saveUser(formData: FormData) {
         id,
         ...getUserWhereForAdmin(adminUser),
       },
-      select: { id: true },
+      select: { id: true, roleAssignments: { select: { role: true } } },
     })
+
+    if (editableUser?.roleAssignments.some((item) => item.role === UserRole.SUPER_ADMIN) && !hasSuperAdminRole(adminUser.roleAssignments)) throw new Error("Only super admins can edit a super admin account.")
 
     if (!editableUser) {
       throw new Error("You do not have permission to edit this user.")
@@ -524,6 +526,9 @@ export async function updateAdminUserAvatar(
     }
   }
 
+  const admin = await requireAdmin()
+  const target = await getPrismaClient().user.findUnique({ where: { id: data.userId }, select: { roleAssignments: { select: { role: true } } } })
+  if (target?.roleAssignments.some((item) => item.role === UserRole.SUPER_ADMIN) && !hasSuperAdminRole(admin.roleAssignments)) return { ok: false, message: "Only super admins can edit a super admin account." }
   const prisma = getPrismaClient()
   const user = await prisma.user.findUnique({
     where: { id: data.userId },
@@ -588,6 +593,9 @@ export async function removeAdminUserAvatar(
   formData: FormData
 ): Promise<AdminUserAvatarState> {
   const data = adminUserAvatarSchema.parse(readForm(formData))
+  const admin = await requireAdmin()
+  const target = await getPrismaClient().user.findUnique({ where: { id: data.userId }, select: { roleAssignments: { select: { role: true } } } })
+  if (target?.roleAssignments.some((item) => item.role === UserRole.SUPER_ADMIN) && !hasSuperAdminRole(admin.roleAssignments)) return { ok: false, message: "Only super admins can edit a super admin account." }
   const prisma = getPrismaClient()
   const user = await prisma.user.findUnique({
     where: { id: data.userId },

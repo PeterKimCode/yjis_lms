@@ -265,7 +265,7 @@ export default async function UsersPage({
             </TableCell>
             <TableCell>
               <Button asChild size="sm" variant="outline">
-                <Link href={`/admin/users/${user.id}`}>Edit</Link>
+                <Link href={`/admin/users/${user.id}`}>{!canManageAdminRoles && user.roleAssignments.some((item) => item.role === UserRole.SUPER_ADMIN) ? "View" : "Edit"}</Link>
               </Button>
             </TableCell>
             <TableCell>
