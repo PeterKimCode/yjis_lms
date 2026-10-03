@@ -290,7 +290,7 @@ export function QuizManagePanel({
   uploadFailed?: boolean
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-44 md:pb-28">
       {quiz.attachments.length ? (
         <div className="rounded border bg-background p-3">
           <h2 className="mb-3 text-base font-semibold">Attachments</h2>
@@ -415,6 +415,7 @@ function QuestionInput({ question }: { question: QuestionValue }) {
       ) : null}
       {["SHORT_ANSWER", "ESSAY"].includes(question.type) ? (
         <Textarea
+          aria-label={question.prompt}
           name={`answer_${question.id}`}
           required
           rows={question.type === "ESSAY" ? 5 : 2}

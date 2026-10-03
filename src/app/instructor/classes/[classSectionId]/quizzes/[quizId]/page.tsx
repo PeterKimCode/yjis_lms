@@ -89,7 +89,7 @@ export default async function InstructorQuizManagePage({
 
   return (
     <DashboardPage
-      title={quiz.title}
+      title={preview === "1" ? "Student preview" : view === "1" ? "Assessment details" : "Edit assessment"}
       description={`${quiz.classSection.name} - ${quiz.classSection.course.title} - ${
         quiz.classSection.term?.name ?? "No term"
       }`}

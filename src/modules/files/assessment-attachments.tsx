@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { Button } from "@/components/ui/button"
 
 import { Input } from "@/components/ui/input"
@@ -97,16 +98,7 @@ function Attachment({
         </details>
       ) : null}
       {kind && ownerId ? (
-        <form
-          className="space-y-2"
-          onSubmit={(event) => {
-            if (!replace && !window.confirm("Remove this attachment?")) {
-              event.preventDefault()
-              return
-            }
-            void onSubmit(event)
-          }}
-        >
+        <form className="space-y-2" onSubmit={onSubmit}>
           <input type="hidden" name="kind" value={kind} />
           <input type="hidden" name="ownerId" value={ownerId} />
           <input type="hidden" name="fileAssetId" value={file.id} />
@@ -135,17 +127,20 @@ function Attachment({
             </>
           ) : null}
 
-          <Button
-            type="submit"
-            size="sm"
-            variant={replace ? "default" : "outline"}
-            className={
-              !replace ? "border-red-200 text-red-700 hover:bg-red-50" : ""
-            }
-            disabled={pending}
-          >
-            {pending ? "Saving…" : replace ? "Upload replacement" : "Delete"}
-          </Button>
+          {replace ? (
+            <Button type="submit" size="sm" disabled={pending}>
+              {pending ? "Saving…" : "Upload replacement"}
+            </Button>
+          ) : (
+            <ConfirmSubmitButton
+              variant="outline"
+              className="border-red-200 text-red-700 hover:bg-red-50"
+              disabled={pending}
+              confirmMessage="Remove this attachment?"
+            >
+              Delete
+            </ConfirmSubmitButton>
+          )}
           <ActionFeedback state={state} />
         </form>
       ) : null}

@@ -39,6 +39,7 @@ export async function GET(
       contentType: true,
       byteSize: true,
       uploadedById: true,
+      metadata: true,
       classSectionId: true,
       assignmentSubmission: {
         select: {
@@ -220,6 +221,7 @@ async function canDownloadFile(
   userId: string,
   file: {
     id: string
+    metadata: unknown
     uploadedById: string | null
     classSectionId: string | null
     assignmentSubmission: {
@@ -257,6 +259,12 @@ async function canDownloadFile(
       if (!quiz.archivedAt && quiz.isPublished && await canViewClassSection(userId,quiz.classSectionId)) return true
     }
     return false
+  }
+  const source = file.metadata && typeof file.metadata === "object" && "source" in file.metadata ? file.metadata.source : null
+  if(source === "quizzes-pdf-attachment" || source === "exams-pdf-attachment") return false
+  if(source === "assignments-pdf-attachment") {
+    const attachment=await getPrismaClient().assignmentAttachment.findFirst({where:{fileAssetId:file.id},include:{assignment:{select:{classSectionId:true}}}})
+    return Boolean(attachment && await canViewClassSection(userId,attachment.assignment.classSectionId))
   }
   const avatarOwner = await getPrismaClient().user.findFirst({
     where: { avatarFileAssetId: file.id },
