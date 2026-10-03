@@ -40,7 +40,7 @@ export async function getInstructorClasses() {
           enrollments: true,
           lessons: true,
           assignments: true,
-          quizzes: true,
+          quizzes: {where:{archivedAt:null}},
         },
       },
     },
@@ -87,7 +87,7 @@ export async function getStudentClasses() {
             select: {
               lessons: true,
               assignments: true,
-              quizzes: true,
+              quizzes: {where:{archivedAt:null}},
             },
           },
         },
@@ -147,6 +147,7 @@ export async function getClassSectionDetail(
   return getPrismaClient().classSection.findUnique({
     where: { id: classSectionId },
     include: {
+      organization: {select:{timezone:true}},
       campus: true,
       course: true,
       term: true,
@@ -219,7 +220,7 @@ export async function getClassSectionDetail(
         },
       },
       quizzes: {
-        where: options.publishedLessonsOnly ? { isPublished: true } : undefined,
+        where: { archivedAt: null, ...(options.publishedLessonsOnly ? { isPublished: true } : {}) },
         orderBy: { opensAt: "asc" },
         include: {
           attachments: {

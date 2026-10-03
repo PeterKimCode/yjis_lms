@@ -370,6 +370,7 @@ export async function calculateFinalGrades(
         include: { submissions: true },
       },
       quizzes: {
+        where: {archivedAt:null},
         include: {
           questions: true,
           attempts: true,
@@ -748,6 +749,7 @@ function calculateModuleScores(
       submissions: Array<{ studentId: string; score: Prisma.Decimal | null }>
     }>
     quizzes: Array<{
+      assessmentType: string
       pointsPossible: Prisma.Decimal | null
       questions: Array<{ points: Prisma.Decimal }>
       attempts: Array<{
@@ -801,7 +803,8 @@ function calculateModuleScores(
     ? assignmentTotals.earned.div(assignmentTotals.possible).mul(100)
     : new Prisma.Decimal(0)
 
-  const quizTotals = section.quizzes.reduce(
+  const assessmentScore = (types: "quiz" | "exam") => {
+  const quizTotals = section.quizzes.filter(quiz => types === "quiz" ? quiz.assessmentType === "QUIZ" : quiz.assessmentType !== "QUIZ").reduce(
     (total, quiz) => {
       const possible =
         quiz.pointsPossible ??
@@ -825,16 +828,20 @@ function calculateModuleScores(
     },
     { earned: new Prisma.Decimal(0), possible: new Prisma.Decimal(0) }
   )
-  const quizzesScore = quizTotals.possible.gt(0)
+  return quizTotals.possible.gt(0)
     ? quizTotals.earned.div(quizTotals.possible).mul(100)
     : new Prisma.Decimal(0)
+
+  }
+  const quizzesScore = assessmentScore("quiz")
+  const examsScore = assessmentScore("exam")
 
   return {
     lessonsScore,
     attendanceScore,
     assignmentsScore,
     quizzesScore,
-    examsScore: section.exams.length ? new Prisma.Decimal(0) : new Prisma.Decimal(0),
+    examsScore,
   }
 }
 

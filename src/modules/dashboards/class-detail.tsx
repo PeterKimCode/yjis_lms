@@ -30,9 +30,7 @@ import {
 } from "@/modules/assignments/assignment-panel"
 import { StudentListDialog } from "@/modules/dashboards/student-list-dialog"
 import {
-  ExamPanel,
   QuizPanel,
-  type ExamPanelValue,
   type QuizPanelValue,
 } from "@/modules/quizzes/quiz-panel"
 import { LessonForm, type LessonFormValue } from "@/modules/learning/lesson-form"
@@ -587,7 +585,7 @@ export async function ClassSectionDetail({
           title="Assignments"
         >
           <AssignmentPanel
-            assignments={section.assignments.map(toAssignmentPanelValue)}
+            assignments={section.assignments.map(assignment=>toAssignmentPanelValue(assignment,section.organization.timezone))}
             classSectionId={section.id}
             defaultAcceptsLate={policies.assignment.allowLateSubmissionDefault}
             mode={mode}
@@ -597,35 +595,19 @@ export async function ClassSectionDetail({
         </SectionBlock>) : null}
 
         {showSection("quizzes") ? (<SectionBlock
-          description="Create quizzes, review attempts, and handle manual grading."
+          description="Create assessments, review answers, and manage grading."
           id="quizzes"
-          meta={<SectionBadge>{section.quizzes.length} quizzes</SectionBadge>}
-          title="Quizzes"
+          meta={<SectionBadge>{section.quizzes.length} assessments</SectionBadge>}
+          title="Exams / Assessments"
         >
           <QuizPanel
             classSectionId={section.id}
             mode={mode}
             now={new Date().toISOString()}
-            quizzes={section.quizzes.map(toQuizPanelValue)}
+            quizzes={section.quizzes.map(quiz=>{const value=toQuizPanelValue(quiz,section.organization.timezone); const legacyItems=section.gradeItems.filter(item=>section.exams.some(exam=>exam.id===item.examId && exam.quizId===quiz.id)); const ownLegacy=legacyItems.flatMap(item=>item.scores.filter(score=>score.studentId===userId).map(score=>({score:Number(score.score),possible:Number(item.pointsPossible)}))); if(ownLegacy.length) value.legacyScore={score:String(ownLegacy.reduce((sum,entry)=>sum+entry.score,0)),possible:String(ownLegacy.reduce((sum,entry)=>sum+entry.possible,0))}; if(mode!=="instructor" && !(quiz.showResultsToStudents && quiz.attempts.some(a=>a.studentId===userId && a.gradedAt))) {value.questions=value.questions.map(q=>({...q,answerKey:null,explanation:null,options:q.options.map(o=>({...o,isCorrect:false}))}))} return value})}
             userId={userId}
           />
         </SectionBlock>) : null}
-
-        {showSection("exams") ? (<SectionBlock
-            description="Scheduled exams and published exam scores for this class section."
-            id="exams"
-            meta={<SectionBadge>{section.exams.length} exams</SectionBadge>}
-            title="Exams"
-          >
-            {mode === "instructor" ? (
-              <ExamPanel
-              classSectionId={section.id}
-              exams={section.exams.map(toExamPanelValue)}
-              />
-            ) : (
-              <StudentExamTable section={section} studentId={userId} />
-            )}
-          </SectionBlock>) : null}
 
         {showSection("grades") ? (<SectionBlock
           description="Set module weights, calculate final grades, and publish results."
@@ -897,9 +879,10 @@ function toAssignmentPanelValue(
   assignment: NonNullable<
     Awaited<ReturnType<typeof getClassSectionDetail>>
   >["assignments"][number]
-): AssignmentPanelValue {
+, timeZone: string = "Asia/Seoul"): AssignmentPanelValue {
   return {
     id: assignment.id,
+    timeZone,
     title: assignment.title,
     description: assignment.description,
     dueAt: assignment.dueAt?.toISOString() ?? null,
@@ -951,9 +934,12 @@ function toQuizPanelValue(
   quiz: NonNullable<
     Awaited<ReturnType<typeof getClassSectionDetail>>
   >["quizzes"][number]
-): QuizPanelValue {
+, timeZone: string = "Asia/Seoul"): QuizPanelValue {
   return {
     id: quiz.id,
+    assessmentType: quiz.assessmentType,
+    location: quiz.location,
+    timeZone,
     title: quiz.title,
     description: quiz.description,
     opensAt: quiz.opensAt?.toISOString() ?? null,
@@ -1014,83 +1000,6 @@ function getQuestionExplanation(rubric: unknown) {
 
   const explanation = (rubric as { explanation?: unknown }).explanation
   return typeof explanation === "string" && explanation.length ? explanation : null
-}
-
-function toExamPanelValue(
-  exam: NonNullable<
-    Awaited<ReturnType<typeof getClassSectionDetail>>
-  >["exams"][number]
-): ExamPanelValue {
-  return {
-    id: exam.id,
-    title: exam.title,
-    examType: exam.examType,
-    startsAt: exam.startsAt?.toISOString() ?? null,
-    endsAt: exam.endsAt?.toISOString() ?? null,
-    location: exam.location,
-    pointsPossible: exam.pointsPossible?.toString() ?? null,
-    weight: exam.weight?.toString() ?? null,
-    description: exam.description,
-    attachments: exam.attachments.map((attachment) => ({
-      id: attachment.fileAsset.id,
-      name: attachment.fileAsset.originalName,
-    })),
-  }
-}
-
-function StudentExamTable({
-  section,
-  studentId,
-}: {
-  section: NonNullable<Awaited<ReturnType<typeof getClassSectionDetail>>>
-  studentId: string
-}) {
-  return (
-    <SimpleTable
-      empty="No exams yet."
-      headers={["Exam", "Type", "Date", "Max score", "Score", "Status"]}
-      rows={section.exams.map((exam) => {
-        const gradeItems = section.gradeItems.filter(
-          (item) => item.examId === exam.id
-        )
-        const earned = gradeItems.reduce((total, item) => {
-          const score = item.scores.find((entry) => entry.studentId === studentId)
-          return total + Number(score?.score ?? 0)
-        }, 0)
-        const possible = gradeItems.reduce(
-          (total, item) => total + Number(item.pointsPossible),
-          0
-        )
-        const hasScore = gradeItems.some((item) =>
-          item.scores.some((score) => score.studentId === studentId)
-        )
-
-        return (
-          <TableRow key={exam.id}>
-            <TableCell className="font-medium">{exam.title}</TableCell>
-            <TableCell>{exam.examType ?? "CUSTOM"}</TableCell>
-            <TableCell>{formatDateTime(exam.startsAt)}</TableCell>
-            <TableCell>
-              {possible
-                ? possible.toFixed(2)
-                : exam.pointsPossible?.toString() ?? "-"}
-            </TableCell>
-            <TableCell>
-              {hasScore
-                ? `${earned.toFixed(2)}${possible ? ` / ${possible.toFixed(2)}` : ""}`
-                : "Not graded yet"}
-            </TableCell>
-            <TableCell>
-              <StatusBadge
-                label={hasScore ? "Graded" : "Pending"}
-                value={hasScore ? "PUBLISHED" : "DRAFT"}
-              />
-            </TableCell>
-          </TableRow>
-        )
-      })}
-    />
-  )
 }
 
 function toGradebookPanelValue(
@@ -1257,7 +1166,8 @@ function getStudentModuleScores(
     ? (assignmentTotals.earned / assignmentTotals.possible) * 100
     : 0
 
-  const quizTotals = section.quizzes.reduce(
+  const assessmentScore = (category: "quiz" | "exam") => {
+  const quizTotals = section.quizzes.filter(quiz => category === "quiz" ? quiz.assessmentType === "QUIZ" : quiz.assessmentType !== "QUIZ").reduce(
     (totals, quiz) => {
       const possible =
         Number(quiz.pointsPossible ?? 0) ||
@@ -1276,16 +1186,20 @@ function getStudentModuleScores(
     },
     { earned: 0, possible: 0 }
   )
-  const quizzesScore = quizTotals.possible
+  return quizTotals.possible
     ? (quizTotals.earned / quizTotals.possible) * 100
     : 0
+
+  }
+  const quizzesScore = assessmentScore("quiz")
+  const examsScore = assessmentScore("exam")
 
   return {
     lessonsScore,
     attendanceScore,
     assignmentsScore,
     quizzesScore,
-    examsScore: 0,
+    examsScore,
   }
 }
 

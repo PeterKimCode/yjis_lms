@@ -5,6 +5,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import { FileVisibility, NotificationType, Prisma, UserRole } from "@prisma/client"
 import { z } from "zod"
 
+import { parseDateTimeLocalInTimeZone } from "@/lib/timezone"
 import { getPrismaClient } from "@/lib/prisma"
 import {
   canManageClassSection,
@@ -29,9 +30,7 @@ const optionalString = z.preprocess(
   z.string().transform((value) => (value.length ? value : null))
 )
 const requiredString = z.string().trim().min(1)
-const optionalDate = optionalString.transform((value) =>
-  value ? new Date(value) : null
-)
+const optionalDate = optionalString
 
 const assignmentSchema = z.object({
   id: optionalString,
@@ -86,12 +85,16 @@ export async function saveAssignment(
   const prisma = getPrismaClient()
   const classSection = await prisma.classSection.findUnique({
     where: { id: data.classSectionId },
-    select: { organizationId: true },
+    select: { organizationId: true, organization: {select:{timezone:true}} },
   })
   if (!classSection) {
     return { ok: false, message: "Class section was not found." }
   }
-  const { id, ...values } = data
+  const { id, dueAt, ...rawValues } = data
+  let parsedDueAt: Date | null
+  try { parsedDueAt = parseDateTimeLocalInTimeZone(dueAt,classSection.organization.timezone) }
+  catch { return {ok:false,message:"Enter a valid due date.",fieldErrors:{dueAt:"Enter a valid date and time."}} }
+  const values={...rawValues,dueAt:parsedDueAt}
 
   let assignmentId = id
   if (id) {

@@ -250,6 +250,14 @@ async function canDownloadFile(
     return true
   }
 
+  const assessmentFile = await getPrismaClient().quizAttachment.findMany({where:{fileAssetId:file.id},include:{quiz:{select:{classSectionId:true,isPublished:true,archivedAt:true}}}})
+  if (assessmentFile.length) {
+    for (const {quiz} of assessmentFile) {
+      if (await canManageClassSection(userId,quiz.classSectionId)) return true
+      if (!quiz.archivedAt && quiz.isPublished && await canViewClassSection(userId,quiz.classSectionId)) return true
+    }
+    return false
+  }
   const avatarOwner = await getPrismaClient().user.findFirst({
     where: { avatarFileAssetId: file.id },
     select: {

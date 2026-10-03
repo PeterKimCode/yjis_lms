@@ -22,15 +22,17 @@ export function parseDateTimeLocalInTimeZone(
     Number(second)
   )
 
-  const zone = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+  const zone = timeZone || "Asia/Seoul"
   try {
     const firstOffset = getTimeZoneOffsetMs(new Date(utcWallClock), zone)
     const firstUtc = utcWallClock - firstOffset
     const secondOffset = getTimeZoneOffsetMs(new Date(firstUtc), zone)
-    return new Date(utcWallClock - secondOffset)
+    const result = new Date(utcWallClock - secondOffset)
+    if (dateTimeLocalInTimeZone(result, zone) !== value.slice(0, 16))
+      throw new Error("Invalid local date or time.")
+    return result
   } catch {
-    const fallback = new Date(value)
-    return Number.isNaN(fallback.getTime()) ? null : fallback
+    throw new Error("Invalid date, time or time zone.")
   }
 }
 
@@ -39,14 +41,14 @@ export function formatDateTimeInTimeZone(
   timeZone: string | null | undefined,
   options: Intl.DateTimeFormatOptions = {
     dateStyle: "medium",
-    timeStyle: "short",
+    timeStyle: "short"
   }
 ) {
   if (!value) return "-"
 
   return new Intl.DateTimeFormat("en-US", {
     ...options,
-    timeZone: timeZone || "Asia/Seoul",
+    timeZone: timeZone || "Asia/Seoul"
   }).format(value)
 }
 
@@ -57,14 +59,16 @@ export function startOfTodayInTimeZone(timeZone: string | null | undefined) {
     day: "2-digit",
     month: "2-digit",
     timeZone: zone,
-    year: "numeric",
+    year: "numeric"
   }).formatToParts(now)
   const valueByType = new Map(parts.map((part) => [part.type, part.value]))
 
-  return parseDateTimeLocalInTimeZone(
-    `${valueByType.get("year")}-${valueByType.get("month")}-${valueByType.get("day")}T00:00`,
-    zone
-  ) ?? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return (
+    parseDateTimeLocalInTimeZone(
+      `${valueByType.get("year")}-${valueByType.get("month")}-${valueByType.get("day")}T00:00`,
+      zone
+    ) ?? new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  )
 }
 
 function getTimeZoneOffsetMs(date: Date, timeZone: string) {
@@ -76,7 +80,7 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string) {
     month: "2-digit",
     second: "2-digit",
     timeZone,
-    year: "numeric",
+    year: "numeric"
   }).formatToParts(date)
 
   const valueByType = new Map(parts.map((part) => [part.type, part.value]))
@@ -90,4 +94,24 @@ function getTimeZoneOffsetMs(date: Date, timeZone: string) {
   )
 
   return localAsUtc - date.getTime()
+}
+
+export function dateTimeLocalInTimeZone(
+  value: string | Date | null | undefined,
+  timeZone: string = "Asia/Seoul"
+) {
+  if (!value) return ""
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date)
+  const get = (key: string) => parts.find((part) => part.type === key)?.value
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`
 }

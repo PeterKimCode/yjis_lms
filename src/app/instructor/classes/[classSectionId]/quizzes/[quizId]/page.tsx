@@ -7,19 +7,19 @@ import { getPrismaClient } from "@/lib/prisma"
 import { canManageClassSection, requireAnyRole } from "@/modules/auth/permissions"
 import {
   DashboardPage,
-  MetricCard,
 } from "@/modules/dashboards/components"
 import {
+  AssessmentHeader,
+  StudentAssessmentPaper,
   QuizManagePanel,
   type QuizPanelValue,
 } from "@/modules/quizzes/quiz-panel"
-import { getQuizAttemptStatus } from "@/modules/quizzes/status"
 
 export default async function InstructorQuizManagePage({
   params,
   searchParams,
 }: {
-  searchParams: Promise<{ uploadFailed?: string }>
+  searchParams: Promise<{ uploadFailed?: string; preview?: string; view?: string }>
   params: Promise<{ classSectionId: string; quizId: string }>
 }) {
   const user = await requireAnyRole([
@@ -31,7 +31,7 @@ export default async function InstructorQuizManagePage({
     UserRole.HOMEROOM_TEACHER,
   ])
   const { classSectionId, quizId } = await params
-  const { uploadFailed } = await searchParams
+  const { uploadFailed, preview, view } = await searchParams
 
   if (!(await canManageClassSection(user.id, classSectionId))) {
     notFound()
@@ -40,11 +40,13 @@ export default async function InstructorQuizManagePage({
   const quiz = await getPrismaClient().quiz.findFirst({
     where: {
       id: quizId,
+      archivedAt: null,
       classSectionId,
     },
     include: {
       classSection: {
         include: {
+          organization: {select:{timezone:true}},
           campus: true,
           course: true,
           term: true,
@@ -84,9 +86,6 @@ export default async function InstructorQuizManagePage({
   }
 
   const panelQuiz = toQuizPanelValue(quiz)
-  const gradedCount = panelQuiz.attempts.filter(
-    (attempt) => getQuizAttemptStatus(attempt) === "Graded"
-  ).length
 
   return (
     <DashboardPage
@@ -103,39 +102,9 @@ export default async function InstructorQuizManagePage({
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Questions" value={quiz.questions.length} />
-        <MetricCard label="Attempts" value={quiz.attempts.length} />
-        <MetricCard label="Graded" value={gradedCount} />
-        <MetricCard
-          label="Status"
-          value={quiz.isPublished ? "Published" : "Draft"}
-        />
-      </div>
+      <AssessmentHeader quiz={panelQuiz}/>
+      {preview === "1" || view === "1" ? <><Button asChild variant="outline"><Link href={`/instructor/classes/${classSectionId}/quizzes/${quizId}`}>Edit / Grade</Link></Button><StudentAssessmentPaper quiz={panelQuiz} now={new Date().toISOString()} preview/></> : <QuizManagePanel classSectionId={classSectionId} quiz={panelQuiz} uploadFailed={uploadFailed === "1"} />}
 
-      <div className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <span className="font-medium text-foreground">Opens:</span>{" "}
-            {formatDateTime(quiz.opensAt)}
-          </div>
-          <div>
-            <span className="font-medium text-foreground">Closes:</span>{" "}
-            {formatDateTime(quiz.closesAt)}
-          </div>
-          <div>
-            <span className="font-medium text-foreground">Time limit:</span>{" "}
-            {quiz.timeLimitMinutes ? `${quiz.timeLimitMinutes} minutes` : "No limit"}
-          </div>
-          <div>
-            <span className="font-medium text-foreground">Max attempts:</span>{" "}
-            {quiz.maxAttempts ?? 1}
-          </div>
-        </div>
-        {quiz.description ? <p className="mt-3">{quiz.description}</p> : null}
-      </div>
-
-      <QuizManagePanel classSectionId={classSectionId} quiz={panelQuiz} uploadFailed={uploadFailed === "1"} />
     </DashboardPage>
   )
 }
@@ -144,6 +113,7 @@ type QuizManageData = Prisma.QuizGetPayload<{
   include: {
     classSection: {
       include: {
+        organization: {select:{timezone:true}}
         campus: true
         course: true
         term: true
@@ -176,6 +146,9 @@ type QuizManageData = Prisma.QuizGetPayload<{
 function toQuizPanelValue(quiz: QuizManageData) {
   return {
     id: quiz.id,
+    assessmentType: quiz.assessmentType,
+    location: quiz.location,
+    timeZone: quiz.classSection.organization.timezone,
     title: quiz.title,
     description: quiz.description,
     opensAt: quiz.opensAt?.toISOString() ?? null,
@@ -236,12 +209,4 @@ function getQuestionExplanation(rubric: unknown) {
 
   const explanation = (rubric as { explanation?: unknown }).explanation
   return typeof explanation === "string" && explanation.length ? explanation : null
-}
-
-function formatDateTime(value: Date | null | undefined) {
-  if (!value) return "-"
-  return value.toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  })
 }

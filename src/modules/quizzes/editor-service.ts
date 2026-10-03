@@ -22,6 +22,9 @@ const optionalNumber = (integer = false) =>
     ).optional()
   )
 const schema = z.object({
+  assessmentType: z
+    .enum(["QUIZ", "MONTHLY", "MIDTERM", "FINAL", "OTHER"])
+    .default("QUIZ"),
   title: z.string().trim().min(1, "Enter a title."),
   classSectionId: z.string().min(1),
   timeLimitMinutes: optionalNumber(true),
@@ -45,6 +48,8 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
   const data = parsed.data,
     id = String(form.get("id") ?? ""),
     publish = form.get("isPublished") === "on"
+  const pendingFile = form.get("pdfAttachmentFile")
+  const requiresUpload = pendingFile instanceof File && pendingFile.size > 0
   let input: unknown
   try {
     input = JSON.parse(String(form.get("editorQuestions")))
@@ -105,7 +110,11 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
       async (tx) => {
         const previous = id
           ? await tx.quiz.findFirst({
-              where: { id, classSectionId: data.classSectionId },
+              where: {
+                id,
+                classSectionId: data.classSectionId,
+                archivedAt: null
+              },
               include: {
                 questions: { include: { options: true } },
                 _count: { select: { attempts: true } }
@@ -115,6 +124,8 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
         if (id && !previous)
           throw new Error("Quiz was not found in this class.")
         const attempted = Boolean(previous?._count.attempts)
+        if (attempted && previous!.assessmentType !== data.assessmentType)
+          throw new Error("Assessment type cannot change after attempts.")
         const incomingIds = validated.questions.flatMap((question) =>
           question.id ? [question.id] : []
         )
@@ -137,6 +148,8 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
           ? await tx.quiz.update({
               where: { id },
               data: {
+                assessmentType: data.assessmentType,
+                location: String(form.get("location") ?? "") || null,
                 title: data.title,
                 description: String(form.get("description") ?? "") || null,
                 opensAt,
@@ -147,7 +160,9 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
                   data.pointsPossible === undefined
                     ? null
                     : new Prisma.Decimal(data.pointsPossible),
-                isPublished: publish,
+                isPublished:
+                  publish &&
+                  (!requiresUpload || previous?.isPublished === true),
                 showResultsToStudents: form.has("showResultsToStudents")
               }
             })
@@ -155,6 +170,8 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
               data: {
                 organizationId: section.organizationId,
                 classSectionId: section.id,
+                assessmentType: data.assessmentType,
+                location: String(form.get("location") ?? "") || null,
                 title: data.title,
                 description: String(form.get("description") ?? "") || null,
                 opensAt,
@@ -165,7 +182,7 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
                   data.pointsPossible === undefined
                     ? null
                     : new Prisma.Decimal(data.pointsPossible),
-                isPublished: publish,
+                isPublished: publish && !requiresUpload,
                 showResultsToStudents: form.has("showResultsToStudents"),
                 shuffleQuestions: false
               }
@@ -303,9 +320,41 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
               }
             }
           })
+        // Keep legacy exam grade references in sync without using them as a second schedule source.
+        if (
+          quiz.assessmentType !== "QUIZ" &&
+          !(await tx.exam.count({ where: { quizId: quiz.id } }))
+        ) {
+          await tx.exam.create({
+            data: {
+              organizationId: quiz.organizationId,
+              classSectionId: quiz.classSectionId,
+              quizId: quiz.id,
+              title: quiz.title,
+              examType: quiz.assessmentType,
+              startsAt: quiz.opensAt,
+              endsAt: quiz.closesAt,
+              location: quiz.location,
+              description: quiz.description,
+              pointsPossible: quiz.pointsPossible
+            }
+          })
+        }
+        await tx.exam.updateMany({
+          where: { quizId: quiz.id },
+          data: {
+            title: quiz.title,
+            description: quiz.description,
+            examType: quiz.assessmentType,
+            startsAt: quiz.opensAt,
+            endsAt: quiz.closesAt,
+            location: quiz.location,
+            pointsPossible: quiz.pointsPossible
+          }
+        })
         return {
           id: quiz.id,
-          newlyPublished: publish && !previous?.isPublished
+          newlyPublished: publish && !previous?.isPublished && !requiresUpload
         }
       },
       { isolationLevel: "Serializable" }
@@ -322,22 +371,6 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
   revalidatePath(`/instructor/classes/${section.id}`)
   revalidatePath(`/instructor/classes/${section.id}/quizzes/${saved.id}`)
   revalidatePath(`/student/classes/${section.id}`)
-  if (saved.newlyPublished)
-    try {
-      await notifyClassStudents(section.id, {
-        actorUserId: user.id,
-        actionUrl: `/student/classes/${section.id}`,
-        entityId: saved.id,
-        entityType: "Quiz",
-        title: `New quiz: ${data.title}`,
-        type: NotificationType.NEW_QUIZ
-      })
-    } catch {
-      console.error(
-        "Quiz saved, but publication notifications could not be sent",
-        { quizId: saved.id }
-      )
-    }
   const pdf = form.get("pdfAttachmentFile")
   if (pdf instanceof File && pdf.size) {
     try {
@@ -363,5 +396,31 @@ export async function saveEditorQuiz(form: FormData): Promise<QuizActionState> {
       }
     }
   }
+  if (requiresUpload && publish) {
+    const published = await db.quiz.updateMany({
+      where: { id: saved.id, archivedAt: null, isPublished: false },
+      data: { isPublished: true }
+    })
+    saved.newlyPublished = published.count > 0
+  }
+  revalidatePath(`/instructor/classes/${section.id}`)
+  revalidatePath(`/instructor/classes/${section.id}/quizzes/${saved.id}`)
+  revalidatePath(`/student/classes/${section.id}`)
+  if (saved.newlyPublished)
+    try {
+      await notifyClassStudents(section.id, {
+        actorUserId: user.id,
+        actionUrl: `/student/classes/${section.id}`,
+        entityId: saved.id,
+        entityType: "Quiz",
+        title: `New assessment: ${data.title}`,
+        type: NotificationType.NEW_QUIZ
+      })
+    } catch {
+      console.error(
+        "Quiz saved, but publication notifications could not be sent",
+        { quizId: saved.id }
+      )
+    }
   return { ok: true, saved: true, quizId: saved.id, message: "Quiz saved." }
 }

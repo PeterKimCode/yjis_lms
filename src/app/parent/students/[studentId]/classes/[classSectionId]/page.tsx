@@ -1,3 +1,5 @@
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
+import { assessmentTypeLabel } from "@/modules/quizzes/assessment-types"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { UserRole } from "@prisma/client"
@@ -56,14 +58,11 @@ export default async function ParentClassPage({ params, searchParams }: {
         return <TableRow key={assignment.id}><TableCell>{assignment.title}</TableCell><TableCell>{formatDateTime(assignment.dueAt)}</TableCell><TableCell>{getSubmissionStatus({ dueAt: assignment.dueAt, score: submission?.score, submittedAt: submission?.submittedAt })}</TableCell><TableCell>{submission?.score?.toString() ?? "-"}/{assignment.pointsPossible?.toString() ?? "-"}</TableCell></TableRow>
       })} />
     </SectionBlock> : null}
-    {selection.section === "quizzes" ? <SectionBlock id="quizzes" title="Quizzes">
-      <SimpleTable empty="No quizzes yet." headers={["Title", "Closes", "Status", "Score"]} rows={section.quizzes.map((quiz) => {
+    {selection.section === "quizzes" ? <SectionBlock id="quizzes" title="Exams / Assessments">
+      <SimpleTable empty="No assessments yet." headers={["Title", "Type", "Starts", "Ends", "Status", "Score"]} rows={section.quizzes.map((quiz) => {
         const attempt = quiz.attempts.find((item) => item.studentId === studentId)
-        return <TableRow key={quiz.id}><TableCell>{quiz.title}</TableCell><TableCell>{formatDateTime(quiz.closesAt)}</TableCell><TableCell>{attempt ? getQuizAttemptStatus(attempt) : "Not started"}</TableCell><TableCell>{attempt && shouldShowQuizResults(quiz) ? attempt.score?.toString() ?? "0" : attempt ? "Results hidden" : "-"}</TableCell></TableRow>
+        return <TableRow key={quiz.id}><TableCell>{quiz.title}</TableCell><TableCell>{assessmentTypeLabel(quiz.assessmentType)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.opensAt,section.organization.timezone)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.closesAt,section.organization.timezone)}</TableCell><TableCell>{attempt ? getQuizAttemptStatus(attempt) : "Not started"}</TableCell><TableCell>{attempt && shouldShowQuizResults(quiz) ? attempt.score?.toString() ?? "0" : attempt ? "Results hidden" : "-"}</TableCell></TableRow>
       })} />
-    </SectionBlock> : null}
-    {selection.section === "exams" ? <SectionBlock id="exams" title="Exams">
-      <SimpleTable empty="No exams yet." headers={["Title", "Starts", "Ends"]} rows={section.exams.map((exam) => <TableRow key={exam.id}><TableCell>{exam.title}</TableCell><TableCell>{formatDateTime(exam.startsAt)}</TableCell><TableCell>{formatDateTime(exam.endsAt)}</TableCell></TableRow>)} />
     </SectionBlock> : null}
     {selection.section === "grades" ? <SectionBlock id="grades" title="Grades">
       <div className="mt-4"><SimpleTable empty="Final grade is not published yet." headers={["Final score", "Letter", "Grade point", "Credits"]} rows={section.finalGrades.map((grade) => <TableRow key={grade.id}><TableCell>{grade.percentage?.toString() ?? grade.numericScore?.toString() ?? "-"}</TableCell><TableCell>{grade.letterGrade ?? "-"}</TableCell><TableCell>{grade.gradePoint?.toString() ?? "-"}</TableCell><TableCell>{grade.creditsEarned?.toString() ?? "0"}</TableCell></TableRow>)} /></div>

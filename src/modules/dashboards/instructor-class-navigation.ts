@@ -21,7 +21,7 @@ export function resolveInstructorClassSelection(tab?: string | string[], view?: 
     return { tab: selectedTab, view: selectedView, section: selectedView }
   }
   if (selectedTab === "assessments") {
-    const selectedView = view === "quizzes" || view === "exams" ? view : "assignments"
+    const selectedView = view === "quizzes" || view === "exams" ? "quizzes" : "assignments"
     return { tab: selectedTab, view: selectedView, section: selectedView }
   }
   return { tab: selectedTab, section: selectedTab }

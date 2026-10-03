@@ -1,5 +1,7 @@
 "use client"
 
+import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
+import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone } from "@/lib/timezone"
 import { useAssessmentSave } from "@/components/assessment-save"
 
 import { useActionState } from "react"
@@ -29,6 +31,7 @@ import {
 
 export type AssignmentPanelValue = {
   id: string
+  timeZone: string
   title: string
   description: string | null
   dueAt: string | null
@@ -99,7 +102,7 @@ export function AssignmentPanel({
             return (
               <TableRow key={assignment.id}>
                 <TableCell className="font-medium">{assignment.title}</TableCell>
-                <TableCell>{formatDateTime(assignment.dueAt)}</TableCell>
+                <TableCell>{formatDateTime(assignment.dueAt, assignment.timeZone)}</TableCell>
                 <TableCell>{assignment.pointsPossible ?? "-"}</TableCell>
                 <TableCell>
                   <StatusBadge
@@ -131,7 +134,7 @@ export function AssignmentPanel({
                       <div className="grid gap-3 rounded-lg border bg-muted/20 p-3 text-sm sm:grid-cols-3">
                         <SubmissionMeta
                           label="Due"
-                          value={formatDateTime(assignment.dueAt)}
+                          value={formatDateTime(assignment.dueAt, assignment.timeZone)}
                         />
                         <SubmissionMeta
                           label="Max score"
@@ -227,7 +230,7 @@ function InstructorAssignmentList({
               />
               <AssignmentSummaryItem
                 label="Due"
-                value={formatDateTime(assignment.dueAt)}
+                value={formatDateTime(assignment.dueAt, assignment.timeZone)}
               />
               <AssignmentSummaryItem
                 label="Max score"
@@ -255,10 +258,7 @@ function InstructorAssignmentList({
                 {assignment.attachments.length ? (
                   <div className="rounded-md border bg-muted/20 p-3 text-sm">
                     <div className="mb-2 font-medium">Teacher PDFs</div>
-                    <AttachmentLinks
-                      attachments={assignment.attachments}
-                      removable
-                    />
+                    <AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/>
                   </div>
                 ) : null}
                 <FormDialog
@@ -327,6 +327,7 @@ function AssignmentForm({
   )
 
   return (
+    <>
     <form onInvalid={(event) => { const details = (event.target as HTMLElement).closest("details"); if (details) details.open = true }} onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
       <input name="id" type="hidden" value={assignment?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
@@ -339,7 +340,7 @@ function AssignmentForm({
         <Input
           name="dueAt"
           type="datetime-local"
-          defaultValue={toLocalInputDate(assignment?.dueAt)}
+          defaultValue={dateTimeLocalInTimeZone(assignment?.dueAt, assignment?.timeZone ?? "Asia/Seoul")}
         />
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.dueAt}</span></label>
       <label className="grid gap-1 text-sm md:col-span-2">
@@ -388,6 +389,8 @@ function AssignmentForm({
         </Button>
       </div>
     </form>
+    {assignment?<section className="mt-4 space-y-3"><h3 className="text-base font-semibold">Existing attachments</h3><AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/></section>:null}
+    </>
   )
 }
 
@@ -671,18 +674,6 @@ function GradeForm({
   )
 }
 
-function formatDateTime(value: string | null | undefined) {
-  if (!value) return "-"
-  return new Date(value).toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  })
-}
-
-function toLocalInputDate(value: string | null | undefined) {
-  if (!value) return ""
-  const date = new Date(value)
-  const offset = date.getTimezoneOffset() * 60 * 1000
-
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+function formatDateTime(value: string | null | undefined, timeZone = "Asia/Seoul") {
+  return formatDateTimeInTimeZone(value?new Date(value):null,timeZone)
 }

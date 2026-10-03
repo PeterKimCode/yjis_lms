@@ -11,6 +11,7 @@ import {
   canViewClassSection,
   requireAnyRole,
 } from "@/modules/auth/permissions"
+import { validateAssessmentAnswers } from "./answer-validation"
 import { saveEditorQuiz } from "./editor-service"
 import type { QuizActionState } from "@/modules/quizzes/action-state"
 import {
@@ -500,7 +501,7 @@ export async function submitQuiz(
     },
   })
 
-  if (!quiz.isPublished) return { ok: false, message: "Quiz is not open." }
+  if (quiz.archivedAt || !quiz.questions.length || !quiz.isPublished) return { ok: false, message: "Quiz is not open." }
   if (!(await canViewClassSection(student.id, quiz.classSectionId))) {
     throw new Error("Forbidden")
   }
@@ -514,6 +515,8 @@ export async function submitQuiz(
     return { ok: false, message: "Maximum attempts reached." }
   }
 
+  const answerErrors=validateAssessmentAnswers(quiz.questions,formData)
+  if(Object.keys(answerErrors).length) return {ok:false,message:"Check your answers.",fieldErrors:answerErrors}
   const attemptNumber = (quiz.attempts[0]?.attemptNumber ?? 0) + 1
   const answers = quiz.questions.map((question) =>
     gradeAutoAnswer(question, formData)
@@ -724,18 +727,17 @@ export async function saveExam(
     ),
   }
 
-  let examId = id
-  if (id) {
-    await prisma.exam.update({ where: { id }, data: values })
-  } else {
-    const exam = await prisma.exam.create({
-      data: {
-        ...values,
-        organizationId: classSection.organizationId,
-      },
-    })
-    examId = exam.id
-  }
+  const previous = id ? await prisma.exam.findFirst({where:{id,classSectionId:data.classSectionId}}) : null
+  if(id&&!previous) return {ok:false,message:"Exam was not found in this class."}
+  if(values.startsAt&&values.endsAt&&values.startsAt>=values.endsAt) return {ok:false,message:"End time must follow start time."}
+  const assessmentType=["QUIZ","MONTHLY","MIDTERM","FINAL"].includes(values.examType??"")?values.examType!:"OTHER"
+  const saved=await prisma.$transaction(async tx=>{
+    const canonical={title:values.title,description:values.description,opensAt:values.startsAt,closesAt:values.endsAt,location:values.location,pointsPossible:values.pointsPossible,assessmentType}
+    const quiz=previous?.quizId ? await tx.quiz.update({where:{id:previous.quizId,classSectionId:data.classSectionId,archivedAt:null},data:canonical}) : await tx.quiz.create({data:{...canonical,classSectionId:data.classSectionId,organizationId:classSection.organizationId}})
+    const exam=previous?await tx.exam.update({where:{id:previous.id},data:{...values,quizId:quiz.id}}):await tx.exam.create({data:{...values,quizId:quiz.id,organizationId:classSection.organizationId}})
+    return {examId:exam.id,quizId:quiz.id}
+  })
+  const examId=saved.examId
 
   if (examId && pdfAttachment instanceof File && pdfAttachment.size > 0) {
     try {
@@ -749,6 +751,8 @@ export async function saveExam(
       await prisma.examAttachment.create({
         data: { examId, fileAssetId: fileAsset.id },
       })
+      await prisma.quizAttachment.create({data:{quizId:saved.quizId,fileAssetId:fileAsset.id}})
+      if(!(await prisma.question.count({where:{quizId:saved.quizId}}))) await prisma.question.create({data:{quizId:saved.quizId,organizationId:classSection.organizationId,type:"ESSAY",prompt:"Read the attached exam paper and write your answers below.",points:values.pointsPossible??100,sequence:1}})
     } catch (error) {
       return {
         ok: false,
@@ -761,7 +765,7 @@ export async function saveExam(
   }
 
   revalidatePath(`/instructor/classes/${data.classSectionId}`)
-  return { ok: true, message: id ? "Exam saved." : "Exam created." }
+  return { ok: true, quizId:saved.quizId, saved:true, message: id ? "Exam saved." : "Exam created." }
 }
 
 export async function removeExamAttachment(
@@ -865,4 +869,15 @@ function gradeAutoAnswer(
     answerText: String(formData.get(`answer_${question.id}`) ?? ""),
     score: null,
   }
+}
+
+export async function archiveAssessment(_: QuizActionState, form: FormData): Promise<QuizActionState> {
+  const id=String(form.get("id")??"")
+  const db=getPrismaClient(), quiz=await db.quiz.findFirst({where:{id,archivedAt:null}})
+  if(!quiz) return {ok:false,message:"Assessment was not found."}
+  await requireQuizManager(quiz.classSectionId)
+  await db.quiz.update({where:{id},data:{archivedAt:new Date(),isPublished:false}})
+  revalidatePath(`/instructor/classes/${quiz.classSectionId}`)
+  revalidatePath(`/student/classes/${quiz.classSectionId}`)
+  return {ok:true,message:"Assessment deleted. Existing submissions are retained."}
 }

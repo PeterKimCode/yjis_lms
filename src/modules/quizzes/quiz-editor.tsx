@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { dateTimeLocalInTimeZone } from "@/lib/timezone"
+import { assessmentTypes } from "./assessment-types"
 import { saveQuiz } from "./actions"
 import {
   validateEditorQuestions,
@@ -38,18 +40,15 @@ function fromQuiz(quiz?: QuizPanelValue): EditorQuestion[] {
     }) ?? []
   )
 }
-function localDate(value?: string | null) {
-  if (!value) return ""
-  const date = new Date(value)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
-}
 export function QuizEditor({
   classSectionId,
   quiz,
+  timeZone = "Asia/Seoul",
   uploadFailed = false
 }: {
   classSectionId: string
   quiz?: QuizPanelValue
+  timeZone?: string
   uploadFailed?: boolean
 }) {
   const router = useRouter(),
@@ -236,18 +235,68 @@ export function QuizEditor({
       <input name="id" type="hidden" value={quiz?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
       <Link className="inline-block text-sm underline" href={back}>
-        Back to quizzes
+        Back to assessments
       </Link>
       {uploadFailed ? (
         <p
           role="alert"
           className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
         >
-          Quiz saved. PDF upload failed. Choose the PDF again under Quiz
+          Quiz saved. PDF upload failed. Choose the PDF again under Assessment
           settings, then save to retry.
         </p>
       ) : null}
       <fieldset disabled={pending} className="min-w-0 space-y-5">
+        <div className="grid gap-4 rounded-xl border bg-background p-4 md:grid-cols-2">
+          {field(
+            "assessmentType",
+            "Assessment type",
+            <select
+              name="assessmentType"
+              className="h-11 w-full rounded-md border bg-background px-3 text-sm"
+              defaultValue={quiz?.assessmentType ?? "QUIZ"}
+              disabled={locked}
+            >
+              {assessmentTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          )}
+          {locked ? (
+            <input
+              type="hidden"
+              name="assessmentType"
+              value={quiz?.assessmentType ?? "QUIZ"}
+            />
+          ) : null}
+          {field(
+            "location",
+            "Location (optional)",
+            <Input name="location" defaultValue={quiz?.location ?? ""} />
+          )}
+          <p className="text-xs text-muted-foreground md:col-span-2">
+            All start and end times use {timeZone}, for both instructors and
+            students.
+          </p>
+        </div>
+        <div className="rounded-xl border bg-background p-4">
+          {field(
+            "pdfAttachmentFile",
+            "PDF attachment (optional)",
+            <>
+              <Input
+                type="file"
+                name="pdfAttachmentFile"
+                accept=".pdf,application/pdf"
+              />
+              <span className="text-xs text-muted-foreground">
+                PDF only. Max 20MB.
+              </span>
+            </>
+          )}
+        </div>
         <section className="space-y-4 rounded-xl border bg-background p-4">
           {field(
             "title",
@@ -529,6 +578,30 @@ export function QuizEditor({
               >
                 Add open ended
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const key = crypto.randomUUID()
+                  dirty.current = true
+                  setQuestions((items) => [
+                    ...items,
+                    {
+                      key,
+                      type: "ESSAY",
+                      prompt:
+                        "Read the attached exam paper and write your answers below.",
+                      points: 100,
+                      explanation: "",
+                      acceptedAnswers: "",
+                      options: []
+                    }
+                  ])
+                  setExpanded(key)
+                }}
+              >
+                Add PDF answer sheet
+              </Button>
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
@@ -543,25 +616,25 @@ export function QuizEditor({
           className="rounded-xl border bg-background p-4"
         >
           <summary className="cursor-pointer font-medium">
-            Quiz settings
+            Assessment settings
           </summary>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {field(
               "opensAt",
-              "Opens at (optional)",
+              "Start date / time (optional)",
               <Input
                 type="datetime-local"
                 name="opensAt"
-                defaultValue={localDate(quiz?.opensAt)}
+                defaultValue={dateTimeLocalInTimeZone(quiz?.opensAt, timeZone)}
               />
             )}
             {field(
               "closesAt",
-              "Closes at (optional)",
+              "End date / time (optional)",
               <Input
                 type="datetime-local"
                 name="closesAt"
-                defaultValue={localDate(quiz?.closesAt)}
+                defaultValue={dateTimeLocalInTimeZone(quiz?.closesAt, timeZone)}
               />
             )}
             {field(
@@ -603,20 +676,6 @@ export function QuizEditor({
                 defaultValue={quiz?.pointsPossible ?? ""}
               />
             )}
-            {field(
-              "pdfAttachmentFile",
-              "PDF attachment (optional)",
-              <>
-                <Input
-                  type="file"
-                  name="pdfAttachmentFile"
-                  accept=".pdf,application/pdf"
-                />
-                <span className="text-xs text-muted-foreground">
-                  PDF only. Max 20MB.
-                </span>
-              </>
-            )}
           </div>
         </details>
       </fieldset>
@@ -646,7 +705,7 @@ export function QuizEditor({
             void save(true)
           }}
         >
-          {quiz?.isPublished ? "Save published quiz" : "Publish"}
+          {quiz?.isPublished ? "Save published assessment" : "Publish"}
         </Button>
       </div>
     </form>

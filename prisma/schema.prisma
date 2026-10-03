@@ -1025,6 +1025,9 @@ model Quiz {
   organizationId        String
   classSectionId        String
   lessonId              String?
+  assessmentType        String        @default("QUIZ")
+  location              String?
+  archivedAt            DateTime?
   title                 String
   description           String?
   opensAt               DateTime?
