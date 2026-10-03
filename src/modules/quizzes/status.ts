@@ -1,13 +1,13 @@
 export function getQuizAttemptStatus(attempt: {
   submittedAt?: Date | string | null
   score?: unknown
-  answers?: Array<{ score?: unknown; question?: { type?: string } }>
+  answers?: Array<{ score?: unknown; questionType?: string; question?: { type?: string } }>
 }) {
   if (!attempt.submittedAt) return "In progress"
 
   const needsManual = attempt.answers?.some(
     (answer) =>
-      ["ESSAY", "SHORT_ANSWER"].includes(answer.question?.type ?? "") &&
+      ["ESSAY", "SHORT_ANSWER"].includes(answer.question?.type ?? answer.questionType ?? "") &&
       (answer.score === null || answer.score === undefined)
   )
 

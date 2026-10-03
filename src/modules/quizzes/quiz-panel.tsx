@@ -268,7 +268,7 @@ export function StudentAssessmentPaper({
         </p>
       ) : null}
       {attempt && !preview ? (
-        shouldShowQuizResults(quiz) ? (
+        shouldShowQuizResults(quiz) && attempt.gradedAt ? (
           <StudentResult quiz={quiz} attempt={attempt} />
         ) : (
           <p>Results are not available yet.</p>

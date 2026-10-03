@@ -72,3 +72,9 @@ test("PDF written response is required and foreign choice IDs are refused", () =
   form.set("answer_mc", "own")
   assert.deepEqual(validateAssessmentAnswers(questions, form), {})
 })
+
+import { getQuizAttemptStatus } from "../src/modules/quizzes/status"
+test("written PDF responses remain awaiting grading in serialized panels",()=>{
+ assert.equal(getQuizAttemptStatus({submittedAt:"2026-10-04",score:"0",answers:[{questionType:"ESSAY",score:null}]}),"Needs manual grading")
+ assert.equal(getQuizAttemptStatus({submittedAt:"2026-10-04",score:"87",answers:[{questionType:"ESSAY",score:"87"}]}),"Graded")
+})
