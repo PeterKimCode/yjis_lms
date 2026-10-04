@@ -20,9 +20,11 @@ export function FormDialog({
   variant = "default",
   triggerClassName,
   initialOpen = false,
+  onClose,
 }: {
   triggerClassName?: string
   initialOpen?: boolean
+  onClose?: () => void
   children: ReactNode
   description?: string
   title: string
@@ -31,11 +33,14 @@ export function FormDialog({
 }) {
   const [open, setOpen] = useState(initialOpen)
   const content = useRef<HTMLDivElement>(null)
+  function close() { setOpen(false); onClose?.() }
   function changeOpen(next: boolean) {
     if (!next) {
       for (const form of content.current?.querySelectorAll("form") ?? []) {
-        if (!form.dispatchEvent(new CustomEvent("lms-confirm-leave", { cancelable: true, detail: { proceed: () => setOpen(false) } }))) return
+        if (!form.dispatchEvent(new CustomEvent("lms-confirm-leave", { cancelable: true, detail: { proceed: close } }))) return
       }
+      close()
+      return
     }
     setOpen(next)
   }

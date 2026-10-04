@@ -4,7 +4,7 @@ import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
 import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone } from "@/lib/timezone"
 import { useAssessmentSave } from "@/components/assessment-save"
 
-import { useActionState, useRef } from "react"
+import { useActionState, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { DraftNotice, useFormDraft } from "@/components/use-form-draft"
 
@@ -72,6 +72,7 @@ export function AssignmentPanel({
   userId: string
 }) {
   const query = useSearchParams()
+  const [closedTaskDialogs, setClosedTaskDialogs] = useState<string[]>([])
   return (
     <div className="space-y-4">
       {mode === "instructor" ? (
@@ -129,7 +130,8 @@ export function AssignmentPanel({
                 <TableCell>
                   <FormDialog
                     title={assignment.title}
-                    initialOpen={query.get("assignmentId") === assignment.id}
+                    initialOpen={query.get("assignmentId") === assignment.id && !closedTaskDialogs.includes(assignment.id)}
+                    onClose={() => setClosedTaskDialogs((ids) => ids.includes(assignment.id) ? ids : [...ids, assignment.id])}
                     description="View assignment details, update your response, and upload an attachment."
                     trigger={ownSubmission ? "View / update" : "Open"}
                     variant="outline"
