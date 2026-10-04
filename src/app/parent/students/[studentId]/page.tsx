@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { UserRole } from "@prisma/client"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
+import { assessmentAvailability } from "@/modules/quizzes/availability"
 
 import { Button } from "@/components/ui/button"
 import { requireAnyRole } from "@/modules/auth/permissions"
@@ -222,8 +224,8 @@ export default async function ParentStudentDetailPage({
       />
 
       <SimpleTable
-        empty="No quizzes yet."
-        headers={["Class", "Quiz", "Close", "Status", "Score"]}
+        empty="No published exams or quizzes yet."
+        headers={["Class", "Exams / Quiz", "Starts", "Ends", "Time zone", "Status", "Score"]}
         rows={student.enrollments.flatMap((enrollment) =>
           enrollment.classSection.quizzes.map((quiz) => {
             const attempt = quiz.attempts[0]
@@ -235,12 +237,14 @@ export default async function ParentStudentDetailPage({
                   <Link className="text-primary hover:underline" href={`/parent/students/${enrollment.studentId}/classes/${enrollment.classSectionId}`}>{enrollment.classSection.name}</Link>
                 </TableCell>
                 <TableCell>{quiz.title}</TableCell>
-                <TableCell>{formatDateTime(quiz.closesAt)}</TableCell>
+                <TableCell>{formatDateTimeInTimeZone(quiz.opensAt, enrollment.classSection.organization.timezone)}</TableCell>
+                <TableCell>{formatDateTimeInTimeZone(quiz.closesAt, enrollment.classSection.organization.timezone)}</TableCell>
+                <TableCell>{enrollment.classSection.organization.timezone || "Asia/Seoul"}</TableCell>
                 <TableCell>
-                  {attempt ? getQuizAttemptStatus(attempt) : "Not started"}
+                  {attempt ? getQuizAttemptStatus(attempt) : assessmentAvailability(quiz, quiz.attempts.length, quiz.questions.length)}
                 </TableCell>
                 <TableCell>
-                  {attempt && showResults
+                  {attempt && showResults && getQuizAttemptStatus(attempt) === "Graded"
                     ? `${attempt.score?.toString() ?? "0"}/${
                         quiz.pointsPossible?.toString() ??
                         quiz.questions
@@ -251,7 +255,7 @@ export default async function ParentStudentDetailPage({
                           .toFixed(2)
                       }`
                     : attempt
-                      ? "Results hidden"
+                      ? showResults ? "Results are not available yet" : "Results hidden"
                       : "-"}
                 </TableCell>
               </TableRow>

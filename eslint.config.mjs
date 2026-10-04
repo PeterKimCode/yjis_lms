@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "naver/**",
     "out/**",
     "build/**",
+    "backups/**",
+    "tmp/**",
     "next-env.d.ts",
   ]),
 ]);

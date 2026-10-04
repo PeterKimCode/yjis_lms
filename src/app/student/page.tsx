@@ -19,6 +19,8 @@ import { TranscriptDownloadButton } from "@/modules/documents/transcript-downloa
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
+import { getStudentTaskGroups } from "@/modules/dashboards/student-task-data"
+import { StudentTaskPanel } from "@/modules/dashboards/student-task-panel"
 
 export const metadata = { title: "Student dashboard" }
 
@@ -59,6 +61,7 @@ export default async function StudentPage() {
     ).values(),
   ]
   const hasPublishedDocuments = publishedGradeClassSections.length > 0
+  const tasks = await getStudentTaskGroups(user.id)
 
   return (
     <DashboardPage
@@ -67,6 +70,7 @@ export default async function StudentPage() {
       description="Your enrolled classes, coursework, and learning progress."
       tone="student"
     >
+      <StudentTaskPanel groups={tasks} />
       <BentoGrid storageKey={`${authUser.id}:student`} widgets={[
         { id: "classes", title: "Classes", kind: "metric", w: 6, h: 4, accent: "blue", content: (<MetricCard
           description="Currently enrolled"

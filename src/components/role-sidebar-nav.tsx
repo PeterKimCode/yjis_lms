@@ -27,6 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { LogoutButton } from "@/modules/auth/logout-button"
+import { useSidebarPreference } from "@/components/use-sidebar-preference"
 
 type SidebarLink = {
   href: string
@@ -95,7 +96,7 @@ export function RoleSidebarNav({
   userEmail,
 }: RoleSidebarNavProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, toggleCollapsed] = useSidebarPreference()
   const [mobileOpen, setMobileOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const toneClass = toneClasses[tone]
@@ -106,7 +107,7 @@ export function RoleSidebarNav({
     <>
       <div aria-hidden="true" className={`hidden shrink-0 md:block ${collapsed ? "w-20" : "w-64"}`} />
       <aside
-        className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-y-auto border-r border-slate-200 bg-white p-3 text-zinc-800 transition-[width] md:flex ${
+        className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-x-hidden overflow-y-auto border-r border-slate-200 bg-white p-3 text-zinc-800 transition-[width] md:flex ${
           collapsed ? "w-20" : "w-64"
         }`}
       >
@@ -115,8 +116,8 @@ export function RoleSidebarNav({
             <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
             {!collapsed ? <span className="min-w-0"><span className="block text-sm font-semibold">{title}</span><span className="block truncate text-xs text-muted-foreground">{userEmail}</span></span> : null}
           </Link>
-          <button aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100" type="button" onClick={() => setCollapsed(!collapsed)}>
+          <button aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed}
+            className="grid size-8 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" type="button" onClick={toggleCollapsed}>
             {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
           </button>
         </div>
@@ -267,7 +268,7 @@ export function RoleSidebarNav({
         </div>
       </header>
       <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
-          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none border-r border-slate-200 bg-white p-4 text-zinc-800 shadow-xl">
+          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-x-hidden overflow-y-auto rounded-none border-r border-slate-200 bg-white p-4 text-zinc-800 shadow-xl">
             <DialogTitle className="sr-only">{title} menu</DialogTitle>
             <div className="mb-4 flex items-center justify-between">
               <Link

@@ -4,7 +4,9 @@ import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
 import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone } from "@/lib/timezone"
 import { useAssessmentSave } from "@/components/assessment-save"
 
-import { useActionState } from "react"
+import { useActionState, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { DraftNotice, useFormDraft } from "@/components/use-form-draft"
 
 import { ActionFeedback } from "@/components/action-feedback"
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
@@ -69,6 +71,7 @@ export function AssignmentPanel({
   now: string
   userId: string
 }) {
+  const query = useSearchParams()
   return (
     <div className="space-y-4">
       {mode === "instructor" ? (
@@ -126,6 +129,7 @@ export function AssignmentPanel({
                 <TableCell>
                   <FormDialog
                     title={assignment.title}
+                    initialOpen={query.get("assignmentId") === assignment.id}
                     description="View assignment details, update your response, and upload an attachment."
                     trigger={ownSubmission ? "View / update" : "Open"}
                     variant="outline"
@@ -260,10 +264,13 @@ function AssignmentForm({
     saveAssignment,
     initialAssignmentActionState
   )
+  const form = useRef<HTMLFormElement>(null)
+  const draft = useFormDraft({ form, scope: `assignment:${classSectionId}:${assignment?.id ?? "new"}`, saved: state.ok })
 
   return (
     <>
-    <form onSubmit={onSubmit} className="grid min-w-0 gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2 [&_input:not([type=checkbox])]:border-slate-400 [&_input:not([type=checkbox])]:bg-background [&_textarea]:border-slate-400 [&_textarea]:bg-background">
+    <form ref={form} onSubmit={onSubmit} className="grid min-w-0 gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2 [&_input:not([type=checkbox])]:border-slate-400 [&_input:not([type=checkbox])]:bg-background [&_textarea]:border-slate-400 [&_textarea]:bg-background">
+      <DraftNotice draft={draft} />
       <input name="id" type="hidden" value={assignment?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
       <label className="grid gap-1 text-sm">

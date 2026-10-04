@@ -1309,5 +1309,30 @@
         "y": 722.75
       }
     ]
+  },
+  {
+    "name": "student-tasks",
+    "source": "isolated demo database, current UX working tree",
+    "boxes": []
+  },
+  {
+    "name": "parent-published-exams",
+    "source": "isolated demo database, current UX working tree",
+    "boxes": []
+  },
+  {
+    "name": "instructor-draft-restore",
+    "source": "isolated demo database, current UX working tree",
+    "boxes": []
+  },
+  {
+    "name": "admin-collapsed",
+    "source": "isolated demo database, current UX working tree",
+    "boxes": []
+  },
+  {
+    "name": "student-pdf-mobile",
+    "source": "isolated demo database, current UX working tree",
+    "boxes": []
   }
 ]

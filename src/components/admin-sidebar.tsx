@@ -4,53 +4,58 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, LifeBuoy } from "lucide-react"
+import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, LifeBuoy, PanelLeftClose, PanelLeftOpen, Building2, MapPin, Network, CalendarDays, CalendarRange, ListOrdered, School, ShieldCheck, ScrollText } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { adminPrimaryLinks, adminSetupLinks, adminCommunicationLinks } from "@/modules/admin/components"
 import { LogoutButton } from "@/modules/auth/logout-button"
+import { useSidebarPreference } from "@/components/use-sidebar-preference"
 
 type MessageLink = { id: string; href: string; label: string; preview: string; unreadCount: number }
-const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell }
+const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell, "Audit Logs": ScrollText, Organizations: Building2, Campuses: MapPin, Departments: Network, "Academic Years": CalendarDays, Terms: CalendarRange, "Grade Levels": ListOrdered, Homerooms: School, Policies: ShieldCheck }
 
 export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [] }: {
   logoUrl: string; email: string | null; schoolOnly: boolean; messages?: MessageLink[]
 }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [collapsed, toggleCollapsed] = useSidebarPreference()
   const primary = schoolOnly ? adminPrimaryLinks.filter(([, label]) => ["Courses", "Class Sections", "Users", "Files"].includes(label)) : adminPrimaryLinks
-  function group(links: readonly (readonly [string, string])[]) {
+  function group(links: readonly (readonly [string, string])[], compact = false) {
     return <div className="grid gap-1">{links.map(([href, label]) => {
       const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`))
       const Icon = icons[label as keyof typeof icons] ?? Settings
-      return <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${active ? "bg-zinc-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-zinc-900"}`}><Icon className="size-4 shrink-0" />{label}</Link>
+      return <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${compact ? "justify-center" : ""} ${active ? "bg-zinc-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-zinc-900"}`}><Icon className="size-4 shrink-0" /><span className={compact ? "sr-only" : ""}>{label}</span></Link>
     })}</div>
   }
-  function contents() {
+  function contents(compact = false, desktop = false) {
     return <>
-      <Link href={schoolOnly ? "/admin/users" : "/admin"} aria-label="Admin home" className="mb-7 flex min-w-0 items-center gap-3 py-3" onClick={() => setOpen(false)}>
+      <div className={`mb-7 flex items-center gap-2 py-3 ${compact ? "flex-col" : ""}`}>
+      <Link href={schoolOnly ? "/admin/users" : "/admin"} aria-label="Admin home" className="flex min-w-0 flex-1 items-center gap-3" onClick={() => setOpen(false)}>
         <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
-        <span className="min-w-0"><span className="block text-sm font-semibold">Admin workspace</span><span className="block truncate text-xs text-slate-500">{email}</span></span>
+        {!compact ? <span className="min-w-0"><span className="block text-sm font-semibold">Admin workspace</span><span className="block truncate text-xs text-slate-500">{email}</span></span> : null}
       </Link>
+      {desktop ? <button type="button" aria-label={compact ? "Expand sidebar" : "Collapse sidebar"} title={compact ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!compact} className="grid size-8 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" onClick={toggleCollapsed}>{compact ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}</button> : null}
+      </div>
       <nav aria-label="Admin navigation" className="space-y-3">
-        {group(primary)}
-        {!schoolOnly ? <details open className="rounded-md border border-slate-200 p-2"><summary className="cursor-pointer px-2 py-2 text-sm">Academic setup</summary>{group(adminSetupLinks)}</details> : null}
-        {group(adminCommunicationLinks)}
-        {pathname.startsWith("/messages") && messages.length ? <div className="ml-3 grid gap-1 border-l border-slate-200 pl-2">{messages.map((message) => <Link key={message.id} href={message.href} onClick={() => setOpen(false)} aria-current={pathname === message.href ? "page" : undefined} className="rounded-md p-2 text-xs hover:bg-slate-100"><span className="block truncate font-medium">{message.label}{message.unreadCount ? ` (${message.unreadCount})` : ""}</span><span className="block truncate text-slate-500">{message.preview}</span></Link>)}</div> : null}
+        {group(primary, compact)}
+        {!schoolOnly ? compact ? <div className="border-y border-slate-200 py-2" role="group" aria-label="Academic setup">{group(adminSetupLinks, true)}</div> : <details open className="rounded-md border border-slate-200 p-2"><summary className="cursor-pointer px-2 py-2 text-sm">Academic setup</summary>{group(adminSetupLinks)}</details> : null}
+        {group(adminCommunicationLinks, compact)}
+        {!compact && pathname.startsWith("/messages") && messages.length ? <div className="ml-3 grid gap-1 border-l border-slate-200 pl-2">{messages.map((message) => <Link key={message.id} href={message.href} onClick={() => setOpen(false)} aria-current={pathname === message.href ? "page" : undefined} className="rounded-md p-2 text-xs hover:bg-slate-100"><span className="block truncate font-medium">{message.label}{message.unreadCount ? ` (${message.unreadCount})` : ""}</span><span className="block truncate text-slate-500">{message.preview}</span></Link>)}</div> : null}
       </nav>
-      <div className="mt-auto space-y-3 pt-6">
+      {!compact ? <div className="mt-auto space-y-3 pt-6">
         <LogoutButton size="sm" className="w-full border-slate-200 bg-slate-50 text-zinc-800 hover:bg-slate-100" />
         <details><summary className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm"><LifeBuoy className="size-4" />Help & Contact</summary><div className="space-y-2 p-3 text-xs text-slate-500"><p>B1 L2 ABCD Sunny Brooke 2 Brgy. San Francisco General Tria City Cavite</p><p>(046) 402-1779 / 0917-155-1779 / 0917-175-1779</p><a className="underline" href="mailto:gtcc2006@gmail.com">gtcc2006@gmail.com</a></div></details>
-      </div>
+      </div> : null}
     </>
   }
   return <>
-    <div aria-hidden="true" className="hidden w-64 shrink-0 md:block" />
-    <aside className="fixed bottom-0 left-0 top-16 z-30 hidden w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white p-4 text-zinc-800 md:flex">{contents()}</aside>
+    <div aria-hidden="true" className={`hidden shrink-0 md:block ${collapsed ? "w-20" : "w-64"}`} />
+    <aside className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-x-hidden overflow-y-auto border-r border-slate-200 bg-white p-3 text-zinc-800 transition-[width] md:flex ${collapsed ? "w-20" : "w-64"}`}>{contents(collapsed, true)}</aside>
     <div className="border-b bg-white px-4 py-2 md:hidden">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild><Button variant="outline" aria-label="Open admin menu"><Menu />Menu</Button></DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="fixed top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-[min(20rem,90vw)] translate-x-0 translate-y-0 flex-col overflow-y-auto rounded-none bg-white p-4 text-zinc-800 sm:max-w-sm">
+        <DialogContent aria-describedby={undefined} className="fixed top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-[min(20rem,90vw)] translate-x-0 translate-y-0 flex-col overflow-x-hidden overflow-y-auto rounded-none bg-white p-4 text-zinc-800 sm:max-w-sm">
           <DialogTitle className="sr-only">Admin menu</DialogTitle>{contents()}
         </DialogContent>
       </Dialog>

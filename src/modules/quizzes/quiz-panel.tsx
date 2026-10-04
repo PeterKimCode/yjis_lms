@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
 import { assessmentTypeLabel } from "./assessment-types"
 import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import { QuizEditor } from "./quiz-editor"
-import { useActionState } from "react"
+import { assessmentAvailability } from "./availability"
+import { useActionState, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
@@ -114,6 +116,7 @@ export function QuizPanel({
   quizzes: QuizPanelValue[]
   userId: string
 }) {
+  const query = useSearchParams()
   return (
     <div className="space-y-4">
       {mode === "instructor" ? (
@@ -132,6 +135,7 @@ export function QuizPanel({
         return (
           <article
             key={quiz.id}
+            id={`assessment-${quiz.id}`}
             className="min-w-0 rounded-xl border bg-card px-4 py-3 text-sm"
           >
             <AssessmentHeader quiz={quiz} />
@@ -154,13 +158,14 @@ export function QuizPanel({
                 <DeleteAssessment id={quiz.id} />
               </div>
             ) : (
-              <details>
+              <details open={query.get("quizId") === quiz.id ? true : undefined}>
                 <summary className="cursor-pointer font-medium text-primary">
                   Open assessment{" "}
                   {latest ? `· ${getQuizAttemptStatus(latest)}` : ""}
                 </summary>
                 <div className="pt-4">
                   <StudentAssessmentPaper
+                    key={latest?.id ?? "not-started"}
                     quiz={quiz}
                     now={now}
                     attempt={latest}
@@ -215,6 +220,8 @@ export function StudentAssessmentPaper({
   attempt?: AttemptValue
   preview?: boolean
 }) {
+  const [retaking, setRetaking] = useState(false)
+  const canRetake = Boolean(attempt?.submittedAt) && availabilityLabel(quiz, now) === "Available"
   return (
     <div className="space-y-4 text-sm">
       {preview ? (
@@ -231,12 +238,17 @@ export function StudentAssessmentPaper({
           Recorded score: {quiz.legacyScore.score} / {quiz.legacyScore.possible}
         </p>
       ) : null}
-      {attempt && !preview ? (
+      {attempt && !preview && !retaking ? (
+        <>
+        {
         shouldShowQuizResults(quiz) && attempt.gradedAt ? (
           <StudentResult quiz={quiz} attempt={attempt} />
         ) : (
           <p>Results are not available yet.</p>
         )
+        }
+        {canRetake ? <Button type="button" variant="outline" onClick={() => setRetaking(true)}>Start next attempt</Button> : null}
+        </>
       ) : (
         <QuizAttemptForm quiz={quiz} now={now} preview={preview} />
       )}
@@ -380,6 +392,7 @@ function QuestionInput({ question }: { question: QuestionValue }) {
       {["SHORT_ANSWER", "ESSAY"].includes(question.type) ? (
         <Textarea
           aria-label={question.prompt}
+          className={question.type === "ESSAY" ? "min-h-40" : "min-h-20"}
           name={`answer_${question.id}`}
           required
           rows={question.type === "ESSAY" ? 5 : 2}
@@ -497,15 +510,8 @@ function StudentResult({
 }
 
 function availabilityLabel(quiz: QuizPanelValue, now: string) {
-  const current = new Date(now).getTime()
   if (!quiz.isPublished) return "Not published"
-  if (quiz.opensAt && new Date(quiz.opensAt).getTime() > current) {
-    return "Not open yet"
-  }
-  if (quiz.closesAt && new Date(quiz.closesAt).getTime() < current) {
-    return "Closed"
-  }
-  return "Available"
+  return assessmentAvailability(quiz, quiz.attempts.length, quiz.questions.length, new Date(now))
 }
 
 function totalPoints(quiz: QuizPanelValue) {

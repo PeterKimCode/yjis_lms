@@ -17,6 +17,7 @@ export function LessonActionsMenu({ classSectionId, lessonId, title, edit, previ
   const [dialog, setDialog] = useState<"edit" | "preview" | null>(null)
   const [pending, setPending] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
+  const content = useRef<HTMLDivElement>(null)
   async function duplicate() {
     setPending(true)
     try {
@@ -35,8 +36,8 @@ export function LessonActionsMenu({ classSectionId, lessonId, title, edit, previ
         <DropdownMenuItem disabled={pending} onSelect={() => { void duplicate() }}>Duplicate lesson</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-    <Dialog open={dialog !== null} onOpenChange={(open) => { if (!open) setDialog(null) }}>
-      <DialogContent aria-describedby={undefined} className="sm:max-w-3xl lg:max-w-5xl" onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus() }}>
+    <Dialog open={dialog !== null} onOpenChange={(open) => { if (!open) { for (const form of content.current?.querySelectorAll("form") ?? []) { if (!form.dispatchEvent(new CustomEvent("lms-confirm-leave", { cancelable: true, detail: { proceed: () => setDialog(null) } }))) return }; setDialog(null) } }}>
+      <DialogContent ref={content} aria-describedby={undefined} className="sm:max-w-3xl lg:max-w-5xl" onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus() }}>
         <DialogHeader className="pr-10"><DialogTitle>{dialog === "edit" ? `Edit lesson: ${title}` : title}</DialogTitle></DialogHeader>
         {dialog === "edit" ? edit : dialog === "preview" ? preview : null}
       </DialogContent>

@@ -171,6 +171,7 @@
     min-height: 44px;
     font-size: 16px;
   }
+  textarea { min-height: 128px; }
   [data-slot="button"]:not([data-size^="icon"]) {
     height: auto;
     max-width: 100%;

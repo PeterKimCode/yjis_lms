@@ -5,6 +5,7 @@ import { signOut, useSession } from "next-auth/react"
 import { Clock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { clearUserDrafts } from "@/lib/browser-preferences"
 
 const warningThresholdSeconds = 5 * 60
 
@@ -40,8 +41,9 @@ export function SessionCountdown({ compact = false }: { compact?: boolean }) {
         },
       })
     )
+    clearUserDrafts(session?.user?.id)
     void signOut({ callbackUrl: "/login?expired=1" })
-  }, [remainingSeconds, status])
+  }, [remainingSeconds, status, session?.user?.id])
 
   async function extendSession() {
     try {

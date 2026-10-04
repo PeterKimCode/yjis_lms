@@ -5,6 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react"
 import { ActionFeedback } from "@/components/action-feedback"
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
 import { Button } from "@/components/ui/button"
+import { DraftNotice, useFormDraft } from "@/components/use-form-draft"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { initialLessonActionState } from "@/modules/learning/action-state"
@@ -109,6 +110,25 @@ export function LessonForm({
 
     return fileAssetOptions
   }, [fileAssetOptions, uploadedFile])
+  const draftForm = useRef<HTMLFormElement>(null)
+  const draft = useFormDraft({
+    form: draftForm,
+    scope: `lesson:${classSectionId}:${lesson?.id ?? "new"}`,
+    saved: saveState.ok,
+    getExtra: () => ({ contentType, videoProvider, selectedVideoFileAssetId, uploadedFileId: uploadedFile?.id }),
+    restoreExtra: (raw) => {
+      if (!raw || typeof raw !== "object") return
+      const value = raw as Record<string, unknown>
+      if (selectableContentTypes.includes(value.contentType as typeof selectableContentTypes[number])) setContentType(value.contentType as ContentType)
+      if (value.videoProvider === "HTML5" || value.videoProvider === "YOUTUBE") setVideoProvider(value.videoProvider)
+      const options = value.contentType === "FILE" ? fileAssetOptions : videoFileOptions
+      if (typeof value.selectedVideoFileAssetId === "string" && options.some((item) => item.id === value.selectedVideoFileAssetId)) setSelectedVideoFileAssetId(value.selectedVideoFileAssetId)
+      else setSelectedVideoFileAssetId(lesson?.videoFileAssetId ?? "")
+    },
+  })
+  useEffect(() => {
+    if (uploadedVideo || uploadedFile) draftForm.current?.dispatchEvent(new Event("lms-draft-change"))
+  }, [uploadedVideo, uploadedFile])
   async function handleUploadVideo(file = videoFileInputRef.current?.files?.[0]) {
     if (!file || isUploading) return
     const controller = new AbortController()
@@ -209,7 +229,8 @@ export function LessonForm({
 
   return (
     <div className="min-w-0 space-y-3 rounded-md border bg-background p-3 [overflow-wrap:anywhere]">
-      <form action={saveAction} className="space-y-3">
+      <form ref={draftForm} action={saveAction} className="space-y-3">
+        <DraftNotice draft={draft} />
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
         <input name="classSectionId" type="hidden" value={classSectionId} />
         {lesson ? (

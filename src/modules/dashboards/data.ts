@@ -458,6 +458,7 @@ export async function getParentStudentDetail(parentId: string, studentId: string
         include: {
           classSection: {
             include: {
+              organization: { select: { timezone: true } },
               campus: true,
               course: true,
               term: true,
@@ -483,6 +484,7 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                 orderBy: { dueAt: "asc" },
               },
               quizzes: {
+                where: { isPublished: true, archivedAt: null },
                 include: {
                   questions: {
                     orderBy: { sequence: "asc" },

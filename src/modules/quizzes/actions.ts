@@ -12,6 +12,7 @@ import {
   requireAnyRole,
 } from "@/modules/auth/permissions"
 import { validateAssessmentAnswers } from "./answer-validation"
+import { assessmentAvailability } from "./availability"
 import { saveEditorQuiz } from "./editor-service"
 import type { QuizActionState } from "@/modules/quizzes/action-state"
 import {
@@ -507,13 +508,8 @@ export async function submitQuiz(
   }
 
   const now = new Date()
-  if (quiz.opensAt && quiz.opensAt > now) return { ok: false, message: "Quiz is not open yet." }
-  if (quiz.closesAt && quiz.closesAt < now) return { ok: false, message: "Quiz is closed." }
-
-  const maxAttempts = quiz.maxAttempts ?? 1
-  if (quiz.attempts.length >= maxAttempts) {
-    return { ok: false, message: "Maximum attempts reached." }
-  }
+  const availability = assessmentAvailability(quiz, quiz.attempts.length, quiz.questions.length, now)
+  if (availability !== "Available") return { ok: false, message: availability === "Not open yet" ? "Quiz is not open yet." : availability === "Closed" ? "Quiz is closed." : availability === "Maximum attempts reached" ? "Maximum attempts reached." : "Quiz is not open." }
 
   const answerErrors=validateAssessmentAnswers(quiz.questions,formData)
   if(Object.keys(answerErrors).length) return {ok:false,message:"Check your answers.",fieldErrors:answerErrors}

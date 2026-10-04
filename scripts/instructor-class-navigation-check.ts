@@ -20,14 +20,14 @@ test("attendance and assessment menus select only their own valid views", () => 
     assert.equal(resolveInstructorClassSelection("assessments", view).section, "assignments")
   }
   for (const view of ["assignments", "quizzes", "exams"]) {
-    assert.equal(resolveInstructorClassSelection("assessments", view).section, view)
+    assert.equal(resolveInstructorClassSelection("assessments", view).section, view === "exams" ? "quizzes" : view)
   }
   assert.deepEqual(resolveInstructorClassSelection("grades", "sessions"), { tab: "grades", section: "grades" })
 })
 
 test("all existing section anchors open their corresponding menu", () => {
   for (const section of ["lessons", "attendance", "sessions", "assignments", "quizzes", "exams", "grades", "boards"]) {
-    assert.equal(instructorSelectionForHash(`#${section}`)?.section, section)
+    assert.equal(instructorSelectionForHash(`#${section}`)?.section, section === "exams" ? "quizzes" : section)
   }
   assert.equal(instructorSelectionForHash("#lesson-progress")?.section, "lessons")
   assert.equal(instructorSelectionForHash("#unknown"), null)

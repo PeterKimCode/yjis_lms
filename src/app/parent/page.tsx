@@ -11,6 +11,10 @@ import { getParentStudents } from "@/modules/dashboards/data"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
+import { getPrismaClient } from "@/lib/prisma"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
+import { assessmentAvailability } from "@/modules/quizzes/availability"
+import { getQuizAttemptStatus } from "@/modules/quizzes/status"
 
 export const metadata = { title: "Parent dashboard" }
 
@@ -21,6 +25,16 @@ export default async function ParentPage() {
     getUnreadMessageCountForCurrentUser(),
     getUnreadNotificationCount(user.id),
   ])
+  const studentIds = relations.map((relation) => relation.student.id)
+  const exams = studentIds.length ? await getPrismaClient().quiz.findMany({
+    where: { isPublished: true, archivedAt: null, classSection: { enrollments: { some: { studentId: { in: studentIds }, status: "ENROLLED" } } } },
+    select: {
+      id: true, title: true, isPublished: true, opensAt: true, closesAt: true, maxAttempts: true,
+      classSectionId: true, classSection: { select: { name: true, organization: { select: { timezone: true } } } },
+      _count: { select: { questions: true } },
+      attempts: { where: { studentId: { in: studentIds } }, orderBy: { createdAt: "desc" }, select: { studentId: true, submittedAt: true, score: true, answers: { select: { score: true, question: { select: { type: true } } } } } },
+    }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 10,
+  }) : []
 
   return (
     <DashboardPage
@@ -29,6 +43,14 @@ export default async function ParentPage() {
       description="Linked students and their current learning activity."
       tone="parent"
     >
+      <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-semibold">Exams / Quiz · latest published</h2>
+        <SimpleTable empty="No published exams or quizzes yet." headers={["Exams / Quiz", "Student / Class", "Starts", "Ends", "Time zone", "Status", "Open"]} rows={exams.flatMap((exam) => relations.filter((relation) => relation.student.enrollments.some((enrollment) => enrollment.classSectionId === exam.classSectionId && enrollment.status === "ENROLLED")).map((relation) => {
+          const attempts = exam.attempts.filter((attempt) => attempt.studentId === relation.student.id)
+          const zone = exam.classSection.organization.timezone || "Asia/Seoul"
+          return <TableRow key={`${exam.id}:${relation.student.id}`}><TableCell className="font-medium">{exam.title}</TableCell><TableCell>{relation.student.name} · {exam.classSection.name}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.opensAt, zone)}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.closesAt, zone)}</TableCell><TableCell>{zone}</TableCell><TableCell>{attempts[0] ? getQuizAttemptStatus(attempts[0]) : assessmentAvailability(exam, attempts.length, exam._count.questions)}</TableCell><TableCell><OpenButton href={`/parent/students/${relation.student.id}/classes/${exam.classSectionId}?tab=assessments&view=quizzes`} /></TableCell></TableRow>
+        }))} />
+      </section>
       <BentoGrid storageKey={`${user.id}:parent`} widgets={[
         { id: "students", title: "Students", kind: "metric", w: 6, h: 4, accent: "blue", content: (<MetricCard
           description="Linked to your account"

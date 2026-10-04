@@ -13,6 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { StatusBadge } from "@/modules/dashboards/components"
+import { canShowMobileCards, MobileTableCards } from "@/components/mobile-table-cards"
+import { ResponsiveTable } from "@/components/responsive-table"
 
 export const adminPrimaryLinks = [
   ["/admin", "Overview"],
@@ -143,9 +145,9 @@ export function DataTable({
   if (rows.length === 0) {
     return <EmptyState label={empty} />
   }
+  const cards = headers.length <= 8 && canShowMobileCards(rows, headers.length)
 
-  return (
-    <div className="max-h-[72vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
+  const desktop = <div className="min-w-0 max-w-full max-h-[72vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
       <Table
         className={`${minWidth} [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80`}
       >
@@ -164,7 +166,7 @@ export function DataTable({
         <TableBody>{rows}</TableBody>
       </Table>
     </div>
-  )
+  return cards ? <ResponsiveTable mobile={<MobileTableCards headers={headers} rows={rows} />}>{desktop}</ResponsiveTable> : desktop
 }
 
 export function SearchForm({

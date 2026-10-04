@@ -2,7 +2,8 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
-import { getCsrfToken, signOut } from "next-auth/react"
+import { getCsrfToken, signOut, useSession } from "next-auth/react"
+import { clearUserDrafts } from "@/lib/browser-preferences"
 import { LogOut } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ export function LogoutButton({
   size?: React.ComponentProps<typeof Button>["size"]
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { data: session } = useSession()
   const [csrfToken, setCsrfToken] = useState("")
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export function LogoutButton({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSubmitting(true)
+    clearUserDrafts(session?.user?.id)
 
     const result = await signOut({
       callbackUrl: "/login",

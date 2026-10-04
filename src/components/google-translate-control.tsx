@@ -41,8 +41,7 @@ export function GoogleTranslateControl({ className }: { className?: string }) {
     const value = document.cookie.split("; ").find((cookie) => cookie.startsWith("googtrans="))?.split("/").pop()
     if (value && options.some(([code]) => code === value)) {
       requested.current = value
-      setLanguage(value)
-      if (value !== "en") setEnabled(true)
+      queueMicrotask(() => { setLanguage(value); if (value !== "en") setEnabled(true) })
     }
     const sync = (event: Event) => {
       const value = (event as CustomEvent<string>).detail

@@ -1,8 +1,9 @@
 "use client"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
+import { DraftNotice, useFormDraft } from "@/components/use-form-draft"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { dateTimeLocalInTimeZone } from "@/lib/timezone"
@@ -53,7 +54,6 @@ export function QuizEditor({
 }) {
   const router = useRouter(),
     form = useRef<HTMLFormElement>(null),
-    dirty = useRef(false),
     pendingRef = useRef(false)
   const [questions, setQuestions] = useState(() => fromQuiz(quiz)),
     [expanded, setExpanded] = useState<string | null>(null)
@@ -67,64 +67,30 @@ export function QuizEditor({
       0
     )
   const back = `/instructor/classes/${classSectionId}?tab=assessments&view=quizzes`
-  useEffect(() => {
-    let restoringHistory = false
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (dirty.current) {
-        event.preventDefault()
-        event.returnValue = ""
-      }
-    }
-    const onClick = (event: MouseEvent) => {
-      const link = (event.target as Element)?.closest("a[href]")
-      if (
-        dirty.current &&
-        link &&
-        !event.ctrlKey &&
-        !event.metaKey &&
-        !event.shiftKey &&
-        !event.defaultPrevented
-      ) {
-        if (window.confirm("You have unsaved changes. Leave anyway?")) {
-          dirty.current = false
-        } else {
-          event.preventDefault()
-          event.stopPropagation()
-        }
-      }
-    }
-    const pop = (event: PopStateEvent) => {
-      if (restoringHistory) {
-        restoringHistory = false
-        return
-      }
-      if (
-        dirty.current &&
-        !window.confirm("You have unsaved changes. Leave anyway?")
-      ) {
-        event.stopImmediatePropagation()
-        restoringHistory = true
-        window.history.forward()
-      } else dirty.current = false
-    }
-    window.addEventListener("beforeunload", beforeUnload)
-    document.addEventListener("click", onClick, true)
-    window.addEventListener("popstate", pop, true)
-    return () => {
-      window.removeEventListener("beforeunload", beforeUnload)
-      document.removeEventListener("click", onClick, true)
-      window.removeEventListener("popstate", pop, true)
-    }
-  }, [])
+  const draft = useFormDraft({
+    form,
+    scope: `assessment:${classSectionId}:${quiz?.id ?? "new"}`,
+    getExtra: () => questions,
+    restoreExtra: (raw) => {
+      if (locked || !Array.isArray(raw) || raw.length > 500) return
+      const valid = raw.every((item) => item && typeof item.key === "string" &&
+        ["MULTIPLE_CHOICE", "ESSAY", "TRUE_FALSE", "SHORT_ANSWER"].includes(item.type) &&
+        typeof item.prompt === "string" && typeof item.explanation === "string" &&
+        typeof item.acceptedAnswers === "string" && Number.isFinite(item.points) &&
+        Array.isArray(item.options) && item.options.length <= 20 &&
+        item.options.every((option: { text?: unknown; isCorrect?: unknown }) => typeof option.text === "string" && typeof option.isCorrect === "boolean"))
+      if (valid) { setQuestions(raw as EditorQuestion[]); setExpanded(null) }
+    },
+  })
   function update(key: string, changes: Partial<EditorQuestion>) {
-    dirty.current = true
+    draft.markChanged()
     setQuestions((items) =>
       items.map((item) => (item.key === key ? { ...item, ...changes } : item))
     )
   }
   function add(type: "MULTIPLE_CHOICE" | "ESSAY") {
     const key = crypto.randomUUID()
-    dirty.current = true
+    draft.markChanged()
     setQuestions((items) => [
       ...items,
       {
@@ -185,7 +151,7 @@ export function QuizEditor({
     try {
       const result = await saveQuiz(initialQuizActionState, data)
       if (result.saved && result.quizId) {
-        dirty.current = false
+        draft.clear()
         router.push(
           result.ok ? back : `/instructor/classes/${classSectionId}/quizzes/${result.quizId}?uploadFailed=1`
         )
@@ -222,16 +188,17 @@ export function QuizEditor({
       ref={form}
       className="mx-auto w-full min-w-0 max-w-4xl space-y-5 pb-44 md:pb-28"
       onChange={() => {
-        dirty.current = true
+        draft.markChanged()
       }}
       onSubmit={(event) => {
         event.preventDefault()
         void save(quiz?.isPublished ?? false)
       }}
     >
+      <DraftNotice draft={draft} />
       <input name="id" type="hidden" value={quiz?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
-      <Button asChild variant="secondary" className="border border-slate-300 bg-slate-800 text-white hover:bg-slate-700"><Link href={back}>← Back to Exams / Quiz</Link></Button>
+      <Button asChild variant="outline"><Link href={back}>← Back to Exams / Quiz</Link></Button>
       {uploadFailed ? (
         <p
           role="alert"
@@ -546,7 +513,7 @@ export function QuizEditor({
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        dirty.current = true
+                        draft.markChanged()
                         setQuestions((items) =>
                           items.filter((item) => item.key !== question.key)
                         )
@@ -581,7 +548,7 @@ export function QuizEditor({
                 variant="outline"
                 onClick={() => {
                   const key = crypto.randomUUID()
-                  dirty.current = true
+                  draft.markChanged()
                   setQuestions((items) => [
                     ...items,
                     {
