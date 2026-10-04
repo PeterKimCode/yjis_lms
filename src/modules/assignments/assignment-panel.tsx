@@ -218,96 +218,31 @@ function InstructorAssignmentList({
         ).length
 
         return (
-          <article
-            className="lms-card rounded-lg p-4"
-            key={assignment.id}
-          >
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1.5fr)_repeat(5,minmax(90px,auto))] md:items-start">
-              <AssignmentSummaryItem
-                label="Title"
-                value={assignment.title}
-                strong
-              />
-              <AssignmentSummaryItem
-                label="Due"
-                value={formatDateTime(assignment.dueAt, assignment.timeZone)}
-              />
-              <AssignmentSummaryItem
-                label="Max score"
-                value={assignment.pointsPossible ?? "-"}
-              />
-              <div className="space-y-1">
-                <div className="text-xs text-muted-foreground">Late</div>
-                <StatusBadge
-                  label={assignment.acceptsLate ? "Allowed" : "Closed"}
-                  value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"}
-                />
-              </div>
-              <AssignmentSummaryItem
-                label="Submissions"
-                value={assignment.submissions.length}
-              />
-              <AssignmentSummaryItem label="Graded" value={gradedCount} />
+          <article className="min-w-0 rounded-xl border bg-card px-4 py-3 text-sm" key={assignment.id}>
+            <header className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+              <h2 className="min-w-0 break-words text-base font-semibold">{assignment.title}</h2>
+              <span><span className="font-medium">Due: </span>{formatDateTime(assignment.dueAt, assignment.timeZone)}</span>
+              <span className="text-muted-foreground">{assignment.pointsPossible ?? "-"} points · {assignment.timeZone}</span>
+              <span>Submissions: {assignment.submissions.length} · Graded: {gradedCount}</span>
+              <StatusBadge label={assignment.acceptsLate ? "Late submissions allowed" : "No late submissions"} value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"} />
+            </header>
+            <div className="mt-2 flex flex-wrap items-start gap-2">
+              <FormDialog title={`Edit assignment: ${assignment.title}`} trigger="Edit assignment" variant="outline">
+                <AssignmentForm assignment={assignment} classSectionId={classSectionId} defaultAcceptsLate={defaultAcceptsLate} />
+              </FormDialog>
+              <FormDialog title={`Review submissions: ${assignment.title}`} trigger="Review / Grade" variant="outline">
+                <SubmissionReview assignment={assignment} />
+              </FormDialog>
+              {assignment.attachments.length ? (
+                <FormDialog title={`Attachments: ${assignment.title}`} trigger={`Attachments · ${assignment.attachments.length}`} variant="outline">
+                  <AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id} />
+                </FormDialog>
+              ) : null}
+              <DeleteAssignmentForm assignmentId={assignment.id} />
             </div>
-
-            <details className="mt-4 rounded-md border bg-white/80 p-3">
-              <summary className="cursor-pointer text-sm font-medium text-primary underline-offset-4 hover:underline">
-                Manage assignment
-              </summary>
-              <div className="mt-3 grid gap-3">
-                {assignment.attachments.length ? (
-                  <div className="rounded-md border bg-muted/20 p-3 text-sm">
-                    <div className="mb-2 font-medium">Teacher PDFs</div>
-                    <AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/>
-                  </div>
-                ) : null}
-                <FormDialog
-                  title={`Edit assignment: ${assignment.title}`}
-                  description="Update assignment details and grading settings."
-                  trigger="Edit assignment"
-                  variant="outline"
-                >
-                  <AssignmentForm
-                    assignment={assignment}
-                    classSectionId={classSectionId}
-                    defaultAcceptsLate={defaultAcceptsLate}
-                  />
-                </FormDialog>
-                <FormDialog
-                  title={`Review submissions: ${assignment.title}`}
-                  description="Review student responses, attachments, scores, and feedback in a wider workspace."
-                  trigger="Review submissions"
-                  variant="outline"
-                >
-                  <div className="space-y-4">
-                    <DeleteAssignmentForm assignmentId={assignment.id} />
-                    <SubmissionReview assignment={assignment} />
-                  </div>
-                </FormDialog>
-              </div>
-            </details>
           </article>
         )
       })}
-    </div>
-  )
-}
-
-function AssignmentSummaryItem({
-  label,
-  strong,
-  value,
-}: {
-  label: string
-  strong?: boolean
-  value: string | number
-}) {
-  return (
-    <div className="min-w-0 space-y-1">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`${strong ? "font-semibold" : "text-sm"} truncate`}>
-        {value}
-      </div>
     </div>
   )
 }
@@ -328,7 +263,7 @@ function AssignmentForm({
 
   return (
     <>
-    <form onInvalid={(event) => { const details = (event.target as HTMLElement).closest("details"); if (details) details.open = true }} onSubmit={onSubmit} className="grid gap-3 md:grid-cols-2">
+    <form onSubmit={onSubmit} className="grid min-w-0 gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2 [&_input:not([type=checkbox])]:border-slate-400 [&_input:not([type=checkbox])]:bg-background [&_textarea]:border-slate-400 [&_textarea]:bg-background">
       <input name="id" type="hidden" value={assignment?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
       <label className="grid gap-1 text-sm">
@@ -362,7 +297,7 @@ function AssignmentForm({
           PDF only. Max 20MB.
         </span>
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pdfAttachmentFile}</span></label>
-      <details className="rounded-lg border p-3 md:col-span-2"><summary className="cursor-pointer text-sm font-medium">Additional settings</summary><div className="mt-3 grid gap-3 md:grid-cols-2">      <label className="grid gap-1 text-sm">
+      <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 md:col-span-2 dark:border-blue-900 dark:bg-blue-950/30"><h3 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Assignment settings</h3><div className="mt-3 grid gap-4 md:grid-cols-2">      <label className="grid gap-1 text-sm">
         <span className="font-medium">Max score</span>
         <Input
           min="0.01"
@@ -381,15 +316,15 @@ function AssignmentForm({
         />
         Allow late submission
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.acceptsLate}</span></label>
-</div></details>
+</div></section>
       <ActionFeedback closeOnSuccess state={state} />
-      <div className="flex items-end">
+      <div className="flex items-end justify-end border-t pt-3 md:col-span-2">
         <Button size="sm" type="submit" disabled={pending}>
           {pending ? "Saving..." : assignment ? "Save assignment" : "Create assignment"}
         </Button>
       </div>
     </form>
-    {assignment?<section className="mt-4 space-y-3"><h3 className="text-base font-semibold">Existing attachments</h3><AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/></section>:null}
+    {assignment?<section className="mt-4 space-y-3 rounded-xl border border-slate-300 bg-card p-4"><h3 className="text-base font-semibold">Existing attachments</h3><AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/></section>:null}
     </>
   )
 }
@@ -401,7 +336,7 @@ function DeleteAssignmentForm({ assignmentId }: { assignmentId: string }) {
   )
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form action={formAction} className="space-y-1">
       <input name="assignmentId" type="hidden" value={assignmentId} />
       <ActionFeedback state={state} />
       <ConfirmSubmitButton

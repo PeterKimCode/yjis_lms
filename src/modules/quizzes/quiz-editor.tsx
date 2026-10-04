@@ -206,7 +206,7 @@ export function QuizEditor({
   }
   function field(name: string, label: string, children: ReactNode) {
     return (
-      <label className="grid min-w-0 gap-1 text-sm [&_input]:bg-background [&_textarea]:bg-background [&_select]:bg-background">
+      <label className="grid min-w-0 gap-2 text-sm [&_input]:border-slate-400 [&_input]:bg-background [&_select]:border-slate-400 [&_select]:bg-background">
         <span className="font-medium">{label}</span>
         {children}
         {errors[name] ? (
@@ -336,7 +336,7 @@ export function QuizEditor({
             <div
               key={question.key}
               data-question-key={question.key}
-              className="min-w-0 rounded-xl border bg-background"
+              className="min-w-0 rounded-xl border-2 border-slate-300 bg-card shadow-sm"
             >
               <button
                 type="button"
@@ -344,7 +344,7 @@ export function QuizEditor({
                 onClick={() =>
                   setExpanded(expanded === question.key ? null : question.key)
                 }
-                className="flex min-h-12 w-full min-w-0 items-center gap-3 p-4 text-left text-sm"
+                className="flex min-h-12 w-full min-w-0 items-center gap-3 rounded-t-xl bg-blue-50 p-4 text-left text-sm font-medium text-blue-950 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-100"
               >
                 <span>{index + 1}.</span>
                 <span className="min-w-0 flex-1 truncate">
@@ -360,7 +360,7 @@ export function QuizEditor({
               ) : null}
               <div
                 hidden={expanded !== question.key}
-                className="space-y-3 border-t p-4"
+                className="space-y-4 border-t border-slate-300 bg-card p-4"
               >
                 <div className="grid gap-3 md:grid-cols-2">
                   {field(
@@ -434,6 +434,9 @@ export function QuizEditor({
                   "Question",
                   <Textarea
                     aria-label={`Question ${index + 1}`}
+                    className="min-h-32 border-2 border-slate-400 bg-white text-foreground shadow-sm placeholder:text-slate-500 focus-visible:border-blue-600 dark:bg-background dark:border-slate-500"
+                    placeholder="Enter the question students will answer."
+                    rows={4}
                     value={question.prompt}
                     onChange={(event) =>
                       update(question.key, { prompt: event.target.value })
