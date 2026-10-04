@@ -1,229 +1,140 @@
-# GTCC YJIS LMS 쉬운 사용 설명서
+# GTCC YJIS LMS
 
-이 문서는 컴퓨터가 익숙하지 않은 분도 LMS를 사용할 수 있도록 아주 천천히 설명합니다.
-어려운 말보다 “어느 메뉴를 누르고, 무엇을 입력하고, 어떤 버튼을 누르는지”를 중심으로 적었습니다.
+학교의 수업·강의·출석·과제·시험·성적과 소통을 관리하는 LMS입니다. 처음 이용하는 분은 아래 PDF에서 본인 역할을 골라 따라 하세요.
 
-## 1. 먼저 이것만 기억하세요
+**운영 서비스: [https://lms.mygtcc.com](https://lms.mygtcc.com)**
+학교에서 받은 **Login ID와 비밀번호**로 로그인합니다. 공개 회원가입은 제공하지 않습니다. `http://localhost:3000`은 개발자가 자기 PC에서 실행할 때 사용하는 주소입니다.
 
-1. 인터넷 주소창에 `http://localhost:3000`을 입력합니다.
-2. 오른쪽 위 또는 화면의 `Log In` 버튼을 누릅니다.
-3. 이메일과 비밀번호를 입력합니다.
-4. 로그인 후 왼쪽 메뉴에서 필요한 일을 선택합니다.
-5. 새로 만든 뒤에는 보통 `Save` 버튼을 눌러 저장합니다.
+## 쉬운 한국어 PDF 매뉴얼
 
-## 2. 테스트 계정
+A4 세로, 본문 16pt, 작업별 한 페이지로 구성했습니다. 최신 앱의 별도 데모 환경에서 캡처한 화면에 번호·테두리·화살표를 표시했습니다. 실제 개인정보나 비밀번호는 포함하지 않습니다. PDF 첫 페이지의 목차를 누르면 해당 작업으로 이동합니다.
 
-모든 테스트 계정의 비밀번호는 `DemoPass123!` 입니다.
+| 대상 | PDF 열기·다운로드 | 주요 내용 | 쪽수 |
+| --- | --- | --- | --- |
+| 처음 이용하는 모든 사용자 | [처음 쓰는 LMS](docs/manuals/easy-start-guide.pdf) | 로그인, 모바일 메뉴, 메시지, 알림, 로그아웃 | 7 |
+| Super Admin | [최고 관리자 매뉴얼](docs/manuals/super-admin-manual.pdf) | 조직·학년도, 사용자·과목·수업, 교수 배정, 학생 등록, 가족 연결 | 15 |
+| School Admin | [학교 관리자 매뉴얼](docs/manuals/school-admin-manual.pdf) | 학교 범위 사용자 등록, 과목·수업, 교수 배정, 학생 등록, 권한 제한 | 12 |
+| Academic Staff | [학사 직원 매뉴얼](docs/manuals/academic-staff-manual.pdf) | 허용 범위 사용자·수업·학생 관리, 가족 연결, 성적 서류 | 13 |
+| Instructor | [교수 매뉴얼](docs/manuals/instructor-manual.pdf) | 강의·출석·과제, 영상, 시험/퀴즈·PDF 답안, 채점·성적 | 15 |
+| Student | [학생 매뉴얼](docs/manuals/student-manual.pdf) | 강의 진도, 과제 제출, PDF 시험 답안, 출석·성적 | 12 |
+| Parent | [학부모 매뉴얼](docs/manuals/parent-manual.pdf) | 자녀 선택, 강의·출석·과제·시험 일정·성적 확인 | 11 |
 
-| 역할 | 이메일 | 주로 하는 일 |
-| --- | --- | --- |
-| Super Admin | `super.admin@demo.local` | 전체 학교/조직 관리 |
-| School Admin | `school.admin@demo.local` | 사용자, 수업, 학사 설정 관리 |
-| Instructor | `instructor@demo.local` | 레슨, 출석, 과제, 퀴즈, 성적 관리 |
-| Student | `student@demo.local` | 수업 보기, 영상 보기, 과제 제출 |
-| Parent | `parent@demo.local` | 자녀 수업, 출석, 성적 확인 |
+화면의 영어 버튼 이름과 쉬운 한국어 설명을 함께 사용합니다. 화면 언어·학교 설정·권한에 따라 일부 메뉴가 다를 수 있습니다. [글로 읽는 공통 시작 안내](docs/user-guides/easy-start-guide.md)와 [매뉴얼 제작·재생성 안내](docs/manuals/README.md)도 제공합니다.
 
-## 3. 가장 많이 쓰는 순서
+## 역할과 권한
 
-처음 학교를 세팅할 때는 보통 아래 순서대로 하면 됩니다.
+현재 안내하는 역할은 다음 6개입니다. 접근 범위와 저장 권한은 서버에서도 검사합니다.
 
-1. 관리자 계정으로 로그인합니다.
-2. `Users`에서 선생님, 학생, 학부모 계정을 만듭니다.
-3. `Courses`에서 과목을 만듭니다.
-4. `Class Sections`에서 실제 반/수업을 만듭니다.
-5. 수업에 선생님과 학생을 연결합니다.
-6. 선생님 계정으로 로그인합니다.
-7. `Classes`에서 수업을 열고 영상 레슨, 출석, 과제, 퀴즈를 만듭니다.
-8. 학생 계정으로 로그인해서 영상 시청, 과제 제출, 퀴즈 응시를 확인합니다.
-9. 학부모 계정으로 로그인해서 자녀 기록을 확인합니다.
+- **Super Admin:** 전체 조직·학교와 사용자·수업을 관리합니다.
+- **School Admin:** 배정된 범위의 Instructor·Student·Parent 계정을 만들고 수업을 관리합니다. Super Admin이 조회 범위에 보이더라도 수정·삭제할 수 없습니다. 관리자 계정 변경과 사용자 삭제는 승인 절차를 따릅니다. 가족 연결과 학생 학사 상세·서류 관리 영역은 School Admin 전용 화면에 제공되지 않으므로 권한 있는 관리자에게 요청합니다.
+- **Academic Staff:** 부여된 조직·캠퍼스 범위에서 사용자·과목·수업·학생 학사 기록과 가족 연결·서류 업무를 처리합니다. 범위 밖 자료와 Super Admin 계정 수정은 허용되지 않습니다.
+- **Instructor:** 담당 수업의 강의·출석·과제·시험/퀴즈·채점·성적을 관리합니다.
+- **Student:** 등록된 수업을 학습하고 과제와 시험 답안을 제출합니다.
+- **Parent:** 연결된 자녀의 기록을 확인합니다. 자녀 대신 답안을 제출하거나 기록을 수정하지 않습니다.
 
-## 4. 사용자 만들기
+기존 데이터 호환을 위한 `ORG_ADMIN`, `HOMEROOM_TEACHER` 값은 데이터 구조에 남아 있지만 Users 역할 탭에서는 표시하지 않습니다. 새 매뉴얼의 대상은 위 6개 역할입니다.
 
-관리자가 학생, 선생님, 학부모 계정을 만드는 방법입니다.
+## 수업에서 자주 하는 일
 
-1. 관리자 계정으로 로그인합니다.
-2. 왼쪽 메뉴에서 `Users`를 누릅니다.
-3. `Create user` 또는 사용자 생성 영역을 찾습니다.
-4. 아래 내용을 입력합니다.
-   - `Organization`: 학교 또는 조직
-   - `Campus`: 캠퍼스
-   - `Name`: 이름
-   - `Email`: 로그인할 이메일
-   - `Password`: 임시 비밀번호
-   - `Role`: 역할
-5. 학생이라면 `Student grade`, `Student homeroom`, `Student number`도 입력합니다.
-6. `Save` 버튼을 누릅니다.
+`Classes → 수업 이름`으로 이동합니다. 기본 화면은 **Lessons**입니다.
 
-중요: 같은 이메일은 두 번 만들 수 없습니다. 이미 있는 이메일이면 다른 이메일을 사용하거나 기존 사용자를 수정하세요.
-
-## 5. 과목 만들기
-
-과목은 “영어”, “수학”, “Introduction to Learning” 같은 큰 이름입니다.
-
-1. 관리자 계정으로 로그인합니다.
-2. 왼쪽 메뉴에서 `Courses`를 누릅니다.
-3. `Create course` 영역을 찾습니다.
-4. 과목 이름, 코드, 학점이 있으면 입력합니다.
-5. `Save`를 누릅니다.
-
-## 6. 수업 만들기
-
-수업은 실제 학생들이 들어가는 반입니다. 예: `Introduction to Learning - Section A`
-
-1. 관리자 계정으로 로그인합니다.
-2. 왼쪽 메뉴에서 `Class Sections`를 누릅니다.
-3. `Create class section` 영역을 찾습니다.
-4. `Course`를 먼저 선택합니다.
-5. Course를 선택하면 가능한 조직/캠퍼스 정보가 맞게 채워집니다.
-6. 수업 제목, 정원, 기간, 강의 방식을 입력합니다.
-7. 담당 선생님과 학생을 연결합니다.
-8. `Save`를 누릅니다.
-
-참고: `Capacity`는 수업 정원입니다. 예를 들어 30명을 받을 수 있으면 `30`을 입력합니다.
-
-## 7. 영상 레슨 만들기
-
-선생님이 학생에게 보여줄 동영상 수업을 만드는 방법입니다.
-
-1. 선생님 계정으로 로그인합니다.
-2. 왼쪽 메뉴에서 `Classes`를 누릅니다.
-3. 원하는 수업 이름을 누릅니다.
-4. 화면에서 `Lessons` 섹션을 찾습니다.
-5. `Create lesson`을 엽니다.
-6. 아래 내용을 입력합니다.
-   - `Title`: 레슨 제목
-   - `Type`: `VIDEO`
-   - `Video provider`: YouTube 또는 HTML5
-   - `Duration`: 영상 길이
-   - `Published`: 학생에게 보이게 하려면 체크
-7. `Save`를 누릅니다.
-
-학생 화면에서는 `Open` 버튼 옆에 시청 진행률이 보입니다.
-100%가 아니면 빨간색으로 보이고, 완료되면 초록색 100%와 체크 표시가 보입니다.
-
-## 8. 출석 체크하기
-
-선생님이 한 번에 출석을 저장하는 방법입니다.
-
-1. 선생님 계정으로 로그인합니다.
-2. `Classes`에서 수업을 엽니다.
-3. `Attendance` 섹션을 찾습니다.
-4. `Manage attendance`를 엽니다.
-5. 기본 상태는 `PRESENT`입니다.
-6. 결석이나 지각 학생만 상태를 바꿉니다.
-7. 한 명씩 저장할 수도 있고, 전체 저장 버튼으로 한 번에 저장할 수 있습니다.
-
-출석이 바뀌면 학생과 연결된 학부모에게 알림이 갑니다.
-
-## 9. 과제 만들기와 채점
-
-1. 선생님 계정으로 수업을 엽니다.
-2. `Assignments` 섹션으로 갑니다.
-3. `Create assignment`를 엽니다.
-4. 제목, 설명, 마감일, 만점 점수를 입력합니다.
-5. `Save`를 누릅니다.
-6. 학생이 제출하면 `Review submissions`에서 확인합니다.
-7. 점수와 피드백을 입력하고 `Save grade`를 누릅니다.
-
-학생은 자기 과제만 볼 수 있고, 학부모는 연결된 자녀의 과제 상태만 볼 수 있습니다.
-
-## 10. 퀴즈 만들기
-
-1. 선생님 계정으로 수업을 엽니다.
-2. `Quizzes` 섹션에서 퀴즈를 만듭니다.
-3. 퀴즈 목록에서 `Manage`를 누릅니다.
-4. 퀴즈 관리 페이지에서 `Add question`을 엽니다.
-5. 문제 유형을 고릅니다.
-   - `MULTIPLE_CHOICE`: 객관식
-   - `TRUE_FALSE`: 참/거짓
-   - `SHORT_ANSWER`: 짧은 답
-   - `ESSAY`: 서술형
-6. 문제, 점수, 정답을 입력합니다.
-7. 저장합니다.
-
-객관식과 참/거짓은 자동 채점됩니다. 서술형은 선생님이 직접 채점합니다.
-
-## 11. 성적과 성적표
-
-1. 선생님 계정으로 수업을 엽니다.
-2. `Grades` 섹션으로 갑니다.
-3. `Grade weights`에서 레슨, 출석, 과제, 퀴즈, 시험 비율을 확인합니다.
-4. `Calculate final grades`를 누르면 최종 성적 초안이 만들어집니다.
-5. 공개할 준비가 되면 `Publish final grades`를 누릅니다.
-
-학생과 학부모는 공개된 성적만 볼 수 있습니다. 초안 성적은 보이지 않습니다.
-
-## 12. PDF 성적표와 Transcript
-
-관리자는 학생 상세 페이지에서 문서를 받을 수 있습니다.
-
-1. 관리자 계정으로 로그인합니다.
-2. `Users`를 누릅니다.
-3. 학생 이름을 엽니다.
-4. `Documents` 영역을 찾습니다.
-5. `Report card` 또는 `Download transcript`를 누릅니다.
-
-학생은 Transcript 다운로드를 하루 최대 3회까지 할 수 있습니다.
-
-## 13. 메시지와 알림
-
-### Messages
-
-1. 상단 또는 왼쪽 메뉴에서 메시지 아이콘을 누릅니다.
-2. `New message`를 엽니다.
-3. 받을 사람을 선택합니다.
-4. 내용을 입력하고 보냅니다.
-
-학생은 같은 수업의 선생님에게만 메시지를 보낼 수 있습니다. 학생끼리 직접 메시지는 MVP에서 막혀 있습니다.
-
-### Notifications
-
-1. 알림 아이콘을 누릅니다.
-2. 새 과제, 새 메시지, 출석 변경, 성적 공개 알림을 확인합니다.
-3. 확인한 알림은 읽음 처리할 수 있습니다.
-
-## 14. 게시판
-
-1. 관리자 또는 선생님 계정으로 로그인합니다.
-2. `Boards`를 누르거나 수업 안의 `Boards` 섹션을 엽니다.
-3. 공지, Q&A, 자료 게시판을 만들 수 있습니다.
-4. 게시글과 댓글을 작성할 수 있습니다.
-5. 이미지 첨부는 JPG, PNG, WEBP, GIF만 가능하고 10MB 이하만 됩니다.
-
-## 15. 자주 막히는 부분
-
-| 상황 | 확인할 것 |
+| 수업 탭 | 내용 |
 | --- | --- |
-| 학생에게 수업이 안 보임 | 학생이 해당 Class Section에 등록되어 있는지 확인 |
-| 영상이 안 보임 | Lesson이 Published 상태인지 확인 |
-| 과제가 제출되지 않음 | 마감일이 지났는지, late submission 허용 여부 확인 |
-| 성적이 학생에게 안 보임 | Final grade가 Published 상태인지 확인 |
-| 학부모에게 자녀가 안 보임 | Parent와 Student가 연결되어 있는지 확인 |
-| 파일이 안 올라감 | 허용된 파일 형식과 10MB 제한 확인 |
+| Lessons | 강의 목록, 자료·영상, 학습 진도 |
+| Attendance | 출석 확인·관리, 교수의 Sessions(수업 일정) |
+| Assessments | Assignments(과제), Exams / Quiz(시험·퀴즈) |
+| Grades | 성적, 교수의 평가 비중·성적 계산·공개 |
+| Boards | 수업 게시판 |
+| Students | 교수의 학생 목록 |
+| Class conversation | 수업 단체 대화 |
 
-## 16. PDF 설명서
+학생·학부모 화면은 역할에 맞는 확인·제출 기능만 표시합니다. 모바일 탭은 가로로 밀어 이동합니다. 선택한 탭은 URL에 저장되어 새로고침·뒤로가기·공유 링크에서 복원됩니다.
 
-아래 PDF는 역할별로 더 쉽게 정리한 설명서입니다.
+### 강의와 영상
 
-- [처음 쓰는 쉬운 설명서](docs/manuals/easy-start-guide.pdf)
-- [Super Admin 설명서](docs/manuals/super-admin-manual.pdf)
-- [School Admin 설명서](docs/manuals/school-admin-manual.pdf)
-- [Instructor 설명서](docs/manuals/instructor-manual.pdf)
-- [Student 설명서](docs/manuals/student-manual.pdf)
-- [Parent 설명서](docs/manuals/parent-manual.pdf)
+1. 교수는 `Lessons → Create lesson`에서 제목과 Text·Video·File 유형을 고릅니다.
+2. 업로드 영상은 `Video source → Video: Upload`에서 파일을 선택합니다. **파일 선택 즉시 업로드가 시작**됩니다. 실패하면 `Retry upload`로 재시도합니다.
+3. 업로드된 영상이 선택되었는지 확인한 뒤 강의를 저장합니다. **수동 Video duration 입력은 필요 없습니다.**
+4. 학생은 실제로 영상 전체를 시청해야 완료됩니다. 건너뛴 구간은 시청으로 계산되지 않습니다. 글 강의는 열면 완료로 기록됩니다.
+5. 교수는 공개 전환·완료 인원 버튼을 직접 사용하고 수정·복제·학생 미리보기는 더보기에서 엽니다. 손잡이를 끌어 강의 순서와 그룹을 변경하고 `Rename`으로 그룹 제목을 바꿉니다.
 
-## 17. 개발자용 문서 다시 만들기
+### 과제와 첨부파일
 
-PDF 설명서를 다시 만들려면 아래 명령어를 실행합니다.
+`Assessments → Assignments`에서 만듭니다. 제목·마감일·설명·PDF를 입력하고 `Save assignment`를 누릅니다. 과제 카드에 `Edit assignment`, `Review / Grade`, 첨부파일과 삭제 기능이 표시됩니다.
 
-```bash
-npx tsx scripts/generate-manual-pdfs.ts
+수정 화면의 기존 첨부파일에서 **View / Download / Replace / Delete**를 사용할 수 있습니다. 교체 업로드가 성공하기 전에는 기존 파일이 유지됩니다. 학생은 과제 화면에서 Text response 또는 파일을 제출하고, 교수는 점수·피드백을 저장합니다. 지각 제출·재제출·공개 여부는 과제 설정과 학교 정책에 따릅니다.
+
+### Exams / Quiz
+
+퀴즈와 시험은 하나의 작성·응시·채점 흐름으로 관리합니다. 교수와 학생은 같은 평가 데이터와 수업 내 일정을 사용합니다.
+
+- `Create assessment`에서 **Quiz / Monthly exam / Midterm / Final exam / Other exam**을 고릅니다.
+- 전용 편집 화면에서 제목·문제를 작성합니다. `Add multiple choice`, `Add open-ended`, `Add PDF answer sheet`로 필요한 문제만 추가합니다. 객관식 정답은 보기 옆에서 지정하고 `Done`으로 문제를 접습니다.
+- **Assessment settings는 펼쳐진 상태**입니다. 학교 시간대로 시작·종료 시간, 제한 시간·응시 횟수·결과 공개 등을 확인합니다. 미구현 Shuffle questions는 표시하지 않으며 저장된 값은 보존합니다.
+- 총점은 문제 배점 합계로 표시합니다. 기존 별도 만점 설정도 유지할 수 있습니다.
+- **Save draft / Publish**를 구분합니다. 문제 없는 평가는 초안만 저장할 수 있고, 공개 전 문제·보기·정답을 검사합니다.
+- PDF 시험은 시험지 첨부 후 답안란을 준비합니다. 학생은 시험지를 보거나 다운로드하고 **LMS 안의 답안란에 답을 써서 Submit answers**로 제출합니다.
+- `Student preview`에서 학생 화면을 확인합니다. 목록의 `Edit / Grade`에서 수정·응시 내역·채점을 관리합니다. 시험 목록은 최신 작성순입니다.
+- 작성·수정 저장 후 **Exams / Quiz 목록으로 돌아갑니다.** 작성 중에도 `Back to Exams / Quiz`를 사용할 수 있습니다. 저장 실패 시 입력을 유지하며 첨부 실패 여부와 재시도를 안내합니다.
+
+### 학교 시간대와 성적 공개
+
+평가 일정은 조직의 `timezone` 기준으로 입력·표시합니다. 미설정 시 `Asia/Seoul`을 사용합니다. 서버 저장 시점과 화면 표시 시간대를 구분하므로 여행 중인 사용자는 자기 휴대전화 시간 대신 화면의 학교 시간대를 확인해야 합니다. 학부모도 **자녀의 수업 → Exams / Quiz**에서 시작·종료 시간을 확인하세요.
+
+최종 성적은 교수의 `Grades → Calculate final grades → Publish grades` 순서로 확인·공개합니다. 학생·학부모의 성적·피드백·결과·성적표 표시 여부는 학교 정책과 공개 상태에 따릅니다. Transcript(성적증명서)는 학교 승인 절차가 필요할 수 있습니다.
+
+## 파일별 용량 제한
+
+| 사용 위치 | 허용 종류 | 파일당 최대 |
+| --- | --- | --- |
+| 강의 영상 | MP4, WebM, MOV, M4V | 500MB |
+| 과제·시험지 PDF | PDF | 20MB |
+| 일반 자료·학생 과제 첨부 | PDF, Office 문서, TXT, 이미지, CSV, ZIP 등 허용 목록 | 20MB |
+| 프로필 사진 | JPG, PNG, WEBP, GIF | 10MB |
+
+실행파일·스크립트 등 허용되지 않은 파일은 차단됩니다. 동영상은 일반 자료 첨부 대신 영상 업로드 영역을 사용하세요. 업로드 중 창을 닫지 마세요.
+
+## 메시지·알림·모바일
+
+`Messages`에서 받는 사람을 고르고 대화를 시작하거나 기존 대화에서 `Send`로 글을 보냅니다. 내 메시지는 `Edit`로 **메시지 안에서 바로 수정**하며 `Save`로 저장합니다. 현재 메시지는 글만 전송합니다.
+
+`Notifications`에서 알림을 확인하고 `Mark all as read`로 모두 읽음 처리합니다. 모바일에서는 위 `Menu` 또는 아래 `Home / Classes / Messages / Alerts`를 사용합니다. 이용을 마치면 `Logout`을 누릅니다.
+
+## 개발 환경 실행
+
+Node.js·npm, PostgreSQL, Redis, S3 호환 저장소(MinIO)가 필요합니다. 실제 연결 값은 별도 환경변수로 관리합니다. 운영 데이터로 데모 화면을 만들지 마세요.
+
+```powershell
+npm install
+Copy-Item .env.example .env
+# .env의 데이터베이스·파일 저장소·인증 설정을 개발 환경에 맞게 수정
+npx prisma generate
+npx prisma migrate deploy
+npm run dev
 ```
 
-검사 명령어:
+개발 주소는 `http://localhost:3000`입니다. 초기 데모 데이터는 **분리된 개발 DB에서만** `npx tsx prisma/seed.ts`로 생성합니다. 배포·백업·보안 설정은 아래 문서를 참조하세요.
 
-```bash
-npx prisma validate
+```powershell
+npx tsc --noEmit
 npm run lint
 npm run build
 ```
+
+- [배포 절차](docs/deployment.md): GitHub `main`에 푸시한 뒤 gmk에서 기존 **`deploy-lms`** 실행
+- [운영·보안](docs/operations-and-security.md)
+- [권한 설계](docs/permissions.md)
+- [영상 업로드](docs/minio-video-upload.md)
+- [PDF 서류 생성](docs/document-pdf-generation.md)
+
+이번 README·매뉴얼 갱신은 **문서만 변경**하며 운영 앱 재배포가 필요하지 않습니다.
+
+## 매뉴얼 다시 만들기
+
+PDF 원문은 `docs/manuals/source/manuals.json`, 데모 캡처는 `docs/manuals/images`에 있습니다. 환경 준비와 검수 명령은 [재생성 안내](docs/manuals/README.md)에 정리했습니다.
+
+```powershell
+npx tsx scripts/generate-manual-pdfs.ts
+```
+
+이 명령은 문서 생성 전용 Python 스크립트를 실행하며 앱 DB·권한·기능을 변경하지 않습니다. PDF를 다시 생성한 뒤 반드시 전체 페이지를 렌더링하고 검수하세요.

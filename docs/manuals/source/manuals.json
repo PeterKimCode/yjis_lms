@@ -1,0 +1,2213 @@
+{
+  "revision": "2026-10-04",
+  "screenRevision": "7efc2fd",
+  "operatingUrl": "https://lms.mygtcc.com",
+  "manuals": [
+    {
+      "fileName": "easy-start-guide.pdf",
+      "role": "공통 시작 안내",
+      "title": "처음 쓰는 LMS",
+      "scope": "학교에서 받은 계정으로 시작하세요. 본인 역할의 매뉴얼과 함께 읽으면 쉽습니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "내 역할의 메뉴 찾기",
+          "where": "로그인 → 왼쪽 메뉴",
+          "image": {
+            "name": "school-users",
+            "crop": [
+              0,
+              175,
+              256,
+              320
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 212,
+                "w": 223,
+                "h": 36
+              }
+            ]
+          },
+          "steps": [
+            "관리자는 Users·Courses·① Class Sections를 사용합니다.",
+            "교수·학생은 Classes에서 수업을 여세요. 학부모는 Linked students에서 자녀를 고르세요.",
+            "처음에는 한 가지 작업만 끝내고 다음 메뉴로 이동하세요."
+          ],
+          "tip": "이 화면은 학교 관리자 예입니다. 권한에 따라 메뉴가 다릅니다. 안 보이는 기능은 학교에 권한 또는 배정을 확인하세요."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "super-admin-manual.pdf",
+      "role": "Super Admin",
+      "title": "최고 관리자 쉬운 사용법",
+      "scope": "전체 조직을 관리합니다. 실제 변경 전 학교·계정·권한 범위를 먼저 확인하세요.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "역할별로 사용자 찾기",
+          "where": "Users(사용자) → 역할 탭",
+          "image": {
+            "name": "admin-users",
+            "crop": [
+              850,
+              220,
+              650,
+              185
+            ],
+            "labels": [
+              "Student",
+              "Parent",
+              "Search"
+            ]
+          },
+          "steps": [
+            "Student(학생) 또는 Parent(학부모) 등 역할 탭을 누르세요.",
+            "이름이나 Login ID를 입력하고 Search를 누르세요.",
+            "아래 결과에서 이름을 눌러 사용자를 여세요."
+          ],
+          "tip": "All roles는 전체 역할입니다. 같은 이름이 있으면 학교·캠퍼스·아이디를 함께 확인하세요."
+        },
+        {
+          "title": "학교·조직 등록하기",
+          "where": "Academic setup → Organizations",
+          "image": {
+            "name": "admin-organizations",
+            "crop": [
+              305,
+              365,
+              650,
+              247
+            ],
+            "labels": [
+              "Name",
+              "Save"
+            ]
+          },
+          "steps": [
+            "① Name에 학교·조직 이름을 입력하세요.",
+            "Type에서 종류를 고르고 Slug(주소용 코드)를 확인하세요.",
+            "② Save를 누르세요. 아래 조직 목록에 이름이 보이면 완료입니다."
+          ],
+          "tip": "학교 시간대는 조직 설정 기준을 사용합니다. 다른 학교의 자료와 섞이지 않게 조직 이름과 범위를 확인하세요."
+        },
+        {
+          "title": "학년도 등록하기",
+          "where": "Academic setup → Academic Years",
+          "image": {
+            "name": "admin-years",
+            "crop": [
+              1360,
+              345,
+              375,
+              112
+            ],
+            "labels": [
+              "Start year"
+            ]
+          },
+          "steps": [
+            "학교와 캠퍼스를 확인하세요.",
+            "① Start year와 End year에 시작·종료 연도를 입력하세요.",
+            "Save를 누르세요. 학년도 목록에 새 기간이 보이면 완료입니다."
+          ],
+          "tip": "학기는 Terms에서 해당 학년도에 연결합니다. 수업을 만들 때 정확한 학기를 선택하세요."
+        },
+        {
+          "title": "학생·교수·학부모 계정 만들기",
+          "where": "Users → Create user",
+          "image": {
+            "name": "admin-user-create",
+            "crop": [
+              1250,
+              440,
+              475,
+              235
+            ],
+            "labels": [
+              "Name",
+              "Role"
+            ]
+          },
+          "steps": [
+            "Name(이름), Login ID와 초기 비밀번호를 입력하세요.",
+            "① 이름과 ② Role(역할)을 확인하세요. 학교·캠퍼스도 맞게 고르세요.",
+            "Save를 누르세요. 사용자 목록에 새 이름이 보이면 완료입니다."
+          ],
+          "tip": "학생은 학년·반·학생 번호도 확인하세요. 이미 있는 아이디는 중복 등록할 수 없습니다. 비밀번호는 문서나 화면 캡처에 남기지 마세요."
+        },
+        {
+          "title": "과목 만들기",
+          "where": "Courses(과목) → Create course",
+          "image": {
+            "name": "admin-courses",
+            "crop": [
+              305,
+              470,
+              550,
+              112
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "학교와 캠퍼스를 확인하세요.",
+            "① Title(과목명), Code(과목 코드)를 입력하세요.",
+            "Save를 누르세요. 아래 과목 목록에 새 과목이 보이면 완료입니다."
+          ],
+          "tip": "과목은 영어·수학처럼 수업의 큰 이름입니다. 수업 반은 다음 Class Sections에서 따로 만듭니다."
+        },
+        {
+          "title": "실제 수업 반 만들기",
+          "where": "Class Sections(수업 반) → Create class section",
+          "image": {
+            "name": "admin-class-create",
+            "crop": [
+              1360,
+              438,
+              375,
+              202
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "먼저 Course에서 기존 과목을 고르세요.",
+            "① Title에 수업 이름을 입력하고 학기·정원(Capacity)을 확인하세요.",
+            "② Save를 누르세요. 아래 목록에 새 수업이 보이면 완료입니다."
+          ],
+          "tip": "교수 배정과 학생 등록은 수업 이름을 열어 따로 진행합니다. 비슷한 이름의 다른 학기 수업과 혼동하지 마세요."
+        },
+        {
+          "title": "수업에 교수 배정하기",
+          "where": "Class Sections → 수업 이름 → Assign instructor",
+          "image": {
+            "name": "admin-assign",
+            "crop": [
+              1320,
+              246,
+              420,
+              330
+            ],
+            "labels": [
+              "Assign instructor",
+              "Assign"
+            ],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 1335,
+                "y": 271.75,
+                "w": 150,
+                "h": 22
+              },
+              {
+                "number": 2,
+                "x": 1335,
+                "y": 531.75,
+                "w": 386,
+                "h": 28
+              }
+            ]
+          },
+          "steps": [
+            "① Assign instructor에서 Instructor(교수)를 고르세요.",
+            "담당 형태(Role)를 확인하세요. 대표 교수는 Primary를 선택하세요.",
+            "② Assign을 누르세요. Assigned instructors에 교수가 보이면 완료입니다."
+          ],
+          "tip": "이미 배정된 교수는 목록에서 먼저 확인하세요. 학교·캠퍼스 범위 밖의 계정은 선택되지 않을 수 있습니다."
+        },
+        {
+          "title": "학생을 수업에 등록하기",
+          "where": "Users → 학생 이름 → Enrolled classes",
+          "image": {
+            "name": "admin-enrollment",
+            "crop": [
+              300,
+              385,
+              740,
+              180
+            ],
+            "labels": [
+              "Not enrolled (0)",
+              "Enroll selected"
+            ]
+          },
+          "steps": [
+            "① Not enrolled(미등록)을 누르세요. 필요하면 수업 이름으로 검색하세요.",
+            "등록할 수업 앞의 체크 상자를 선택하세요.",
+            "② Enroll selected를 누르세요. Enrolled에 수업이 보이면 완료입니다."
+          ],
+          "tip": "사진은 이미 등록된 예라 미등록 수업이 0개입니다. 회색 버튼은 선택할 수업이 없다는 뜻입니다. 정원과 학기·캠퍼스도 확인하세요."
+        },
+        {
+          "title": "학부모와 학생 연결하기",
+          "where": "Users → 학부모 이름 → Linked students",
+          "image": {
+            "name": "parent-link",
+            "crop": [
+              315,
+              819,
+              700,
+              140
+            ],
+            "labels": [
+              "Student",
+              "Link student"
+            ]
+          },
+          "steps": [
+            "① Student에서 연결할 학생을 고르세요.",
+            "Relation에 관계를 입력하세요. 예: 어머니, 아버지, 보호자.",
+            "② Link student를 누르세요. 아래 연결 목록에 학생이 보이면 완료입니다."
+          ],
+          "tip": "이미 연결된 학생은 선택 목록에서 빠집니다. 사진의 No available students는 연결 가능한 새 학생이 없다는 뜻입니다. 실제 보호자 관계를 확인한 뒤 연결하세요."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "school-admin-manual.pdf",
+      "role": "School Admin",
+      "title": "학교 관리자 쉬운 사용법",
+      "scope": "배정된 학교·캠퍼스의 교수·학생·학부모 계정과 수업을 관리합니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "역할별로 사용자 찾기",
+          "where": "Users(사용자) → 역할 탭",
+          "image": {
+            "name": "school-users",
+            "crop": [
+              850,
+              220,
+              650,
+              185
+            ],
+            "labels": [
+              "Student",
+              "Parent"
+            ]
+          },
+          "steps": [
+            "Student(학생) 또는 Parent(학부모) 등 역할 탭을 누르세요.",
+            "이름이나 Login ID를 입력하고 Search를 누르세요.",
+            "아래 결과에서 이름을 눌러 사용자를 여세요."
+          ],
+          "tip": "Super Admin은 보이는 범위에서 조회만 가능합니다. 수정·삭제할 수 없습니다. 삭제는 Request delete로 승인 요청합니다."
+        },
+        {
+          "title": "학생·교수·학부모 계정 만들기",
+          "where": "Users → Create user",
+          "image": {
+            "name": "school-users",
+            "crop": [
+              1260,
+              510,
+              480,
+              235
+            ],
+            "labels": [
+              "Role"
+            ]
+          },
+          "steps": [
+            "Name(이름), Login ID와 초기 비밀번호를 입력하세요.",
+            "① Role(역할)을 확인하세요. 학교·캠퍼스와 이름도 맞는지 확인하세요.",
+            "Save를 누르세요. 사용자 목록에 새 이름이 보이면 완료입니다."
+          ],
+          "tip": "School Admin은 Instructor·Student·Parent를 만들 수 있습니다. 관리자 계정 변경과 사용자 삭제는 최고 관리자 승인이 필요합니다."
+        },
+        {
+          "title": "과목 만들기",
+          "where": "Courses(과목) → Create course",
+          "image": {
+            "name": "admin-courses",
+            "crop": [
+              305,
+              470,
+              550,
+              112
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "학교와 캠퍼스를 확인하세요.",
+            "① Title(과목명), Code(과목 코드)를 입력하세요.",
+            "Save를 누르세요. 아래 과목 목록에 새 과목이 보이면 완료입니다."
+          ],
+          "tip": "과목은 영어·수학처럼 수업의 큰 이름입니다. 수업 반은 다음 Class Sections에서 따로 만듭니다."
+        },
+        {
+          "title": "실제 수업 반 만들기",
+          "where": "Class Sections(수업 반) → Create class section",
+          "image": {
+            "name": "admin-class-create",
+            "crop": [
+              1360,
+              438,
+              375,
+              202
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "먼저 Course에서 기존 과목을 고르세요.",
+            "① Title에 수업 이름을 입력하고 학기·정원(Capacity)을 확인하세요.",
+            "② Save를 누르세요. 아래 목록에 새 수업이 보이면 완료입니다."
+          ],
+          "tip": "교수 배정과 학생 등록은 수업 이름을 열어 따로 진행합니다. 비슷한 이름의 다른 학기 수업과 혼동하지 마세요."
+        },
+        {
+          "title": "수업에 교수 배정하기",
+          "where": "Class Sections → 수업 이름 → Assign instructor",
+          "image": {
+            "name": "admin-assign",
+            "crop": [
+              1320,
+              246,
+              420,
+              330
+            ],
+            "labels": [
+              "Assign instructor",
+              "Assign"
+            ],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 1335,
+                "y": 271.75,
+                "w": 150,
+                "h": 22
+              },
+              {
+                "number": 2,
+                "x": 1335,
+                "y": 531.75,
+                "w": 386,
+                "h": 28
+              }
+            ]
+          },
+          "steps": [
+            "① Assign instructor에서 Instructor(교수)를 고르세요.",
+            "담당 형태(Role)를 확인하세요. 대표 교수는 Primary를 선택하세요.",
+            "② Assign을 누르세요. Assigned instructors에 교수가 보이면 완료입니다."
+          ],
+          "tip": "이미 배정된 교수는 목록에서 먼저 확인하세요. 학교·캠퍼스 범위 밖의 계정은 선택되지 않을 수 있습니다."
+        },
+        {
+          "title": "학생을 수업에 등록하기",
+          "where": "Users → 학생 이름 → Enrolled classes",
+          "image": {
+            "name": "school-student",
+            "crop": [
+              300,
+              385,
+              740,
+              180
+            ],
+            "labels": [
+              "Not enrolled (0)",
+              "Enroll selected"
+            ],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 479,
+                "y": 398.75,
+                "w": 123,
+                "h": 44
+              },
+              {
+                "number": 2,
+                "x": 393,
+                "y": 518.75,
+                "w": 120,
+                "h": 28
+              }
+            ]
+          },
+          "steps": [
+            "① Not enrolled(미등록)을 누르세요. 필요하면 수업 이름으로 검색하세요.",
+            "등록할 수업 앞의 체크 상자를 선택하세요.",
+            "② Enroll selected를 누르세요. Enrolled에 수업이 보이면 완료입니다."
+          ],
+          "tip": "School Admin 화면에는 가족 연결과 상세 학사·성적 서류 영역이 없습니다. 학부모 연결은 Super Admin 또는 권한 있는 Academic Staff에게 요청하세요."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "academic-staff-manual.pdf",
+      "role": "Academic Staff",
+      "title": "학사 직원 쉬운 사용법",
+      "scope": "관리자가 부여한 조직·캠퍼스 범위 안에서 학사 업무를 처리합니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "역할별로 사용자 찾기",
+          "where": "Users(사용자) → 역할 탭",
+          "image": {
+            "name": "academic-users",
+            "crop": [
+              850,
+              220,
+              650,
+              185
+            ],
+            "labels": [
+              "Student"
+            ]
+          },
+          "steps": [
+            "Student(학생) 또는 Parent(학부모) 등 역할 탭을 누르세요.",
+            "이름이나 Login ID를 입력하고 Search를 누르세요.",
+            "아래 결과에서 이름을 눌러 사용자를 여세요."
+          ],
+          "tip": "메뉴가 보여도 조직·캠퍼스 범위 밖 자료는 처리할 수 없습니다. Super Admin 계정은 수정·삭제할 수 없습니다."
+        },
+        {
+          "title": "학생·교수·학부모 계정 만들기",
+          "where": "Users → Create user",
+          "image": {
+            "name": "academic-users",
+            "crop": [
+              1260,
+              440,
+              480,
+              235
+            ],
+            "labels": [
+              "Role"
+            ]
+          },
+          "steps": [
+            "Name(이름), Login ID와 초기 비밀번호를 입력하세요.",
+            "① Role(역할)을 확인하세요. 학교·캠퍼스와 이름도 맞는지 확인하세요.",
+            "Save를 누르세요. 사용자 목록에 새 이름이 보이면 완료입니다."
+          ],
+          "tip": "이 화면에서 만들 수 있는 역할은 Instructor·Student·Parent입니다. Academic Staff 자체 권한 부여는 관리자에게 요청하세요."
+        },
+        {
+          "title": "과목 만들기",
+          "where": "Courses(과목) → Create course",
+          "image": {
+            "name": "admin-courses",
+            "crop": [
+              305,
+              470,
+              550,
+              112
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "학교와 캠퍼스를 확인하세요.",
+            "① Title(과목명), Code(과목 코드)를 입력하세요.",
+            "Save를 누르세요. 아래 과목 목록에 새 과목이 보이면 완료입니다."
+          ],
+          "tip": "과목은 영어·수학처럼 수업의 큰 이름입니다. 수업 반은 다음 Class Sections에서 따로 만듭니다."
+        },
+        {
+          "title": "실제 수업 반 만들기",
+          "where": "Class Sections(수업 반) → Create class section",
+          "image": {
+            "name": "admin-class-create",
+            "crop": [
+              1360,
+              438,
+              375,
+              202
+            ],
+            "labels": [
+              "Title",
+              "Save"
+            ]
+          },
+          "steps": [
+            "먼저 Course에서 기존 과목을 고르세요.",
+            "① Title에 수업 이름을 입력하고 학기·정원(Capacity)을 확인하세요.",
+            "② Save를 누르세요. 아래 목록에 새 수업이 보이면 완료입니다."
+          ],
+          "tip": "교수 배정과 학생 등록은 수업 이름을 열어 따로 진행합니다. 비슷한 이름의 다른 학기 수업과 혼동하지 마세요."
+        },
+        {
+          "title": "학생을 수업에 등록하기",
+          "where": "Users → 학생 이름 → Enrolled classes",
+          "image": {
+            "name": "admin-enrollment",
+            "crop": [
+              300,
+              385,
+              740,
+              180
+            ],
+            "labels": [
+              "Not enrolled (0)",
+              "Enroll selected"
+            ]
+          },
+          "steps": [
+            "① Not enrolled(미등록)을 누르세요. 필요하면 수업 이름으로 검색하세요.",
+            "등록할 수업 앞의 체크 상자를 선택하세요.",
+            "② Enroll selected를 누르세요. Enrolled에 수업이 보이면 완료입니다."
+          ],
+          "tip": "사진은 이미 등록된 예라 미등록 수업이 0개입니다. 회색 버튼은 선택할 수업이 없다는 뜻입니다. 정원과 학기·캠퍼스도 확인하세요."
+        },
+        {
+          "title": "학부모와 학생 연결하기",
+          "where": "Users → 학부모 이름 → Linked students",
+          "image": {
+            "name": "academic-parent-link",
+            "crop": [
+              315,
+              952,
+              700,
+              140
+            ],
+            "labels": [
+              "Student",
+              "Link student"
+            ]
+          },
+          "steps": [
+            "① Student에서 연결할 학생을 고르세요.",
+            "Relation에 관계를 입력하세요. 예: 어머니, 아버지, 보호자.",
+            "② Link student를 누르세요. 아래 연결 목록에 학생이 보이면 완료입니다."
+          ],
+          "tip": "이미 연결된 학생은 선택 목록에서 빠집니다. 사진의 No available students는 연결 가능한 새 학생이 없다는 뜻입니다. 실제 보호자 관계를 확인한 뒤 연결하세요."
+        },
+        {
+          "title": "학생의 성적 서류 확인하기",
+          "where": "Users → 학생 이름 → Documents",
+          "image": {
+            "name": "academic-documents",
+            "crop": [
+              305,
+              72,
+              850,
+              180
+            ],
+            "labels": [
+              "Generate transcript PDF",
+              "Generate all-term report card PDF"
+            ]
+          },
+          "steps": [
+            "학생과 학기를 먼저 확인하세요.",
+            "Report card는 성적표, Transcript는 학점·성적 기록입니다.",
+            "원하는 PDF 버튼을 눌러 미리보기 또는 다운로드를 확인하세요."
+          ],
+          "tip": "성적표는 공개된 성적과 학교 정책에 따라 제공됩니다. 성적증명서는 승인 절차가 필요할 수 있습니다. 학생·학부모에게 보이는지 공개 상태도 확인하세요."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "instructor-manual.pdf",
+      "role": "Instructor",
+      "title": "교수 쉬운 사용법",
+      "scope": "담당 수업에서 강의·출석·과제·시험·성적을 관리합니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "수업을 열고 강의 관리하기",
+          "where": "Classes → 수업 이름 → Lessons",
+          "image": {
+            "name": "instructor-lessons",
+            "crop": [
+              305,
+              330,
+              770,
+              445
+            ],
+            "labels": [
+              "Create lesson",
+              "Upload files"
+            ]
+          },
+          "steps": [
+            "① Create lesson으로 제목·내용·공개 여부를 정하고 저장하세요.",
+            "기존 강의의 더보기(···)에서 수정·복제·학생 미리보기를 여세요.",
+            "강의 왼쪽 손잡이를 끌어 순서나 그룹을 바꾸세요. Rename으로 그룹 제목을 고칩니다."
+          ],
+          "tip": "학생 수는 Students, 수업 대화는 Class conversation 탭에 있습니다. 완료 인원 버튼으로 학생별 진도를 확인합니다. 공개한 강의만 학생에게 보입니다."
+        },
+        {
+          "title": "영상 강의 올리기",
+          "where": "Lessons → Create lesson → Content type: Video",
+          "image": {
+            "name": "lesson-video",
+            "crop": [
+              410,
+              423,
+              700,
+              285
+            ],
+            "labels": [
+              "Video source",
+              "Uploaded video file",
+              "Upload video to LMS"
+            ]
+          },
+          "steps": [
+            "Video source를 Video: Upload로 선택하세요.",
+            "Upload video to LMS에서 파일을 선택하세요. 업로드가 자동으로 시작됩니다.",
+            "완료된 영상을 Uploaded video file에서 확인한 뒤 Create lesson으로 저장하세요."
+          ],
+          "tip": "MP4·WebM·MOV·M4V, 최대 500MB입니다. 영상 길이는 직접 입력하지 않습니다. 100% 실제 시청해야 완료됩니다. 실패하면 Retry upload로 다시 올리세요."
+        },
+        {
+          "title": "출석 기록하기",
+          "where": "수업 → Attendance → Sessions / Attendance",
+          "image": {
+            "name": "attendance-edit",
+            "crop": [
+              805,
+              628,
+              935,
+              144
+            ],
+            "labels": [
+              "Status",
+              "Save all"
+            ]
+          },
+          "steps": [
+            "Sessions에서 Create session으로 수업 시간을 먼저 등록하세요.",
+            "Take attendance를 열고 학생의 Status를 Present·Late·Absent 등으로 고르세요.",
+            "Save all을 누르세요. 출석 표와 인원 수가 바뀌는지 확인하세요."
+          ],
+          "tip": "Present는 출석, Late는 지각, Absent는 결석입니다. 잘못된 기록은 학교 정책이 허용하는 범위에서 수정하세요. 모든 시간은 학교 시간대 기준입니다."
+        },
+        {
+          "title": "과제를 만들고 파일 관리하기",
+          "where": "Assessments → Assignments → Create assignment / Edit assignment",
+          "image": {
+            "name": "assignment-attachments",
+            "crop": [
+              420,
+              774,
+              965,
+              200
+            ],
+            "labels": [
+              "View",
+              "Download",
+              "Replace",
+              "Delete"
+            ]
+          },
+          "steps": [
+            "제목·Due at(마감일)·설명과 필요한 PDF를 입력해 Save assignment를 누르세요.",
+            "수정은 카드의 Edit assignment를 누르세요. 기존 파일이 아래에 보입니다.",
+            "View는 보기, Download는 내려받기, Replace는 교체, Delete는 첨부 삭제입니다."
+          ],
+          "tip": "PDF는 최대 20MB입니다. 교체가 성공하기 전에는 기존 파일이 유지됩니다. 만점·지각 제출은 Assignment settings에서 정합니다. 과제 카드의 Delete assignment와 첨부 Delete를 구분하세요."
+        },
+        {
+          "title": "제출된 과제 채점하기",
+          "where": "Assignments → 과제 카드 → Review / Grade",
+          "image": {
+            "name": "assignment-grade",
+            "crop": [
+              1050,
+              420,
+              380,
+              330
+            ],
+            "labels": [
+              "Grade submission",
+              "Save grade"
+            ]
+          },
+          "steps": [
+            "학생과 제출한 답안·파일을 먼저 확인하세요.",
+            "① Grade submission에 Score(점수)와 Feedback(설명)을 적으세요.",
+            "② Save grade를 누르세요. 학생의 점수와 채점 상태가 바뀌는지 확인하세요."
+          ],
+          "tip": "점수는 과제 만점 범위 안에서 입력하세요. 학생에게 보이는 시점은 학교의 성적·피드백 공개 정책에 따릅니다."
+        },
+        {
+          "title": "시험·퀴즈 문제 작성하기",
+          "where": "Assessments → Exams / Quiz → Create assessment",
+          "image": {
+            "name": "question-editor",
+            "crop": [
+              580,
+              405,
+              885,
+              455
+            ],
+            "labels": [
+              "Question",
+              "Done"
+            ],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 585,
+                "y": 416,
+                "w": 864,
+                "h": 27
+              },
+              {
+                "number": 2,
+                "x": 586,
+                "y": 610,
+                "w": 30,
+                "h": 33
+              },
+              {
+                "number": 3,
+                "x": 585,
+                "y": 820,
+                "w": 60,
+                "h": 32
+              }
+            ]
+          },
+          "steps": [
+            "종류를 Quiz·Monthly exam·Midterm·Final exam·Other exam 중 고르고 제목을 입력하세요.",
+            "Add multiple choice 또는 Add open-ended로 문제를 추가하세요. 보기를 입력하고 정답 옆 원을 선택하세요.",
+            "Done으로 문제를 접으세요. Save draft는 초안, Publish는 학생에게 공개입니다."
+          ],
+          "tip": "문제가 없으면 초안만 저장할 수 있습니다. 공개 전 문제·보기·정답을 확인하세요. 총점은 문제 배점 합계이며 별도 만점은 설정에서 유지할 수 있습니다."
+        },
+        {
+          "title": "PDF 시험 공개 전 확인하기",
+          "where": "Exams / Quiz → 시험 편집 / Student preview",
+          "image": {
+            "name": "exam-preview",
+            "crop": [
+              295,
+              475,
+              930,
+              295
+            ],
+            "labels": [
+              "View",
+              "Download"
+            ]
+          },
+          "steps": [
+            "PDF attachment에서 시험지 PDF를 붙이세요. 답안은 Add PDF answer sheet로 준비하세요.",
+            "Assessment settings의 Start date / time과 End date / time을 학교 시간대로 확인하세요.",
+            "저장 후 Student preview를 여세요. 시험지·답안란이 맞으면 편집에서 Publish를 누르세요."
+          ],
+          "tip": "PDF는 최대 20MB입니다. 미리보기는 제출되지 않습니다. 저장·수정 완료 후 Exams / Quiz 목록으로 돌아갑니다. Back to Exams / Quiz로 목록에 바로 돌아갈 수 있습니다."
+        },
+        {
+          "title": "성적 계산하고 공개하기",
+          "where": "수업 → Grades(성적)",
+          "image": {
+            "name": "instructor-grades",
+            "crop": [
+              305,
+              530,
+              940,
+              165
+            ],
+            "labels": [
+              "Calculate final grades",
+              "Publish grades"
+            ]
+          },
+          "steps": [
+            "평가 비중과 출석·강의·과제·시험 점수를 먼저 확인하세요.",
+            "① Calculate final grades로 성적을 계산하세요.",
+            "학생별 점수를 확인한 뒤 ② Publish grades를 누르세요."
+          ],
+          "tip": "Draft는 임시 성적, Published는 공개 성적입니다. 학생과 학부모가 볼 수 있는지 학교 정책을 함께 확인하세요. 채점은 Exams / Quiz의 Grade에서도 관리합니다."
+        },
+        {
+          "title": "시험 목록에서 수정·채점하기",
+          "where": "Assessments → Exams / Quiz",
+          "image": {
+            "name": "exams-list",
+            "crop": [
+              305,
+              390,
+              870,
+              230
+            ],
+            "labels": [
+              "Create assessment",
+              "Edit / Grade",
+              "Student preview"
+            ]
+          },
+          "steps": [
+            "새 시험은 Create assessment로 시작하세요.",
+            "기존 시험은 Edit / Grade에서 내용·일정·응시 내역·채점을 관리하세요.",
+            "저장 후 목록으로 돌아와 바뀐 제목·일정·공개 상태를 확인하세요."
+          ],
+          "tip": "시험은 최신 작성순입니다. Student preview로 학생 화면을 확인합니다. Boards는 수업 게시판이며 Class conversation은 수업 대화입니다."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "student-manual.pdf",
+      "role": "Student",
+      "title": "학생 쉬운 사용법",
+      "scope": "등록된 수업의 강의·과제·시험을 이용하고 내 기록을 확인합니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "내 수업과 강의 열기",
+          "where": "Classes(수업) → 수업 이름 → Lessons",
+          "image": {
+            "name": "student-lessons",
+            "crop": [
+              1270,
+              383,
+              430,
+              165
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 1528,
+                "y": 500,
+                "w": 57,
+                "h": 30
+              }
+            ]
+          },
+          "steps": [
+            "Classes에서 듣는 수업 이름을 누르세요.",
+            "Lessons(강의)에서 원하는 제목의 ① Open을 누르세요.",
+            "글·파일을 확인하거나 영상을 재생하세요. 수업 목록의 Progress로 진도를 확인하세요."
+          ],
+          "tip": "Open 버튼은 강의 행의 오른쪽에 있습니다. 영상은 끝까지 실제로 시청해야 완료됩니다. 앞으로 건너뛴 부분은 시청 시간으로 계산되지 않습니다."
+        },
+        {
+          "title": "글 강의 완료 확인하기",
+          "where": "Lessons → 강의 Open",
+          "image": {
+            "name": "student-lesson",
+            "crop": [
+              520,
+              198,
+              810,
+              175
+            ],
+            "labels": [
+              "Lesson content",
+              "Marked complete"
+            ]
+          },
+          "steps": [
+            "Lesson content의 내용을 천천히 읽으세요.",
+            "Marked complete(완료 표시)가 보이는지 확인하세요.",
+            "Classes로 돌아가 해당 강의의 Progress(진도)를 확인하세요."
+          ],
+          "tip": "글 강의는 열면 완료로 기록됩니다. 영상은 100% 시청 기록이 필요합니다. 진도가 저장되지 않으면 인터넷 연결을 확인한 뒤 다시 수업을 여세요."
+        },
+        {
+          "title": "과제 제출하기",
+          "where": "Assessments → Assignments → 과제 열기",
+          "image": {
+            "name": "student-assignment",
+            "crop": [
+              395,
+              604,
+              985,
+              245
+            ],
+            "labels": [
+              "Text response",
+              "Attachment",
+              "Submit"
+            ]
+          },
+          "steps": [
+            "마감일과 과제 설명을 먼저 읽으세요.",
+            "① Text response에 답을 쓰거나 Attachment에서 파일을 고르세요.",
+            "Submit을 누르세요. 제출 날짜나 Submitted 상태가 보이면 완료입니다."
+          ],
+          "tip": "첨부는 최대 20MB입니다. 허용되는 파일은 PDF·문서·이미지·TXT·CSV·ZIP 등입니다. 마감 뒤 제출·재제출 가능 여부는 과제와 학교 정책에 따라 다릅니다."
+        },
+        {
+          "title": "PDF 시험에 답 쓰기",
+          "where": "Assessments → Exams / Quiz → 시험 열기",
+          "image": {
+            "name": "student-exam",
+            "crop": [
+              323,
+              558,
+              760,
+              307
+            ],
+            "labels": [
+              "View",
+              "Download",
+              "Submit answers"
+            ]
+          },
+          "steps": [
+            "시작·종료 시간을 확인하고 시험을 여세요.",
+            "View(보기) 또는 Download(다운로드)로 PDF 시험지를 읽으세요.",
+            "LMS의 답안란에 답을 쓰고 Submit answers를 누르세요. 제출 상태를 확인하세요."
+          ],
+          "tip": "PDF에 직접 써서 올리는 방식과 다릅니다. 답은 화면의 답안란에 적습니다. 종료 시간 전에 제출하세요. 결과는 교수의 공개 설정에 따라 보입니다."
+        },
+        {
+          "title": "내 출석 확인하기",
+          "where": "수업 → Attendance",
+          "image": {
+            "name": "student-attendance",
+            "crop": [
+              1160,
+              425,
+              565,
+              170
+            ],
+            "labels": [
+              "Attendance rate",
+              "Status"
+            ]
+          },
+          "steps": [
+            "Attendance(출석)를 누르세요.",
+            "Attendance rate(출석률)과 수업별 Status(상태)를 확인하세요.",
+            "기록이 다르면 수업 날짜를 적어 교수에게 메시지를 보내세요."
+          ],
+          "tip": "학생은 출석 기록을 직접 바꾸지 못합니다. Present는 출석, Late는 지각, Absent는 결석입니다."
+        },
+        {
+          "title": "내 성적 확인하기",
+          "where": "수업 → Grades",
+          "image": {
+            "name": "student-grades",
+            "crop": [
+              305,
+              386,
+              860,
+              115
+            ],
+            "labels": [
+              "Final score"
+            ]
+          },
+          "steps": [
+            "Grades(성적)를 누르세요.",
+            "① Final score(최종 점수), Letter(등급), Status(상태)를 확인하세요.",
+            "과제 피드백과 시험 결과가 궁금하면 해당 평가를 여세요."
+          ],
+          "tip": "성적이 비어 있거나 Draft이면 아직 공개되지 않았을 수 있습니다. 성적표·성적증명서는 학교 공개·승인 정책에 따라 제공됩니다."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    },
+    {
+      "fileName": "parent-manual.pdf",
+      "role": "Parent",
+      "title": "학부모 쉬운 사용법",
+      "scope": "연결된 자녀의 기록을 확인합니다. 과제·시험 제출이나 성적 수정은 하지 않습니다.",
+      "pages": [
+        {
+          "title": "학교 계정으로 로그인하기",
+          "where": "인터넷 주소창 → https://lms.mygtcc.com",
+          "image": {
+            "name": "login",
+            "crop": [
+              680,
+              500,
+              440,
+              285
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 718,
+                "y": 550,
+                "w": 358,
+                "h": 53
+              },
+              {
+                "number": 2,
+                "x": 718,
+                "y": 622,
+                "w": 358,
+                "h": 54
+              },
+              {
+                "number": 3,
+                "x": 720,
+                "y": 715,
+                "w": 354,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "① Login ID에 학교에서 받은 아이디를 입력하세요.",
+            "② Password에 비밀번호를 입력하세요.",
+            "③ Log In을 누르세요. 본인 역할의 메뉴가 나오면 완료입니다."
+          ],
+          "tip": "로그인이 안 되면 한/영 입력과 대문자를 확인하세요. 아이디를 모르거나 비밀번호를 잊으면 학교 관리자에게 문의하세요."
+        },
+        {
+          "title": "휴대전화에서 메뉴 열기",
+          "where": "로그인 → 화면 위 Menu(메뉴)",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              0,
+              10,
+              288,
+              335
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 145,
+                "w": 255,
+                "h": 43
+              },
+              {
+                "number": 2,
+                "x": 222,
+                "y": 27,
+                "w": 49,
+                "h": 26
+              }
+            ]
+          },
+          "steps": [
+            "Menu를 눌러 왼쪽 메뉴를 여세요.",
+            "① Classes(수업) 등 필요한 메뉴를 누르세요.",
+            "② Close로 메뉴를 닫으세요. 긴 수업 탭은 좌우로 밀어 보세요."
+          ],
+          "tip": "사진은 학생 메뉴입니다. 관리자에게는 Users, Courses 등이 보입니다. 아래 Home·Classes·Messages·Alerts로도 이동할 수 있습니다."
+        },
+        {
+          "title": "확인할 자녀 선택하기",
+          "where": "Linked students(연결된 자녀) / Overview",
+          "image": {
+            "name": "parent-overview",
+            "crop": [
+              1250,
+              785,
+              455,
+              110
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 1480,
+                "y": 839,
+                "w": 54,
+                "h": 31
+              }
+            ]
+          },
+          "steps": [
+            "Linked students(연결된 자녀)를 누르세요.",
+            "자녀 이름과 학교·학년을 확인하세요.",
+            "해당 자녀의 ① Open을 눌러 출석·수업 기록 화면을 여세요."
+          ],
+          "tip": "자녀 목록이 비어 있으면 계정 연결을 학교에 요청하세요. 다른 자녀 기록을 보지 않도록 이름을 먼저 확인하세요."
+        },
+        {
+          "title": "자녀 강의 진도 확인하기",
+          "where": "자녀 화면 → 수업 이름 → Lessons",
+          "image": {
+            "name": "parent-lessons",
+            "crop": [
+              1085,
+              345,
+              610,
+              110
+            ],
+            "labels": [
+              "Progress",
+              "Completed"
+            ]
+          },
+          "steps": [
+            "자녀 화면에서 확인할 수업 이름을 누르세요.",
+            "Lessons(강의)를 눌러 공개된 강의를 확인하세요.",
+            "Progress(진도)와 Completed(완료)를 살펴보세요."
+          ],
+          "tip": "학부모 화면은 확인용입니다. 자녀 대신 강의를 완료하거나 과제·시험을 제출하지 않습니다."
+        },
+        {
+          "title": "자녀 출석 확인하기",
+          "where": "Linked students → 자녀 Open",
+          "image": {
+            "name": "parent-student",
+            "crop": [
+              300,
+              155,
+              730,
+              210
+            ],
+            "labels": [
+              "Attendance rate"
+            ]
+          },
+          "steps": [
+            "자녀 이름이 맞는지 확인하세요.",
+            "① Attendance rate(출석률)와 Present·Late·Absent 인원을 살펴보세요.",
+            "수업별 자세한 기록은 해당 수업의 Attendance 탭에서 확인하세요."
+          ],
+          "tip": "기록이 다르면 자녀 이름·수업명·날짜를 학교나 교수에게 알려 주세요. 학부모는 출석을 직접 수정할 수 없습니다."
+        },
+        {
+          "title": "자녀 시험 일정 확인하기",
+          "where": "자녀 → 수업 → Assessments → Exams / Quiz",
+          "image": {
+            "name": "parent-exams",
+            "crop": [
+              475,
+              337,
+              1050,
+              210
+            ],
+            "labels": [
+              "Starts",
+              "Ends",
+              "Status"
+            ]
+          },
+          "steps": [
+            "해당 수업의 Exams / Quiz를 누르세요.",
+            "Starts(시작)와 Ends(종료)를 확인하세요. 학교 시간대 기준입니다.",
+            "Status에서 응시 여부를 확인하세요. 결과는 공개된 뒤 확인할 수 있습니다."
+          ],
+          "tip": "정확한 일정은 수업 안의 이 화면에서 확인하세요. 휴대전화 현지 시간과 다를 수 있으므로 학교 기준 시간대를 먼저 확인하세요."
+        },
+        {
+          "title": "자녀 과제·성적 확인하기",
+          "where": "자녀 → 수업 → Assessments / Grades",
+          "image": {
+            "name": "student-grades",
+            "crop": [
+              305,
+              386,
+              860,
+              115
+            ],
+            "labels": [
+              "Final score"
+            ]
+          },
+          "steps": [
+            "자녀의 수업에서 Assignments로 과제 마감·제출 상태를 확인하세요.",
+            "Grades에서 Final score(최종 점수)와 공개 상태를 확인하세요.",
+            "공개된 성적표는 자녀 화면 Documents에서 제공되는 링크를 사용하세요."
+          ],
+          "tip": "사진은 같은 성적 구조를 사용하는 학생 예시입니다. 학부모는 점수 확인만 합니다. 점수가 없으면 채점 또는 성적 공개가 끝나지 않았을 수 있습니다."
+        },
+        {
+          "title": "메시지 보내고 고치기",
+          "where": "왼쪽 Messages(메시지) → 대화 선택",
+          "image": {
+            "name": "message-thread",
+            "crop": [
+              1215,
+              293,
+              455,
+              110
+            ],
+            "labels": [
+              "Edit"
+            ]
+          },
+          "steps": [
+            "대화를 열고 아래 Message에 내용을 입력하세요.",
+            "Send를 누르세요. 대화에 새 글이 나타나면 전송 완료입니다.",
+            "① 내 글의 Edit로 바로 수정하고 Save로 저장하세요. Delete는 글을 지웁니다."
+          ],
+          "tip": "새 대화는 Messages에서 Recipient(받는 사람)를 고른 뒤 Start conversation을 누릅니다. 현재 메시지는 글만 보내며 파일 첨부는 지원하지 않습니다."
+        },
+        {
+          "title": "새 알림 확인하기",
+          "where": "왼쪽 Notifications 또는 아래 Alerts(알림)",
+          "image": {
+            "name": "notifications",
+            "crop": [
+              450,
+              210,
+              780,
+              270
+            ],
+            "labels": [
+              "Filter",
+              "Mark all as read"
+            ]
+          },
+          "steps": [
+            "Notifications(알림)를 열고 알림 내용을 누르세요.",
+            "① Filter로 원하는 알림만 골라 보세요.",
+            "② 모두 확인했다면 Mark all as read를 누르세요."
+          ],
+          "tip": "알림이 비어 있으면 새 알림이 없는 상태입니다. 수업이 안 보이면 학생 등록·수업 배정 여부를 학교에 확인하세요."
+        },
+        {
+          "title": "안전하게 사용 마치기",
+          "where": "컴퓨터 왼쪽 아래 / 휴대전화 Menu 아래",
+          "image": {
+            "name": "mobile-menu",
+            "crop": [
+              5,
+              610,
+              278,
+              185
+            ],
+            "labels": [],
+            "boxes": [
+              {
+                "number": 1,
+                "x": 16,
+                "y": 676,
+                "w": 255,
+                "h": 44
+              }
+            ]
+          },
+          "steps": [
+            "먼저 작성하던 내용을 Save 또는 Submit으로 저장하세요.",
+            "① Logout(로그아웃)을 누르세요.",
+            "다시 로그인 화면이 보이는지 확인하고 인터넷 창을 닫으세요."
+          ],
+          "tip": "공용 컴퓨터에서는 비밀번호를 저장하지 마세요. 오류가 반복되면 화면의 오류 번호와 메뉴 이름을 학교에 알려 주세요. 업로드 실패는 파일 종류·용량과 인터넷 연결부터 확인하세요."
+        }
+      ]
+    }
+  ]
+}

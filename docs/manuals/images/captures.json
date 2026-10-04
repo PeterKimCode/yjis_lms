@@ -1,0 +1,1313 @@
+[
+  {
+    "name": "instructor-overview",
+    "boxes": [
+      {
+        "label": "Customize",
+        "h": 40,
+        "w": 123.734375,
+        "x": 1614.265625,
+        "y": 255.75
+      },
+      {
+        "label": "Your classes",
+        "h": 20,
+        "w": 1385,
+        "x": 334,
+        "y": 743.25
+      }
+    ]
+  },
+  {
+    "name": "instructor-lessons",
+    "boxes": [
+      {
+        "label": "Create lesson",
+        "h": 28,
+        "w": 106.3125,
+        "x": 313,
+        "y": 389.75
+      },
+      {
+        "label": "Upload files",
+        "h": 28,
+        "w": 93.328125,
+        "x": 427.3125,
+        "y": 389.75
+      },
+      {
+        "label": "Completion",
+        "h": 0,
+        "w": 0,
+        "x": 0,
+        "y": 0
+      }
+    ]
+  },
+  {
+    "name": "lesson-form",
+    "boxes": [
+      {
+        "label": "Title",
+        "h": 40,
+        "w": 526.296875,
+        "x": 468.703125,
+        "y": 434.75
+      },
+      {
+        "label": "Content type",
+        "h": 20,
+        "w": 473,
+        "x": 417.5,
+        "y": 536.5
+      },
+      {
+        "label": "Published",
+        "h": 0,
+        "w": 0,
+        "x": 0,
+        "y": 0
+      }
+    ]
+  },
+  {
+    "name": "lesson-video",
+    "boxes": [
+      {
+        "label": "Video source",
+        "h": 20,
+        "w": 473,
+        "x": 902.5,
+        "y": 431.5
+      },
+      {
+        "label": "Uploaded video file",
+        "h": 20,
+        "w": 958,
+        "x": 417.5,
+        "y": 503.5
+      },
+      {
+        "label": "Upload video to LMS",
+        "h": 20,
+        "w": 932,
+        "x": 430.5,
+        "y": 584.5
+      }
+    ]
+  },
+  {
+    "name": "instructor-attendance",
+    "boxes": [
+      {
+        "label": "Sessions",
+        "h": 44,
+        "w": 91.15625,
+        "x": 406.96875,
+        "y": 277.75
+      },
+      {
+        "label": "Attendance rate",
+        "h": 16,
+        "w": 252.203125,
+        "x": 1470.796875,
+        "y": 454.75
+      }
+    ]
+  },
+  {
+    "name": "session-form",
+    "boxes": [
+      {
+        "label": "Title",
+        "h": 20,
+        "w": 320,
+        "x": 404.5,
+        "y": 546.5
+      },
+      {
+        "label": "Starts at",
+        "h": 20,
+        "w": 320,
+        "x": 736.5,
+        "y": 546.5
+      },
+      {
+        "label": "Ends at",
+        "h": 20,
+        "w": 320,
+        "x": 1068.5,
+        "y": 546.5
+      }
+    ]
+  },
+  {
+    "name": "sessions",
+    "boxes": [
+      {
+        "label": "Create session",
+        "h": 28,
+        "w": 112.6875,
+        "x": 313,
+        "y": 441.75
+      },
+      {
+        "label": "Take attendance",
+        "h": 28,
+        "w": 120.203125,
+        "x": 1466.515625,
+        "y": 535.25
+      }
+    ]
+  },
+  {
+    "name": "attendance-edit",
+    "boxes": [
+      {
+        "label": "Save all",
+        "h": 28,
+        "w": 70.859375,
+        "x": 1639.140625,
+        "y": 653.75
+      },
+      {
+        "label": "Status",
+        "h": 40,
+        "w": 346.5,
+        "x": 814.046875,
+        "y": 694.75
+      },
+      {
+        "label": "Note",
+        "h": 40,
+        "w": 423.90625,
+        "x": 1160.546875,
+        "y": 694.75
+      }
+    ]
+  },
+  {
+    "name": "assignments-list",
+    "boxes": [
+      {
+        "label": "Create assignment",
+        "h": 28,
+        "w": 136.71875,
+        "x": 313,
+        "y": 441.75
+      },
+      {
+        "label": "Edit assignment",
+        "h": 28,
+        "w": 117.90625,
+        "x": 330,
+        "y": 530.75
+      },
+      {
+        "label": "Review / Grade",
+        "h": 28,
+        "w": 113.796875,
+        "x": 455.90625,
+        "y": 530.75
+      }
+    ]
+  },
+  {
+    "name": "assignment-form",
+    "boxes": [
+      {
+        "label": "Title",
+        "h": 20,
+        "w": 467,
+        "x": 421.5,
+        "y": 263
+      },
+      {
+        "label": "Due at",
+        "h": 20,
+        "w": 467,
+        "x": 904.5,
+        "y": 263
+      },
+      {
+        "label": "Save assignment",
+        "h": 28,
+        "w": 126.28125,
+        "x": 1245.21875,
+        "y": 698
+      }
+    ]
+  },
+  {
+    "name": "assignment-attachments",
+    "boxes": [
+      {
+        "label": "View",
+        "h": 28,
+        "w": 51.3125,
+        "x": 434.5,
+        "y": 857
+      },
+      {
+        "label": "Download",
+        "h": 28,
+        "w": 82.015625,
+        "x": 493.8125,
+        "y": 857
+      },
+      {
+        "label": "Replace",
+        "h": 28,
+        "w": 70.6875,
+        "x": 583.828125,
+        "y": 857
+      },
+      {
+        "label": "Delete",
+        "h": 28,
+        "w": 61.390625,
+        "x": 434.5,
+        "y": 929
+      }
+    ]
+  },
+  {
+    "name": "assignment-grade",
+    "boxes": [
+      {
+        "label": "Grade submission",
+        "h": 20,
+        "w": 294,
+        "x": 1064.5,
+        "y": 437.5
+      },
+      {
+        "label": "Save grade",
+        "h": 28,
+        "w": 89.15625,
+        "x": 1064.5,
+        "y": 581.5
+      }
+    ]
+  },
+  {
+    "name": "exams-list",
+    "boxes": [
+      {
+        "label": "Create assessment",
+        "h": 40,
+        "w": 158,
+        "x": 313,
+        "y": 441.75
+      },
+      {
+        "label": "Edit / Grade",
+        "h": 28,
+        "w": 93.578125,
+        "x": 330,
+        "y": 542.75
+      },
+      {
+        "label": "Student preview",
+        "h": 28,
+        "w": 120.03125,
+        "x": 431.578125,
+        "y": 542.75
+      }
+    ]
+  },
+  {
+    "name": "exam-create",
+    "boxes": [
+      {
+        "label": "Assessment type",
+        "h": 20,
+        "w": 423,
+        "x": 586,
+        "y": 292.75
+      },
+      {
+        "label": "PDF attachment (optional)",
+        "h": 20,
+        "w": 862,
+        "x": 586,
+        "y": 450.75
+      },
+      {
+        "label": "Title",
+        "h": 20,
+        "w": 862,
+        "x": 586,
+        "y": 588.75
+      }
+    ]
+  },
+  {
+    "name": "login",
+    "boxes": [
+      {
+        "label": "Login ID",
+        "h": 18,
+        "w": 52.90625,
+        "x": 720.5,
+        "y": 550.5
+      },
+      {
+        "label": "Password",
+        "h": 18,
+        "w": 64.03125,
+        "x": 720.5,
+        "y": 622.5
+      }
+    ]
+  },
+  {
+    "name": "question-editor",
+    "boxes": [
+      {
+        "label": "Question",
+        "h": 20,
+        "w": 860,
+        "x": 587,
+        "y": 417.75
+      },
+      {
+        "label": "Answers · select the correct answer",
+        "h": 20,
+        "w": 233.046875,
+        "x": 587,
+        "y": 589.75
+      },
+      {
+        "label": "Done",
+        "h": 28,
+        "w": 53.3125,
+        "x": 587,
+        "y": 821.75
+      }
+    ]
+  },
+  {
+    "name": "exam-settings",
+    "boxes": [
+      {
+        "label": "Start date / time (optional)",
+        "h": 20,
+        "w": 423,
+        "x": 586,
+        "y": 709.75
+      },
+      {
+        "label": "End date / time (optional)",
+        "h": 20,
+        "w": 423,
+        "x": 1025,
+        "y": 709.75
+      },
+      {
+        "label": "Save draft",
+        "h": 40,
+        "w": 98.046875,
+        "x": 1554.734375,
+        "y": 1119
+      },
+      {
+        "label": "Publish",
+        "h": 40,
+        "w": 80.21875,
+        "x": 1660.78125,
+        "y": 1119
+      }
+    ]
+  },
+  {
+    "name": "exam-preview",
+    "boxes": [
+      {
+        "label": "View",
+        "h": 28,
+        "w": 51.3125,
+        "x": 309,
+        "y": 522.75
+      },
+      {
+        "label": "Download",
+        "h": 28,
+        "w": 82.015625,
+        "x": 368.3125,
+        "y": 522.75
+      },
+      {
+        "label": "Read PDF here",
+        "h": 20,
+        "w": 1431,
+        "x": 309,
+        "y": 562.75
+      },
+      {
+        "label": "Preview only",
+        "h": 28,
+        "w": 99.953125,
+        "x": 296,
+        "y": 745.75
+      }
+    ]
+  },
+  {
+    "name": "instructor-grades",
+    "boxes": [
+      {
+        "label": "Calculate final grades",
+        "h": 28,
+        "w": 152.6875,
+        "x": 326,
+        "y": 558.75
+      },
+      {
+        "label": "Publish grades",
+        "h": 28,
+        "w": 110.4375,
+        "x": 486.6875,
+        "y": 558.75
+      }
+    ]
+  },
+  {
+    "name": "boards",
+    "boxes": [
+      {
+        "label": "Create class board",
+        "h": 20,
+        "w": 1397,
+        "x": 326,
+        "y": 402.75
+      },
+      {
+        "label": "Open",
+        "h": 40,
+        "w": 173.75,
+        "x": 1561.25,
+        "y": 452.75
+      }
+    ]
+  },
+  {
+    "name": "messages",
+    "boxes": [
+      {
+        "label": "Recipient",
+        "h": 20,
+        "w": 1118,
+        "x": 465.5,
+        "y": 350
+      },
+      {
+        "label": "Start conversation",
+        "h": 28,
+        "w": 134.140625,
+        "x": 465.5,
+        "y": 574
+      }
+    ]
+  },
+  {
+    "name": "message-thread",
+    "boxes": [
+      {
+        "label": "Edit",
+        "h": 28,
+        "w": 45.171875,
+        "x": 1255.15625,
+        "y": 337.75
+      },
+      {
+        "label": "Message",
+        "h": 20,
+        "w": 1118,
+        "x": 465.5,
+        "y": 436.75
+      },
+      {
+        "label": "Send",
+        "h": 28,
+        "w": 54.953125,
+        "x": 465.5,
+        "y": 588.75
+      }
+    ]
+  },
+  {
+    "name": "notifications",
+    "boxes": [
+      {
+        "label": "Filter",
+        "h": 40,
+        "w": 63.796875,
+        "x": 828.5,
+        "y": 246
+      },
+      {
+        "label": "Mark all as read",
+        "h": 28,
+        "w": 117.328125,
+        "x": 465.5,
+        "y": 298
+      }
+    ]
+  },
+  {
+    "name": "logout",
+    "boxes": [
+      {
+        "label": "Logout",
+        "h": 28,
+        "w": 231,
+        "x": 12,
+        "y": 1081
+      }
+    ]
+  },
+  {
+    "name": "student-overview",
+    "boxes": [
+      {
+        "label": "Customize",
+        "h": 40,
+        "w": 123.734375,
+        "x": 1614.265625,
+        "y": 255.75
+      },
+      {
+        "label": "Your classes",
+        "h": 20,
+        "w": 898,
+        "x": 334,
+        "y": 743.25
+      }
+    ]
+  },
+  {
+    "name": "student-lessons",
+    "boxes": [
+      {
+        "label": "Open",
+        "h": 40,
+        "w": 214.1875,
+        "x": 1520.8125,
+        "y": 390.75
+      },
+      {
+        "label": "Assessments",
+        "h": 44,
+        "w": 119.71875,
+        "x": 502.03125,
+        "y": 220.75
+      }
+    ]
+  },
+  {
+    "name": "student-lesson",
+    "boxes": [
+      {
+        "label": "Lesson content",
+        "h": 22,
+        "w": 114.984375,
+        "x": 529.5,
+        "y": 218
+      },
+      {
+        "label": "Marked complete",
+        "h": 20,
+        "w": 956,
+        "x": 546.5,
+        "y": 290
+      }
+    ]
+  },
+  {
+    "name": "student-assignment",
+    "boxes": [
+      {
+        "label": "Text response",
+        "h": 20,
+        "w": 984,
+        "x": 404.5,
+        "y": 615.5
+      },
+      {
+        "label": "Attachment",
+        "h": 20,
+        "w": 984,
+        "x": 404.5,
+        "y": 715.5
+      },
+      {
+        "label": "Submit",
+        "h": 28,
+        "w": 66.6875,
+        "x": 404.5,
+        "y": 811.5
+      }
+    ]
+  },
+  {
+    "name": "student-exam",
+    "boxes": [
+      {
+        "label": "View",
+        "h": 28,
+        "w": 51.3125,
+        "x": 343,
+        "y": 595.75
+      },
+      {
+        "label": "Download",
+        "h": 28,
+        "w": 82.015625,
+        "x": 402.3125,
+        "y": 595.75
+      },
+      {
+        "label": "Submit answers",
+        "h": 28,
+        "w": 119.84375,
+        "x": 330,
+        "y": 818.75
+      }
+    ]
+  },
+  {
+    "name": "student-attendance",
+    "boxes": [
+      {
+        "label": "Attendance rate",
+        "h": 16,
+        "w": 252.203125,
+        "x": 1470.796875,
+        "y": 454.75
+      },
+      {
+        "label": "Status",
+        "h": 40,
+        "w": 283.625,
+        "x": 1276.71875,
+        "y": 532.75
+      }
+    ]
+  },
+  {
+    "name": "student-grades",
+    "boxes": [
+      {
+        "label": "Final score",
+        "h": 40,
+        "w": 289.390625,
+        "x": 314,
+        "y": 390.75
+      },
+      {
+        "label": "Published",
+        "h": 22,
+        "w": 73.265625,
+        "x": 1446.78125,
+        "y": 439.25
+      }
+    ]
+  },
+  {
+    "name": "mobile-home",
+    "boxes": [
+      {
+        "label": "Home",
+        "h": 16,
+        "w": 32.796875,
+        "x": 44.71875,
+        "y": 801
+      },
+      {
+        "label": "Classes",
+        "h": 16,
+        "w": 44.390625,
+        "x": 123.171875,
+        "y": 801
+      },
+      {
+        "label": "Alerts",
+        "h": 16,
+        "w": 33.484375,
+        "x": 297.125,
+        "y": 801
+      }
+    ]
+  },
+  {
+    "name": "mobile-menu",
+    "boxes": [
+      {
+        "label": "Classes",
+        "h": 16,
+        "w": 44.390625,
+        "x": 128.796875,
+        "y": 801
+      },
+      {
+        "label": "Logout",
+        "h": 44,
+        "w": 255,
+        "x": 16,
+        "y": 676
+      }
+    ]
+  },
+  {
+    "name": "parent-overview",
+    "boxes": [
+      {
+        "label": "Linked students",
+        "h": 20,
+        "w": 102.28125,
+        "x": 48,
+        "y": 216
+      },
+      {
+        "label": "Open",
+        "h": 38.390625,
+        "w": 670,
+        "x": 1047,
+        "y": 397.75
+      }
+    ]
+  },
+  {
+    "name": "parent-student",
+    "boxes": [
+      {
+        "label": "Attendance rate",
+        "h": 20,
+        "w": 104.1875,
+        "x": 603.796875,
+        "y": 175.75
+      },
+      {
+        "label": "Documents",
+        "h": 20,
+        "w": 1408,
+        "x": 313,
+        "y": 431.75
+      }
+    ]
+  },
+  {
+    "name": "parent-lessons",
+    "boxes": [
+      {
+        "label": "Lessons",
+        "h": 44,
+        "w": 86.0625,
+        "x": 301,
+        "y": 220.75
+      },
+      {
+        "label": "Progress",
+        "h": 40,
+        "w": 289.1875,
+        "x": 1110.453125,
+        "y": 366.75
+      },
+      {
+        "label": "Completed",
+        "h": 36.5,
+        "w": 335.359375,
+        "x": 1399.640625,
+        "y": 406.75
+      }
+    ]
+  },
+  {
+    "name": "parent-exams",
+    "boxes": [
+      {
+        "label": "Starts",
+        "h": 40,
+        "w": 333.875,
+        "x": 753.421875,
+        "y": 418.75
+      },
+      {
+        "label": "Ends",
+        "h": 40,
+        "w": 344.5,
+        "x": 1087.296875,
+        "y": 418.75
+      },
+      {
+        "label": "Status",
+        "h": 40,
+        "w": 188.140625,
+        "x": 1431.796875,
+        "y": 418.75
+      }
+    ]
+  },
+  {
+    "name": "super-overview",
+    "boxes": [
+      {
+        "label": "Users",
+        "h": 36,
+        "w": 223,
+        "x": 16,
+        "y": 292
+      },
+      {
+        "label": "Class Sections",
+        "h": 36,
+        "w": 223,
+        "x": 16,
+        "y": 252
+      },
+      {
+        "label": "Academic setup",
+        "h": 36,
+        "w": 205,
+        "x": 25,
+        "y": 469
+      }
+    ]
+  },
+  {
+    "name": "admin-users",
+    "boxes": [
+      {
+        "label": "Student",
+        "h": 44,
+        "w": 84.359375,
+        "x": 875.3125,
+        "y": 236.75
+      },
+      {
+        "label": "Parent",
+        "h": 44,
+        "w": 75.125,
+        "x": 963.671875,
+        "y": 236.75
+      },
+      {
+        "label": "Search",
+        "h": 40,
+        "w": 76.25,
+        "x": 1388.25,
+        "y": 322.75
+      }
+    ]
+  },
+  {
+    "name": "parent-link",
+    "boxes": [
+      {
+        "label": "Student",
+        "h": 20,
+        "w": 681,
+        "x": 330,
+        "y": 838.75
+      },
+      {
+        "label": "Relation",
+        "h": 20,
+        "w": 334.5,
+        "x": 1023,
+        "y": 838.75
+      },
+      {
+        "label": "Link student",
+        "h": 28,
+        "w": 98.9375,
+        "x": 330,
+        "y": 906.75
+      }
+    ]
+  },
+  {
+    "name": "admin-enrollment",
+    "boxes": [
+      {
+        "label": "Not enrolled (0)",
+        "h": 44,
+        "w": 122.90625,
+        "x": 478.875,
+        "y": 398.75
+      },
+      {
+        "label": "Enroll selected",
+        "h": 40,
+        "w": 129.421875,
+        "x": 392.625,
+        "y": 518.75
+      }
+    ]
+  },
+  {
+    "name": "admin-documents",
+    "boxes": [
+      {
+        "label": "Generate transcript PDF",
+        "h": 28,
+        "w": 168.84375,
+        "x": 313,
+        "y": 676.25
+      },
+      {
+        "label": "Generate all-term report card PDF",
+        "h": 28,
+        "w": 225.125,
+        "x": 489.84375,
+        "y": 676.25
+      }
+    ]
+  },
+  {
+    "name": "admin-courses",
+    "boxes": [
+      {
+        "label": "Title",
+        "h": 20,
+        "w": 346.75,
+        "x": 313,
+        "y": 484.75
+      },
+      {
+        "label": "Code",
+        "h": 20,
+        "w": 346.75,
+        "x": 1389.25,
+        "y": 416.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 313,
+        "y": 552.75
+      }
+    ]
+  },
+  {
+    "name": "admin-class-create",
+    "boxes": [
+      {
+        "label": "Course",
+        "h": 20,
+        "w": 346.75,
+        "x": 313,
+        "y": 472.75
+      },
+      {
+        "label": "Title",
+        "h": 20,
+        "w": 346.75,
+        "x": 1389.25,
+        "y": 472.75
+      },
+      {
+        "label": "Capacity (max students)",
+        "h": 20,
+        "w": 346.75,
+        "x": 1030.5,
+        "y": 576.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 1389.25,
+        "y": 604.75
+      }
+    ]
+  },
+  {
+    "name": "admin-organizations",
+    "boxes": [
+      {
+        "label": "Name",
+        "h": 30,
+        "w": 463.65625,
+        "x": 313,
+        "y": 380.75
+      },
+      {
+        "label": "Type",
+        "h": 30,
+        "w": 463.65625,
+        "x": 1272.328125,
+        "y": 380.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 389.859375,
+        "y": 580.75
+      }
+    ]
+  },
+  {
+    "name": "admin-years",
+    "boxes": [
+      {
+        "label": "Start year",
+        "h": 20,
+        "w": 346.75,
+        "x": 1389.25,
+        "y": 380.75
+      },
+      {
+        "label": "End year",
+        "h": 20,
+        "w": 346.75,
+        "x": 313,
+        "y": 448.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 1030.5,
+        "y": 476.75
+      }
+    ]
+  },
+  {
+    "name": "admin-policies",
+    "boxes": [
+      {
+        "label": "Organization",
+        "h": 20,
+        "w": 461.328125,
+        "x": 313,
+        "y": 326.75
+      },
+      {
+        "label": "Campus",
+        "h": 20,
+        "w": 461.328125,
+        "x": 786.328125,
+        "y": 326.75
+      },
+      {
+        "label": "Change scope",
+        "h": 28,
+        "w": 107.5,
+        "x": 1259.65625,
+        "y": 378.75
+      }
+    ]
+  },
+  {
+    "name": "school-users",
+    "boxes": [
+      {
+        "label": "Student",
+        "h": 44,
+        "w": 84.359375,
+        "x": 875.3125,
+        "y": 236.75
+      },
+      {
+        "label": "Parent",
+        "h": 44,
+        "w": 75.125,
+        "x": 963.671875,
+        "y": 236.75
+      },
+      {
+        "label": "Role",
+        "h": 20,
+        "w": 466.34375,
+        "x": 1269.65625,
+        "y": 628.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 791.328125,
+        "y": 696.75
+      }
+    ]
+  },
+  {
+    "name": "school-student",
+    "boxes": [
+      {
+        "label": "Enrolled classes",
+        "h": 20,
+        "w": 1408,
+        "x": 313,
+        "y": 346.75
+      },
+      {
+        "label": "Not enrolled (0)",
+        "h": 44,
+        "w": 122.90625,
+        "x": 478.875,
+        "y": 398.75
+      },
+      {
+        "label": "Account details",
+        "h": 20,
+        "w": 1408,
+        "x": 313,
+        "y": 839.25
+      }
+    ]
+  },
+  {
+    "name": "academic-overview",
+    "boxes": [
+      {
+        "label": "Users",
+        "h": 36,
+        "w": 223,
+        "x": 16,
+        "y": 292
+      },
+      {
+        "label": "Class Sections",
+        "h": 36,
+        "w": 223,
+        "x": 16,
+        "y": 252
+      },
+      {
+        "label": "Academic setup",
+        "h": 36,
+        "w": 205,
+        "x": 25,
+        "y": 469
+      }
+    ]
+  },
+  {
+    "name": "academic-users",
+    "boxes": [
+      {
+        "label": "Student",
+        "h": 44,
+        "w": 84.359375,
+        "x": 875.3125,
+        "y": 236.75
+      },
+      {
+        "label": "Role",
+        "h": 20,
+        "w": 466.34375,
+        "x": 1269.65625,
+        "y": 558.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 791.328125,
+        "y": 626.75
+      }
+    ]
+  },
+  {
+    "name": "academic-parent-link",
+    "boxes": [
+      {
+        "label": "Student",
+        "h": 20,
+        "w": 681,
+        "x": 330,
+        "y": 971.75
+      },
+      {
+        "label": "Relation",
+        "h": 20,
+        "w": 334.5,
+        "x": 1023,
+        "y": 971.75
+      },
+      {
+        "label": "Link student",
+        "h": 28,
+        "w": 98.9375,
+        "x": 330,
+        "y": 1039.75
+      }
+    ]
+  },
+  {
+    "name": "academic-documents",
+    "boxes": [
+      {
+        "label": "Generate transcript PDF",
+        "h": 28,
+        "w": 168.84375,
+        "x": 313,
+        "y": 95.25
+      },
+      {
+        "label": "Generate all-term report card PDF",
+        "h": 28,
+        "w": 225.125,
+        "x": 489.84375,
+        "y": 95.25
+      }
+    ]
+  },
+  {
+    "name": "admin-assign",
+    "boxes": [
+      {
+        "label": "Assign instructor",
+        "h": 22,
+        "w": 386,
+        "x": 1335,
+        "y": 271.75
+      },
+      {
+        "label": "Assign",
+        "h": 28,
+        "w": 386,
+        "x": 1335,
+        "y": 531.75
+      }
+    ]
+  },
+  {
+    "name": "admin-user-create",
+    "boxes": [
+      {
+        "label": "Name",
+        "h": 20,
+        "w": 461.34375,
+        "x": 1259.65625,
+        "y": 490.75
+      },
+      {
+        "label": "Login ID",
+        "h": 20,
+        "w": 461.328125,
+        "x": 313,
+        "y": 558.75
+      },
+      {
+        "label": "Role",
+        "h": 20,
+        "w": 461.34375,
+        "x": 1259.65625,
+        "y": 558.75
+      },
+      {
+        "label": "Save",
+        "h": 28,
+        "w": 53.5625,
+        "x": 1259.65625,
+        "y": 722.75
+      }
+    ]
+  }
+]
