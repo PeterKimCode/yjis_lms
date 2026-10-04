@@ -95,9 +95,9 @@ export default async function InstructorQuizManagePage({
       }`}
     >
       <div className="flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="outline">
+        <Button asChild size="sm" variant="secondary" className="border border-slate-300 bg-slate-800 text-white hover:bg-slate-700">
           <Link href={`/instructor/classes/${classSectionId}?tab=assessments&view=quizzes`}>
-            Back to class
+            ← Back to Exams / Quiz
           </Link>
         </Button>
       </div>

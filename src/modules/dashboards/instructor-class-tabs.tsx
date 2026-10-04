@@ -39,7 +39,7 @@ export function InstructorClassTabs({ classSectionId, selection, basePath, actio
   const views = selection.tab === "attendance"
     ? [{ id: "attendance", label: "Attendance" }, { id: "sessions", label: "Sessions" }]
     : selection.tab === "assessments"
-      ? [{ id: "assignments", label: "Assignments" }, { id: "quizzes", label: "Exams / Assessments" }]
+      ? [{ id: "assignments", label: "Assignments" }, { id: "quizzes", label: "Exams / Quiz" }]
       : []
   const linkClass = (active: boolean) => `flex min-h-11 shrink-0 items-center rounded-lg px-4 py-2 text-sm font-medium ${active ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`
 

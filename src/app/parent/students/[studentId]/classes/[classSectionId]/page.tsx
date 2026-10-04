@@ -58,7 +58,7 @@ export default async function ParentClassPage({ params, searchParams }: {
         return <TableRow key={assignment.id}><TableCell>{assignment.title}</TableCell><TableCell>{formatDateTime(assignment.dueAt)}</TableCell><TableCell>{getSubmissionStatus({ dueAt: assignment.dueAt, score: submission?.score, submittedAt: submission?.submittedAt })}</TableCell><TableCell>{submission?.score?.toString() ?? "-"}/{assignment.pointsPossible?.toString() ?? "-"}</TableCell></TableRow>
       })} />
     </SectionBlock> : null}
-    {selection.section === "quizzes" ? <SectionBlock id="quizzes" title="Exams / Assessments">
+    {selection.section === "quizzes" ? <SectionBlock id="quizzes" title="Exams / Quiz">
       <SimpleTable empty="No assessments yet." headers={["Title", "Type", "Starts", "Ends", "Status", "Score"]} rows={section.quizzes.map((quiz) => {
         const attempt = quiz.attempts.find((item) => item.studentId === studentId)
         return <TableRow key={quiz.id}><TableCell>{quiz.title}</TableCell><TableCell>{assessmentTypeLabel(quiz.assessmentType)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.opensAt,section.organization.timezone)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.closesAt,section.organization.timezone)}</TableCell><TableCell>{attempt ? getQuizAttemptStatus(attempt) : "Not started"}</TableCell><TableCell>{attempt && shouldShowQuizResults(quiz) ? attempt.score?.toString() ?? "0" : attempt ? "Results hidden" : "-"}</TableCell></TableRow>

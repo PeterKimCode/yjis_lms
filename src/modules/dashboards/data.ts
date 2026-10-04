@@ -221,7 +221,7 @@ export async function getClassSectionDetail(
       },
       quizzes: {
         where: { archivedAt: null, ...(options.publishedLessonsOnly ? { isPublished: true } : {}) },
-        orderBy: { opensAt: "asc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         include: {
           attachments: {
             include: { fileAsset: true },
@@ -495,7 +495,7 @@ export async function getParentStudentDetail(parentId: string, studentId: string
                     orderBy: { createdAt: "desc" },
                   },
                 },
-                orderBy: { opensAt: "asc" },
+                orderBy: [{ createdAt: "desc" }, { id: "desc" }],
               },
               boards: {
                 where: { isActive: true },

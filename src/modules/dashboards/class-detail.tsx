@@ -598,7 +598,7 @@ export async function ClassSectionDetail({
           description="Create assessments, review answers, and manage grading."
           id="quizzes"
           meta={<SectionBadge>{section.quizzes.length} assessments</SectionBadge>}
-          title="Exams / Assessments"
+          title="Exams / Quiz"
         >
           <QuizPanel
             classSectionId={section.id}

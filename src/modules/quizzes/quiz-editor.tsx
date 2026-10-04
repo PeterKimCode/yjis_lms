@@ -60,7 +60,6 @@ export function QuizEditor({
   const [pending, setPending] = useState(false),
     [errors, setErrors] = useState<Record<string, string>>({}),
     [message, setMessage] = useState("")
-  const [settingsOpen, setSettingsOpen] = useState(uploadFailed)
   const locked = Boolean(quiz?.attempts.length),
     total = questions.reduce(
       (sum, question) =>
@@ -147,7 +146,6 @@ export function QuizEditor({
     const key = Object.keys(fields)[0],
       question = questions[Number(key)]
     if (question) setExpanded(question.key)
-    else setSettingsOpen(key !== "title" && key !== "questions")
     requestAnimationFrame(() => {
       const element = question
         ? form.current?.querySelector<HTMLElement>(
@@ -172,7 +170,6 @@ export function QuizEditor({
     }
     const invalid = form.current.querySelector<HTMLInputElement>(":invalid")
     if (invalid) {
-      setSettingsOpen(true)
       requestAnimationFrame(() => {
         invalid.focus()
         invalid.reportValidity()
@@ -190,7 +187,7 @@ export function QuizEditor({
       if (result.saved && result.quizId) {
         dirty.current = false
         router.push(
-          `/instructor/classes/${classSectionId}/quizzes/${result.quizId}${result.ok ? "" : "?uploadFailed=1"}`
+          result.ok ? back : `/instructor/classes/${classSectionId}/quizzes/${result.quizId}?uploadFailed=1`
         )
         router.refresh()
       } else {
@@ -209,7 +206,7 @@ export function QuizEditor({
   }
   function field(name: string, label: string, children: ReactNode) {
     return (
-      <label className="grid min-w-0 gap-1 text-sm">
+      <label className="grid min-w-0 gap-1 text-sm [&_input]:bg-background [&_textarea]:bg-background [&_select]:bg-background">
         <span className="font-medium">{label}</span>
         {children}
         {errors[name] ? (
@@ -234,20 +231,18 @@ export function QuizEditor({
     >
       <input name="id" type="hidden" value={quiz?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
-      <Link className="inline-block text-sm underline" href={back}>
-        Back to assessments
-      </Link>
+      <Button asChild variant="secondary" className="border border-slate-300 bg-slate-800 text-white hover:bg-slate-700"><Link href={back}>← Back to Exams / Quiz</Link></Button>
       {uploadFailed ? (
         <p
           role="alert"
           className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
         >
-          Quiz saved. PDF upload failed. Choose the PDF again under Assessment
-          settings, then save to retry.
+          Assessment saved. PDF upload failed. Choose the PDF again under PDF
+          attachment, then save to retry.
         </p>
       ) : null}
       <fieldset disabled={pending} className="min-w-0 space-y-5">
-        <div className="grid gap-4 rounded-xl border bg-background p-4 md:grid-cols-2">
+        <div className="grid gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2">
           {field(
             "assessmentType",
             "Assessment type",
@@ -281,7 +276,7 @@ export function QuizEditor({
             students.
           </p>
         </div>
-        <div className="rounded-xl border bg-background p-4">
+        <div className="rounded-xl border border-slate-300 bg-card p-4">
           {field(
             "pdfAttachmentFile",
             "PDF attachment (optional)",
@@ -297,7 +292,7 @@ export function QuizEditor({
             </>
           )}
         </div>
-        <section className="space-y-4 rounded-xl border bg-background p-4">
+        <section className="space-y-4 rounded-xl border border-slate-300 bg-card p-4">
           {field(
             "title",
             "Title",
@@ -610,14 +605,8 @@ export function QuizEditor({
             </p>
           )}
         </section>
-        <details
-          open={settingsOpen}
-          onToggle={(event) => setSettingsOpen(event.currentTarget.open)}
-          className="rounded-xl border bg-background p-4"
-        >
-          <summary className="cursor-pointer font-medium">
-            Assessment settings
-          </summary>
+        <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900 dark:bg-blue-950/30" aria-labelledby="assessment-settings-title">
+          <h2 id="assessment-settings-title" className="font-semibold text-blue-950 dark:text-blue-100">Assessment settings</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {field(
               "opensAt",
@@ -677,7 +666,7 @@ export function QuizEditor({
               />
             )}
           </div>
-        </details>
+        </section>
       </fieldset>
       {message ? (
         <p
@@ -687,7 +676,7 @@ export function QuizEditor({
           {message}
         </p>
       ) : null}
-      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 z-10 mx-auto flex max-w-4xl flex-wrap items-center justify-end gap-2 rounded-xl border bg-background p-3 shadow-lg md:left-auto md:right-6">
+      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 z-10 mx-auto flex max-w-4xl flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-300 bg-card p-3 shadow-lg md:left-auto md:right-6">
         <Button
           type="button"
           variant="outline"

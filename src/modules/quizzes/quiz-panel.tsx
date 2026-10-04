@@ -132,18 +132,11 @@ export function QuizPanel({
         return (
           <article
             key={quiz.id}
-            className="min-w-0 rounded-xl border bg-background p-4 space-y-4 text-sm"
+            className="min-w-0 rounded-xl border bg-card px-4 py-3 text-sm"
           >
             <AssessmentHeader quiz={quiz} />
             {mode === "instructor" ? (
-              <div className="flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline">
-                  <Link
-                    href={`/instructor/classes/${classSectionId}/quizzes/${quiz.id}?view=1`}
-                  >
-                    View
-                  </Link>
-                </Button>
+              <div className="mt-2 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
                   <Link
                     href={`/instructor/classes/${classSectionId}/quizzes/${quiz.id}`}
@@ -201,42 +194,13 @@ function DeleteAssessment({ id }: { id: string }) {
 }
 export function AssessmentHeader({ quiz }: { quiz: QuizPanelValue }) {
   return (
-    <header className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">{quiz.title}</h2>
-        <StatusBadge
-          label={quiz.isPublished ? "Published" : "Draft"}
-          value={quiz.isPublished ? "PUBLISHED" : "DRAFT"}
-        />
-      </div>
-      <p className="text-sm text-muted-foreground">
-        {assessmentTypeLabel(quiz.assessmentType)} ·{" "}
-        {quiz.pointsPossible ?? totalPoints(quiz)} points
-      </p>
-      <dl className="grid gap-2 sm:grid-cols-2 text-sm">
-        <div>
-          <dt className="font-medium">Starts</dt>
-          <dd>
-            {formatDateTimeInTimeZone(
-              quiz.opensAt ? new Date(quiz.opensAt) : null,
-              quiz.timeZone
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt className="font-medium">Ends</dt>
-          <dd>
-            {formatDateTimeInTimeZone(
-              quiz.closesAt ? new Date(quiz.closesAt) : null,
-              quiz.timeZone
-            )}
-          </dd>
-        </div>
-      </dl>
-      <p className="text-xs text-muted-foreground">
-        Time zone: {quiz.timeZone}
-        {quiz.location ? ` · ${quiz.location}` : ""}
-      </p>
+    <header className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+      <h2 className="min-w-0 break-words text-base font-semibold">{quiz.title}</h2>
+      <StatusBadge label={quiz.isPublished ? "Published" : "Draft"} value={quiz.isPublished ? "PUBLISHED" : "DRAFT"} />
+      <span className="text-muted-foreground">{assessmentTypeLabel(quiz.assessmentType)} · {quiz.pointsPossible ?? totalPoints(quiz)} points</span>
+      <span><span className="font-medium">Starts: </span>{formatDateTimeInTimeZone(quiz.opensAt ? new Date(quiz.opensAt) : null, quiz.timeZone)}</span>
+      <span><span className="font-medium">Ends: </span>{formatDateTimeInTimeZone(quiz.closesAt ? new Date(quiz.closesAt) : null, quiz.timeZone)}</span>
+      <span className="text-xs text-muted-foreground">{quiz.timeZone}{quiz.location ? ` · ${quiz.location}` : ""}</span>
     </header>
   )
 }
