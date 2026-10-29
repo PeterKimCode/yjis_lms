@@ -76,9 +76,20 @@ export async function getUserEnrollmentData(userId: string, query: Query = {}) {
       term: { select: { name: true } }, gradeLevel: { select: { name: true } },
       instructors: { select: { instructor: { select: { name: true } } } },
       enrollments: { where: { studentId: student ? user.id : { in: students.map((item) => item.id) } }, select: { studentId: true, status: true } },
-      _count: { select: { enrollments: { where: { status: "ENROLLED" } } } },
+      _count: { select: { enrollments: { where: { status: "ENROLLED" } }, lessons: { where: { isPublished: true } } } },
     },
   })
+  // Count lessons, rather than progress rows, so duplicate/material records do not inflate completion.
+  const completedLessons = student && sections.length ? await db.lesson.groupBy({
+    by: ["classSectionId"],
+    where: {
+      classSectionId: { in: sections.map(section => section.id) },
+      isPublished: true,
+      videoProgress: { some: { studentId: user.id, completed: true } },
+    },
+    _count: { _all: true },
+  }) : []
+  const completionCounts = new Map(completedLessons.map(item => [item.classSectionId, item._count._all]))
   return {
     mode: student ? "student" as const : "instructor" as const,
     page, pageCount, total, tabCounts, tab, q, sectionId, sectionOptions, subjectActive: user.isActive,
@@ -88,6 +99,8 @@ export async function getUserEnrollmentData(userId: string, query: Query = {}) {
       term: section.term?.name ?? "-", grade: section.gradeLevel?.name ?? "-",
       teachers: section.instructors.map((assignment) => assignment.instructor.name).join(", ") || "Unassigned",
       capacity: section.capacity, enrolled: section._count.enrollments,
+      lessonCount: section._count.lessons,
+      completedLessonCount: completionCounts.get(section.id) ?? 0,
       enrollments: section.enrollments,
     })),
     students,

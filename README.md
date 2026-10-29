@@ -58,6 +58,8 @@ A4 세로, 본문 16pt, 작업별 한 페이지로 구성했습니다. 데모 �
 
 ### 강의와 영상
 
+관리자는 `Users → 학생 → Enrolled classes`에서 수업별 `Lesson completion`을 `완료 수/공개 강의 수`(예: `3/4`)로 확인합니다. `Status`는 등록 상태이며 맨 앞에 표시됩니다. `Select for enrollment`는 일괄 등록용 선택으로, 등록되지 않은 수업에서만 사용합니다.
+
 1. 교수는 `Lessons → Create lesson`에서 제목과 Text·Video·File 유형을 고릅니다.
 2. 업로드 영상은 `Video source → Video: Upload`에서 파일을 선택합니다. **파일 선택 즉시 업로드가 시작**됩니다. 실패하면 `Retry upload`로 재시도합니다.
 3. 업로드된 영상이 선택되었는지 확인한 뒤 강의를 저장합니다. **수동 Video duration 입력은 필요 없습니다.**

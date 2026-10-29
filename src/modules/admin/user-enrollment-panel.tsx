@@ -1,6 +1,7 @@
 "use client"
 
 import { Switch } from "@/components/ui/switch"
+import { HelpTooltip } from "@/components/help-tooltip"
 
 import Link from "next/link"
 import { useState, useTransition } from "react"
@@ -30,11 +31,12 @@ export function UserEnrollmentPanel({ userId, data: initialData }: { userId: str
     campus: item.campus, extra: `${item.grade} · ${item.term} · ${item.code}`,
     status: item.enrollments.find((enrollment) => enrollment.studentId === userId)?.status ?? "NOT_ENROLLED",
     active: data.subjectActive, places: `${item.enrolled}/${item.capacity ?? "Unlimited"}`,
+    lessonCompletion: `${item.completedLessonCount}/${item.lessonCount}`,
     href: `/admin/class-sections/${item.id}`,
   })) : data.students.map((student) => ({
     id: student.id, name: student.name, detail: student.email ?? "-", campus: "", extra: "",
     status: section?.enrollments.find((enrollment) => enrollment.studentId === student.id)?.status ?? "NOT_ENROLLED",
-    active: student.isActive, places: "", href: `/admin/users/${student.id}`,
+    active: student.isActive, places: "", lessonCompletion: "", href: `/admin/users/${student.id}`,
   }))
   const eligible = rows.filter((row) => row.status === "NOT_ENROLLED" && row.active).map((row) => row.id)
   const chosen = selected.filter((id) => eligible.includes(id))
@@ -68,7 +70,7 @@ export function UserEnrollmentPanel({ userId, data: initialData }: { userId: str
     })
   }
   function checkbox(row: typeof rows[number]) {
-    return <Switch aria-label={`Select ${row.name}`} checked={chosen.includes(row.id)} disabled={pending || !eligible.includes(row.id)}
+    return <Switch aria-label={`Select ${row.name} for enrollment`} checked={chosen.includes(row.id)} disabled={pending || !eligible.includes(row.id)}
       onChange={(event) => setSelected((values) => event.target.checked ? [...values, row.id] : values.filter((id) => id !== row.id))} />
   }
   function status(row: typeof rows[number]) {
@@ -100,35 +102,36 @@ export function UserEnrollmentPanel({ userId, data: initialData }: { userId: str
           value={search} onChange={(event) => setSearch(event.target.value)} />
         <Button disabled={pending} type="submit" variant="outline">Search</Button>
       </form>
-      <div className="flex flex-wrap items-center gap-3 text-sm"><span>{chosen.length} selected</span>
+      <div className="flex flex-wrap items-center gap-3 text-sm"><span>{chosen.length} selected for enrollment</span>
         <Button disabled={pending || !chosen.length} onClick={enroll}>Enroll selected</Button>
         <span className="text-muted-foreground" role="status">{pending ? "Updating..." : `${rows.length} of ${data.total} shown`}</span>
       </div>
       {message ? <p role="status" className="text-sm">{message}</p> : null}
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <Switch disabled={pending || !eligible.length} checked={eligible.length > 0 && chosen.length === eligible.length}
-          onChange={(event) => setSelected(event.target.checked ? eligible : [])} />Select available results on this page
+          onChange={(event) => setSelected(event.target.checked ? eligible : [])} />Select all available results for enrollment
+        <HelpTooltip>Selection is only for bulk enrollment. Turn on the classes or students to register, then press Enroll selected. The Status column shows the current enrollment status.</HelpTooltip>
       </label>
       <div className="divide-y border-y md:hidden">
         {!rows.length ? <p className="py-4 text-sm text-muted-foreground">No matching results.</p> : null}
         {rows.map((row) => <article key={row.id} className="flex min-w-0 items-start gap-3 py-4">
-          <label className="flex size-11 shrink-0 items-center justify-center">{checkbox(row)}</label>
           <div className="min-w-0 flex-1 space-y-1 break-words">
+            {status(row)}
             <Link className="block font-medium text-primary underline-offset-4 hover:underline" href={row.href}>{row.name}</Link>
             <p className="text-sm text-muted-foreground">{row.detail}</p>
-            {data.mode === "student" ? <><p className="text-sm">{row.campus} · {row.extra}</p><p className="text-sm">Enrolled / Capacity: {row.places}</p></> : null}
-            {status(row)}
+            {data.mode === "student" ? <><p className="text-sm">{row.campus} · {row.extra}</p><p className="text-sm">Lesson completion: <span className="font-semibold tabular-nums">{row.status === "NOT_ENROLLED" ? "—" : row.lessonCompletion}</span></p><p className="text-sm">Enrolled / Capacity: {row.places}</p></> : null}
+            {eligible.includes(row.id) ? <label className="flex min-h-11 items-center gap-2 text-sm">{checkbox(row)}Select for enrollment</label> : null}
           </div>
         </article>)}
       </div>
       <div className="hidden md:block">
         <DataTable minWidth="min-w-[760px]" empty="No matching results."
-          headers={data.mode === "student" ? ["Select", "Class / Course / Teachers", "Campus", "Grade / Term / Code", "Enrolled / Capacity", "Status", "Open"] : ["Select", "Student / Login ID", "Status", "Open"]}
+          headers={data.mode === "student" ? ["Status", "Class / Course / Teachers", "Campus", "Grade / Term / Code", <span key="lesson-completion" className="inline-flex items-center gap-1">Lesson completion<HelpTooltip label="Help: Lesson completion">Completed lessons / published lessons for this student. For example, 3/4 means 3 of 4 lessons completed. Draft lessons are excluded.</HelpTooltip></span>, "Enrolled / Capacity", "Select for enrollment", "Open"] : ["Status", "Student / Login ID", "Select for enrollment", "Open"]}
           rows={rows.map((row) => <TableRow key={row.id}>
-            <TableCell>{checkbox(row)}</TableCell>
-            <TableCell><div className="font-medium whitespace-normal">{row.name}</div><div className="text-sm text-muted-foreground whitespace-normal">{row.detail}</div></TableCell>
-            {data.mode === "student" ? <><TableCell>{row.campus}</TableCell><TableCell>{row.extra}</TableCell><TableCell>{row.places}</TableCell></> : null}
             <TableCell>{status(row)}</TableCell>
+            <TableCell><div className="font-medium whitespace-normal">{row.name}</div><div className="text-sm text-muted-foreground whitespace-normal">{row.detail}</div></TableCell>
+            {data.mode === "student" ? <><TableCell>{row.campus}</TableCell><TableCell>{row.extra}</TableCell><TableCell className="font-semibold tabular-nums">{row.status === "NOT_ENROLLED" ? "—" : row.lessonCompletion}</TableCell><TableCell>{row.places}</TableCell></> : null}
+            <TableCell>{eligible.includes(row.id) ? checkbox(row) : "—"}</TableCell>
             <TableCell><Button asChild size="sm" variant="outline"><Link href={row.href}>View</Link></Button></TableCell>
           </TableRow>)} />
       </div>
