@@ -165,12 +165,14 @@ export async function canViewClassSection(
           classSectionId,
           studentId: userId,
         },
+        status: { in: ["ENROLLED", "COMPLETED"] },
       },
       select: { id: true },
     }),
     prisma.enrollment.findFirst({
       where: {
         classSectionId,
+        status: { in: ["ENROLLED", "COMPLETED"] },
         student: {
           studentParentRelations: {
             some: {
@@ -196,6 +198,7 @@ export async function canViewStudentData(userId: string, studentId: string) {
   }
 
   const prisma = getPrismaClient()
+  const viewer = await getUserWithRoles(userId)
   const [parentRelation, teachesStudent] = await Promise.all([
     prisma.parentStudentRelation.findUnique({
       where: {
@@ -209,6 +212,7 @@ export async function canViewStudentData(userId: string, studentId: string) {
     prisma.enrollment.findFirst({
       where: {
         studentId,
+        student: { organizationId: viewer?.organizationId ?? "" },
         classSection: {
           instructors: {
             some: {
@@ -250,6 +254,9 @@ export async function canManageStudentData(userId: string, studentId: string) {
   ) {
     return true
   }
+
+  // A visiting student grants course-level teaching authority, not home-school records.
+  if (user.organizationId !== studentProfile.organizationId) return false
 
   const managedEnrollment = await prisma.enrollment.findFirst({
     where: {

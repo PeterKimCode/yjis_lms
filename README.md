@@ -7,16 +7,16 @@
 
 ## 쉬운 한국어 PDF 매뉴얼
 
-A4 세로, 본문 16pt, 작업별 한 페이지로 구성했습니다. 최신 앱의 별도 데모 환경에서 캡처한 화면에 번호·테두리·화살표를 표시했습니다. 실제 개인정보나 비밀번호는 포함하지 않습니다. PDF 첫 페이지의 목차를 누르면 해당 작업으로 이동합니다.
+A4 세로, 본문 16pt, 작업별 한 페이지로 구성했습니다. 데모 화면과 쉬운 메뉴 순서 안내를 함께 제공합니다. 새 로그인·신청·고정 메뉴는 작업 순서 그림으로 안내하며, 이번 새 화면의 자동 캡처는 도구 제한으로 완료하지 못했습니다. 실제 개인정보나 비밀번호는 포함하지 않습니다. PDF 첫 페이지의 목차를 누르면 해당 작업으로 이동합니다.
 
 | 대상 | PDF 열기·다운로드 | 주요 내용 | 쪽수 |
 | --- | --- | --- | --- |
 | 처음 이용하는 모든 사용자 | [처음 쓰는 LMS](docs/manuals/easy-start-guide.pdf) | 로그인, 모바일 메뉴, 메시지, 알림, 로그아웃 | 7 |
-| Super Admin | [최고 관리자 매뉴얼](docs/manuals/super-admin-manual.pdf) | 조직·학년도, 사용자·과목·수업, 교수 배정, 학생 등록, 가족 연결 | 15 |
-| School Admin | [학교 관리자 매뉴얼](docs/manuals/school-admin-manual.pdf) | 학교 범위 사용자 등록, 과목·수업, 교수 배정, 학생 등록, 권한 제한 | 12 |
+| Super Admin | [최고 관리자 매뉴얼](docs/manuals/super-admin-manual.pdf) | 조직·학년도, 사용자·과목·수업, 교수 배정, 학생 등록, 가족 연결 | 17 |
+| School Admin | [학교 관리자 매뉴얼](docs/manuals/school-admin-manual.pdf) | 학교 범위 사용자 등록, 과목·수업, 교수 배정, 학생 등록, 권한 제한 | 14 |
 | Academic Staff | [학사 직원 매뉴얼](docs/manuals/academic-staff-manual.pdf) | 허용 범위 사용자·수업·학생 관리, 가족 연결, 성적 서류 | 13 |
 | Instructor | [교수 매뉴얼](docs/manuals/instructor-manual.pdf) | 강의·출석·과제, 임시 저장 복원, 시험/퀴즈·PDF 답안, 채점·성적 | 16 |
-| Student | [학생 매뉴얼](docs/manuals/student-manual.pdf) | 오늘 할 일, 강의 진도, 과제 제출, PDF 시험 답안, 출석·성적 | 13 |
+| Student | [학생 매뉴얼](docs/manuals/student-manual.pdf) | 오늘 할 일, 강의 진도, 과제 제출, PDF 시험 답안, 출석·성적 | 14 |
 | Parent | [학부모 매뉴얼](docs/manuals/parent-manual.pdf) | 공개 시험 일정, 자녀 선택, 강의·출석·과제·성적 확인 | 12 |
 
 화면의 영어 버튼 이름과 쉬운 한국어 설명을 함께 사용합니다. 화면 언어·학교 설정·권한에 따라 일부 메뉴가 다를 수 있습니다. [글로 읽는 공통 시작 안내](docs/user-guides/easy-start-guide.md)와 [매뉴얼 제작·재생성 안내](docs/manuals/README.md)도 제공합니다.
@@ -147,3 +147,14 @@ npx tsx scripts/generate-manual-pdfs.ts
 ```
 
 이 명령은 문서 생성 전용 Python 스크립트를 실행하며 앱 DB·권한·기능을 변경하지 않습니다. PDF를 다시 생성한 뒤 반드시 전체 페이지를 렌더링하고 검수하세요.
+
+## 로그인 공지와 수강 신청 (2026-10-29)
+
+- 로그인 화면은 활성 조직의 로고·이름과 공개 공지를 표시합니다. 로고를 누르면 해당 학교 공지만 봅니다. 공지는 School Admin/Super Admin의 `Login notices`에서 공개 여부와 학교 시간대의 게시 기간을 설정합니다. 내부 게시판은 공개되지 않습니다.
+- 학생은 `Browse classes`에서 Organization·수업명·신청 상태로 찾고 `Apply for class`로 신청합니다. 승인 전에는 소개만 보이며, 강의·자료·과제·시험은 열리지 않습니다.
+- 학교 관리자는 `Class Sections → 수업 → Student recruitment`에서 소개와 모집 공개를 저장합니다. 기존 수업의 모집은 기본 비공개입니다. 종료·비활성 조직 수업에는 새로 신청할 수 없습니다.
+- `Enrollment requests`에서 수업 소속 School Admin 또는 Super Admin이 승인·거절합니다. 캠퍼스 범위를 검사하고, 거절 시 사유가 필요합니다. Academic Staff와 교수에게는 승인 권한을 추가하지 않습니다.
+- 승인 후 학생의 `Classes`에서 수강합니다. 학생의 원래 학교·학적·역할은 유지하며, 대상 학교에 전체 학생 기록을 열어주지 않습니다. 정원은 동시 승인에서도 검사합니다. 대기 취소와 거절 후 재신청이 가능하고 결과는 앱 알림으로 전달합니다.
+- 모든 역할의 사이드바에서 조직 정보와 Messages·Notifications·Logout·Help & Contact를 고정하고 가운데 메뉴만 스크롤합니다. Help는 팝업이며 접힌 상태에서도 공통 아이콘을 사용할 수 있습니다.
+
+새 마이그레이션은 모집 설정·로그인 공지·수강 신청만 추가하며 기존 수업은 자동 공개하지 않습니다. 격리 환경 검증은 [검증 기록](docs/catalog-login-verification.md)을 참고하세요.

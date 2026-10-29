@@ -124,7 +124,7 @@ def cover(c,manual,data,count):
         c.setFont('Korean',16); c.setFillColor(INK)
         c.drawString(MARGIN,y,p['title']); c.drawRightString(WIDTH-MARGIN,y,str(index))
         c.linkRect('',f'p{index}',(MARGIN,y-5,WIDTH-MARGIN,y+17),relative=0,thickness=0)
-        y-=26
+        y-=24 if len(manual['pages'])>14 else 26
     if y<75: raise ValueError(f'Cover overflow: {manual["fileName"]}')
     c.showPage()
 
@@ -134,7 +134,18 @@ def task(c,manual,p,number,count,data,captures):
     y=text(c,p['title'],MARGIN,HEIGHT-84,CONTENT,25,32,'KoreanBold',NAVY)
     y=text(c,p['where'],MARGIN,y-12,CONTENT,16,23,'KoreanBold',BLUE)
     if y<662: raise ValueError(f'Heading overflow: {p["title"]}')
-    screenshot(c,p['image'],captures)
+    if p.get('image'):
+        screenshot(c,p['image'],captures)
+    else:
+        # A clearly labelled menu guide, never presented as a captured app screen.
+        c.setFillColor(PALE); c.roundRect(MARGIN,405,CONTENT,225,12,fill=1,stroke=0)
+        yflow=600
+        text(c,'메뉴 순서 안내 (화면 캡처 아님)',MARGIN+18,yflow,CONTENT-36,16,23,'KoreanBold',BLUE)
+        yflow-=42
+        for index,label in enumerate(p.get('flow',[]),1):
+            c.setFillColor(colors.white); c.roundRect(MARGIN+18,yflow-42,CONTENT-36,42,8,fill=1,stroke=0)
+            text(c,str(index)+'. '+label,MARGIN+30,yflow-25,CONTENT-60,16,22,'KoreanBold',NAVY)
+            yflow-=54
     y=text(c,'따라 해 보세요',MARGIN,365,CONTENT,18,25,'KoreanBold')-7
     for index,step in enumerate(p['steps'],1):
         c.setFont('KoreanBold',16); c.setFillColor(BLUE); c.drawString(MARGIN,y,str(index)+'.')

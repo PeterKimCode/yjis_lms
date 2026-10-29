@@ -78,6 +78,7 @@ export async function canUserViewBoard(
           student: {
             include: {
               enrollments: {
+                where: { status: { in: ["ENROLLED", "COMPLETED"] } },
                 select: { classSectionId: true },
               },
               studentProfile: true,
@@ -88,7 +89,7 @@ export async function canUserViewBoard(
     },
   })
 
-  if (!user || user.organizationId !== board.organizationId) return false
+  if (!user) return false
 
   if (board.classSectionId) {
     if (await canViewClassSection(userId, board.classSectionId)) return true
@@ -99,6 +100,8 @@ export async function canUserViewBoard(
       )
     )
   }
+
+  if (user.organizationId !== board.organizationId) return false
 
   if (!board.campusId) return true
 

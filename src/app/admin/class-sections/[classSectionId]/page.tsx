@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { RecruitmentSettings } from "@/modules/catalog/recruitment-settings"
 import { notFound } from "next/navigation"
 
 import {
@@ -88,6 +89,7 @@ export default async function ClassSectionDetailPage({
         </dl>
       </FormCard>
 
+      <RecruitmentSettings classSectionId={classSection.id} />
       <ClassSectionForm data={data} section={classSection} />
       <InstructorManagement data={data} section={classSection} />
       <EnrollmentManagement data={data} section={classSection} />

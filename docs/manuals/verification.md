@@ -39,3 +39,8 @@ A4 세로, 작업 안내 본문 16pt, 한글 글꼴 내장. 제목·번호·테�
 - README 및 문서 상대 링크를 확인했다. PDF 생성기는 로컬 JSON·이미지·글꼴만 읽는다.
 - `npx eslint scripts/generate-manual-pdfs.ts`, `npx tsc --noEmit`: 통과.
 - 이번에는 앱 UX 변경과 함께 게시하며 기존 `deploy-lms` 절차로 배포한다. 문서만 수정하는 후속 작업은 앱 재배포가 필요 없다.
+
+
+## 2026-10-29 갱신
+
+로그인·모바일 공통 메뉴 안내를 수정하고 Super Admin/School Admin에 공지·모집·승인, 학생에 수강 신청을 추가했다. 총 쪽 수는 공통 7, Super Admin 17, School Admin 14, Academic Staff 13, Instructor 16, Student 14, Parent 12로 93쪽이다. 전체 페이지 렌더링과 구조·텍스트 검사를 통과했으며 변경 페이지를 시각 확인했다. 새 UI의 실제 화면 캡처는 Computer Use URL 확인 실패로 확보하지 못했다. 해당 페이지는 화면 캡처가 아닌 메뉴 순서 그림이라고 명시했다. 상세 기능 검증 및 미확인 범위는 ../catalog-login-verification.md를 참고한다.

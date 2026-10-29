@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button"
 export function LogoutButton({
   className,
   size = "default",
+  compact = false,
 }: {
   className?: string
   size?: React.ComponentProps<typeof Button>["size"]
+  compact?: boolean
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { data: session } = useSession()
@@ -48,9 +50,11 @@ export function LogoutButton({
         variant="outline"
         size={size}
         disabled={isSubmitting}
+        aria-label={isSubmitting ? "Signing out..." : "Logout"}
+        title={compact ? "Logout" : undefined}
       >
         <LogOut />
-        {isSubmitting ? "Signing out..." : "Logout"}
+        <span className={compact ? "sr-only" : ""}>{isSubmitting ? "Signing out..." : "Logout"}</span>
       </Button>
     </form>
   )

@@ -44,6 +44,13 @@ enum AttendanceStatus {
   PENDING
 }
 
+enum EnrollmentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum EnrollmentStatus {
   ENROLLED
   DROPPED
@@ -165,6 +172,8 @@ enum UserDeletionRequestStatus {
 }
 
 model Organization {
+  loginNotices LoginNotice[]
+
   id                       String                    @id @default(cuid())
   name                     String
   slug                     String                    @unique
@@ -279,6 +288,9 @@ model Campus {
 }
 
 model User {
+  enrollmentRequests EnrollmentRequest[] @relation("StudentRequests")
+  reviewedEnrollmentRequests EnrollmentRequest[] @relation("ReviewedRequests")
+
   id                                String                    @id @default(cuid())
   organizationId                    String
   email                             String?
@@ -684,6 +696,10 @@ model Course {
 }
 
 model ClassSection {
+  isRecruiting Boolean @default(false)
+  catalogDescription String?
+  enrollmentRequests EnrollmentRequest[]
+
   id                      String                     @id @default(cuid())
   organizationId          String
   campusId                String?
@@ -1806,4 +1822,36 @@ model FileAsset {
   @@index([campusId])
   @@index([classSectionId])
   @@index([createdAt])
+}
+
+model LoginNotice {
+  id String @id @default(cuid())
+  organizationId String
+  title String
+  body String
+  isPublished Boolean @default(false)
+  startsAt DateTime?
+  endsAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId, isPublished, createdAt])
+}
+
+model EnrollmentRequest {
+  id String @id @default(cuid())
+  classSectionId String
+  studentId String
+  status EnrollmentRequestStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt DateTime?
+  rejectionReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  classSection ClassSection @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
+  student User @relation("StudentRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReviewedRequests", fields: [reviewedById], references: [id], onDelete: SetNull)
+  @@unique([classSectionId, studentId])
+  @@index([status, createdAt])
+  @@index([studentId])
 }

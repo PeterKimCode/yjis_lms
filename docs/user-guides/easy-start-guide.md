@@ -80,3 +80,16 @@
 작성한 내용을 먼저 저장합니다. 왼쪽 아래 또는 휴대전화 메뉴 아래 `Logout`을 누릅니다. 로그인 화면으로 돌아왔는지 확인한 뒤 인터넷 창을 닫습니다. 공용 컴퓨터에는 비밀번호를 저장하지 마세요.
 
 문서 기준: 2026-10-04. 화면 언어와 권한에 따라 버튼이 다르게 보일 수 있습니다.
+
+
+## 새 수업을 신청하려면
+
+학생은 Browse classes에서 학교·수업을 찾고 Apply for class를 누릅니다. PENDING은 승인 대기이며 Cancel application으로 취소할 수 있습니다. 승인 알림을 받은 뒤 Classes에서 수업을 엽니다. 거절되면 사유를 확인하고 다시 신청할 수 있습니다.
+
+## 관리자가 모집·공지를 열려면
+
+Class Sections의 수업에서 Student recruitment 소개를 쓰고 Accept applications를 켜서 저장합니다. Enrollment requests에서 학생의 원래 학교와 신청 수업을 확인하고 Approve 또는 사유 작성 후 Reject를 누릅니다. Login notices는 로그인 전 공개 공지이므로 개인정보를 쓰지 마세요. 게시 시간은 표시된 학교 시간대 기준입니다.
+
+## 아래쪽 공통 메뉴
+
+Messages·Notifications·Logout·Help & Contact는 사이드바 아래에 고정됩니다. 긴 수업·관리 메뉴는 가운데에서만 스크롤하세요. 접힌 메뉴도 아이콘으로 사용할 수 있으며 Help & Contact는 팝업으로 열립니다.
