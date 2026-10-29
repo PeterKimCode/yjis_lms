@@ -58,7 +58,7 @@ export default async function AdminBoardDetailPage({
           Cannot delete a board with posts. Deactivate it instead.
         </p>
       ) : null}
-      <details className="rounded-lg border bg-background p-4" open>
+      <details className="rounded-lg border bg-white p-4" open>
         <summary className="cursor-pointer font-medium">Board settings</summary>
         <div className="pt-4">
           <BoardForm

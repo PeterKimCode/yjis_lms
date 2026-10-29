@@ -43,20 +43,19 @@ export default async function PoliciesPage({
         title="Policies"
         description="Configure school-level rules for attendance, video completion, assignments, grades, GPA, and documents."
       />
-      <HelpTooltip>If a campus-specific policy is missing, the system falls back to the
-        organization default, then safe system defaults. You are editing the
-        effective values for the selected scope below.</HelpTooltip>
       <PolicyScopeSelector
         campusOptions={data.policyCampusOptions}
         organizationOptions={data.organizationOptions}
         selectedCampusId={data.selectedCampusId}
         selectedOrganizationId={data.selectedOrganizationId}
       />
-      <p className="text-sm font-medium">
+      <p className="text-sm font-medium lms-help-heading">
         {campus
           ? `Editing campus policies: ${campus.name} (${campus.organization.name})`
           : `Editing organization default policies: ${organization?.name ?? "Unknown organization"}`}
-      </p>
+      <HelpTooltip>If a campus-specific policy is missing, the system falls back to the
+        organization default, then safe system defaults. You are editing the
+        effective values for the selected scope below.</HelpTooltip></p>
       <InitializeDefaultsForm
         campusId={data.selectedCampusId}
         organizationId={data.selectedOrganizationId}
@@ -142,7 +141,7 @@ function PolicySummary({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border bg-background p-4">
+    <div className="min-w-0 rounded-lg border bg-white p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="truncate font-semibold" title={value}>
         {value}
@@ -157,17 +156,16 @@ function GradingScaleSection({
   data: Awaited<ReturnType<typeof getPolicyAdminData>>
 }) {
   return (
-    <details className="rounded-lg border bg-background p-4" open>
+    <details className="rounded-lg border bg-white p-4" open>
       <summary className="cursor-pointer font-medium">
         Grading scale / GPA policy
-      </summary>
-      <div className="space-y-4 pt-4">
-        <HelpTooltip label="Help: Grading scale / GPA policy">
+      <HelpTooltip label="Help: Grading scale / GPA policy">
           Final numeric scores are converted to letter grades and GPA points using this table.
           Example: if A is 90-94.99 with grade point 4.0, then a final score of 92 becomes A and contributes 4.0 points to GPA.
           Make sure score ranges do not overlap and cover 0-100.
           {data.selectedCampusId ? " This scale is inherited from the organization default. Create a campus override if this campus uses a different scale." : ""}
-        </HelpTooltip>
+        </HelpTooltip></summary>
+      <div className="space-y-4 pt-4">
         {!data.gradingScales.length ? (
           <p className="rounded-md border p-3 text-sm text-muted-foreground">
             No grading scale is configured. Final grades can be calculated as

@@ -72,9 +72,8 @@ export default async function StudentLessonPage({
         >
           {lesson.contentType === "FILE" ? (
             lesson.videoFileAsset ? (
-              <div className="rounded-lg border bg-background p-4">
-                <p className="font-medium">{lesson.videoFileAsset.originalName}</p>
-                <HelpTooltip>Download or open the lesson file through the LMS.</HelpTooltip>
+              <div className="rounded-lg border bg-white p-4">
+                <p className="font-medium lms-help-heading">{lesson.videoFileAsset.originalName}<HelpTooltip>Download or open the lesson file through the LMS.</HelpTooltip></p>
                 <Button asChild className="mt-3" size="sm">
                   <Link
                     href={`/api/files/${lesson.videoFileAsset.id}/download`}
@@ -88,7 +87,7 @@ export default async function StudentLessonPage({
               <EmptyState>No file has been attached to this lesson yet.</EmptyState>
             )
           ) : lesson.contentType !== "VIDEO" ? (
-            <div className="rounded-lg border bg-background p-4">
+            <div className="rounded-lg border bg-white p-4">
               <p className="font-medium">Marked complete</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Opening this {lesson.contentType.toLowerCase()} lesson records it

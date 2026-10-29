@@ -124,7 +124,7 @@ export default async function AdminStudentClassRecordPage({
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border bg-background p-3">
+    <div className="min-w-0 rounded-lg border bg-white p-3">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <div className="mt-1 truncate text-sm font-medium" title={value}>
         {value}
@@ -144,7 +144,7 @@ function DetailsSection({
 }) {
   return (
     <details
-      className="rounded-lg border bg-background p-4 open:space-y-4"
+      className="rounded-lg border bg-white p-4 open:space-y-4"
       open={defaultOpen}
     >
       <summary className="cursor-pointer text-sm font-semibold">{title}</summary>

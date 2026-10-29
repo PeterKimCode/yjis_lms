@@ -38,10 +38,10 @@ export function PolicyScopeSelector({
   return (
     <form
       action="/admin/policies"
-      className="grid gap-3 rounded-lg border bg-background p-4 md:grid-cols-3"
+      className="grid gap-3 rounded-lg border bg-white p-4 md:grid-cols-3"
     >
       <label className="grid gap-1 text-sm">
-        <span className="font-medium">Organization</span>
+        <span className="font-medium lms-help-heading">Organization<HelpTooltip>Choose the organization policy scope.</HelpTooltip></span>
         <select
           className="h-9 rounded-md border bg-background px-3 text-sm"
           name="organizationId"
@@ -55,10 +55,9 @@ export function PolicyScopeSelector({
             </option>
           ))}
         </select>
-        <HelpTooltip>Choose the organization policy scope.</HelpTooltip>
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="font-medium">Campus</span>
+        <span className="font-medium lms-help-heading">Campus<HelpTooltip>Select a campus override or leave blank for the organization default.</HelpTooltip></span>
         <select
           className="h-9 rounded-md border bg-background px-3 text-sm"
           name="campusId"
@@ -72,7 +71,6 @@ export function PolicyScopeSelector({
             </option>
           ))}
         </select>
-        <HelpTooltip>Select a campus override or leave blank for the organization default.</HelpTooltip>
       </label>
       <div className="flex items-end">
         <Button size="sm" type="submit" variant="outline">

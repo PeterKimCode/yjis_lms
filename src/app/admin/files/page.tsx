@@ -93,13 +93,11 @@ export default async function AdminFilesPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
+        help={!canSeeAllFiles ? <HelpTooltip>School Admin view is limited to files in your assigned organization
+          and campus scope.</HelpTooltip> : null}
         title="Files"
         description="Uploaded LMS files in your admin scope, including videos, PDFs, images, and lesson materials."
       />
-      {!canSeeAllFiles ? (
-        <HelpTooltip>School Admin view is limited to files in your assigned organization
-          and campus scope.</HelpTooltip>
-      ) : null}
       {deleteSuccess ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
           {deleteSuccess}

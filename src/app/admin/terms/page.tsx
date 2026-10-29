@@ -139,13 +139,13 @@ function TermForm({
         />
         <Field
           label="Term order"
+          help={<HelpTooltip>Term order controls sorting inside the academic year. Example: 1 =
+          first semester, 2 = second semester.</HelpTooltip>}
           name="sequence"
           type="number"
           defaultValue={term?.sequence ?? 1}
           required
         />
-        <HelpTooltip>Term order controls sorting inside the academic year. Example: 1 =
-          first semester, 2 = second semester.</HelpTooltip>
         <label className="flex items-end gap-2 text-sm">
           <Switch
             name="isActive"

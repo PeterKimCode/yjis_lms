@@ -45,7 +45,7 @@ export function AdminUserAvatarForm({
   return (
     <div className="rounded-lg border bg-white p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border bg-slate-50">
+        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full border bg-white">
           {avatarUrl ? (
             <Image
               alt={`${userName} profile photo`}
@@ -63,9 +63,8 @@ export function AdminUserAvatarForm({
         </div>
         <div className="min-w-0 flex-1 space-y-3">
           <div>
-            <h3 className="text-sm font-semibold">Profile photo</h3>
-            <HelpTooltip>Admins can upload or remove this user&apos;s profile image. JPG, PNG,
-              WEBP, or GIF only. Max 10MB.</HelpTooltip>
+            <h3 className="text-sm font-semibold lms-help-heading">Profile photo<HelpTooltip>Admins can upload or remove this user&apos;s profile image. JPG, PNG,
+              WEBP, or GIF only. Max 10MB.</HelpTooltip></h3>
           </div>
           <form
             action={uploadAction}

@@ -251,11 +251,10 @@ export async function ClassSectionDetail({
               <div className="space-y-3" id="lesson-progress">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-sm font-medium lms-help-heading">
                       Completion detail: {selectedLesson.title}
-                    </h3>
                     <HelpTooltip>All enrolled students are shown, including students who
-                      have not started.</HelpTooltip>
+                      have not started.</HelpTooltip></h3>
                   </div>
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/instructor/classes/${section.id}`}>
@@ -456,20 +455,21 @@ export async function ClassSectionDetail({
             ) : null}
             {mode === "instructor" ? (
               section.attendanceSessions.length ? (
-                <details className="rounded-md border bg-background p-3">
+                <details className="rounded-md border bg-white p-3">
                   <summary className="cursor-pointer text-sm font-medium">
                     Manage attendance
                   </summary>
                   <div className="space-y-3 pt-3">
                     {section.attendanceSessions.map((attendance) => (
                       <details
-                        className="rounded-md border bg-background p-3"
+                        className="rounded-md border bg-white p-3"
                         key={attendance.id}
                       >
                         <summary className="cursor-pointer text-sm font-medium">
                           {attendance.title ?? "Attendance"} -{" "}
                           {formatDateTime(attendance.takenAt)}
-                        </summary>
+                        <HelpTooltip>Default is Present. Change only students who are
+                                late, absent, excused, or pending.</HelpTooltip></summary>
                         <div className="pt-3">
                           <form action={saveAttendanceRecords} className="space-y-3">
                             <input
@@ -478,8 +478,6 @@ export async function ClassSectionDetail({
                               value={attendance.id}
                             />
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <HelpTooltip>Default is Present. Change only students who are
-                                late, absent, excused, or pending.</HelpTooltip>
                               <Button size="sm" type="submit">
                                 Save all
                               </Button>
@@ -629,10 +627,11 @@ export async function ClassSectionDetail({
         >
           <div className="space-y-4">
             {mode === "instructor" ? (
-              <details className="rounded-md border bg-background p-3">
+              <details className="rounded-md border bg-white p-3">
                 <summary className="cursor-pointer text-sm font-medium">
                   Create class board
-                </summary>
+                <HelpTooltip>Attachments will be enabled after file storage
+                    stabilization.</HelpTooltip></summary>
                 <form
                   action={createClassBoard}
                   className="grid gap-3 pt-3 md:grid-cols-2 xl:grid-cols-4"
@@ -686,8 +685,6 @@ export async function ClassSectionDetail({
                       Create board
                     </Button>
                   </div>
-                  <HelpTooltip>Attachments will be enabled after file storage
-                    stabilization.</HelpTooltip>
                 </form>
               </details>
             ) : null}
@@ -848,7 +845,7 @@ function AttendanceStat({
   value: string | number
 }) {
   return (
-    <div className="rounded-md border bg-background p-3">
+    <div className="rounded-md border bg-white p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
     </div>

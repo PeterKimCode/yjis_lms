@@ -98,7 +98,7 @@ export default async function AdminBoardsPage({
       ) : null}
       <DeleteStatusBanner deleted={params.deleted} deleteError={params.deleteError} />
       <BoardFilters admin={admin} params={params} q={q} />
-      <details className="rounded-lg border bg-background p-4" open>
+      <details className="rounded-lg border bg-white p-4" open>
         <summary className="cursor-pointer font-medium">Create board</summary>
         <div className="pt-4">
           <BoardForm
@@ -186,7 +186,7 @@ function BoardFilters({
   // for users, class sections, courses, and policies when those pages get richer
   // cross-scope filtering.
   return (
-    <form className="rounded-lg border bg-background p-4" action="">
+    <form className="rounded-lg border bg-white p-4" action="">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <label className="grid gap-1 text-sm">
           <span className="font-medium">Search</span>

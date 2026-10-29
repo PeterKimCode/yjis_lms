@@ -41,10 +41,9 @@ export default async function NotificationsPage({
           </Link>
         </Button>
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight lms-help-heading">
             Notifications
-          </h1>
-          <HelpTooltip>In-app LMS alerts. Counts update on page load and navigation.</HelpTooltip>
+          <HelpTooltip>In-app LMS alerts. Counts update on page load and navigation.</HelpTooltip></h1>
         </div>
 
         <div className="lms-soft-panel flex flex-col gap-3 rounded-lg p-4">

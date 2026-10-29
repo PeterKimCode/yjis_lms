@@ -48,6 +48,8 @@ export default async function AdminAuditLogDetailPage({
         </Button>
       </div>
       <AdminPageHeader
+        help={<HelpTooltip>Audit logs are for accountability and troubleshooting. They do not
+        replace database backups.</HelpTooltip>}
         title="Audit Log Detail"
         description="A single security-sensitive event recorded by the LMS."
       />
@@ -56,7 +58,7 @@ export default async function AdminAuditLogDetailPage({
           label="Time"
           value={formatDateTime(log.createdAt, log.organization.timezone)}
         />
-        <div className="min-w-0 rounded-lg border bg-slate-50 p-3">
+        <div className="min-w-0 rounded-lg border bg-white p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Action
           </p>
@@ -87,15 +89,13 @@ export default async function AdminAuditLogDetailPage({
           </pre>
         </div>
       </section>
-      <HelpTooltip>Audit logs are for accountability and troubleshooting. They do not
-        replace database backups.</HelpTooltip>
     </div>
   )
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border bg-slate-50 p-3">
+    <div className="min-w-0 rounded-lg border bg-white p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>

@@ -49,23 +49,23 @@
 }
 
 :root {
-  --background: #F7E7C6;
+  --background: #FFFFFF;
   --foreground: #2F3A3F;
   --card: #FFFFFF;
   --card-foreground: #2F3A3F;
-  --popover: #FFFDF8;
+  --popover: #FFFFFF;
   --popover-foreground: #2F3A3F;
   --primary: #8D472F;
   --primary-foreground: #FFFDF8;
-  --secondary: #E2EBE4;
+  --secondary: #FFFFFF;
   --secondary-foreground: #2F3A3F;
-  --muted: #F3EBDD;
+  --muted: #FFFFFF;
   --muted-foreground: #62635A;
-  --accent: #E9B97A;
+  --accent: #FFFFFF;
   --accent-foreground: #2F3A3F;
   --destructive: #B33B32;
-  --border: #DFD0B6;
-  --input: #CCBFA8;
+  --border: #D7DDE2;
+  --input: #C3CBD2;
   --ring: #8D472F;
   --chart-1: #C97D5B;
   --chart-2: #7FA38A;
@@ -92,8 +92,8 @@
   --color-white: #FFFFFF;
   --color-slate-50: #FBF7EF;
   --color-slate-100: #F3EBDD;
-  --color-slate-200: #E4D7C1;
-  --color-slate-300: #CEC0A7;
+  --color-slate-200: #DFE3E8;
+  --color-slate-300: #C9D0D6;
   --color-slate-400: #A4957F;
   --color-slate-500: #726D61;
   --color-slate-600: #62635A;
@@ -301,5 +301,24 @@
 }
 .lms-switch:checked { background-color: #8D472F; border-color: #8D472F; background-position: calc(100% - 2px) center; }
 .lms-switch:disabled { opacity: .5; cursor: not-allowed; }
+.lms-help-heading {
+  display: flex;
+  min-width: 0;
+  min-height: 1.75rem;
+  align-items: center;
+  gap: .25rem;
+}
+/* A help icon is part of a label, never a separate form-grid row. */
+label.grid { align-content: start; }
+label.grid > :is(span, div):first-child:not([role="alert"]) {
+  display: flex;
+  min-height: 1.75rem;
+  align-items: center;
+  gap: .25rem;
+}
+@media (min-width: 768px) {
+  form :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) { min-height: 2.5rem; }
+  form [data-slot="button"]:not([data-size^="icon"]) { min-height: 2.5rem; }
+}
 @media (prefers-reduced-motion: reduce) { .lms-switch { transition: none; } }
 @media (forced-colors: active) { .lms-switch { appearance: auto; } }

@@ -49,6 +49,8 @@ export default async function OrganizationsPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
+        help={!isSuperAdmin ? <HelpTooltip>Organization creation is limited to SUPER_ADMIN accounts. You can edit
+          organizations already assigned to your admin scope.</HelpTooltip> : null}
         title="Organizations"
         description="Tenant organizations available in your admin scope."
       />
@@ -71,14 +73,13 @@ export default async function OrganizationsPage({
       {isSuperAdmin ? (
         <OrganizationForm />
       ) : (
-        <HelpTooltip>Organization creation is limited to SUPER_ADMIN accounts. You can edit
-          organizations already assigned to your admin scope.</HelpTooltip>
+        null
       )}
       <DataTable
         empty="No organizations are available for your scope."
         headers={["Name", "Slug", "Type", "Status", "Edit", "Delete"]}
         rows={filteredOrganizations.map((organization) => (
-          <TableRow key={organization.id}>
+          <TableRow className="[&:has(details[open])>td]:align-top" key={organization.id}>
             <TableCell className="font-medium">
               <div className="flex items-center gap-3">
                 <OrganizationLogoPreview
@@ -147,8 +148,6 @@ function OrganizationForm({
               name={organization.name}
               size="lg"
             />
-            <HelpTooltip>Uploading a new logo replaces the sidebar logo for users in this
-              organization. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip>
           </div>
         ) : null}
         <label className="grid min-w-0 gap-1 text-sm">
@@ -161,16 +160,15 @@ function OrganizationForm({
           />
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Slug</span>
+          <span className="font-medium lms-help-heading">Slug<HelpTooltip>URL-safe short name. If blank, it is generated from the name.</HelpTooltip></span>
           <input
             className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="slug"
             placeholder="example-school"
             defaultValue={organization?.slug ?? ""}
           />
-          <HelpTooltip>URL-safe short name. If blank, it is generated from the name.</HelpTooltip>
         </label>
-        <label className="grid min-w-0 gap-1 text-sm">
+        <label className={`grid min-w-0 gap-1 text-sm ${compact ? "lg:col-span-2" : ""}`}>
           <span className="font-medium">Type</span>
           <select
             className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
@@ -185,17 +183,17 @@ function OrganizationForm({
           </select>
         </label>
         <label className="grid min-w-0 gap-1 text-sm lg:col-span-2">
-          <span className="font-medium">Homepage URL</span>
+          <span className="font-medium lms-help-heading">Homepage URL<HelpTooltip>Used on generated transcript backgrounds when available.</HelpTooltip></span>
           <input
             className="h-9 min-w-0 rounded-lg border border-input bg-background px-3 text-sm"
             name="websiteUrl"
             placeholder="https://www.school.edu"
             defaultValue={organization?.websiteUrl ?? ""}
           />
-          <HelpTooltip>Used on generated transcript backgrounds when available.</HelpTooltip>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Organization logo</span>
+          <span className="font-medium lms-help-heading">Organization logo<HelpTooltip>Uploading a new logo replaces the sidebar logo for users in this
+              organization. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip></span>
           <input
             accept="image/jpeg,image/png,image/webp,image/gif"
             className="min-w-0 rounded-lg border border-input bg-background px-2 py-1.5 text-sm file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-medium"
@@ -204,7 +202,7 @@ function OrganizationForm({
           />
         </label>
         <div className="flex min-w-0 flex-wrap items-end gap-4">
-        <label className="flex h-9 items-center gap-2 text-sm">
+        <label className="flex h-10 items-center gap-2 text-sm">
           <Switch
             name="isActive"
             defaultChecked={organization?.isActive ?? true}

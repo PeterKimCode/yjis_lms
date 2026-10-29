@@ -145,7 +145,7 @@ export function BoardForm({
           </select>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Class section</span>
+          <span className="font-medium lms-help-heading">Class section<HelpTooltip>Class boards require a campus and class section.</HelpTooltip></span>
           <select
             className="h-9 min-w-0 rounded-lg border border-input bg-background px-2 text-sm disabled:opacity-60"
             name="classSectionId"
@@ -162,10 +162,9 @@ export function BoardForm({
               </option>
             ))}
           </select>
-          <HelpTooltip>Class boards require a campus and class section.</HelpTooltip>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
-          <span className="font-medium">Board type</span>
+          <span className="font-medium lms-help-heading">Board type<HelpTooltip>{boardKindHelp(boardKind)}{boardKind === "SCHOOL_ANNOUNCEMENTS" && classSectionId ? " School announcements should not be attached to a class section." : ""}</HelpTooltip></span>
           <select
             className="h-9 min-w-0 rounded-lg border border-input bg-background px-2 text-sm"
             name="boardKind"
@@ -185,14 +184,10 @@ export function BoardForm({
               </option>
             ))}
           </select>
-          <HelpTooltip>{boardKindHelp(boardKind)}</HelpTooltip>
           {classBoard && !classSectionId ? (
             <span className="text-xs text-amber-700 dark:text-amber-300">
               Class boards require a class section.
             </span>
-          ) : null}
-          {boardKind === "SCHOOL_ANNOUNCEMENTS" && classSectionId ? (
-            <HelpTooltip>School announcements should not be attached to a class section.</HelpTooltip>
           ) : null}
         </label>
       </div>
@@ -279,9 +274,8 @@ function CheckboxCard({
   const [isChecked, setIsChecked] = useState(checked)
 
   return (
-    <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+    <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
       <Switch
-        className="mt-1"
         name={name}
         checked={isChecked}
         onChange={(event) => {
@@ -290,8 +284,7 @@ function CheckboxCard({
         }}
       />
       <span className="space-y-1">
-        <span className="block font-medium">{label}</span>
-        <HelpTooltip label={`Help: ${label}`}>{help}</HelpTooltip>
+        <span className="block font-medium lms-help-heading">{label}<HelpTooltip label={`Help: ${label}`}>{help}</HelpTooltip></span>
       </span>
     </label>
   )

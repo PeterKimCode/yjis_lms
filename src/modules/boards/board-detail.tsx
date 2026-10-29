@@ -80,7 +80,7 @@ export async function BoardDetailPage({
       </div>
 
       {data.canPost ? (
-        <details className="rounded-lg border bg-background p-4" open>
+        <details className="rounded-lg border bg-white p-4" open>
           <summary className="cursor-pointer text-sm font-medium">
             Create post
           </summary>
@@ -112,14 +112,13 @@ export async function BoardDetailPage({
               </label>
             ) : null}
             <label className="grid gap-1 text-sm">
-              <span className="font-medium">Images</span>
+              <span className="font-medium lms-help-heading">Images<HelpTooltip>Upload JPG, PNG, WEBP, or GIF images. Maximum 10MB per image.</HelpTooltip></span>
               <input
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 multiple
                 name="images"
                 type="file"
               />
-              <HelpTooltip>Upload JPG, PNG, WEBP, or GIF images. Maximum 10MB per image.</HelpTooltip>
             </label>
             <div>
               <Button size="sm" type="submit">
@@ -176,7 +175,7 @@ export async function BoardDetailPage({
             <div className="space-y-3">
               {board.posts.map((post) => (
                 <article
-                  className="rounded-lg border bg-background p-4"
+                  className="rounded-lg border bg-white p-4"
                   key={post.id}
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -249,15 +248,14 @@ export async function BoardDetailPage({
                           </div>
                         ) : null}
                         <label className="grid gap-1 text-sm">
-                          <span className="font-medium">Add images</span>
+                          <span className="font-medium lms-help-heading">Add images<HelpTooltip>Up to 5 images per post. JPG, PNG, WEBP, or GIF
+                            only. Maximum 10MB per image.</HelpTooltip></span>
                           <input
                             accept="image/jpeg,image/png,image/webp,image/gif"
                             multiple
                             name="images"
                             type="file"
                           />
-                          <HelpTooltip>Up to 5 images per post. JPG, PNG, WEBP, or GIF
-                            only. Maximum 10MB per image.</HelpTooltip>
                         </label>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" type="submit">
@@ -290,7 +288,7 @@ export async function BoardDetailPage({
                       )}
                       {post.comments.length ? (
                         post.comments.map((comment) => (
-                          <div className="rounded-md bg-muted/40 p-3" key={comment.id}>
+                          <div className="rounded-md bg-white p-3" key={comment.id}>
                             <p className="whitespace-pre-wrap text-sm">
                               {comment.body}
                             </p>
@@ -541,7 +539,7 @@ function ImageGrid({
   return (
     <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
       {attachments.map((attachment) => (
-        <figure className="rounded-md border bg-muted/30 p-2" key={attachment.id}>
+        <figure className="rounded-md border bg-white p-2" key={attachment.id}>
           <a
             href={`/api/files/${attachment.fileAsset.id}/download?disposition=inline`}
             rel="noreferrer"

@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   function filterUrl(slug?: string) { const q = new URLSearchParams(); if (slug) q.set("organization", slug); if (params.error) q.set("error", params.error); if (params.expired) q.set("expired", params.expired); return `/login${q.size ? `?${q}` : ""}` }
   const openNotice = notices.find(n => n.id === params.notice)
   const tabClass = (active: boolean) => `flex h-full min-h-20 min-w-0 items-center gap-3 rounded-t-md border-b-2 px-3 py-3 text-left text-sm font-medium leading-5 transition-colors ${active ? "border-[#8D472F] bg-white text-[#8D472F]" : "border-slate-200/70 text-slate-700 hover:border-slate-400 hover:bg-white/70"}`
-  return <main className="relative flex-1 overflow-x-hidden bg-gradient-to-br from-blue-50 via-white to-sky-100 px-4 py-8 sm:px-6 lg:py-14">
+  return <main className="relative flex-1 overflow-x-hidden bg-white px-4 py-8 sm:px-6 lg:py-14">
     <div className="relative mx-auto grid w-full max-w-7xl items-start gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.8fr)] lg:gap-12">
       <section className="order-2 min-w-0 space-y-7 lg:order-1">
         <h1 className="text-3xl font-semibold leading-tight text-slate-950 sm:text-4xl">Learning Management System</h1>

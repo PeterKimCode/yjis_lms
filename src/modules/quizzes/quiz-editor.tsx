@@ -175,10 +175,10 @@ export function QuizEditor({
       setPending(false)
     }
   }
-  function field(name: string, label: string, children: ReactNode) {
+  function field(name: string, label: string, children: ReactNode, help?: ReactNode) {
     return (
       <label className="grid min-w-0 gap-2 text-sm [&_input]:border-slate-400 [&_input]:bg-background [&_select]:border-slate-400 [&_select]:bg-background">
-        <span className="font-medium">{label}</span>
+        <span className="font-medium lms-help-heading">{label}{help}</span>
         {children}
         {errors[name] ? (
           <span role="alert" className="text-red-700">
@@ -214,7 +214,7 @@ export function QuizEditor({
         </p>
       ) : null}
       <fieldset disabled={pending} className="min-w-0 space-y-5">
-        <div className="grid gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2">
+        <div className="grid gap-4 rounded-xl border border-slate-300 bg-white p-4 md:grid-cols-2">
           {field(
             "assessmentType",
             "Assessment type",
@@ -244,7 +244,7 @@ export function QuizEditor({
             <Input name="location" defaultValue={quiz?.location ?? ""} />
           )}
         </div>
-        <div className="rounded-xl border border-slate-300 bg-card p-4">
+        <div className="rounded-xl border border-slate-300 bg-white p-4">
           {field(
             "pdfAttachmentFile",
             "PDF attachment (optional)",
@@ -254,11 +254,11 @@ export function QuizEditor({
                 name="pdfAttachmentFile"
                 accept=".pdf,application/pdf"
               />
-              <HelpTooltip>PDF only. Max 20MB.</HelpTooltip>
-            </>
+            </>,
+            <HelpTooltip>PDF only. Max 20MB.</HelpTooltip>
           )}
         </div>
-        <section className="space-y-4 rounded-xl border border-slate-300 bg-card p-4">
+        <section className="space-y-4 rounded-xl border border-slate-300 bg-white p-4">
           {field(
             "title",
             "Title",
@@ -302,7 +302,7 @@ export function QuizEditor({
             <div
               key={question.key}
               data-question-key={question.key}
-              className="min-w-0 rounded-xl border-2 border-slate-300 bg-card shadow-sm"
+              className="min-w-0 rounded-xl border-2 border-slate-300 bg-white shadow-sm"
             >
               <button
                 type="button"
@@ -326,7 +326,7 @@ export function QuizEditor({
               ) : null}
               <div
                 hidden={expanded !== question.key}
-                className="space-y-4 border-t border-slate-300 bg-card p-4"
+                className="space-y-4 border-t border-slate-300 bg-white p-4"
               >
                 <div className="grid gap-3 md:grid-cols-2">
                   {field(
@@ -574,7 +574,7 @@ export function QuizEditor({
             </p>
           )}
         </section>
-        <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900 dark:bg-blue-950/30" aria-labelledby="assessment-settings-title">
+        <section className="rounded-xl border border-blue-200 bg-white p-4 dark:border-blue-900 dark:bg-blue-950/30" aria-labelledby="assessment-settings-title">
           <h2 id="assessment-settings-title" className="font-semibold text-blue-950 dark:text-blue-100">Assessment settings</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {field(
@@ -644,7 +644,7 @@ export function QuizEditor({
           {message}
         </p>
       ) : null}
-      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 z-10 mx-auto flex max-w-4xl flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-300 bg-card p-3 shadow-lg md:left-auto md:right-6">
+      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-4 left-4 right-4 z-10 mx-auto flex max-w-4xl flex-wrap items-center justify-end gap-2 rounded-xl border border-slate-300 bg-white p-3 shadow-lg md:left-auto md:right-6">
         <Button
           type="button"
           variant="outline"

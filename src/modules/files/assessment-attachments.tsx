@@ -56,7 +56,7 @@ function Attachment({
   )
 
   return (
-    <article className="min-w-0 rounded-lg border bg-background p-3 space-y-3">
+    <article className="min-w-0 rounded-lg border bg-white p-3 space-y-3">
       <p className="break-all font-medium">{file.name}</p>
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline" size="sm">
@@ -113,7 +113,8 @@ function Attachment({
           {replace ? (
             <>
               <label className="grid gap-1">
-                <span>Replacement PDF</span>
+                <span className="lms-help-heading">Replacement PDF<HelpTooltip>PDF only. Max 20MB. The current file stays until replacement
+                succeeds.</HelpTooltip></span>
                 <Input
                   name="replacementFile"
                   type="file"
@@ -122,8 +123,6 @@ function Attachment({
                   disabled={pending}
                 />
               </label>
-              <HelpTooltip>PDF only. Max 20MB. The current file stays until replacement
-                succeeds.</HelpTooltip>
             </>
           ) : null}
 

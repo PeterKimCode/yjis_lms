@@ -232,7 +232,7 @@ export function LessonForm({
   }
 
   return (
-    <div className="min-w-0 space-y-3 rounded-md border bg-background p-3 [overflow-wrap:anywhere]">
+    <div className="min-w-0 space-y-3 rounded-md border bg-white p-3 [overflow-wrap:anywhere]">
       <form ref={draftForm} action={saveAction} className="space-y-3">
         <DraftNotice draft={draft} />
         <input name="id" type="hidden" value={lesson?.id ?? ""} />
@@ -252,7 +252,7 @@ export function LessonForm({
           {lesson ? (
             <div className="grid gap-1 text-sm md:col-span-2">
               <span className="font-medium">Order</span>
-              <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              <div className="h-9 rounded-md border bg-white px-3 py-2 text-sm text-muted-foreground">
                 {lesson.sequence}
               </div>
             </div>
@@ -262,7 +262,7 @@ export function LessonForm({
             {isLegacyType ? (
               <>
                 <input name="contentType" type="hidden" value={contentType} />
-                <div className="h-9 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                <div className="h-9 rounded-md border bg-white px-3 py-2 text-sm">
                   {contentType} (legacy)
                 </div>
               </>
@@ -326,12 +326,11 @@ export function LessonForm({
                   ))}
                 </select>
               </label>
-              <div className="space-y-3 rounded-md border border-sky-200 bg-sky-50/80 p-3">
+              <div className="space-y-3 rounded-md border border-sky-200 bg-white p-3">
                 <label className="grid gap-2 text-sm">
-                  <span className="font-medium text-sky-950">
+                  <span className="font-medium text-sky-950 lms-help-heading">
                     Upload video to LMS
-                  </span>
-                  <HelpTooltip>MP4, WebM, MOV, or M4V only. Max 500MB.</HelpTooltip>
+                  <HelpTooltip>MP4, WebM, MOV, or M4V only. Max 500MB.</HelpTooltip></span>
                   <Input
                     ref={videoFileInputRef}
                     disabled={isUploading}
@@ -416,7 +415,7 @@ export function LessonForm({
                   ))}
                 </select>
               </label>
-              <div className="space-y-3 rounded-md border border-indigo-200 bg-indigo-50/80 p-3">
+              <div className="space-y-3 rounded-md border border-indigo-200 bg-white p-3">
                 <label className="grid gap-2 text-sm">
                   <span className="font-medium text-indigo-950">
                     Upload lesson file to LMS

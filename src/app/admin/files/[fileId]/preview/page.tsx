@@ -47,6 +47,9 @@ export default async function AdminFilePreviewPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
+        help={isVideo ? <HelpTooltip>Video is streamed through LMS access checks. If playback is still
+            slow, check server bandwidth, MinIO speed, and reverse proxy
+            buffering.</HelpTooltip> : null}
         title="File preview"
         description="Preview uploaded LMS files through the permission-checked app route."
       />
@@ -99,9 +102,6 @@ export default async function AdminFilePreviewPage({
           >
             Your browser does not support the video tag.
           </video>
-          <HelpTooltip>Video is streamed through LMS access checks. If playback is still
-            slow, check server bandwidth, MinIO speed, and reverse proxy
-            buffering.</HelpTooltip>
         </div>
       ) : (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

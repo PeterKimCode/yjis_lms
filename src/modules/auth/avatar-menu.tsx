@@ -89,13 +89,12 @@ export function AvatarMenu({
         )}
       </summary>
       <div className="fixed inset-x-3 top-16 z-50 max-h-[calc(100dvh-4.75rem-env(safe-area-inset-bottom))] min-w-0 overflow-y-auto overscroll-contain rounded-xl border bg-white p-3 text-slate-950 shadow-lg [overflow-wrap:anywhere] sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-3 sm:max-h-[calc(100dvh-6rem)] sm:w-72">
-        <p className="text-sm font-semibold">{userName}</p>
+        <p className="text-sm font-semibold lms-help-heading">{userName}<HelpTooltip>Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip></p>
         {roleSummary ? (
           <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">
             {roleSummary}
           </p>
         ) : null}
-        <HelpTooltip>Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip>
         <div className="mt-3">
           <SessionCountdown />
         </div>

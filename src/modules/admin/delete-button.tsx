@@ -66,7 +66,7 @@ export function ConfirmDeleteForm({
           className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 px-4"
           role="dialog"
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border bg-background p-5 shadow-2xl sm:p-6">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border bg-white p-5 shadow-2xl sm:p-6">
             <div className="space-y-2">
               <p className="text-base font-semibold">{title}</p>
               <p className="whitespace-normal break-words text-sm leading-6 text-muted-foreground">

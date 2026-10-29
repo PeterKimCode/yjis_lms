@@ -50,7 +50,7 @@ export function FormDialog({
         </Button>
       </DialogTrigger>
       <DialogContent ref={content} aria-describedby={undefined} className="border-slate-200 bg-white p-0 shadow-2xl sm:max-w-3xl lg:max-w-5xl">
-        <DialogHeader className="border-b bg-slate-50/80 px-5 py-4">
+        <DialogHeader className="border-b bg-white px-5 py-4">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="min-w-0 px-5 pb-5">{children}</div>

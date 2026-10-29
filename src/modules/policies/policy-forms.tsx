@@ -30,7 +30,7 @@ export function PolicyForms({
 }) {
   return (
     <div className="space-y-4">
-      <details className="rounded-lg border bg-background p-4" open>
+      <details className="rounded-lg border bg-white p-4" open>
         <summary className="cursor-pointer font-medium">Attendance policy</summary>
         <div className="pt-4">
           <AttendancePolicyForm
@@ -40,9 +40,10 @@ export function PolicyForms({
           />
         </div>
       </details>
-      <details className="rounded-lg border bg-background p-4" open>
+      <details className="rounded-lg border bg-white p-4" open>
         <summary className="cursor-pointer font-medium">
-          Video completion policy
+          Video completion policy<HelpTooltip>YouTube progress depends on the YouTube IFrame Player API and may not
+        work for videos that block embedding.</HelpTooltip>
         </summary>
         <div className="pt-4">
           <VideoPolicyForm
@@ -52,7 +53,7 @@ export function PolicyForms({
           />
         </div>
       </details>
-      <details className="rounded-lg border bg-background p-4" open>
+      <details className="rounded-lg border bg-white p-4" open>
         <summary className="cursor-pointer font-medium">
           Assignments, grades, GPA, and documents
         </summary>
@@ -173,8 +174,6 @@ function VideoPolicyForm({
         name="requireActualWatchedCoverage"
       />
       <FormFooter pending={pending} state={state} />
-      <HelpTooltip>YouTube progress depends on the YouTube IFrame Player API and may not
-        work for videos that block embedding.</HelpTooltip>
     </form>
   )
 }
@@ -195,10 +194,9 @@ function GradingPolicyForm({
       <details className="rounded-md border p-3" open>
         <summary className="cursor-pointer text-sm font-medium">
           Assignment policy
-        </summary>
+        <HelpTooltip>These settings define the default behavior for new assignments.
+            Individual assignments may override them when allowed.</HelpTooltip></summary>
         <div className="space-y-3 pt-3">
-          <HelpTooltip>These settings define the default behavior for new assignments.
-            Individual assignments may override them when allowed.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.assignment.allowLateSubmissionDefault}
@@ -239,10 +237,9 @@ function GradingPolicyForm({
       <details className="rounded-md border p-3" open>
         <summary className="cursor-pointer text-sm font-medium">
           Grade visibility policy
-        </summary>
+        <HelpTooltip>These settings control when students and parents can see grades,
+            feedback, and quiz results.</HelpTooltip></summary>
         <div className="space-y-3 pt-3">
-          <HelpTooltip>These settings control when students and parents can see grades,
-            feedback, and quiz results.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.gradeVisibility.studentsCanSeeDraftGrades}
@@ -280,10 +277,9 @@ function GradingPolicyForm({
       <details className="rounded-md border p-3" open>
         <summary className="cursor-pointer text-sm font-medium">
           Document policy
-        </summary>
+        <HelpTooltip>These settings control when report cards and transcripts are
+            visible to students and parents.</HelpTooltip></summary>
         <div className="space-y-3 pt-3">
-          <HelpTooltip>These settings control when report cards and transcripts are
-            visible to students and parents.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.document.reportCardsRequirePublishedGrades}
@@ -300,10 +296,9 @@ function GradingPolicyForm({
               note="For universities, transcripts should normally use finalized or officially published grades."
             />
             <div className="rounded-md border p-3 text-sm">
-              <div className="font-medium">Admin preview allowed</div>
-              <HelpTooltip>Recommended default: on. If enabled, admins and authorized
+              <div className="font-medium lms-help-heading">Admin preview allowed<HelpTooltip>Recommended default: on. If enabled, admins and authorized
                 academic staff can preview draft report cards or transcripts
-                before releasing them to students and parents. Preview documents should be treated as unofficial.</HelpTooltip>
+                before releasing them to students and parents. Preview documents should be treated as unofficial.</HelpTooltip></div>
             </div>
           </div>
         </div>
@@ -311,7 +306,9 @@ function GradingPolicyForm({
       <details className="rounded-md border p-3" open>
         <summary className="cursor-pointer text-sm font-medium">
           GPA policy
-        </summary>
+        <HelpTooltip>Examples: 4.0 scale is common in US universities; 4.5 scale is
+            common in Korean universities; 4.3 scale is used by some
+            universities.</HelpTooltip></summary>
         <div className="space-y-3 pt-3">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <NumberField
@@ -325,9 +322,6 @@ function GradingPolicyForm({
               value={policies.gpaScale}
             />
           </div>
-          <HelpTooltip>Examples: 4.0 scale is common in US universities; 4.5 scale is
-            common in Korean universities; 4.3 scale is used by some
-            universities.</HelpTooltip>
         </div>
       </details>
       <FormFooter pending={pending} state={state} />
@@ -404,9 +398,8 @@ function CheckField({
   warning?: string
 }) {
   return (
-    <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+    <label className="flex items-center gap-2 rounded-md border p-3 text-sm">
       <Switch
-        className="mt-1"
         name={name}
         defaultChecked={checked}
       />

@@ -157,7 +157,7 @@ export function GradebookPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border bg-background p-3 text-sm">
+      <div className="rounded-md border bg-white p-3 text-sm">
         <span className="font-medium">Total weight:</span>{" "}
         {totalWeight.toFixed(1)}%
         {Math.round(totalWeight * 10) / 10 !== 100 ? (
@@ -168,7 +168,7 @@ export function GradebookPanel({
         ) : null}
       </div>
 
-      <details className="rounded-md border bg-background p-3">
+      <details className="rounded-md border bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium">
           Grade weights
         </summary>
@@ -184,17 +184,16 @@ export function GradebookPanel({
         </div>
       </details>
 
-      <details className="rounded-md border bg-background p-3">
+      <details className="rounded-md border bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium">
           Final grade calculation
-        </summary>
-        <div className="space-y-4 pt-3">
-          <FinalGradeActions classSectionId={classSectionId} />
-          <HelpTooltip>MVP behavior: lesson score uses published lesson completion;
+        <HelpTooltip>MVP behavior: lesson score uses published lesson completion;
             attendance uses Present 100, Late 50, excused/sick/official absence
             100; due assignments without submissions count as 0; quizzes use
             the best submitted attempt; exams currently count as 0 until exam
-            scoring is added.</HelpTooltip>
+            scoring is added.</HelpTooltip></summary>
+        <div className="space-y-4 pt-3">
+          <FinalGradeActions classSectionId={classSectionId} />
           <SimpleTable
             empty="No enrolled students."
             headers={[
@@ -253,14 +252,13 @@ export function GradebookPanel({
         </div>
       </details>
 
-      <details className="rounded-md border bg-background p-3">
+      <details className="rounded-md border bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium">
           Advanced gradebook
-        </summary>
+        <HelpTooltip>TODO: Advanced GradeCategory/GradeItem workflows can be expanded
+            later. The MVP flow above does not require these manual structures.</HelpTooltip></summary>
         <div className="space-y-4 pt-3">
-          <HelpTooltip>TODO: Advanced GradeCategory/GradeItem workflows can be expanded
-            later. The MVP flow above does not require these manual structures.</HelpTooltip>
-          <details className="rounded-md border bg-background p-3">
+          <details className="rounded-md border bg-white p-3">
             <summary className="cursor-pointer text-sm font-medium">
               Grade categories
             </summary>
@@ -294,7 +292,7 @@ export function GradebookPanel({
             </div>
           </details>
 
-          <details className="rounded-md border bg-background p-3">
+          <details className="rounded-md border bg-white p-3">
             <summary className="cursor-pointer text-sm font-medium">
               Grade items
             </summary>
@@ -313,7 +311,7 @@ export function GradebookPanel({
             </div>
           </details>
 
-          <details className="rounded-md border bg-background p-3">
+          <details className="rounded-md border bg-white p-3">
             <summary className="cursor-pointer text-sm font-medium">
               Score entry
             </summary>
@@ -337,7 +335,7 @@ export function GradebookPanel({
         </div>
       </details>
 
-      <details className="rounded-md border bg-background p-3">
+      <details className="rounded-md border bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium">
           Published/finalized records
         </summary>
@@ -373,14 +371,13 @@ export function GradebookPanel({
         </div>
       </details>
 
-      <details className="rounded-md border bg-background p-3">
+      <details className="rounded-md border bg-white p-3">
         <summary className="cursor-pointer text-sm font-medium">
           Transcript/GPA
-        </summary>
-        <div className="space-y-3 pt-3">
-          <HelpTooltip>Generates transcript terms and GPA from published or finalized final
+        <HelpTooltip>Generates transcript terms and GPA from published or finalized final
             grades. Attempted credits include failed courses; earned credits
-            count passed courses only.</HelpTooltip>
+            count passed courses only.</HelpTooltip></summary>
+        <div className="space-y-3 pt-3">
           <TranscriptForm classSectionId={classSectionId} />
         </div>
       </details>

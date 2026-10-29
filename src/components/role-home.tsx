@@ -9,7 +9,7 @@ export async function RoleHome({ title }: { title: string }) {
   const session = await requireAuth()
 
   return (
-    <main className="flex-1 bg-muted/40 px-4 py-10">
+    <main className="flex-1 bg-white px-4 py-10">
       <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
           <CardTitle>{title}</CardTitle>

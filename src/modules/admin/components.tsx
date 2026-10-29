@@ -50,13 +50,15 @@ export const adminLinks = [
 
 export function AdminPageHeader({
   title,
+  help,
 }: {
   title: string
   description: string
+  help?: ReactNode
 }) {
   return (
     <div className="space-y-3 py-4">
-      <h1 className="text-2xl font-semibold sm:text-3xl">{title}</h1>
+      <h1 className="lms-help-heading text-2xl font-semibold sm:text-3xl">{title}{help}</h1>
     </div>
   )
 }
@@ -114,15 +116,17 @@ export function DeleteStatusBanner({
 
 export function FormCard({
   title,
+  help,
   children,
 }: {
   title: string
+  help?: ReactNode
   children: ReactNode
 }) {
   return (
     <Card className="lms-card animate-in fade-in-50 slide-in-from-bottom-2 duration-500">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="lms-help-heading">{title}{help}</CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -267,6 +271,7 @@ export function Field({
   placeholder,
   type = "text",
   required,
+  help,
 }: {
   name: string
   label: string
@@ -274,10 +279,11 @@ export function Field({
   placeholder?: string
   type?: string
   required?: boolean
+  help?: ReactNode
 }) {
   return (
     <label className="grid min-w-0 gap-1 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className="font-medium lms-help-heading">{label}{help}</span>
       <Input
         name={name}
         type={type}

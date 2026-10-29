@@ -90,10 +90,9 @@ export default async function ParentStudentDetailPage({
         />
       </div>
 
-      <div className="rounded-lg border bg-background p-4">
+      <div className="rounded-lg border bg-white p-4">
         <div className="space-y-1">
-          <h2 className="text-sm font-semibold">Documents</h2>
-          <HelpTooltip>Download published or finalized documents for this linked student.</HelpTooltip>
+          <h2 className="text-sm font-semibold lms-help-heading">Documents<HelpTooltip>Download published or finalized documents for this linked student.</HelpTooltip></h2>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {student.generatedDocuments.length > 0 ? (

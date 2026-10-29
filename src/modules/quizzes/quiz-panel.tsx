@@ -138,7 +138,7 @@ export function QuizPanel({
           <article
             key={quiz.id}
             id={`assessment-${quiz.id}`}
-            className="min-w-0 rounded-xl border bg-card px-4 py-3 text-sm"
+            className="min-w-0 rounded-xl border bg-white px-4 py-3 text-sm"
           >
             <AssessmentHeader quiz={quiz} />
             {mode === "instructor" ? (
@@ -270,7 +270,7 @@ export function QuizManagePanel({
   return (
     <div className="space-y-6 pb-44 md:pb-28">
       {quiz.attachments.length ? (
-        <div className="rounded border bg-background p-3">
+        <div className="rounded border bg-white p-3">
           <h2 className="mb-3 text-base font-semibold">Attachments</h2>
           <AssessmentAttachments
             attachments={quiz.attachments}
@@ -287,14 +287,13 @@ export function QuizManagePanel({
         uploadFailed={uploadFailed}
       />
 
-      <details className="rounded-lg border bg-background p-4">
+      <details className="rounded-lg border bg-white p-4">
         <summary className="cursor-pointer text-base font-semibold">
           Review attempts
-        </summary>
-        <div className="space-y-4 pt-4">
-          <HelpTooltip>Legacy exam grades remain available under Grades. Review student
+        <HelpTooltip>Legacy exam grades remain available under Grades. Review student
             submissions and manually grade short-answer or essay responses when
-            needed.</HelpTooltip>
+            needed.</HelpTooltip></summary>
+        <div className="space-y-4 pt-4">
           <AttemptReview quiz={quiz} />
         </div>
       </details>

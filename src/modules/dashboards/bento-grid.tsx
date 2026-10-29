@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export type BentoWidget = {
   id: string
   title: string
+  help?: ReactNode
   content: ReactNode
   w?: number
   h?: number
@@ -119,7 +120,7 @@ function BentoGridContent({ widgets, storageKey, title = "Overview" }: BentoGrid
               event.preventDefault(); move(widget.id, ["ArrowUp", "ArrowLeft"].includes(event.key) ? -1 : 1)
             }
           }}><GripVertical className="size-4" /></button> : <span className="bento-marker" aria-hidden="true" />}
-        <h3 className="min-w-0 flex-1 break-words text-sm font-medium">{widget.title}</h3>
+        <h3 className="lms-help-heading min-w-0 flex-1 break-words text-sm font-medium">{widget.title}{widget.help}</h3>
         {editing && item ? <DropdownMenu>
           <DropdownMenuTrigger asChild><Button size="icon-sm" variant="ghost" aria-label={`Arrange ${widget.title}`} title="Widget options"><MoreHorizontal /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

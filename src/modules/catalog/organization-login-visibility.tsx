@@ -33,11 +33,10 @@ export function OrganizationLoginVisibility({ organizationId, visible }: { organ
     <div className="flex flex-wrap items-center justify-between gap-3">
       <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
         <Switch checked={shown} disabled={pending} onChange={event => change(event.target.checked)} />
-        Show organization on login page
+        <span className="lms-help-heading">Show organization on login page<HelpTooltip label="Help: Organization login visibility">Hide the organization name, logo, and public notices from the login page. Existing accounts can still log in and use their classes.</HelpTooltip></span>
       </label>
       <div className="flex items-center gap-2 text-sm text-slate-600">
         <span>{pending ? "Saving…" : shown ? "Visible" : "Hidden"}</span>
-        <HelpTooltip label="Help: Organization login visibility">Hide the organization name, logo, and public notices from the login page. Existing accounts can still log in and use their classes.</HelpTooltip>
       </div>
     </div>
     {message ? <p role={failed ? "alert" : "status"} className={`text-sm ${failed ? "text-red-700" : "text-slate-600"}`}>{message}</p> : null}

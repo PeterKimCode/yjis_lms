@@ -50,7 +50,7 @@ export function GradingScaleEditor({
       ) : null}
       <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-[820px] w-full text-sm">
-          <thead className="bg-muted/50 text-left">
+          <thead className="bg-white text-left">
             <tr>
               <th className="p-2">Letter grade</th>
               <th className="p-2">Min score</th>

@@ -91,7 +91,7 @@ export default async function AdminUserDetailPage({
           label="Roles"
           value={roles.length ? roles.join(", ") : "-"}
         />
-        <div className="rounded-lg border bg-background p-3">
+        <div className="rounded-lg border bg-white p-3">
           <div className="text-xs font-medium text-muted-foreground">Status</div>
           <div className="mt-2">
             <ActiveBadge active={user.isActive} />
@@ -108,7 +108,9 @@ export default async function AdminUserDetailPage({
       ) : null}
 
       {isStudent && !isSchoolAdminOnly ? (
-        <DetailsSection title="Documents" defaultOpen>
+        <DetailsSection title="Documents" help={<HelpTooltip>Report card: K-12 style term summary. Transcript: university-style
+        credit/GPA record. PDFs are generated directly; storing PDFs in MinIO is
+        a future enhancement.</HelpTooltip>} defaultOpen>
           <StudentDocuments user={user} />
         </DetailsSection>
       ) : null}
@@ -211,9 +213,6 @@ function StudentDocuments({ user }: { user: DetailUser }) {
           </Button>
         ))}
       </div>
-      <HelpTooltip>Report card: K-12 style term summary. Transcript: university-style
-        credit/GPA record. PDFs are generated directly; storing PDFs in MinIO is
-        a future enhancement.</HelpTooltip>
       <DataTable
         empty="No generated document history yet."
         headers={["Type", "Status", "Generated", "Storage"]}
@@ -244,8 +243,7 @@ function StudentAcademicOverview({ user }: { user: DetailUser }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Student academic overview</h2>
-        <HelpTooltip>Read-only academic activity for this student across enrolled classes.</HelpTooltip>
+        <h2 className="text-lg font-semibold lms-help-heading">Student academic overview<HelpTooltip>Read-only academic activity for this student across enrolled classes.</HelpTooltip></h2>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
@@ -305,7 +303,7 @@ function StudentAcademicOverview({ user }: { user: DetailUser }) {
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border bg-background p-3">
+    <div className="min-w-0 rounded-lg border bg-white p-3">
       <div className="text-xs font-medium text-muted-foreground">{label}</div>
       <div className="mt-1 truncate text-sm font-medium" title={value}>
         {value}
@@ -316,19 +314,21 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 
 function DetailsSection({
   title,
+  help,
   children,
   defaultOpen = false,
 }: {
   title: string
+  help?: ReactNode
   children: ReactNode
   defaultOpen?: boolean
 }) {
   return (
     <details
-      className="rounded-lg border bg-background p-4 open:space-y-4"
+      className="rounded-lg border bg-white p-4 open:space-y-4"
       open={defaultOpen}
     >
-      <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
+      <summary className="cursor-pointer text-sm font-semibold">{title}{help}</summary>
       <div className="pt-4">{children}</div>
     </details>
   )

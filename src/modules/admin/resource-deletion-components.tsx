@@ -39,7 +39,7 @@ export function ResourceDeletionStatusBanners({
         </div>
       ) : null}
       {params.reviewed === "rejected" ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
           {entityLabel} deletion request rejected.
         </div>
       ) : null}
@@ -72,8 +72,7 @@ export function PendingResourceDeletionRequests({
   return (
     <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
       <div className="mb-3">
-        <h2 className="font-semibold text-amber-950">{title}</h2>
-        <HelpTooltip>Review requests from school admins before any record is deleted.</HelpTooltip>
+        <h2 className="font-semibold text-amber-950 lms-help-heading">{title}<HelpTooltip>Review requests from school admins before any record is deleted.</HelpTooltip></h2>
       </div>
       <div className="grid gap-2">
         {requests.map((request) => (

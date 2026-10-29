@@ -26,12 +26,11 @@ export function InitializeDefaultsForm({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded-lg border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-2 rounded-lg border bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="space-y-1">
-        <p className="text-sm font-medium">Initialize missing defaults</p>
-        <HelpTooltip>Creates missing policy records for this scope without overwriting
-          customized values.</HelpTooltip>
+        <p className="text-sm font-medium lms-help-heading">Initialize missing defaults<HelpTooltip>Creates missing policy records for this scope without overwriting
+          customized values.</HelpTooltip></p>
         {state.message ? (
           <p
             className={`text-xs ${state.ok ? "text-muted-foreground" : "text-destructive"}`}

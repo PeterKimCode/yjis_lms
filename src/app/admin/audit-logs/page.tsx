@@ -74,6 +74,9 @@ export default async function AdminAuditLogsPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
+        help={<HelpTooltip>Showing up to 250 audit logs for the selected filters. Use CSV export
+        for lightweight review; use database backups for full historical
+        retention.</HelpTooltip>}
         title="Audit Logs"
         description="Recent security-sensitive admin activity in your scope."
       />
@@ -136,9 +139,6 @@ export default async function AdminAuditLogsPage({
           </TableRow>
         ))}
       />
-      <HelpTooltip>Showing up to 250 audit logs for the selected filters. Use CSV export
-        for lightweight review; use database backups for full historical
-        retention.</HelpTooltip>
     </div>
   )
 }

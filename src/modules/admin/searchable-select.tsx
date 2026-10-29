@@ -46,7 +46,7 @@ export function SearchableSelect({
         />
       </label>
       <input name={name} type="hidden" value={selectedId} />
-      <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border bg-background p-1">
+      <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border bg-white p-1">
         {visibleOptions.length ? (
           visibleOptions.map((option) => {
             const checked = selectedId === option.id

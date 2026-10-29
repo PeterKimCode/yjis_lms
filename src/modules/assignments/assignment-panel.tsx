@@ -141,7 +141,7 @@ export function AssignmentPanel({
                     variant="outline"
                   >
                     <div className="space-y-4">
-                      <div className="grid gap-3 rounded-lg border bg-muted/20 p-3 text-sm sm:grid-cols-3">
+                      <div className="grid gap-3 rounded-lg border bg-white p-3 text-sm sm:grid-cols-3">
                         <SubmissionMeta
                           label="Due"
                           value={formatDateTime(assignment.dueAt, assignment.timeZone)}
@@ -160,7 +160,7 @@ export function AssignmentPanel({
                         />
                       </div>
                       {assignment.description ? (
-                        <div className="rounded-lg border bg-background p-3">
+                        <div className="rounded-lg border bg-white p-3">
                           <div className="text-xs font-medium uppercase text-muted-foreground">
                             Instructions
                           </div>
@@ -170,7 +170,7 @@ export function AssignmentPanel({
                         </div>
                       ) : null}
                       {assignment.attachments.length ? (
-                        <div className="rounded-lg border bg-background p-3">
+                        <div className="rounded-lg border bg-white p-3">
                           <div className="text-xs font-medium uppercase text-muted-foreground">
                             Assignment PDFs
                           </div>
@@ -228,7 +228,7 @@ function InstructorAssignmentList({
         ).length
 
         return (
-          <article className="min-w-0 rounded-xl border bg-card px-4 py-3 text-sm" key={assignment.id}>
+          <article className="min-w-0 rounded-xl border bg-white px-4 py-3 text-sm" key={assignment.id}>
             <header className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
               <h2 className="min-w-0 break-words text-base font-semibold">{assignment.title}</h2>
               <span><span className="font-medium">Due: </span>{formatDateTime(assignment.dueAt, assignment.timeZone)}</span>
@@ -275,7 +275,7 @@ function AssignmentForm({
 
   return (
     <>
-    <form ref={form} onSubmit={onSubmit} className="grid min-w-0 gap-4 rounded-xl border border-slate-300 bg-card p-4 md:grid-cols-2 [&_input:not([type=checkbox])]:border-slate-400 [&_input:not([type=checkbox])]:bg-background [&_textarea]:border-slate-400 [&_textarea]:bg-background">
+    <form ref={form} onSubmit={onSubmit} className="grid min-w-0 gap-4 rounded-xl border border-slate-300 bg-white p-4 md:grid-cols-2 [&_input:not([type=checkbox])]:border-slate-400 [&_input:not([type=checkbox])]:bg-background [&_textarea]:border-slate-400 [&_textarea]:bg-background">
       <DraftNotice draft={draft} />
       <input name="id" type="hidden" value={assignment?.id ?? ""} />
       <input name="classSectionId" type="hidden" value={classSectionId} />
@@ -300,15 +300,14 @@ function AssignmentForm({
         />
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.description}</span></label>
       <label className="grid gap-1 text-sm md:col-span-2">
-        <span className="font-medium">PDF attachment</span>
+        <span className="font-medium lms-help-heading">PDF attachment<HelpTooltip>PDF only. Max 20MB.</HelpTooltip></span>
         <Input
           accept="application/pdf,.pdf"
           name="pdfAttachmentFile"
           type="file"
         />
-        <HelpTooltip>PDF only. Max 20MB.</HelpTooltip>
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pdfAttachmentFile}</span></label>
-      <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 md:col-span-2 dark:border-blue-900 dark:bg-blue-950/30"><h3 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Assignment settings</h3><div className="mt-3 grid gap-4 md:grid-cols-2">      <label className="grid gap-1 text-sm">
+      <section className="rounded-xl border border-blue-200 bg-white p-4 md:col-span-2 dark:border-blue-900 dark:bg-blue-950/30"><h3 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Assignment settings</h3><div className="mt-3 grid gap-4 md:grid-cols-2">      <label className="grid gap-1 text-sm">
         <span className="font-medium">Max score</span>
         <Input
           min="0.01"
@@ -334,7 +333,7 @@ function AssignmentForm({
         </Button>
       </div>
     </form>
-    {assignment?<section className="mt-4 space-y-3 rounded-xl border border-slate-300 bg-card p-4"><h3 className="text-base font-semibold">Existing attachments</h3><AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/></section>:null}
+    {assignment?<section className="mt-4 space-y-3 rounded-xl border border-slate-300 bg-white p-4"><h3 className="text-base font-semibold">Existing attachments</h3><AssessmentAttachments attachments={assignment.attachments} kind="assignment" ownerId={assignment.id}/></section>:null}
     </>
   )
 }
@@ -391,15 +390,14 @@ function SubmissionForm({
         />
       </label>
       <label className="grid gap-1 text-sm">
-        <span className="font-medium">Attachment</span>
+        <span className="font-medium lms-help-heading">Attachment<HelpTooltip>Allowed: PDF, Office files, text, images, CSV, ZIP. Max 20 MB.
+        Executable/script files are blocked.</HelpTooltip></span>
         <Input
           name="attachmentFile"
           type="file"
           disabled={Boolean(isClosed)}
         />
       </label>
-      <HelpTooltip>Allowed: PDF, Office files, text, images, CSV, ZIP. Max 20 MB.
-        Executable/script files are blocked.</HelpTooltip>
       {submission?.submittedAt ? (
         <p className="text-xs text-muted-foreground">
           Last submitted: {formatDateTime(submission.submittedAt)}
@@ -437,7 +435,7 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
 
         return (
           <article
-            className="rounded-xl border bg-background p-4 shadow-sm"
+            className="rounded-xl border bg-white p-4 shadow-sm"
             key={submission.id}
           >
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -474,7 +472,7 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
                     value={formatDateTime(submission.gradedAt)}
                   />
                 </div>
-                <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="rounded-lg border bg-white p-3">
                   <div className="text-xs font-medium uppercase text-muted-foreground">
                     Response
                   </div>
@@ -482,7 +480,7 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
                     {submission.content?.trim() || "No text response."}
                   </p>
                 </div>
-                <div className="rounded-lg border bg-muted/20 p-3">
+                <div className="rounded-lg border bg-white p-3">
                   <div className="text-xs font-medium uppercase text-muted-foreground">
                     Attachment
                   </div>
@@ -497,7 +495,7 @@ function SubmissionReview({ assignment }: { assignment: AssignmentPanelValue }) 
                   </div>
                 </div>
                 {submission.feedback ? (
-                  <div className="rounded-lg border bg-muted/20 p-3">
+                  <div className="rounded-lg border bg-white p-3">
                     <div className="text-xs font-medium uppercase text-muted-foreground">
                       Current feedback
                     </div>

@@ -184,11 +184,13 @@ export function SimpleTable({
 
 export function SectionBlock({
   title,
+  help,
   id,
   meta,
   children,
 }: {
   title: string
+  help?: ReactNode
   description?: string
   id?: string
   meta?: ReactNode
@@ -202,7 +204,7 @@ export function SectionBlock({
       <CardHeader className="gap-2 border-b border-slate-100/90 bg-white/70">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="lms-help-heading">{title}{help}</CardTitle>
           </div>
           {meta ? <div className="flex flex-wrap gap-2">{meta}</div> : null}
         </div>

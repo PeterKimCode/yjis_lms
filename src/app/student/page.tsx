@@ -108,10 +108,7 @@ export default async function StudentPage() {
           )}
         />) },
         { id: "class-list", title: "Your classes", w: 8, h: 9, minW: 6, content: <StudentClassTable enrollments={enrollments} /> },
-        { id: "documents", title: "Documents", w: 4, h: 9, content: (<div className="space-y-4">
-        <div className="space-y-1">
-          <HelpTooltip>Download published or finalized report cards and transcripts.</HelpTooltip>
-        </div>
+        { id: "documents", title: "Documents", help: <HelpTooltip>Download published or finalized report cards and transcripts.</HelpTooltip>, w: 4, h: 9, content: (<div className="space-y-4">
         {hasPublishedDocuments ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {approvedTranscriptCount > 0 ? (

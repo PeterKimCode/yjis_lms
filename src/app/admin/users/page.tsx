@@ -123,6 +123,9 @@ export default async function UsersPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
+        help={isSchoolAdminOnly ? <HelpTooltip>School admins can create instructor, parent, and student accounts in
+          their scope. Admin accounts and user deletion require super admin
+          approval.</HelpTooltip> : null}
         title="Users"
         description="School-managed users. Public registration is intentionally unavailable."
       />
@@ -147,11 +150,6 @@ export default async function UsersPage({
       <UserDeletionStatusBanners params={params} />
       {canManageAdminRoles ? (
         <PendingUserDeletionRequests requests={pendingDeletionRequests} />
-      ) : null}
-      {isSchoolAdminOnly ? (
-        <HelpTooltip>School admins can create instructor, parent, and student accounts in
-          their scope. Admin accounts and user deletion require super admin
-          approval.</HelpTooltip>
       ) : null}
       <UserForm
         canManageAdminRoles={canManageAdminRoles}
@@ -328,7 +326,7 @@ function UserDeletionStatusBanners({
         </div>
       ) : null}
       {params.reviewed === "rejected" ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
           User deletion request rejected.
         </div>
       ) : null}
@@ -359,8 +357,7 @@ function PendingUserDeletionRequests({
   return (
     <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
       <div className="mb-3">
-        <h2 className="font-semibold text-amber-950">Pending user deletion requests</h2>
-        <HelpTooltip>Review requests from school admins before any user is deleted.</HelpTooltip>
+        <h2 className="font-semibold text-amber-950 lms-help-heading">Pending user deletion requests<HelpTooltip>Review requests from school admins before any user is deleted.</HelpTooltip></h2>
       </div>
       <div className="grid gap-2">
         {requests.map((request) => (

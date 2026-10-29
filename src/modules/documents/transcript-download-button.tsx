@@ -67,7 +67,7 @@ export function TranscriptDownloadButton({
       </Button>
       {message ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 px-4">
-          <div className="w-full max-w-sm rounded-xl border bg-background p-5 shadow-xl">
+          <div className="w-full max-w-sm rounded-xl border bg-white p-5 shadow-xl">
             <h2 className="text-base font-semibold">Transcript unavailable</h2>
             <p className="mt-2 text-sm text-muted-foreground">{message}</p>
             <p className="mt-2 text-xs text-muted-foreground">
