@@ -151,7 +151,7 @@ export function DataTable({
 
   const desktop = <div className="min-w-0 max-w-full max-h-[72vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
       <Table
-        className={`${minWidth} [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80`}
+        className={`${minWidth} [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-white`}
       >
         <TableHeader>
           <TableRow>

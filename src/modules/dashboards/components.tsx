@@ -163,7 +163,7 @@ export function SimpleTable({
       </article>)}
     </div> : null
   const desktop = <div className="min-w-0 max-w-full max-h-[70vh] overflow-auto rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/60">
-      <Table className="min-w-[720px] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-slate-50/80">
+      <Table className="min-w-[720px] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-white">
         <TableHeader>
           <TableRow>
             {headers.map((header) => (

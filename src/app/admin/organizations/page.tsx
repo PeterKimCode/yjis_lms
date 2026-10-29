@@ -94,8 +94,8 @@ export default async function OrganizationsPage({
             <TableCell>
               <ActiveBadge active={organization.isActive} />
             </TableCell>
-            <TableCell>
-              <details className="rounded-lg border bg-white/90 p-3">
+            <TableCell className="[&:has(details[open])]:min-w-[34rem]">
+              <details className="rounded-lg border bg-white p-3">
                 <summary className="cursor-pointer text-sm font-medium text-primary">
                   Edit
                 </summary>
