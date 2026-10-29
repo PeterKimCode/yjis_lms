@@ -5,6 +5,31 @@ import { getPrismaClient } from "@/lib/prisma"
 import { requireAnyRole } from "@/modules/auth/permissions"
 import { canPublishNotice } from "./rules"
 import type { CatalogState } from "./actions"
+
+export async function setOrganizationLoginVisibility(organizationId: string, showOnLogin: boolean): Promise<CatalogState> {
+  const user = await requireAnyRole([UserRole.SUPER_ADMIN])
+  if (typeof organizationId !== "string" || !organizationId || typeof showOnLogin !== "boolean") {
+    return { ok: false, message: "Invalid organization visibility setting." }
+  }
+  try {
+    await getPrismaClient().$transaction(async tx => {
+      const previous = await tx.organization.findUniqueOrThrow({ where: { id: organizationId }, select: { showOnLogin: true } })
+      if (previous.showOnLogin === showOnLogin) return
+      await tx.organization.update({ where: { id: organizationId }, data: { showOnLogin } })
+      await tx.auditLog.create({ data: {
+        organizationId, actorUserId: user.id, action: "organization.login_visibility.update",
+        entityType: "Organization", entityId: organizationId,
+        metadata: { previousShowOnLogin: previous.showOnLogin, showOnLogin },
+      } })
+    })
+    revalidatePath("/login")
+    revalidatePath("/admin/login-notices")
+    return { ok: true, message: showOnLogin ? "Organization is visible on the login page." : "Organization is hidden from the login page." }
+  } catch {
+    return { ok: false, message: "Could not save visibility. Please try again." }
+  }
+}
+
 export async function saveLoginNotice(_: CatalogState, form: FormData): Promise<CatalogState> {
   const user = await requireAnyRole([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN])
   const organizationId = String(form.get("organizationId") ?? "")

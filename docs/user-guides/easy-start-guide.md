@@ -93,3 +93,5 @@ Class Sections의 수업에서 Student recruitment 소개를 쓰고 Accept appli
 ## 아래쪽 공통 메뉴
 
 Messages·Notifications·Logout·Help & Contact는 사이드바 아래에 고정됩니다. 긴 수업·관리 메뉴는 가운데에서만 스크롤하세요. 접힌 메뉴도 아이콘으로 사용할 수 있으며 Help & Contact는 팝업으로 열립니다.
+
+Super Admin은 Login notices에서 학교 탭을 선택한 뒤 Show organization on login page 토글을 끄면 로그인 화면에서 해당 학교와 공개 공지를 숨길 수 있습니다. 토글은 자동 저장됩니다. 학교 계정의 로그인이나 수업 이용은 중단되지 않습니다.

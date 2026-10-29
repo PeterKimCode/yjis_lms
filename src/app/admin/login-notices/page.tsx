@@ -6,6 +6,7 @@ import { getPrismaClient } from "@/lib/prisma"
 import { canPublishNotice } from "@/modules/catalog/rules"
 import { saveLoginNotice } from "@/modules/catalog/notices"
 import { CatalogForm } from "@/modules/catalog/action-form"
+import { OrganizationLoginVisibility } from "@/modules/catalog/organization-login-visibility"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,7 +14,8 @@ import { formatDateTimeInTimeZone } from "@/lib/timezone"
 export default async function LoginNoticesPage({ searchParams }: { searchParams: Promise<{ organization?: string; notice?: string; create?: string }> }) {
   const params = await searchParams
   const user = await requireAnyRole([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN]), prisma = getPrismaClient()
-  const organizations = await prisma.organization.findMany({ where: user.roleAssignments.some(a => a.role === "SUPER_ADMIN") ? {} : { id: { in: user.roleAssignments.filter(a => canPublishNotice([a], a.organizationId)).map(a => a.organizationId) } }, select: { id: true, name: true, timezone: true }, orderBy: { name: "asc" } })
+  const superAdmin = user.roleAssignments.some(a => a.role === UserRole.SUPER_ADMIN)
+  const organizations = await prisma.organization.findMany({ where: superAdmin ? {} : { id: { in: user.roleAssignments.filter(a => canPublishNotice([a], a.organizationId)).map(a => a.organizationId) } }, select: { id: true, name: true, timezone: true, showOnLogin: true }, orderBy: { name: "asc" } })
   const notices = await prisma.loginNotice.findMany({ where: { organizationId: { in: organizations.map(o => o.id) } }, orderBy: { createdAt: "desc" } })
   const selected = organizations.find(o => o.id === params.organization) ?? organizations[0]
   const selectedNotices = notices.filter(n => n.organizationId === selected?.id)
@@ -24,6 +26,7 @@ export default async function LoginNoticesPage({ searchParams }: { searchParams:
     <nav aria-label="Organizations" className="flex overflow-x-auto border-b border-slate-300">
       {organizations.map(o => <Link key={o.id} href={`/admin/login-notices?organization=${encodeURIComponent(o.id)}`} aria-current={selected?.id === o.id ? "page" : undefined} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-medium ${selected?.id === o.id ? "border-[#8D472F] bg-white text-[#8D472F]" : "border-transparent hover:bg-white/70"}`}>{o.name}</Link>)}
     </nav>
+    {selected && superAdmin ? <OrganizationLoginVisibility key={selected.id} organizationId={selected.id} visible={selected.showOnLogin} /> : null}
     {selected ? <section className="overflow-hidden rounded-xl border bg-white">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
         <h2 className="text-lg font-semibold">{params.create === "1" ? "Create login notice" : editing ? "Edit login notice" : selected.name}</h2>

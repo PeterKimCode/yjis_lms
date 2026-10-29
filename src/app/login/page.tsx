@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { School } from "lucide-react"
 import { getPrismaClient } from "@/lib/prisma"
 import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import { LoginForm } from "@/modules/auth/login-form"
@@ -13,9 +12,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const session = await getCurrentSession(), params = await searchParams
   if (session?.user?.id) redirect(getPostLoginPath(session.user.roleAssignments))
   const prisma = getPrismaClient(), now = new Date()
-  const organizations = await prisma.organization.findMany({ where: { isActive: true }, select: { id: true, slug: true, name: true, logoFileAssetId: true }, orderBy: { name: "asc" } })
+  const organizations = await prisma.organization.findMany({ where: { isActive: true, showOnLogin: true }, select: { id: true, slug: true, name: true, logoFileAssetId: true }, orderBy: { name: "asc" } })
   const selected = organizations.find(o => o.slug === params.organization)
-  const notices = await prisma.loginNotice.findMany({ where: { isPublished: true, organization: { isActive: true }, ...(selected ? { organizationId: selected.id } : {}), AND: [{ OR: [{ startsAt: null }, { startsAt: { lte: now } }] }, { OR: [{ endsAt: null }, { endsAt: { gt: now } }] }] }, select: { id: true, title: true, body: true, createdAt: true, organization: { select: { name: true, timezone: true } } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }] })
+  const notices = await prisma.loginNotice.findMany({ where: { isPublished: true, organization: { isActive: true, showOnLogin: true }, ...(selected ? { organizationId: selected.id } : {}), AND: [{ OR: [{ startsAt: null }, { startsAt: { lte: now } }] }, { OR: [{ endsAt: null }, { endsAt: { gt: now } }] }] }, select: { id: true, title: true, body: true, createdAt: true, organization: { select: { name: true, timezone: true } } }, orderBy: [{ createdAt: "desc" }, { id: "desc" }] })
   function filterUrl(slug?: string) { const q = new URLSearchParams(); if (slug) q.set("organization", slug); if (params.error) q.set("error", params.error); if (params.expired) q.set("expired", params.expired); return `/login${q.size ? `?${q}` : ""}` }
   const openNotice = notices.find(n => n.id === params.notice)
   const tabClass = (active: boolean) => `flex h-full min-h-20 min-w-0 items-center gap-3 rounded-t-md border-b-2 px-3 py-3 text-left text-sm font-medium leading-5 transition-colors ${active ? "border-[#8D472F] bg-white text-[#8D472F]" : "border-slate-200/70 text-slate-700 hover:border-slate-400 hover:bg-white/70"}`
@@ -27,7 +26,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <h2 id="school-selector" className="text-lg font-semibold">Our schools</h2>
           <nav aria-label="School notices by organization" className="grid auto-rows-fr grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
             <Link href={filterUrl()} aria-current={!selected ? "page" : undefined} className={tabClass(!selected)}>
-              <span className="grid size-10 shrink-0 place-items-center"><School className="size-7" aria-hidden="true" /></span><span className="min-w-0">All schools</span>
+              <span className="size-10 shrink-0" aria-hidden="true" /><span className="min-w-0">All schools</span>
             </Link>
             {organizations.map(o => <Link key={o.id} href={filterUrl(o.slug)} aria-current={selected?.id === o.id ? "page" : undefined} className={tabClass(selected?.id === o.id)}>
               <span className="grid size-10 shrink-0 place-items-center"><Image src={o.logoFileAssetId ? `/api/public/organizations/${o.id}/logo` : "/icon.svg"} alt="" width={32} height={32} unoptimized className="size-8 object-contain" /></span><span className="min-w-0 break-words [overflow-wrap:anywhere]">{o.name}</span>

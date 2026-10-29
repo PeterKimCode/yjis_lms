@@ -1,0 +1,1 @@
+ALTER TABLE "Organization" ADD COLUMN "showOnLogin" BOOLEAN NOT NULL DEFAULT true;

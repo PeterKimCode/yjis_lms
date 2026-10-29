@@ -183,6 +183,7 @@ model Organization {
   defaultLocale            String                    @default("ko-KR")
   timezone                 String                    @default("Asia/Seoul")
   isActive                 Boolean                   @default(true)
+  showOnLogin              Boolean                   @default(true)
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   logoFileAsset            FileAsset?                @relation("OrganizationLogo", fields: [logoFileAssetId], references: [id], onDelete: SetNull)

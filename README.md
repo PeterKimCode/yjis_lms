@@ -156,7 +156,7 @@ npx tsx scripts/generate-manual-pdfs.ts
 
 ## 로그인 공지와 수강 신청 (2026-10-29)
 
-- 로그인 화면은 활성 조직의 로고·이름과 공개 공지를 표시합니다. 학교 탭을 누르면 해당 학교 공지 목록을 보고, 제목을 누르면 본문을 엽니다. 로그인 화면의 공통 헤더는 표시하지 않습니다. 공지는 School Admin/Super Admin의 `Login notices` 조직별 탭·게시판에서 제목·본문·공개 토글로 관리합니다. 저장한 공지는 예약 기간 없이 공개 여부에 따라 표시합니다. 내부 게시판은 공개되지 않습니다.
+- 로그인 화면은 활성 조직의 로고·이름과 공개 공지를 표시합니다. 학교 탭을 누르면 해당 학교 공지 목록을 보고, 제목을 누르면 본문을 엽니다. 로그인 화면의 공통 헤더는 표시하지 않습니다. 공지는 School Admin/Super Admin의 `Login notices` 조직별 탭·게시판에서 제목·본문·공개 토글로 관리합니다. 저장한 공지는 예약 기간 없이 공개 여부에 따라 표시합니다. Super Admin은 조직별 `Show organization on login page` 토글로 학교 탭·로고·공개 공지의 표시 여부를 즉시 저장합니다. School Admin은 이 설정을 변경할 수 없습니다. 숨긴 조직의 기존 계정 로그인과 수업 이용은 유지됩니다. 내부 게시판은 공개되지 않습니다.
 - 학생은 `Browse classes`에서 Organization·수업명·신청 상태로 찾고 `Apply for class`로 신청합니다. 승인 전에는 소개만 보이며, 강의·자료·과제·시험은 열리지 않습니다.
 - 학교 관리자는 `Class Sections → 수업 → Student recruitment`에서 소개와 모집 공개를 저장합니다. 기존 수업의 모집은 기본 비공개입니다. 종료·비활성 조직 수업에는 새로 신청할 수 없습니다.
 - `Enrollment requests`에서 수업 소속 School Admin 또는 Super Admin이 승인·거절합니다. 캠퍼스 범위를 검사하고, 거절 시 사유가 필요합니다. Academic Staff와 교수에게는 승인 권한을 추가하지 않습니다.
