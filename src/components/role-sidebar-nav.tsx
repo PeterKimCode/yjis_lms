@@ -85,7 +85,6 @@ const toneClasses = {
 
 export function RoleSidebarNav({
   classLinks,
-  description,
   links,
   logoUrl,
   messageLinks,
@@ -106,11 +105,11 @@ export function RoleSidebarNav({
     <>
       <div aria-hidden="true" className={`hidden shrink-0 md:block ${collapsed ? "w-20" : "w-64"}`} />
       <aside
-        className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-hidden border-r border-slate-200 bg-white p-3 text-zinc-800 transition-[width] md:flex ${
+        className={`fixed bottom-0 left-0 top-16 z-30 hidden flex-col overflow-hidden border-r border-slate-200 bg-[var(--sidebar)] p-0 text-zinc-800 transition-[width] md:flex ${
           collapsed ? "w-20" : "w-64"
         }`}
       >
-        <div className={`mb-3 flex shrink-0 items-center gap-2 py-3 ${collapsed ? "flex-col" : ""}`}>
+        <div className={`sidebar-heading flex shrink-0 items-center gap-2 p-4 ${collapsed ? "flex-col" : ""}`}>
           <Link aria-label="Go to overview" className="flex min-w-0 flex-1 items-center gap-3" href={`/${tone}`}>
             <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
             {!collapsed ? <span className="min-w-0"><span className="block text-sm font-semibold">{title}</span><span className="block truncate text-xs text-muted-foreground">{userEmail}</span></span> : null}
@@ -120,7 +119,7 @@ export function RoleSidebarNav({
             {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3"><nav className="grid gap-1">
+        <div className="sidebar-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3"><nav className="grid gap-1">
           {links.filter(link => !["/messages", "/notifications"].includes(link.href)).map((link) => {
             const active =
               pathname === link.href ||
@@ -261,15 +260,15 @@ export function RoleSidebarNav({
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">{title}</p>
-            <p className="text-xs text-muted-foreground">{description}</p>
+
           </div>
           <Badge variant="secondary">{tone.toUpperCase()}</Badge>
         </div>
       </header>
       <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
-          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none border-r border-slate-200 bg-white p-4 text-zinc-800 shadow-xl">
+          <DialogContent showCloseButton={false} aria-describedby={undefined} onCloseAutoFocus={(event) => { event.preventDefault(); menuButton.current?.focus() }} className="top-0 bottom-0 left-0 right-auto flex h-dvh max-h-dvh w-72 max-w-[85vw] translate-x-0 translate-y-0 flex-col overflow-hidden rounded-none border-r border-slate-200 bg-[var(--sidebar)] p-0 text-zinc-800 shadow-xl">
             <DialogTitle className="sr-only">{title} menu</DialogTitle>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="sidebar-heading flex shrink-0 items-center justify-between p-4">
               <Link
                 aria-label="Go to overview"
                 className="flex items-center gap-3"
@@ -295,7 +294,7 @@ export function RoleSidebarNav({
                 Close
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3"><nav className="grid gap-1">
+            <div className="sidebar-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3"><nav className="grid gap-1">
               {links.filter(link => !["/messages", "/notifications"].includes(link.href)).map((link) => {
                 const active =
                   pathname === link.href ||

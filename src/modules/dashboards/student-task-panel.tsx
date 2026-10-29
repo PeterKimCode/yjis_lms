@@ -5,7 +5,7 @@ import type { TaskGroups, StudentTask } from "./student-tasks"
 
 function TaskList({ tasks }: { tasks: StudentTask[] }) {
   return tasks.length ? <ul className="divide-y divide-slate-200">{tasks.map((task) => <li key={task.id} className="flex min-w-0 flex-wrap items-center gap-2 py-3">
-    <div className="min-w-0 flex-1 basis-40"><p className="break-words font-medium">{task.title}</p><p className="break-words text-sm text-slate-600">{task.className} · {task.kind}</p><p className="text-sm text-slate-600">{task.dueAt ? `${formatDateTimeInTimeZone(task.dueAt, task.timeZone)} (${task.timeZone})` : "No deadline"} · {task.status === "Available" && task.submitted ? "Retake available" : task.status}</p></div>
+    <div className="min-w-0 flex-1 basis-40"><p className="break-words font-medium">{task.title}</p><p className="break-words text-sm text-slate-600">{task.className} · {task.kind}</p><p className="text-sm text-slate-600">{task.dueAt ? `${formatDateTimeInTimeZone(task.dueAt, task.timeZone)}` : "No deadline"} · {task.status === "Available" && task.submitted ? "Retake available" : task.status}</p></div>
     <Button asChild size="sm" variant="outline"><Link href={task.href}>{task.status === "Closed" ? "Check" : "Open"}</Link></Button>
   </li>)}</ul> : <p className="py-3 text-sm text-slate-600">All caught up. Nothing to do here.</p>
 }

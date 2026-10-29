@@ -45,10 +45,10 @@ export default async function ParentPage() {
     >
       <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <h2 className="text-lg font-semibold">Exams / Quiz · latest published</h2>
-        <SimpleTable empty="No published exams or quizzes yet." headers={["Exams / Quiz", "Student / Class", "Starts", "Ends", "Time zone", "Status", "Open"]} rows={exams.flatMap((exam) => relations.filter((relation) => relation.student.enrollments.some((enrollment) => enrollment.classSectionId === exam.classSectionId && enrollment.status === "ENROLLED")).map((relation) => {
+        <SimpleTable empty="No published exams or quizzes yet." headers={["Exams / Quiz", "Student / Class", "Starts", "Ends", "Status", "Open"]} rows={exams.flatMap((exam) => relations.filter((relation) => relation.student.enrollments.some((enrollment) => enrollment.classSectionId === exam.classSectionId && enrollment.status === "ENROLLED")).map((relation) => {
           const attempts = exam.attempts.filter((attempt) => attempt.studentId === relation.student.id)
           const zone = exam.classSection.organization.timezone || "Asia/Seoul"
-          return <TableRow key={`${exam.id}:${relation.student.id}`}><TableCell className="font-medium">{exam.title}</TableCell><TableCell>{relation.student.name} · {exam.classSection.name}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.opensAt, zone)}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.closesAt, zone)}</TableCell><TableCell>{zone}</TableCell><TableCell>{attempts[0] ? getQuizAttemptStatus(attempts[0]) : assessmentAvailability(exam, attempts.length, exam._count.questions)}</TableCell><TableCell><OpenButton href={`/parent/students/${relation.student.id}/classes/${exam.classSectionId}?tab=assessments&view=quizzes`} /></TableCell></TableRow>
+          return <TableRow key={`${exam.id}:${relation.student.id}`}><TableCell className="font-medium">{exam.title}</TableCell><TableCell>{relation.student.name} · {exam.classSection.name}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.opensAt, zone)}</TableCell><TableCell>{formatDateTimeInTimeZone(exam.closesAt, zone)}</TableCell><TableCell>{attempts[0] ? getQuizAttemptStatus(attempts[0]) : assessmentAvailability(exam, attempts.length, exam._count.questions)}</TableCell><TableCell><OpenButton href={`/parent/students/${relation.student.id}/classes/${exam.classSectionId}?tab=assessments&view=quizzes`} /></TableCell></TableRow>
         }))} />
       </section>
       <BentoGrid storageKey={`${user.id}:parent`} widgets={[

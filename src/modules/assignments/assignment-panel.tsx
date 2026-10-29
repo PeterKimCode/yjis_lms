@@ -228,7 +228,7 @@ function InstructorAssignmentList({
             <header className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
               <h2 className="min-w-0 break-words text-base font-semibold">{assignment.title}</h2>
               <span><span className="font-medium">Due: </span>{formatDateTime(assignment.dueAt, assignment.timeZone)}</span>
-              <span className="text-muted-foreground">{assignment.pointsPossible ?? "-"} points · {assignment.timeZone}</span>
+              <span className="text-muted-foreground">{assignment.pointsPossible ?? "-"} points</span>
               <span>Submissions: {assignment.submissions.length} · Graded: {gradedCount}</span>
               <StatusBadge label={assignment.acceptsLate ? "Late submissions allowed" : "No late submissions"} value={assignment.acceptsLate ? "ACTIVE" : "DRAFT"} />
             </header>

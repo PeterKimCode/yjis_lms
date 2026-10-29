@@ -18,7 +18,6 @@ import {
 
 export function DashboardPage({
   title,
-  description,
   actions,
   children,
   tone = "default",
@@ -38,7 +37,6 @@ export function DashboardPage({
           <div className="min-w-0 space-y-3">
             {userName ? <p className="text-sm font-medium text-muted-foreground">{title}</p> : null}
             <h1 className="break-words text-2xl font-semibold sm:text-3xl">{userName ? `Welcome back, ${userName}` : title}</h1>
-            <p className="max-w-2xl break-words text-sm leading-relaxed text-muted-foreground">{description}</p>
           </div>
           {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
@@ -52,7 +50,6 @@ export function MetricCard({
   label,
   value,
   href,
-  description,
   tone = "default",
 }: {
   label: string
@@ -77,9 +74,6 @@ export function MetricCard({
       </CardHeader>
       <CardContent className="space-y-1">
         <div className="text-2xl font-semibold">{value}</div>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
       </CardContent>
     </Card>
   )
@@ -98,7 +92,6 @@ export function EmptyState({ children }: { children: ReactNode }) {
 
 export function ActionPanel({
   title = "Today at a glance",
-  description,
   children,
 }: {
   title?: string
@@ -109,9 +102,6 @@ export function ActionPanel({
     <section className="lms-soft-panel rounded-xl p-4">
       <div className="mb-3 space-y-1">
         <h2 className="text-sm font-semibold">{title}</h2>
-        {description ? (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        ) : null}
       </div>
       <div className="grid gap-3 md:grid-cols-3">{children}</div>
     </section>
@@ -120,7 +110,6 @@ export function ActionPanel({
 
 export function ActionCard({
   title,
-  description,
   href,
   actionLabel = "Open",
   badge,
@@ -139,7 +128,6 @@ export function ActionCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           <h3 className="text-sm font-medium">{title}</h3>
-          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         {badge ? <Badge variant="secondary">{badge}</Badge> : null}
       </div>
@@ -196,7 +184,6 @@ export function SimpleTable({
 
 export function SectionBlock({
   title,
-  description,
   id,
   meta,
   children,
@@ -216,9 +203,6 @@ export function SectionBlock({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <CardTitle>{title}</CardTitle>
-            {description ? (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            ) : null}
           </div>
           {meta ? <div className="flex flex-wrap gap-2">{meta}</div> : null}
         </div>

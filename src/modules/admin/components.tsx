@@ -50,7 +50,6 @@ export const adminLinks = [
 
 export function AdminPageHeader({
   title,
-  description,
 }: {
   title: string
   description: string
@@ -58,7 +57,6 @@ export function AdminPageHeader({
   return (
     <div className="space-y-3 py-4">
       <h1 className="text-2xl font-semibold sm:text-3xl">{title}</h1>
-      <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
     </div>
   )
 }

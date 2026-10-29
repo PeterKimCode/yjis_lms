@@ -238,10 +238,6 @@ export function QuizEditor({
             "Location (optional)",
             <Input name="location" defaultValue={quiz?.location ?? ""} />
           )}
-          <p className="text-xs text-muted-foreground md:col-span-2">
-            All start and end times use {timeZone}, for both instructors and
-            students.
-          </p>
         </div>
         <div className="rounded-xl border border-slate-300 bg-card p-4">
           {field(

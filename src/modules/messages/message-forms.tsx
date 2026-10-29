@@ -178,9 +178,6 @@ export function NewMessageForm({
             placeholder="Write a text message."
             required
           />
-          <span className="text-xs text-muted-foreground">
-            Text only. No image or file uploads in messenger.
-          </span>
         </label>
         <ActionFeedback state={state} />
         <div>
@@ -211,9 +208,6 @@ export function MessageComposer({ conversationId }: { conversationId: string }) 
           placeholder="Write a text-only message."
           required
         />
-        <span className="text-xs text-muted-foreground">
-          Text only for now. Attachments are not enabled in messenger.
-        </span>
       </label>
       <ActionFeedback state={state} />
       <div>

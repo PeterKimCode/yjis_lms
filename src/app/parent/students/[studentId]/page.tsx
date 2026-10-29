@@ -225,7 +225,7 @@ export default async function ParentStudentDetailPage({
 
       <SimpleTable
         empty="No published exams or quizzes yet."
-        headers={["Class", "Exams / Quiz", "Starts", "Ends", "Time zone", "Status", "Score"]}
+        headers={["Class", "Exams / Quiz", "Starts", "Ends", "Status", "Score"]}
         rows={student.enrollments.flatMap((enrollment) =>
           enrollment.classSection.quizzes.map((quiz) => {
             const attempt = quiz.attempts[0]
@@ -239,7 +239,7 @@ export default async function ParentStudentDetailPage({
                 <TableCell>{quiz.title}</TableCell>
                 <TableCell>{formatDateTimeInTimeZone(quiz.opensAt, enrollment.classSection.organization.timezone)}</TableCell>
                 <TableCell>{formatDateTimeInTimeZone(quiz.closesAt, enrollment.classSection.organization.timezone)}</TableCell>
-                <TableCell>{enrollment.classSection.organization.timezone || "Asia/Seoul"}</TableCell>
+
                 <TableCell>
                   {attempt ? getQuizAttemptStatus(attempt) : assessmentAvailability(quiz, quiz.attempts.length, quiz.questions.length)}
                 </TableCell>

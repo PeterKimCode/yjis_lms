@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,7 +13,6 @@ import {
 
 export function FormDialog({
   children,
-  description,
   title,
   trigger,
   variant = "default",
@@ -51,12 +49,9 @@ export function FormDialog({
           {trigger}
         </Button>
       </DialogTrigger>
-      <DialogContent ref={content} {...(!description ? { "aria-describedby": undefined } : {})} className="border-slate-200 bg-white p-0 shadow-2xl sm:max-w-3xl lg:max-w-5xl">
+      <DialogContent ref={content} aria-describedby={undefined} className="border-slate-200 bg-white p-0 shadow-2xl sm:max-w-3xl lg:max-w-5xl">
         <DialogHeader className="border-b bg-slate-50/80 px-5 py-4">
           <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription>{description}</DialogDescription>
-          ) : null}
         </DialogHeader>
         <div className="min-w-0 px-5 pb-5">{children}</div>
       </DialogContent>

@@ -60,7 +60,6 @@ export default async function ParentClassPage({ params, searchParams }: {
       })} />
     </SectionBlock> : null}
     {selection.section === "quizzes" ? <SectionBlock id="quizzes" title="Exams / Quiz">
-      <p className="mb-3 text-sm text-muted-foreground">Time zone: {section.organization.timezone || "Asia/Seoul"}</p>
       <SimpleTable empty="No assessments yet." headers={["Title", "Type", "Starts", "Ends", "Status", "Score"]} rows={section.quizzes.map((quiz) => {
         const attempt = quiz.attempts.find((item) => item.studentId === studentId)
         return <TableRow key={quiz.id}><TableCell>{quiz.title}</TableCell><TableCell>{assessmentTypeLabel(quiz.assessmentType)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.opensAt,section.organization.timezone)}</TableCell><TableCell>{formatDateTimeInTimeZone(quiz.closesAt,section.organization.timezone)}</TableCell><TableCell>{attempt ? getQuizAttemptStatus(attempt) : assessmentAvailability(quiz, quiz.attempts.filter((item) => item.studentId === studentId).length, quiz.questions.length)}</TableCell><TableCell>{attempt && shouldShowQuizResults(quiz) && getQuizAttemptStatus(attempt) === "Graded" ? attempt.score?.toString() ?? "-" : attempt ? shouldShowQuizResults(quiz) ? "Results are not available yet" : "Results hidden" : "-"}</TableCell></TableRow>

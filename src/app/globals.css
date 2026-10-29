@@ -49,38 +49,80 @@
 }
 
 :root {
-  --background: #f5f6f8;
-  --foreground: #191c20;
-  --card: oklch(1 0 0);
-  --card-foreground: #191c20;
-  --popover: oklch(1 0 0);
-  --popover-foreground: #191c20;
-  --primary: #1458e4;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: #eef4ff;
-  --secondary-foreground: #1e3a8a;
-  --muted: #eef2f7;
-  --muted-foreground: #626974;
-  --accent: #eaf2ff;
-  --accent-foreground: #1d4ed8;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #dce4ef;
-  --input: #d7e1ee;
-  --ring: #93c5fd;
-  --chart-1: #2563eb;
-  --chart-2: #0f766e;
-  --chart-3: #d97706;
-  --chart-4: #7c3aed;
-  --chart-5: #e11d48;
+  --background: #F7E7C6;
+  --foreground: #2F3A3F;
+  --card: #FFFDF8;
+  --card-foreground: #2F3A3F;
+  --popover: #FFFDF8;
+  --popover-foreground: #2F3A3F;
+  --primary: #8D472F;
+  --primary-foreground: #FFFDF8;
+  --secondary: #E2EBE4;
+  --secondary-foreground: #2F3A3F;
+  --muted: #F3EBDD;
+  --muted-foreground: #62635A;
+  --accent: #E9B97A;
+  --accent-foreground: #2F3A3F;
+  --destructive: #B33B32;
+  --border: #DFD0B6;
+  --input: #CCBFA8;
+  --ring: #8D472F;
+  --chart-1: #C97D5B;
+  --chart-2: #7FA38A;
+  --chart-3: #E9B97A;
+  --chart-4: #2F3A3F;
+  --chart-5: #AA6550;
   --radius: 0.5rem;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #191c20;
-  --sidebar-primary: #2563eb;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #eef4ff;
-  --sidebar-accent-foreground: #1d4ed8;
-  --sidebar-border: #dce4ef;
-  --sidebar-ring: #93c5fd;
+  --sidebar: #FBF4E5;
+  --sidebar-foreground: #2F3A3F;
+  --sidebar-primary: #2F3A3F;
+  --sidebar-primary-foreground: #F7E7C6;
+  --sidebar-accent: #E9B97A;
+  --sidebar-accent-foreground: #2F3A3F;
+  --sidebar-border: #D5C9B2;
+  --sidebar-ring: #8D472F;
+  --sidebar-header: #2F3A3F;
+  --sidebar-header-foreground: #F7E7C6;
+  --sidebar-footer: #7FA38A;
+  --sidebar-footer-foreground: #17291F;
+}
+
+/* Shared utility colors keep existing role screens in the same Sunlit palette. */
+@theme {
+  --color-white: #FFFDF8;
+  --color-slate-50: #FBF7EF;
+  --color-slate-100: #F3EBDD;
+  --color-slate-200: #E4D7C1;
+  --color-slate-300: #CEC0A7;
+  --color-slate-400: #A4957F;
+  --color-slate-500: #726D61;
+  --color-slate-600: #62635A;
+  --color-slate-700: #4B534C;
+  --color-slate-800: #394447;
+  --color-slate-900: #2F3A3F;
+  --color-slate-950: #202D32;
+  --color-zinc-900: #2F3A3F;
+  --color-blue-50: #FCF0E7;
+  --color-blue-100: #F6E0D1;
+  --color-blue-200: #ECC6AC;
+  --color-blue-300: #DFA888;
+  --color-blue-400: #D28E6C;
+  --color-blue-500: #C97D5B;
+  --color-blue-600: #A85C40;
+  --color-blue-700: #8D472F;
+  --color-blue-800: #733C2A;
+  --color-blue-900: #583324;
+  --color-blue-950: #3E271E;
+  --color-sky-50: #FBF4E5;
+  --color-sky-100: #F7E7C6;
+  --color-sky-200: #BECEBF;
+  --color-sky-600: #476B54;
+  --color-sky-700: #365440;
+  --color-sky-800: #293F31;
+  --color-indigo-50: #EEF3EF;
+  --color-indigo-100: #E2EBE4;
+  --color-indigo-600: #476B54;
+  --color-indigo-700: #365440;
 }
 
 .dark {
@@ -145,7 +187,7 @@
     overflow-wrap: anywhere;
   }
   :where(a, button, input, select, textarea, summary):focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--ring);
     outline-offset: 3px;
   }
 }
@@ -196,7 +238,7 @@
   .role-instructor-surface,
   .role-student-surface,
   .role-parent-surface {
-    background: #f5f6f8;
+    background: var(--background);
   }
 
   .lms-card {
@@ -220,4 +262,18 @@
     top: 0 !important;
   }
 
+}
+
+.sidebar-heading {
+  background: var(--sidebar-header);
+  color: var(--sidebar-header-foreground);
+}
+.sidebar-heading .text-muted-foreground,
+.sidebar-heading .text-slate-500 { color: #E0E4D9; }
+.sidebar-heading button { color: var(--sidebar-header-foreground); }
+.sidebar-heading button:hover { background: #455257; }
+.sidebar-scroll { background: var(--sidebar); }
+.sidebar-actions {
+  background: var(--sidebar-footer);
+  color: var(--sidebar-footer-foreground);
 }

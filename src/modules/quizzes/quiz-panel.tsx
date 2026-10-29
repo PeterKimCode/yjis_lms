@@ -205,7 +205,7 @@ export function AssessmentHeader({ quiz }: { quiz: QuizPanelValue }) {
       <span className="text-muted-foreground">{assessmentTypeLabel(quiz.assessmentType)} · {quiz.pointsPossible ?? totalPoints(quiz)} points</span>
       <span><span className="font-medium">Starts: </span>{formatDateTimeInTimeZone(quiz.opensAt ? new Date(quiz.opensAt) : null, quiz.timeZone)}</span>
       <span><span className="font-medium">Ends: </span>{formatDateTimeInTimeZone(quiz.closesAt ? new Date(quiz.closesAt) : null, quiz.timeZone)}</span>
-      <span className="text-xs text-muted-foreground">{quiz.timeZone}{quiz.location ? ` · ${quiz.location}` : ""}</span>
+      {quiz.location ? <span className="text-xs text-muted-foreground">{quiz.location}</span> : null}
     </header>
   )
 }
