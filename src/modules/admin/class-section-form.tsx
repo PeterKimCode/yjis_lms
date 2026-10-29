@@ -264,10 +264,6 @@ export function ClassSectionClientForm({
                 </option>
               ))}
             </select>
-            <span className="min-h-8 text-xs text-muted-foreground">
-              Selecting a course fills organization, campus, title, section
-              code, and delivery mode.
-            </span>
           </label>
           <AdminSelect
             label="Grade level"

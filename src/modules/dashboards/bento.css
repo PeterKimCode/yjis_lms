@@ -2,12 +2,12 @@
 .bento-container { min-width: 0; }
 .bento-widget {
   display: flex; flex-direction: column; min-width: 0; min-height: 0;
-  border: 1px solid #DFD0B6; border-radius: 8px; background: #FFFDF8;
+  border: 1px solid #DFD0B6; border-radius: 8px; background: #FFFFFF;
   box-shadow: 0 2px 0 #E9DABB; color: #2F3A3F;
 }
-.bento-widget[data-accent="blue"] { background: #F7E7C6; border-color: #E4C99F; }
-.bento-widget[data-accent="mint"] { background: #E2EBE4; border-color: #BECEBF; }
-.bento-widget[data-accent="rose"] { background: #F4E2D7; border-color: #E6C8B7; }
+.bento-widget[data-accent="blue"] { background: #FFFFFF; border-color: #E4C99F; }
+.bento-widget[data-accent="mint"] { background: #FFFFFF; border-color: #BECEBF; }
+.bento-widget[data-accent="rose"] { background: #FFFFFF; border-color: #E6C8B7; }
 .bento-widget-header {
   display: flex; align-items: center; gap: 10px; flex: 0 0 auto;
   min-height: 48px; padding: 10px 18px; border-bottom: 1px solid rgb(24 24 27 / 7%);

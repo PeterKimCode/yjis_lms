@@ -51,7 +51,7 @@
 :root {
   --background: #F7E7C6;
   --foreground: #2F3A3F;
-  --card: #FFFDF8;
+  --card: #FFFFFF;
   --card-foreground: #2F3A3F;
   --popover: #FFFDF8;
   --popover-foreground: #2F3A3F;
@@ -83,13 +83,13 @@
   --sidebar-ring: #8D472F;
   --sidebar-header: #2F3A3F;
   --sidebar-header-foreground: #F7E7C6;
-  --sidebar-footer: #7FA38A;
-  --sidebar-footer-foreground: #17291F;
+  --sidebar-footer: #2F3A3F;
+  --sidebar-footer-foreground: #F7E7C6;
 }
 
 /* Shared utility colors keep existing role screens in the same Sunlit palette. */
 @theme {
-  --color-white: #FFFDF8;
+  --color-white: #FFFFFF;
   --color-slate-50: #FBF7EF;
   --color-slate-100: #F3EBDD;
   --color-slate-200: #E4D7C1;
@@ -277,3 +277,6 @@
   background: var(--sidebar-footer);
   color: var(--sidebar-footer-foreground);
 }
+
+/* Dashboard surfaces stay white; controls keep their semantic colors. */
+.bento-widget, .bento-widget[data-accent], .lms-card, .lms-soft-panel { background-color: #FFFFFF; }

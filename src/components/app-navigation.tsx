@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { NavigationVisibility } from "@/components/navigation-visibility"
 import type { ReactNode } from "react"
 import { Bell, BookOpen, Home, LogIn, MessageSquare } from "lucide-react"
 
@@ -31,7 +32,7 @@ export async function AppNavigation() {
   const headerTitle = headerUser?.organization?.name ?? "Learning Management System"
 
   return (
-    <>
+    <NavigationVisibility>
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white text-zinc-900">
         <div className="flex h-14 w-full items-center justify-between gap-2 px-3 sm:h-16 sm:px-6">
           <Link
@@ -131,7 +132,7 @@ export async function AppNavigation() {
           unreadNotifications={unreadNotifications}
         />
       ) : null}
-    </>
+    </NavigationVisibility>
   )
 }
 
