@@ -1,3 +1,5 @@
+import { HelpTooltip } from "@/components/help-tooltip"
+import { Switch } from "@/components/ui/switch"
 import { InstitutionType } from "@prisma/client"
 import Image from "next/image"
 
@@ -69,10 +71,8 @@ export default async function OrganizationsPage({
       {isSuperAdmin ? (
         <OrganizationForm />
       ) : (
-        <div className="rounded-lg border bg-white/90 p-4 text-sm text-muted-foreground">
-          Organization creation is limited to SUPER_ADMIN accounts. You can edit
-          organizations already assigned to your admin scope.
-        </div>
+        <HelpTooltip>Organization creation is limited to SUPER_ADMIN accounts. You can edit
+          organizations already assigned to your admin scope.</HelpTooltip>
       )}
       <DataTable
         empty="No organizations are available for your scope."
@@ -147,10 +147,8 @@ function OrganizationForm({
               name={organization.name}
               size="lg"
             />
-            <p className="text-xs text-muted-foreground">
-              Uploading a new logo replaces the sidebar logo for users in this
-              organization. JPG, PNG, WEBP, or GIF only. Max 10MB.
-            </p>
+            <HelpTooltip>Uploading a new logo replaces the sidebar logo for users in this
+              organization. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip>
           </div>
         ) : null}
         <label className="grid min-w-0 gap-1 text-sm">
@@ -170,9 +168,7 @@ function OrganizationForm({
             placeholder="example-school"
             defaultValue={organization?.slug ?? ""}
           />
-          <span className="text-xs text-muted-foreground">
-            URL-safe short name. If blank, it is generated from the name.
-          </span>
+          <HelpTooltip>URL-safe short name. If blank, it is generated from the name.</HelpTooltip>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Type</span>
@@ -196,9 +192,7 @@ function OrganizationForm({
             placeholder="https://www.school.edu"
             defaultValue={organization?.websiteUrl ?? ""}
           />
-          <span className="text-xs text-muted-foreground">
-            Used on generated transcript backgrounds when available.
-          </span>
+          <HelpTooltip>Used on generated transcript backgrounds when available.</HelpTooltip>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Organization logo</span>
@@ -211,9 +205,8 @@ function OrganizationForm({
         </label>
         <div className="flex min-w-0 flex-wrap items-end gap-4">
         <label className="flex h-9 items-center gap-2 text-sm">
-          <input
+          <Switch
             name="isActive"
-            type="checkbox"
             defaultChecked={organization?.isActive ?? true}
           />
           Active

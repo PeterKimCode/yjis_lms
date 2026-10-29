@@ -280,3 +280,26 @@
 
 /* Dashboard surfaces stay white; controls keep their semantic colors. */
 .bento-widget, .bento-widget[data-accent], .lms-card, .lms-soft-panel { background-color: #FFFFFF; }
+
+.lms-switch {
+  appearance: none;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.5rem !important;
+  height: 1.5rem !important;
+  padding: 0 !important;
+  border: 1px solid #726D61;
+  border-radius: 999px;
+  background-color: #726D61;
+  background-image: radial-gradient(circle, #FFFFFF 0 7px, transparent 7.5px);
+  background-repeat: no-repeat;
+  background-size: 18px 18px;
+  background-position: 2px center;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background-color 120ms, background-position 120ms;
+}
+.lms-switch:checked { background-color: #8D472F; border-color: #8D472F; background-position: calc(100% - 2px) center; }
+.lms-switch:disabled { opacity: .5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .lms-switch { transition: none; } }
+@media (forced-colors: active) { .lms-switch { appearance: auto; } }

@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -98,11 +99,9 @@ export default async function AdminFilePreviewPage({
           >
             Your browser does not support the video tag.
           </video>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Video is streamed through LMS access checks. If playback is still
+          <HelpTooltip>Video is streamed through LMS access checks. If playback is still
             slow, check server bandwidth, MinIO speed, and reverse proxy
-            buffering.
-          </p>
+            buffering.</HelpTooltip>
         </div>
       ) : (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

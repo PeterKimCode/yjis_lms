@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import { UserRole, VideoProvider } from "@prisma/client"
 import { notFound } from "next/navigation"
 import Link from "next/link"
@@ -73,9 +74,7 @@ export default async function StudentLessonPage({
             lesson.videoFileAsset ? (
               <div className="rounded-lg border bg-background p-4">
                 <p className="font-medium">{lesson.videoFileAsset.originalName}</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Download or open the lesson file through the LMS.
-                </p>
+                <HelpTooltip>Download or open the lesson file through the LMS.</HelpTooltip>
                 <Button asChild className="mt-3" size="sm">
                   <Link
                     href={`/api/files/${lesson.videoFileAsset.id}/download`}

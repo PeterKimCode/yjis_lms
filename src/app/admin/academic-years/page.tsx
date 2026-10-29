@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch"
 import { deleteAdminEntity, saveAcademicYear } from "@/modules/admin/actions"
 import {
   ActiveBadge,
@@ -158,9 +159,8 @@ function AcademicYearForm({
           required
         />
         <label className="flex items-end gap-2 text-sm">
-          <input
+          <Switch
             name="isActive"
-            type="checkbox"
             defaultChecked={year?.isActive ?? false}
           />
           Active

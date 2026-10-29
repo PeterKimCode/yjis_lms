@@ -1,3 +1,5 @@
+import { HelpTooltip } from "@/components/help-tooltip"
+import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
@@ -209,11 +211,9 @@ function StudentDocuments({ user }: { user: DetailUser }) {
           </Button>
         ))}
       </div>
-      <p className="text-sm text-muted-foreground">
-        Report card: K-12 style term summary. Transcript: university-style
+      <HelpTooltip>Report card: K-12 style term summary. Transcript: university-style
         credit/GPA record. PDFs are generated directly; storing PDFs in MinIO is
-        a future enhancement.
-      </p>
+        a future enhancement.</HelpTooltip>
       <DataTable
         empty="No generated document history yet."
         headers={["Type", "Status", "Generated", "Storage"]}
@@ -245,9 +245,7 @@ function StudentAcademicOverview({ user }: { user: DetailUser }) {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold">Student academic overview</h2>
-        <p className="text-sm text-muted-foreground">
-          Read-only academic activity for this student across enrolled classes.
-        </p>
+        <HelpTooltip>Read-only academic activity for this student across enrolled classes.</HelpTooltip>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
@@ -442,7 +440,7 @@ function ParentLinks({
           </label>
           <Field label="Relation" name="relation" defaultValue="Guardian" />
           <label className="flex items-end gap-2 text-sm">
-            <input name="isPrimary" type="checkbox" />
+            <Switch name="isPrimary"  />
             Primary
           </label>
           <div className="flex items-end">
@@ -529,7 +527,7 @@ function StudentLinks({
           </label>
           <Field label="Relation" name="relation" defaultValue="Guardian" />
           <label className="flex items-end gap-2 text-sm">
-            <input name="isPrimary" type="checkbox" />
+            <Switch name="isPrimary"  />
             Primary
           </label>
           <div className="flex items-end">

@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useState } from "react"
 
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button"
@@ -120,10 +122,8 @@ function Attachment({
                   disabled={pending}
                 />
               </label>
-              <p className="text-xs text-muted-foreground">
-                PDF only. Max 20MB. The current file stays until replacement
-                succeeds.
-              </p>
+              <HelpTooltip>PDF only. Max 20MB. The current file stays until replacement
+                succeeds.</HelpTooltip>
             </>
           ) : null}
 

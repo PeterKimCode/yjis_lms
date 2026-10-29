@@ -1,5 +1,7 @@
 "use client"
 
+import { Switch } from "@/components/ui/switch"
+
 import { useState } from "react"
 import { Copy } from "lucide-react"
 import { updateLessonQuickly } from "./actions"
@@ -18,5 +20,5 @@ export function LessonQuickActions({ classSectionId, lessonId, published, duplic
     } finally { setPending(false) }
   }
   return duplicate ? <button type="button" title="Duplicate lesson" aria-label="Duplicate lesson" disabled={pending} onClick={run} className="ml-2 rounded border p-2"><Copy className="size-4" /></button> :
-    <label className="flex items-center gap-2 whitespace-nowrap"><input type="checkbox" role="switch" checked={published} disabled={pending} onChange={run} />{published ? "Published" : "Draft"}</label>
+    <label className="flex items-center gap-2 whitespace-nowrap"><Switch checked={published} disabled={pending} onChange={run} />{published ? "Published" : "Draft"}</label>
 }

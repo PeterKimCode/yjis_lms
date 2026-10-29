@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
 import { UserRole } from "@prisma/client"
 import { requireAnyRole } from "@/modules/auth/permissions"
@@ -8,7 +9,7 @@ import { CatalogForm } from "@/modules/catalog/action-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone } from "@/lib/timezone"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 export default async function LoginNoticesPage({ searchParams }: { searchParams: Promise<{ organization?: string; notice?: string; create?: string }> }) {
   const params = await searchParams
   const user = await requireAnyRole([UserRole.SCHOOL_ADMIN, UserRole.SUPER_ADMIN]), prisma = getPrismaClient()
@@ -37,6 +38,6 @@ export default async function LoginNoticesPage({ searchParams }: { searchParams:
     </section> : <p className="text-sm text-slate-600">No organizations available.</p>}
   </div>
 }
-function NoticeForm({ organization, notice }: { organization: { id: string; timezone: string }; notice?: { id: string; title: string; body: string; isPublished: boolean; startsAt: Date | null; endsAt: Date | null } }) {
-  return <CatalogForm action={saveLoginNotice}><input type="hidden" name="organizationId" value={organization.id} /><input type="hidden" name="id" value={notice?.id ?? ""} /><label className="grid gap-2 text-sm">Title<Input name="title" maxLength={180} required defaultValue={notice?.title} /></label><label className="grid gap-2 text-sm">Notice<Textarea name="body" required maxLength={10000} rows={5} defaultValue={notice?.body} /></label><div className="grid gap-3 sm:grid-cols-2"><label className="grid gap-2 text-sm">Starts at<Input name="startsAt" type="datetime-local" defaultValue={notice?.startsAt ? dateTimeLocalInTimeZone(notice.startsAt, organization.timezone) : ""} /></label><label className="grid gap-2 text-sm">Ends at<Input name="endsAt" type="datetime-local" defaultValue={notice?.endsAt ? dateTimeLocalInTimeZone(notice.endsAt, organization.timezone) : ""} /></label></div><label className="flex items-center gap-2 text-sm"><input name="isPublished" type="checkbox" defaultChecked={notice?.isPublished} />Publish on login page</label><Button>Save notice</Button></CatalogForm>
+function NoticeForm({ organization, notice }: { organization: { id: string; timezone: string }; notice?: { id: string; title: string; body: string; isPublished: boolean } }) {
+  return <CatalogForm action={saveLoginNotice}><input type="hidden" name="organizationId" value={organization.id} /><input type="hidden" name="id" value={notice?.id ?? ""} /><label className="grid gap-2 text-sm">Title<Input name="title" maxLength={180} required defaultValue={notice?.title} /></label><label className="grid gap-2 text-sm">Notice<Textarea name="body" required maxLength={10000} rows={5} defaultValue={notice?.body} /></label><label className="flex items-center gap-2 text-sm"><Switch name="isPublished"  defaultChecked={notice?.isPublished} />Publish on login page</label><Button>Save notice</Button></CatalogForm>
 }

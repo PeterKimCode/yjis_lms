@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import { Button } from "@/components/ui/button"
 import {
   deleteAdminEntity,
@@ -72,9 +73,7 @@ export function PendingResourceDeletionRequests({
     <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
       <div className="mb-3">
         <h2 className="font-semibold text-amber-950">{title}</h2>
-        <p className="text-sm text-amber-800">
-          Review requests from school admins before any record is deleted.
-        </p>
+        <HelpTooltip>Review requests from school admins before any record is deleted.</HelpTooltip>
       </div>
       <div className="grid gap-2">
         {requests.map((request) => (

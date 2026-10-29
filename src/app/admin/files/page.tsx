@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -96,10 +97,8 @@ export default async function AdminFilesPage({
         description="Uploaded LMS files in your admin scope, including videos, PDFs, images, and lesson materials."
       />
       {!canSeeAllFiles ? (
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-          School Admin view is limited to files in your assigned organization
-          and campus scope.
-        </div>
+        <HelpTooltip>School Admin view is limited to files in your assigned organization
+          and campus scope.</HelpTooltip>
       ) : null}
       {deleteSuccess ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">

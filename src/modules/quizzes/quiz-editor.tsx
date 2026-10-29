@@ -1,4 +1,9 @@
 "use client"
+
+import { HelpTooltip } from "@/components/help-tooltip"
+
+import { Switch } from "@/components/ui/switch"
+
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useRef, useState, type ReactNode } from "react"
@@ -249,9 +254,7 @@ export function QuizEditor({
                 name="pdfAttachmentFile"
                 accept=".pdf,application/pdf"
               />
-              <span className="text-xs text-muted-foreground">
-                PDF only. Max 20MB.
-              </span>
+              <HelpTooltip>PDF only. Max 20MB.</HelpTooltip>
             </>
           )}
         </div>
@@ -613,8 +616,7 @@ export function QuizEditor({
               />
             )}
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Switch
                 name="showResultsToStudents"
                 defaultChecked={quiz?.showResultsToStudents ?? true}
               />

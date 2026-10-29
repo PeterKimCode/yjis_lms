@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 
 import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
@@ -33,10 +34,8 @@ export default async function MessagesPage({
           </Button>
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
-            <p className="text-sm text-muted-foreground">
-              Text-only LMS conversations with teachers, students, parents, and
-              class groups.
-            </p>
+            <HelpTooltip>Text-only LMS conversations with teachers, students, parents, and
+              class groups.</HelpTooltip>
           </div>
 
           {params.classGroupUnavailable ? <p role="status" className="rounded-lg border bg-background p-4 text-sm">Your instructor has not opened a class conversation yet.</p> : null}

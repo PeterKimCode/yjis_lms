@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 
 import { CurrentWorkspaceShell } from "@/components/current-workspace-shell"
@@ -43,9 +44,7 @@ export default async function NotificationsPage({
           <h1 className="text-2xl font-semibold tracking-tight">
             Notifications
           </h1>
-          <p className="text-sm text-muted-foreground">
-            In-app LMS alerts. Counts update on page load and navigation.
-          </p>
+          <HelpTooltip>In-app LMS alerts. Counts update on page load and navigation.</HelpTooltip>
         </div>
 
         <div className="lms-soft-panel flex flex-col gap-3 rounded-lg p-4">

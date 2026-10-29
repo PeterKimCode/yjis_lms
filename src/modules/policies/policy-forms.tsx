@@ -1,5 +1,9 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
+import { Switch } from "@/components/ui/switch"
+
 import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -169,10 +173,8 @@ function VideoPolicyForm({
         name="requireActualWatchedCoverage"
       />
       <FormFooter pending={pending} state={state} />
-      <p className="text-xs text-muted-foreground md:col-span-2 xl:col-span-4">
-        YouTube progress depends on the YouTube IFrame Player API and may not
-        work for videos that block embedding.
-      </p>
+      <HelpTooltip>YouTube progress depends on the YouTube IFrame Player API and may not
+        work for videos that block embedding.</HelpTooltip>
     </form>
   )
 }
@@ -195,10 +197,8 @@ function GradingPolicyForm({
           Assignment policy
         </summary>
         <div className="space-y-3 pt-3">
-          <p className="text-sm text-muted-foreground">
-            These settings define the default behavior for new assignments.
-            Individual assignments may override them when allowed.
-          </p>
+          <HelpTooltip>These settings define the default behavior for new assignments.
+            Individual assignments may override them when allowed.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.assignment.allowLateSubmissionDefault}
@@ -241,10 +241,8 @@ function GradingPolicyForm({
           Grade visibility policy
         </summary>
         <div className="space-y-3 pt-3">
-          <p className="text-sm text-muted-foreground">
-            These settings control when students and parents can see grades,
-            feedback, and quiz results.
-          </p>
+          <HelpTooltip>These settings control when students and parents can see grades,
+            feedback, and quiz results.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.gradeVisibility.studentsCanSeeDraftGrades}
@@ -284,10 +282,8 @@ function GradingPolicyForm({
           Document policy
         </summary>
         <div className="space-y-3 pt-3">
-          <p className="text-sm text-muted-foreground">
-            These settings control when report cards and transcripts are
-            visible to students and parents.
-          </p>
+          <HelpTooltip>These settings control when report cards and transcripts are
+            visible to students and parents.</HelpTooltip>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <CheckField
               checked={policies.document.reportCardsRequirePublishedGrades}
@@ -305,14 +301,9 @@ function GradingPolicyForm({
             />
             <div className="rounded-md border p-3 text-sm">
               <div className="font-medium">Admin preview allowed</div>
-              <p className="text-xs text-muted-foreground">
-                Recommended default: on. If enabled, admins and authorized
+              <HelpTooltip>Recommended default: on. If enabled, admins and authorized
                 academic staff can preview draft report cards or transcripts
-                before releasing them to students and parents.
-              </p>
-              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                Preview documents should be treated as unofficial.
-              </p>
+                before releasing them to students and parents. Preview documents should be treated as unofficial.</HelpTooltip>
             </div>
           </div>
         </div>
@@ -334,11 +325,9 @@ function GradingPolicyForm({
               value={policies.gpaScale}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Examples: 4.0 scale is common in US universities; 4.5 scale is
+          <HelpTooltip>Examples: 4.0 scale is common in US universities; 4.5 scale is
             common in Korean universities; 4.3 scale is used by some
-            universities.
-          </p>
+            universities.</HelpTooltip>
         </div>
       </details>
       <FormFooter pending={pending} state={state} />
@@ -385,7 +374,7 @@ function NumberField({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className="flex items-center gap-1 font-medium">{label}<HelpTooltip label={`Help: ${label}`}>{help}{note ? ` ${note}` : ""}</HelpTooltip></span>
       <Input
         inputMode="decimal"
         max={max}
@@ -395,10 +384,6 @@ function NumberField({
         type="number"
         defaultValue={value}
       />
-      <span className="text-xs text-muted-foreground">{help}</span>
-      {note ? (
-        <span className="text-xs text-muted-foreground">{note}</span>
-      ) : null}
     </label>
   )
 }
@@ -420,23 +405,14 @@ function CheckField({
 }) {
   return (
     <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
-      <input
+      <Switch
         className="mt-1"
         name={name}
-        type="checkbox"
         defaultChecked={checked}
       />
-      <span>
-        <span className="block font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">{help}</span>
-        {note ? (
-          <span className="mt-1 block text-xs text-muted-foreground">{note}</span>
-        ) : null}
-        {warning ? (
-          <span className="mt-1 block text-xs text-amber-700 dark:text-amber-300">
-            {warning}
-          </span>
-        ) : null}
+      <span className="flex min-w-0 items-center gap-1">
+        <span className="font-medium">{label}</span>
+        <HelpTooltip label={`Help: ${label}`}>{help}{note ? ` ${note}` : ""}{warning ? ` ${warning}` : ""}</HelpTooltip>
       </span>
     </label>
   )

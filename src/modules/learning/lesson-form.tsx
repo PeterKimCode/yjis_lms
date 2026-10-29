@@ -1,5 +1,9 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
+import { Switch } from "@/components/ui/switch"
+
 import { useActionState, useEffect, useMemo, useRef, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
@@ -327,9 +331,7 @@ export function LessonForm({
                   <span className="font-medium text-sky-950">
                     Upload video to LMS
                   </span>
-                  <span className="block text-xs text-sky-800">
-                    MP4, WebM, MOV, or M4V only. Max 500MB.
-                  </span>
+                  <HelpTooltip>MP4, WebM, MOV, or M4V only. Max 500MB.</HelpTooltip>
                   <Input
                     ref={videoFileInputRef}
                     disabled={isUploading}
@@ -495,10 +497,9 @@ export function LessonForm({
         </div>
         <ActionFeedback closeOnSuccess state={saveState} />
         <label className="flex items-center gap-2 text-sm">
-          <input
+          <Switch
             className="size-4"
             name="isPublished"
-            type="checkbox"
             defaultChecked={lesson?.isPublished ?? false}
           />
           Published

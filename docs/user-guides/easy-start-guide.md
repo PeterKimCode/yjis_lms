@@ -88,7 +88,7 @@
 
 ## 관리자가 모집·공지를 열려면
 
-Class Sections의 수업에서 Student recruitment 소개를 쓰고 Accept applications를 켜서 저장합니다. Enrollment requests에서 학생의 원래 학교와 신청 수업을 확인하고 Approve 또는 사유 작성 후 Reject를 누릅니다. Login notices는 로그인 전 공개 공지이므로 개인정보를 쓰지 마세요. 게시 시간은 표시된 학교 시간대 기준입니다.
+Class Sections의 수업에서 Student recruitment 소개를 쓰고 Accept applications를 켜서 저장합니다. Enrollment requests에서 학생의 원래 학교와 신청 수업을 확인하고 Approve 또는 사유 작성 후 Reject를 누릅니다. Login notices는 로그인 전 공개 공지이므로 개인정보를 쓰지 마세요. 제목·본문을 입력하고 Publish on login page 토글을 켠 뒤 Save notice를 누르세요. 게시 시작·종료 입력은 사용하지 않습니다.
 
 ## 아래쪽 공통 메뉴
 

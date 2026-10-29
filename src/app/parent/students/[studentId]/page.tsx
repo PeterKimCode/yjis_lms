@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { UserRole } from "@prisma/client"
@@ -92,9 +93,7 @@ export default async function ParentStudentDetailPage({
       <div className="rounded-lg border bg-background p-4">
         <div className="space-y-1">
           <h2 className="text-sm font-semibold">Documents</h2>
-          <p className="text-sm text-muted-foreground">
-            Download published or finalized documents for this linked student.
-          </p>
+          <HelpTooltip>Download published or finalized documents for this linked student.</HelpTooltip>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {student.generatedDocuments.length > 0 ? (

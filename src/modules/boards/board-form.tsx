@@ -1,5 +1,9 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
+import { Switch } from "@/components/ui/switch"
+
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -158,9 +162,7 @@ export function BoardForm({
               </option>
             ))}
           </select>
-          <span className="text-xs text-muted-foreground">
-            Class boards require a campus and class section.
-          </span>
+          <HelpTooltip>Class boards require a campus and class section.</HelpTooltip>
         </label>
         <label className="grid min-w-0 gap-1 text-sm">
           <span className="font-medium">Board type</span>
@@ -183,18 +185,14 @@ export function BoardForm({
               </option>
             ))}
           </select>
-          <span className="text-xs text-muted-foreground">
-            {boardKindHelp(boardKind)}
-          </span>
+          <HelpTooltip>{boardKindHelp(boardKind)}</HelpTooltip>
           {classBoard && !classSectionId ? (
             <span className="text-xs text-amber-700 dark:text-amber-300">
               Class boards require a class section.
             </span>
           ) : null}
           {boardKind === "SCHOOL_ANNOUNCEMENTS" && classSectionId ? (
-            <span className="text-xs text-amber-700 dark:text-amber-300">
-              School announcements should not be attached to a class section.
-            </span>
+            <HelpTooltip>School announcements should not be attached to a class section.</HelpTooltip>
           ) : null}
         </label>
       </div>
@@ -282,10 +280,9 @@ function CheckboxCard({
 
   return (
     <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
-      <input
+      <Switch
         className="mt-1"
         name={name}
-        type="checkbox"
         checked={isChecked}
         onChange={(event) => {
           setIsChecked(event.target.checked)
@@ -294,7 +291,7 @@ function CheckboxCard({
       />
       <span className="space-y-1">
         <span className="block font-medium">{label}</span>
-        <span className="block text-xs text-muted-foreground">{help}</span>
+        <HelpTooltip label={`Help: ${label}`}>{help}</HelpTooltip>
       </span>
     </label>
   )

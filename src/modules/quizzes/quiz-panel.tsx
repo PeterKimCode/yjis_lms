@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
@@ -290,11 +292,9 @@ export function QuizManagePanel({
           Review attempts
         </summary>
         <div className="space-y-4 pt-4">
-          <p className="text-sm text-muted-foreground">
-            Legacy exam grades remain available under Grades. Review student
+          <HelpTooltip>Legacy exam grades remain available under Grades. Review student
             submissions and manually grade short-answer or essay responses when
-            needed.
-          </p>
+            needed.</HelpTooltip>
           <AttemptReview quiz={quiz} />
         </div>
       </details>

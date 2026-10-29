@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 import { UserDeletionRequestStatus, UserRole } from "@prisma/client"
 
@@ -148,11 +149,9 @@ export default async function UsersPage({
         <PendingUserDeletionRequests requests={pendingDeletionRequests} />
       ) : null}
       {isSchoolAdminOnly ? (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-          School admins can create instructor, parent, and student accounts in
+        <HelpTooltip>School admins can create instructor, parent, and student accounts in
           their scope. Admin accounts and user deletion require super admin
-          approval.
-        </div>
+          approval.</HelpTooltip>
       ) : null}
       <UserForm
         canManageAdminRoles={canManageAdminRoles}
@@ -361,9 +360,7 @@ function PendingUserDeletionRequests({
     <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
       <div className="mb-3">
         <h2 className="font-semibold text-amber-950">Pending user deletion requests</h2>
-        <p className="text-sm text-amber-800">
-          Review requests from school admins before any user is deleted.
-        </p>
+        <HelpTooltip>Review requests from school admins before any user is deleted.</HelpTooltip>
       </div>
       <div className="grid gap-2">
         {requests.map((request) => (

@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch"
 import { deleteAdminEntity, saveCampus } from "@/modules/admin/actions"
 import {
   ActiveBadge,
@@ -142,9 +143,8 @@ function CampusForm({
         <Field label="Address" name="address" defaultValue={campus?.address} />
         <Field label="Phone" name="phone" defaultValue={campus?.phone} />
         <label className="flex items-end gap-2 text-sm">
-          <input
+          <Switch
             name="isActive"
-            type="checkbox"
             defaultChecked={campus?.isActive ?? true}
           />
           Active

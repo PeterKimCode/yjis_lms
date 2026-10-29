@@ -209,14 +209,14 @@
           "where": "Login notices(로그인 공지)",
           "flow": [
             "학교 선택 → Create login notice",
-            "제목·본문·게시 기간 입력",
+            "제목·본문 입력",
             "Publish on login page → Save notice"
           ],
           "steps": [
             "Login notices에서 학교와 Create login notice를 누르세요.",
-            "제목·본문을 쓰고 필요하면 시작·종료 시간을 정하세요. 표시된 학교 시간대 기준입니다.",
-            "Publish on login page를 체크하고 Save notice를 누르세요.",
-            "공개를 내리려면 체크를 풀고 다시 저장하세요."
+            "제목·본문을 입력하세요. 게시 시작·종료 시간 입력은 없습니다.",
+            "Publish on login page 토글을 켜고 Save notice를 누르세요.",
+            "공개를 내리려면 토글을 끄고 다시 저장하세요."
           ],
           "tip": "로그인하지 않은 방문자도 읽습니다. 학생 개인정보를 쓰지 마세요. 기존 내부 게시판은 자동 공개되지 않습니다."
         },
@@ -575,14 +575,14 @@
           "where": "Login notices(로그인 공지)",
           "flow": [
             "학교 선택 → Create login notice",
-            "제목·본문·게시 기간 입력",
+            "제목·본문 입력",
             "Publish on login page → Save notice"
           ],
           "steps": [
             "Login notices에서 학교와 Create login notice를 누르세요.",
-            "제목·본문을 쓰고 필요하면 시작·종료 시간을 정하세요. 표시된 학교 시간대 기준입니다.",
-            "Publish on login page를 체크하고 Save notice를 누르세요.",
-            "공개를 내리려면 체크를 풀고 다시 저장하세요."
+            "제목·본문을 입력하세요. 게시 시작·종료 시간 입력은 없습니다.",
+            "Publish on login page 토글을 켜고 Save notice를 누르세요.",
+            "공개를 내리려면 토글을 끄고 다시 저장하세요."
           ],
           "tip": "로그인하지 않은 방문자도 읽습니다. 학생 개인정보를 쓰지 마세요. 기존 내부 게시판은 자동 공개되지 않습니다."
         },

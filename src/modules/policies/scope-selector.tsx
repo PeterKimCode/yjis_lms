@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -53,9 +55,7 @@ export function PolicyScopeSelector({
             </option>
           ))}
         </select>
-        <span className="text-xs text-muted-foreground">
-          Choose the organization policy scope.
-        </span>
+        <HelpTooltip>Choose the organization policy scope.</HelpTooltip>
       </label>
       <label className="grid gap-1 text-sm">
         <span className="font-medium">Campus</span>
@@ -72,9 +72,7 @@ export function PolicyScopeSelector({
             </option>
           ))}
         </select>
-        <span className="text-xs text-muted-foreground">
-          Select a campus override or leave blank for the organization default.
-        </span>
+        <HelpTooltip>Select a campus override or leave blank for the organization default.</HelpTooltip>
       </label>
       <div className="flex items-end">
         <Button size="sm" type="submit" variant="outline">

@@ -1,5 +1,7 @@
 "use client"
 
+import { Switch } from "@/components/ui/switch"
+
 import Link from "next/link"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
@@ -66,7 +68,7 @@ export function UserEnrollmentPanel({ userId, data: initialData }: { userId: str
     })
   }
   function checkbox(row: typeof rows[number]) {
-    return <input type="checkbox" aria-label={`Select ${row.name}`} checked={chosen.includes(row.id)} disabled={pending || !eligible.includes(row.id)}
+    return <Switch aria-label={`Select ${row.name}`} checked={chosen.includes(row.id)} disabled={pending || !eligible.includes(row.id)}
       onChange={(event) => setSelected((values) => event.target.checked ? [...values, row.id] : values.filter((id) => id !== row.id))} />
   }
   function status(row: typeof rows[number]) {
@@ -104,7 +106,7 @@ export function UserEnrollmentPanel({ userId, data: initialData }: { userId: str
       </div>
       {message ? <p role="status" className="text-sm">{message}</p> : null}
       <label className="flex min-h-11 items-center gap-2 text-sm">
-        <input type="checkbox" disabled={pending || !eligible.length} checked={eligible.length > 0 && chosen.length === eligible.length}
+        <Switch disabled={pending || !eligible.length} checked={eligible.length > 0 && chosen.length === eligible.length}
           onChange={(event) => setSelected(event.target.checked ? eligible : [])} />Select available results on this page
       </label>
       <div className="divide-y border-y md:hidden">

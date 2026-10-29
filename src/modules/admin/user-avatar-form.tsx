@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useActionState, useEffect, useRef } from "react"
 import Image from "next/image"
 
@@ -62,10 +64,8 @@ export function AdminUserAvatarForm({
         <div className="min-w-0 flex-1 space-y-3">
           <div>
             <h3 className="text-sm font-semibold">Profile photo</h3>
-            <p className="text-xs text-muted-foreground">
-              Admins can upload or remove this user&apos;s profile image. JPG, PNG,
-              WEBP, or GIF only. Max 10MB.
-            </p>
+            <HelpTooltip>Admins can upload or remove this user&apos;s profile image. JPG, PNG,
+              WEBP, or GIF only. Max 10MB.</HelpTooltip>
           </div>
           <form
             action={uploadAction}

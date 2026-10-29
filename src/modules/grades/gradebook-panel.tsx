@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useActionState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
@@ -188,13 +190,11 @@ export function GradebookPanel({
         </summary>
         <div className="space-y-4 pt-3">
           <FinalGradeActions classSectionId={classSectionId} />
-          <p className="text-xs text-muted-foreground">
-            MVP behavior: lesson score uses published lesson completion;
+          <HelpTooltip>MVP behavior: lesson score uses published lesson completion;
             attendance uses Present 100, Late 50, excused/sick/official absence
             100; due assignments without submissions count as 0; quizzes use
             the best submitted attempt; exams currently count as 0 until exam
-            scoring is added.
-          </p>
+            scoring is added.</HelpTooltip>
           <SimpleTable
             empty="No enrolled students."
             headers={[
@@ -258,10 +258,8 @@ export function GradebookPanel({
           Advanced gradebook
         </summary>
         <div className="space-y-4 pt-3">
-          <p className="text-sm text-muted-foreground">
-            TODO: Advanced GradeCategory/GradeItem workflows can be expanded
-            later. The MVP flow above does not require these manual structures.
-          </p>
+          <HelpTooltip>TODO: Advanced GradeCategory/GradeItem workflows can be expanded
+            later. The MVP flow above does not require these manual structures.</HelpTooltip>
           <details className="rounded-md border bg-background p-3">
             <summary className="cursor-pointer text-sm font-medium">
               Grade categories
@@ -380,11 +378,9 @@ export function GradebookPanel({
           Transcript/GPA
         </summary>
         <div className="space-y-3 pt-3">
-          <p className="text-sm text-muted-foreground">
-            Generates transcript terms and GPA from published or finalized final
+          <HelpTooltip>Generates transcript terms and GPA from published or finalized final
             grades. Attempted credits include failed courses; earned credits
-            count passed courses only.
-          </p>
+            count passed courses only.</HelpTooltip>
           <TranscriptForm classSectionId={classSectionId} />
         </div>
       </details>

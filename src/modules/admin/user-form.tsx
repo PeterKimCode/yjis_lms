@@ -1,5 +1,7 @@
 "use client"
 
+import { Switch } from "@/components/ui/switch"
+
 import { useActionState, useMemo, useState } from "react"
 import { UserRole } from "@prisma/client"
 
@@ -214,9 +216,8 @@ export function UserForm({
           </>
         ) : null}
         <label className="flex items-end gap-2 text-sm">
-          <input
+          <Switch
             name="isActive"
-            type="checkbox"
             defaultChecked={user?.isActive ?? true}
           />
           Active

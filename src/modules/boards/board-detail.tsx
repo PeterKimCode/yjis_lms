@@ -1,3 +1,5 @@
+import { HelpTooltip } from "@/components/help-tooltip"
+import { Switch } from "@/components/ui/switch"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -105,7 +107,7 @@ export async function BoardDetailPage({
             </label>
             {data.canManage ? (
               <label className="flex items-center gap-2 text-sm">
-                <input name="isPinned" type="checkbox" />
+                <Switch name="isPinned"  />
                 Pin post
               </label>
             ) : null}
@@ -117,9 +119,7 @@ export async function BoardDetailPage({
                 name="images"
                 type="file"
               />
-              <span className="text-xs text-muted-foreground">
-                Upload JPG, PNG, WEBP, or GIF images. Maximum 10MB per image.
-              </span>
+              <HelpTooltip>Upload JPG, PNG, WEBP, or GIF images. Maximum 10MB per image.</HelpTooltip>
             </label>
             <div>
               <Button size="sm" type="submit">
@@ -129,9 +129,7 @@ export async function BoardDetailPage({
           </form>
         </details>
       ) : (
-        <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-          Announcements are read-only for you unless posting is enabled.
-        </p>
+        <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">Announcements are read-only for you unless posting is enabled.</p>
       )}
 
       <SectionBlock title="Posts">
@@ -235,17 +233,15 @@ export async function BoardDetailPage({
                         {data.canManage ? (
                           <div className="flex flex-wrap gap-3">
                             <label className="flex items-center gap-2 text-sm">
-                              <input
+                              <Switch
                                 name="isPinned"
-                                type="checkbox"
                                 defaultChecked={post.isPinned}
                               />
                               Pin post
                             </label>
                             <label className="flex items-center gap-2 text-sm">
-                              <input
+                              <Switch
                                 name="isPublished"
-                                type="checkbox"
                                 defaultChecked={Boolean(post.publishedAt)}
                               />
                               Published
@@ -260,10 +256,8 @@ export async function BoardDetailPage({
                             name="images"
                             type="file"
                           />
-                          <span className="text-xs text-muted-foreground">
-                            Up to 5 images per post. JPG, PNG, WEBP, or GIF
-                            only. Maximum 10MB per image.
-                          </span>
+                          <HelpTooltip>Up to 5 images per post. JPG, PNG, WEBP, or GIF
+                            only. Maximum 10MB per image.</HelpTooltip>
                         </label>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" type="submit">

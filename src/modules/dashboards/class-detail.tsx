@@ -1,3 +1,5 @@
+import { HelpTooltip } from "@/components/help-tooltip"
+import { Switch } from "@/components/ui/switch"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Fragment, type ReactNode } from "react"
@@ -252,10 +254,8 @@ export async function ClassSectionDetail({
                     <h3 className="text-sm font-medium">
                       Completion detail: {selectedLesson.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground">
-                      All enrolled students are shown, including students who
-                      have not started.
-                    </p>
+                    <HelpTooltip>All enrolled students are shown, including students who
+                      have not started.</HelpTooltip>
                   </div>
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/instructor/classes/${section.id}`}>
@@ -478,10 +478,8 @@ export async function ClassSectionDetail({
                               value={attendance.id}
                             />
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <p className="text-xs text-muted-foreground">
-                                Default is Present. Change only students who are
-                                late, absent, excused, or pending.
-                              </p>
+                              <HelpTooltip>Default is Present. Change only students who are
+                                late, absent, excused, or pending.</HelpTooltip>
                               <Button size="sm" type="submit">
                                 Save all
                               </Button>
@@ -672,15 +670,15 @@ export async function ClassSectionDetail({
                     />
                   </label>
                   <label className="flex items-end gap-2 text-sm">
-                    <input name="allowStudentPosts" type="checkbox" />
+                    <Switch name="allowStudentPosts"  />
                     Allow student posts
                   </label>
                   <label className="flex items-end gap-2 text-sm">
-                    <input name="allowParentPosts" type="checkbox" />
+                    <Switch name="allowParentPosts"  />
                     Allow parent posts
                   </label>
                   <label className="flex items-end gap-2 text-sm">
-                    <input name="allowComments" type="checkbox" defaultChecked />
+                    <Switch name="allowComments"  defaultChecked />
                     Allow comments
                   </label>
                   <div className="flex items-end">
@@ -688,10 +686,8 @@ export async function ClassSectionDetail({
                       Create board
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground md:col-span-2 xl:col-span-4">
-                    Attachments will be enabled after file storage
-                    stabilization.
-                  </p>
+                  <HelpTooltip>Attachments will be enabled after file storage
+                    stabilization.</HelpTooltip>
                 </form>
               </details>
             ) : null}

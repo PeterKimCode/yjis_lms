@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useActionState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -28,10 +30,8 @@ export function InitializeDefaultsForm({
     >
       <div className="space-y-1">
         <p className="text-sm font-medium">Initialize missing defaults</p>
-        <p className="text-xs text-muted-foreground">
-          Creates missing policy records for this scope without overwriting
-          customized values.
-        </p>
+        <HelpTooltip>Creates missing policy records for this scope without overwriting
+          customized values.</HelpTooltip>
         {state.message ? (
           <p
             className={`text-xs ${state.ok ? "text-muted-foreground" : "text-destructive"}`}

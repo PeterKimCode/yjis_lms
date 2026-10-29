@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import { AdminPageHeader } from "@/modules/admin/components"
 import { getPolicyAdminData } from "@/modules/policies/admin-data"
 import { GradingScaleEditor } from "@/modules/policies/grading-scale-editor"
@@ -42,11 +43,9 @@ export default async function PoliciesPage({
         title="Policies"
         description="Configure school-level rules for attendance, video completion, assignments, grades, GPA, and documents."
       />
-      <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-        If a campus-specific policy is missing, the system falls back to the
+      <HelpTooltip>If a campus-specific policy is missing, the system falls back to the
         organization default, then safe system defaults. You are editing the
-        effective values for the selected scope below.
-      </p>
+        effective values for the selected scope below.</HelpTooltip>
       <PolicyScopeSelector
         campusOptions={data.policyCampusOptions}
         organizationOptions={data.organizationOptions}
@@ -163,25 +162,12 @@ function GradingScaleSection({
         Grading scale / GPA policy
       </summary>
       <div className="space-y-4 pt-4">
-        <div className="space-y-1 text-sm text-muted-foreground">
-          <p>
-            Final numeric scores are converted to letter grades and GPA points
-            using this table.
-          </p>
-          <p>
-            Example: if A is 90-94.99 with grade point 4.0, then a final score
-            of 92 becomes A and contributes 4.0 points to GPA.
-          </p>
-          <p className="font-medium text-amber-700 dark:text-amber-300">
-            Make sure score ranges do not overlap and cover 0-100.
-          </p>
-          {data.selectedCampusId ? (
-            <p>
-              This scale is inherited from the organization default. Create a
-              campus override if this campus uses a different scale.
-            </p>
-          ) : null}
-        </div>
+        <HelpTooltip label="Help: Grading scale / GPA policy">
+          Final numeric scores are converted to letter grades and GPA points using this table.
+          Example: if A is 90-94.99 with grade point 4.0, then a final score of 92 becomes A and contributes 4.0 points to GPA.
+          Make sure score ranges do not overlap and cover 0-100.
+          {data.selectedCampusId ? " This scale is inherited from the organization default. Create a campus override if this campus uses a different scale." : ""}
+        </HelpTooltip>
         {!data.gradingScales.length ? (
           <p className="rounded-md border p-3 text-sm text-muted-foreground">
             No grading scale is configured. Final grades can be calculated as

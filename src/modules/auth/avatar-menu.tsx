@@ -1,5 +1,7 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
 import { useActionState, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 
@@ -93,9 +95,7 @@ export function AvatarMenu({
             {roleSummary}
           </p>
         ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.
-        </p>
+        <HelpTooltip>Upload a profile image. JPG, PNG, WEBP, or GIF only. Max 10MB.</HelpTooltip>
         <div className="mt-3">
           <SessionCountdown />
         </div>

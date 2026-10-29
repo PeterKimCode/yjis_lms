@@ -1,5 +1,7 @@
 "use client"
 
+import { Switch } from "@/components/ui/switch"
+
 import { useActionState, useState } from "react"
 
 import { ActionFeedback } from "@/components/action-feedback"
@@ -104,9 +106,8 @@ export function GradingScaleEditor({
                 </td>
                 <td className="p-2">
                   <label className="flex items-center gap-2">
-                    <input
+                    <Switch
                       name={`rows[${index}][isPassing]`}
-                      type="checkbox"
                       defaultChecked={row.isPassing}
                     />
                     Passing

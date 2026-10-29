@@ -1,5 +1,9 @@
 "use client"
 
+import { HelpTooltip } from "@/components/help-tooltip"
+
+import { Switch } from "@/components/ui/switch"
+
 import { AssessmentAttachments } from "@/modules/files/assessment-attachments"
 import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone } from "@/lib/timezone"
 import { useAssessmentSave } from "@/components/assessment-save"
@@ -302,9 +306,7 @@ function AssignmentForm({
           name="pdfAttachmentFile"
           type="file"
         />
-        <span className="text-xs text-muted-foreground">
-          PDF only. Max 20MB.
-        </span>
+        <HelpTooltip>PDF only. Max 20MB.</HelpTooltip>
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pdfAttachmentFile}</span></label>
       <section className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 md:col-span-2 dark:border-blue-900 dark:bg-blue-950/30"><h3 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Assignment settings</h3><div className="mt-3 grid gap-4 md:grid-cols-2">      <label className="grid gap-1 text-sm">
         <span className="font-medium">Max score</span>
@@ -318,9 +320,8 @@ function AssignmentForm({
         />
       <span role="alert" className="text-xs text-red-700">{state.fieldErrors?.pointsPossible}</span></label>
       <label className="flex items-end gap-2 text-sm">
-        <input
+        <Switch
           name="acceptsLate"
-          type="checkbox"
           defaultChecked={assignment?.acceptsLate ?? defaultAcceptsLate}
         />
         Allow late submission
@@ -397,10 +398,8 @@ function SubmissionForm({
           disabled={Boolean(isClosed)}
         />
       </label>
-      <p className="text-xs text-muted-foreground">
-        Allowed: PDF, Office files, text, images, CSV, ZIP. Max 20 MB.
-        Executable/script files are blocked.
-      </p>
+      <HelpTooltip>Allowed: PDF, Office files, text, images, CSV, ZIP. Max 20 MB.
+        Executable/script files are blocked.</HelpTooltip>
       {submission?.submittedAt ? (
         <p className="text-xs text-muted-foreground">
           Last submitted: {formatDateTime(submission.submittedAt)}

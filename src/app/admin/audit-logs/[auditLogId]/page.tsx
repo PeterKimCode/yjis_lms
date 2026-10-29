@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -86,10 +87,8 @@ export default async function AdminAuditLogDetailPage({
           </pre>
         </div>
       </section>
-      <p className="text-xs text-muted-foreground">
-        Audit logs are for accountability and troubleshooting. They do not
-        replace database backups.
-      </p>
+      <HelpTooltip>Audit logs are for accountability and troubleshooting. They do not
+        replace database backups.</HelpTooltip>
     </div>
   )
 }

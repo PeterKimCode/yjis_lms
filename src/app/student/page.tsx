@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import { BentoGrid } from "@/modules/dashboards/bento-grid"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -109,9 +110,7 @@ export default async function StudentPage() {
         { id: "class-list", title: "Your classes", w: 8, h: 9, minW: 6, content: <StudentClassTable enrollments={enrollments} /> },
         { id: "documents", title: "Documents", w: 4, h: 9, content: (<div className="space-y-4">
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">
-            Download published or finalized report cards and transcripts.
-          </p>
+          <HelpTooltip>Download published or finalized report cards and transcripts.</HelpTooltip>
         </div>
         {hasPublishedDocuments ? (
           <div className="mt-3 flex flex-wrap gap-2">

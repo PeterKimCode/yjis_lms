@@ -1,3 +1,4 @@
+import { HelpTooltip } from "@/components/help-tooltip"
 import Link from "next/link"
 
 import { getPrismaClient } from "@/lib/prisma"
@@ -135,11 +136,9 @@ export default async function AdminAuditLogsPage({
           </TableRow>
         ))}
       />
-      <p className="text-xs text-muted-foreground">
-        Showing up to 250 audit logs for the selected filters. Use CSV export
+      <HelpTooltip>Showing up to 250 audit logs for the selected filters. Use CSV export
         for lightweight review; use database backups for full historical
-        retention.
-      </p>
+        retention.</HelpTooltip>
     </div>
   )
 }

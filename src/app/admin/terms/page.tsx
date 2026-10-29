@@ -1,3 +1,5 @@
+import { HelpTooltip } from "@/components/help-tooltip"
+import { Switch } from "@/components/ui/switch"
 import { deleteAdminEntity, saveTerm } from "@/modules/admin/actions"
 import {
   ActiveBadge,
@@ -142,14 +144,11 @@ function TermForm({
           defaultValue={term?.sequence ?? 1}
           required
         />
-        <p className="text-xs text-muted-foreground xl:col-span-2">
-          Term order controls sorting inside the academic year. Example: 1 =
-          first semester, 2 = second semester.
-        </p>
+        <HelpTooltip>Term order controls sorting inside the academic year. Example: 1 =
+          first semester, 2 = second semester.</HelpTooltip>
         <label className="flex items-end gap-2 text-sm">
-          <input
+          <Switch
             name="isActive"
-            type="checkbox"
             defaultChecked={term?.isActive ?? false}
           />
           Active
