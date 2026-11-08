@@ -5,7 +5,6 @@ import { UserRole } from "@prisma/client"
 import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import { assessmentAvailability } from "@/modules/quizzes/availability"
 
-import { Button } from "@/components/ui/button"
 import { requireAnyRole } from "@/modules/auth/permissions"
 import {
   DashboardPage,
@@ -20,7 +19,7 @@ import {
   getAttendancePolicyForOrganization,
   getParentStudentDetail,
 } from "@/modules/dashboards/data"
-import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
+import { StudentDocuments } from "@/modules/documents/student-documents"
 import {
   getAttendanceSummary,
 } from "@/modules/attendance/summary"
@@ -47,15 +46,6 @@ export default async function ParentStudentDetailPage({
     student.attendanceRecords,
     attendancePolicy
   )
-  const termOptions = [
-    ...new Map(
-      student.enrollments
-        .map((enrollment) => enrollment.classSection.term)
-        .filter((term): term is NonNullable<typeof term> => Boolean(term))
-        .map((term) => [term.id, term])
-    ).values(),
-  ]
-
   return (
     <DashboardPage
       title={student.name}
@@ -90,36 +80,9 @@ export default async function ParentStudentDetailPage({
         />
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold lms-help-heading">Documents<HelpTooltip>Download published or finalized documents for this linked student.</HelpTooltip></h2>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {student.generatedDocuments.length > 0 ? (
-            <TranscriptDownloadButton studentId={student.id} />
-          ) : (
-            <span className="rounded-md border border-dashed px-3 py-1.5 text-sm text-muted-foreground">
-              Transcript available after admin approval.
-            </span>
-          )}
-          {termOptions.length ? (
-            termOptions.map((term) => (
-              <Button asChild key={term.id} size="sm" variant="outline">
-                <Link
-                  href={`/api/documents/report-card?studentId=${student.id}&termId=${term.id}`}
-                >
-                  Report card: {term.name}
-                </Link>
-              </Button>
-            ))
-          ) : (
-            <Button asChild size="sm" variant="outline">
-              <Link href={`/api/documents/report-card?studentId=${student.id}`}>
-                Download report card
-              </Link>
-            </Button>
-          )}
-        </div>
+      <div className="space-y-3 rounded-lg border bg-white p-4">
+        <h2 className="text-sm font-semibold lms-help-heading">Documents<HelpTooltip>Download documents approved by the school for this linked student.</HelpTooltip></h2>
+        <StudentDocuments studentId={student.id} canRequest={false} />
       </div>
 
       <SimpleTable

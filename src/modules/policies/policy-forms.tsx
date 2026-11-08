@@ -274,35 +274,11 @@ function GradingPolicyForm({
           </div>
         </div>
       </details>
-      <details className="rounded-md border p-3" open>
-        <summary className="cursor-pointer text-sm font-medium">
-          Document policy
-        <HelpTooltip>These settings control when report cards and transcripts are
-            visible to students and parents.</HelpTooltip></summary>
-        <div className="space-y-3 pt-3">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <CheckField
-              checked={policies.document.reportCardsRequirePublishedGrades}
-              help="Recommended default: on. If enabled, students and parents can download report cards only after final grades are published or finalized."
-              label="Report cards visible after published grades"
-              name="reportCardsRequirePublishedGrades"
-              note="Admins can still generate previews if admin preview is allowed."
-            />
-            <CheckField
-              checked={policies.document.transcriptsRequirePublishedGrades}
-              help="Recommended default: on. If enabled, students and parents can download transcripts only after official grades are available."
-              label="Transcripts visible after published/finalized grades"
-              name="transcriptsRequirePublishedGrades"
-              note="For universities, transcripts should normally use finalized or officially published grades."
-            />
-            <div className="rounded-md border p-3 text-sm">
-              <div className="font-medium lms-help-heading">Admin preview allowed<HelpTooltip>Recommended default: on. If enabled, admins and authorized
-                academic staff can preview draft report cards or transcripts
-                before releasing them to students and parents. Preview documents should be treated as unofficial.</HelpTooltip></div>
-            </div>
-          </div>
-        </div>
-      </details>
+      <div className="rounded-md border p-3 text-sm">
+        <p className="lms-help-heading font-medium">Document issuance<HelpTooltip>Students request official documents from Overview. School administrators review and approve requests in Grades &amp; Documents.</HelpTooltip></p>
+        <input type="hidden" name="reportCardsRequirePublishedGrades" value={policies.document.reportCardsRequirePublishedGrades ? "on" : "off"} />
+        <input type="hidden" name="transcriptsRequirePublishedGrades" value={policies.document.transcriptsRequirePublishedGrades ? "on" : "off"} />
+      </div>
       <details className="rounded-md border p-3" open>
         <summary className="cursor-pointer text-sm font-medium">
           GPA policy

@@ -2,10 +2,7 @@ import { HelpTooltip } from "@/components/help-tooltip"
 import { BentoGrid } from "@/modules/dashboards/bento-grid"
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { DocumentStatus, DocumentType } from "@prisma/client"
 
-import { Button } from "@/components/ui/button"
-import { getPrismaClient } from "@/lib/prisma"
 import {
   DashboardPage,
   MetricCard,
@@ -16,7 +13,7 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import { getStudentClasses } from "@/modules/dashboards/data"
-import { TranscriptDownloadButton } from "@/modules/documents/transcript-download-button"
+import { StudentDocuments } from "@/modules/documents/student-documents"
 import { getUnreadMessageCountForCurrentUser } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 import { requireAuth } from "@/modules/auth/permissions"
@@ -32,36 +29,6 @@ export default async function StudentPage() {
     getUnreadMessageCountForCurrentUser(),
     getUnreadNotificationCount(authUser.id),
   ])
-  const approvedTranscriptCount = await getPrismaClient().generatedDocument.count({
-    where: {
-      documentType: DocumentType.TRANSCRIPT,
-      status: DocumentStatus.GENERATED,
-      studentId: user.id,
-    },
-  })
-  const publishedGradeClassSections = enrollments.filter(
-    (enrollment) => enrollment.classSection.finalGrades.length > 0
-  )
-  const termOptions = [
-    ...new Map(
-      publishedGradeClassSections
-        .flatMap((enrollment) =>
-          enrollment.classSection.finalGrades.map(
-            (grade) => grade.termId ?? enrollment.classSection.term?.id ?? ""
-          )
-        )
-        .filter(Boolean)
-        .map((termId) => {
-          const enrollment = enrollments.find(
-            (item) => item.classSection.term?.id === termId
-          )
-          return enrollment?.classSection.term ?? null
-        })
-        .filter((term): term is NonNullable<typeof term> => Boolean(term))
-        .map((term) => [term.id, term])
-    ).values(),
-  ]
-  const hasPublishedDocuments = publishedGradeClassSections.length > 0
   const tasks = await getStudentTaskGroups(user.id)
 
   return (
@@ -108,40 +75,7 @@ export default async function StudentPage() {
           )}
         />) },
         { id: "class-list", title: "Your classes", w: 8, h: 9, minW: 6, content: <StudentClassTable enrollments={enrollments} /> },
-        { id: "documents", title: "Documents", help: <HelpTooltip>Download published or finalized report cards and transcripts.</HelpTooltip>, w: 4, h: 9, content: (<div className="space-y-4">
-        {hasPublishedDocuments ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {approvedTranscriptCount > 0 ? (
-              <TranscriptDownloadButton studentId={user.id} />
-            ) : (
-              <span className="rounded-md border border-dashed px-3 py-1.5 text-sm text-muted-foreground">
-                Transcript available after admin approval.
-              </span>
-            )}
-            {termOptions.length ? (
-              termOptions.map((term) => (
-                <Button asChild key={term.id} size="sm" variant="outline">
-                  <Link
-                    href={`/api/documents/report-card?studentId=${user.id}&termId=${term.id}`}
-                  >
-                    Report card: {term.name}
-                  </Link>
-                </Button>
-              ))
-            ) : (
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/api/documents/report-card?studentId=${user.id}`}>
-                  Download report card
-                </Link>
-              </Button>
-            )}
-          </div>
-        ) : (
-          <p className="mt-3 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-            No published documents available yet.
-          </p>
-        )}
-      </div>) },
+        { id: "documents", title: "Documents", help: <HelpTooltip>Request official grade documents from your school and download approved PDFs.</HelpTooltip>, w: 4, h: 9, content: <StudentDocuments studentId={user.id} canRequest /> },
       ]} />
     </DashboardPage>
   )

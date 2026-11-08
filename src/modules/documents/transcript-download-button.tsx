@@ -13,10 +13,12 @@ function getFilename(disposition: string | null) {
 export function TranscriptDownloadButton({
   children = "Download transcript",
   studentId,
+  requestId,
   variant = "outline",
 }: {
   children?: ReactNode
   studentId: string
+  requestId?: string
   variant?: "default" | "outline"
 }) {
   const [message, setMessage] = useState("")
@@ -27,7 +29,8 @@ export function TranscriptDownloadButton({
     setMessage("")
 
     try {
-      const response = await fetch(`/api/documents/transcript?studentId=${studentId}`)
+      const params = new URLSearchParams({ studentId, ...(requestId ? { requestId } : {}) })
+      const response = await fetch(`/api/documents/transcript?${params}`)
 
       if (!response.ok) {
         const data = (await response.json().catch(() => null)) as {
@@ -49,6 +52,8 @@ export function TranscriptDownloadButton({
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
+    } catch {
+      setMessage("Transcript could not be downloaded. Please try again later.")
     } finally {
       setIsDownloading(false)
     }

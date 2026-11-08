@@ -1,6 +1,7 @@
 import "server-only"
 
-import { DocumentStatus, DocumentType, FinalGradeStatus, UserRole } from "@prisma/client"
+import { DocumentStatus, DocumentType, FinalGradeStatus, type Prisma } from "@prisma/client"
+import { createHash } from "node:crypto"
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import fontkit from "@pdf-lib/fontkit"
 import { readFile } from "node:fs/promises"
@@ -16,14 +17,6 @@ import {
 
 import { getPrismaClient } from "@/lib/prisma"
 import { formatDateTimeInTimeZone } from "@/lib/timezone"
-import type { SessionRoleAssignment } from "@/modules/auth/auth"
-import { canManageStudentData } from "@/modules/auth/permissions"
-import { resolvePolicies } from "@/modules/policies/resolve"
-
-type DocumentAccess = {
-  canPreviewDrafts: boolean
-  userId: string
-}
 
 type PdfFonts = {
   bold: PDFFont
@@ -46,7 +39,7 @@ type TableColumn<T> = {
 
 type GradeStatus = FinalGradeStatus
 
-const publishedStatuses: GradeStatus[] = [
+export const publishedStatuses: GradeStatus[] = [
   FinalGradeStatus.PUBLISHED,
   FinalGradeStatus.FINALIZED,
 ]
@@ -62,54 +55,15 @@ const accentBlue = rgb(0.05, 0.55, 0.75)
 const burgundy = rgb(0.43, 0.06, 0.1)
 const softGreen = rgb(0.43, 0.72, 0.56)
 
-export async function assertStudentDocumentAccess(input: {
-  currentUserId: string
-  roleAssignments: SessionRoleAssignment[]
-  studentId: string
-}) {
-  const isAdmin = hasAdminRole(input.roleAssignments)
-
-  if (isAdmin && (await canManageStudentData(input.currentUserId, input.studentId))) {
-    return {
-      canPreviewDrafts: true,
-      userId: input.currentUserId,
-    }
-  }
-
-  if (input.currentUserId === input.studentId) {
-    return {
-      canPreviewDrafts: false,
-      userId: input.currentUserId,
-    }
-  }
-
-  const parentRelation = await getPrismaClient().parentStudentRelation.findUnique({
-    where: {
-      parentId_studentId: {
-        parentId: input.currentUserId,
-        studentId: input.studentId,
-      },
-    },
-    select: { id: true },
-  })
-
-  if (parentRelation) {
-    return {
-      canPreviewDrafts: false,
-      userId: input.currentUserId,
-    }
-  }
-
-  return null
-}
-
 export async function generateReportCardPdf(input: {
-  access: DocumentAccess
   studentId: string
   termId?: string | null
+  issuanceDb?: Prisma.TransactionClient
 }) {
-  const prisma = getPrismaClient()
-  const accessWhere = await getDocumentGradeWhere(input.studentId, input.access, "report-card")
+  const prisma = input.issuanceDb ?? getPrismaClient()
+  const accessWhere = input.issuanceDb
+    ? { status: { in: publishedStatuses } }
+    : {}
   const student = await prisma.user.findUnique({
     where: { id: input.studentId },
     include: {
@@ -122,13 +76,10 @@ export async function generateReportCardPdf(input: {
         },
       },
       enrollments: {
-        where: input.termId
-          ? {
-              classSection: {
-                termId: input.termId,
-              },
-            }
-          : undefined,
+        where: {
+          ...(input.termId ? { classSection: { termId: input.termId } } : {}),
+          ...(input.issuanceDb ? { status: { in: ["ENROLLED", "COMPLETED"] } } : {}),
+        },
         include: {
           classSection: {
             include: {
@@ -137,7 +88,7 @@ export async function generateReportCardPdf(input: {
               term: true,
               instructors: {
                 include: { instructor: true },
-                orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+                orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }, { id: "asc" }],
               },
               attendanceSessions: {
                 include: {
@@ -177,11 +128,12 @@ export async function generateReportCardPdf(input: {
                   studentId: input.studentId,
                   ...accessWhere,
                 },
+                orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
               },
             },
           },
         },
-        orderBy: { enrolledAt: "desc" },
+        orderBy: [{ enrolledAt: "desc" }, { id: "asc" }],
       },
     },
   })
@@ -217,7 +169,7 @@ export async function generateReportCardPdf(input: {
   })
 
   const ctx = await createPdfContext()
-  drawDocumentHeader(ctx, "Report Card", termName)
+  drawDocumentHeader(ctx, input.issuanceDb ? "Report Card" : "Report Card Preview", termName)
   drawStudentInfo(ctx, student, generatedAt)
   drawSectionHeading(ctx, "Term Summary")
   drawTable(ctx, rows, [
@@ -231,19 +183,20 @@ export async function generateReportCardPdf(input: {
     { header: "Grade", value: (row) => row.letter, width: 44 },
     { header: "Status", value: (row) => row.status, width: 58 },
   ])
-  drawNote(
+  if (!input.issuanceDb) drawNote(
     ctx,
-    "Student and parent downloads include published/finalized grades only. Administrative previews may include draft grades."
+    "Administrative preview. This document may include draft grades."
   )
   drawFooter(ctx, generatedAt)
 
-  await createGeneratedDocumentMetadata({
+  if (!input.issuanceDb) await createGeneratedDocumentMetadata({
     documentType: DocumentType.REPORT_CARD,
     organizationId: student.organizationId,
     studentId: student.id,
   })
 
   return {
+    fingerprint: documentFingerprint(student, termName, rows),
     filename: safePdfFilename(`report-card-${student.name}-${termName}`),
     organizationId: student.organizationId,
     pdf: await savePdf(ctx.doc),
@@ -251,11 +204,13 @@ export async function generateReportCardPdf(input: {
 }
 
 export async function generateTranscriptPdf(input: {
-  access: DocumentAccess
   studentId: string
+  issuanceDb?: Prisma.TransactionClient
 }) {
-  const prisma = getPrismaClient()
-  const accessWhere = await getDocumentGradeWhere(input.studentId, input.access, "transcript")
+  const prisma = input.issuanceDb ?? getPrismaClient()
+  const accessWhere = input.issuanceDb
+    ? { status: { in: publishedStatuses } }
+    : {}
   const student = await prisma.user.findUnique({
     where: { id: input.studentId },
     include: {
@@ -278,7 +233,7 @@ export async function generateTranscriptPdf(input: {
             },
           },
         },
-        orderBy: [{ classSection: { term: { startsAt: "asc" } } }, { createdAt: "asc" }],
+        orderBy: [{ classSection: { term: { startsAt: "asc" } } }, { createdAt: "asc" }, { id: "asc" }],
       },
     },
   })
@@ -291,9 +246,10 @@ export async function generateTranscriptPdf(input: {
   const terms = groupTranscriptGradesByTerm(student.finalGrades)
   const cumulative = calculateGpa(student.finalGrades)
   const ctx = await createPdfContext()
-  const logo = await getOrganizationLogoImage(ctx.doc, student.organization.id)
+  const logoBytes = await getOrganizationLogoBytes(student.organization.id, prisma)
+  const logo = await embedOrganizationLogo(ctx.doc, logoBytes)
 
-  drawTranscriptCover(ctx, student, generatedAt, logo)
+  drawTranscriptCover(ctx, student, generatedAt, logo, Boolean(input.issuanceDb))
   ctx.y = pageSize[1] - 300
   drawStudentInfo(ctx, student, generatedAt)
 
@@ -332,61 +288,36 @@ export async function generateTranscriptPdf(input: {
     ["Attempted credits", cumulative.attempted.toFixed(1)],
     ["Earned credits", cumulative.earned.toFixed(1)],
   ])
-  await createGeneratedDocumentMetadata({
+  if (!input.issuanceDb) await createGeneratedDocumentMetadata({
     documentType: DocumentType.TRANSCRIPT,
     organizationId: student.organizationId,
     studentId: student.id,
   })
 
   return {
+    fingerprint: documentFingerprint(
+      student,
+      student.organization.websiteUrl,
+      logoBytes && createHash("sha256").update(logoBytes).digest("hex"),
+      terms.map((term) => [term.name, term.grades.map((grade) => [
+        grade.id, grade.status, grade.classSection.course.code, grade.classSection.course.title,
+        grade.classSection.course.credits, grade.letterGrade, grade.gradePoint, grade.creditsEarned,
+      ])]),
+      cumulative
+    ),
     filename: safePdfFilename(`transcript-${student.name}`),
     organizationId: student.organizationId,
     pdf: await savePdf(ctx.doc),
   }
 }
 
-async function getDocumentGradeWhere(
-  studentId: string,
-  access: DocumentAccess,
-  documentType: "report-card" | "transcript"
-) {
-  if (access.canPreviewDrafts) return {}
-
-  const student = await getPrismaClient().user.findUnique({
-    where: { id: studentId },
-    select: {
-      organizationId: true,
-      studentProfile: {
-        select: { campusId: true },
-      },
-    },
-  })
-
-  if (!student) {
-    return { status: { in: publishedStatuses } }
-  }
-
-  const policies = await resolvePolicies({
-    organizationId: student.organizationId,
-    campusId: student.studentProfile?.campusId,
-  })
-  const requiresPublished =
-    documentType === "report-card"
-      ? policies.document.reportCardsRequirePublishedGrades
-      : policies.document.transcriptsRequirePublishedGrades
-
-  return requiresPublished ? { status: { in: publishedStatuses } } : {}
-}
-
-function hasAdminRole(assignments: SessionRoleAssignment[]) {
-  return assignments.some((assignment) =>
-    ([
-      UserRole.SUPER_ADMIN,
-      UserRole.ORG_ADMIN,
-      UserRole.SCHOOL_ADMIN,
-      UserRole.ACADEMIC_STAFF,
-    ] as UserRole[]).includes(assignment.role as UserRole)
-  )
+function documentFingerprint(student: Parameters<typeof drawStudentInfo>[1], ...content: unknown[]) {
+  return createHash("sha256").update(JSON.stringify([
+    student.name, student.email, student.organization.name, student.organization.timezone,
+    student.studentProfile?.campus?.name, student.studentProfile?.studentNumber,
+    student.studentProfile?.currentGradeLevel?.name, student.studentProfile?.homeroom?.name,
+    content,
+  ])).digest("hex")
 }
 
 async function createPdfContext(): Promise<PdfContext> {
@@ -462,7 +393,8 @@ function drawTranscriptCover(
     } | null
   },
   generatedAt: Date,
-  logo: PDFImage | null
+  logo: PDFImage | null,
+  official: boolean
 ) {
   const page = ctx.page
   const schoolName = student.organization.name || "Learning Management System"
@@ -527,7 +459,7 @@ function drawTranscriptCover(
     size: 20,
   })
   drawLine(ctx, 174, pageSize[1] - 230, pageSize[0] - 174)
-  drawText(ctx, "Official academic record", 206, pageSize[1] - 252, {
+  drawText(ctx, official ? "Official academic record" : "Administrative preview", 206, pageSize[1] - 252, {
     color: mutedColor,
     size: 10,
   })
@@ -663,8 +595,11 @@ function drawSectionHeading(ctx: PdfContext, title: string) {
   ctx.y -= 12
 }
 
-function drawTable<T>(ctx: PdfContext, rows: T[], columns: Array<TableColumn<T>>) {
-  const tableWidth = columns.reduce((sum, column) => sum + column.width, 0)
+function drawTable<T>(ctx: PdfContext, rows: T[], layout: Array<TableColumn<T>>) {
+  const requestedWidth = layout.reduce((sum, column) => sum + column.width, 0)
+  const scale = Math.min(1, (pageSize[0] - 2 * margin) / requestedWidth)
+  const columns = layout.map((column) => ({ ...column, width: column.width * scale }))
+  const tableWidth = requestedWidth * scale
   const startX = margin
 
   ensureSpace(ctx, 44)
@@ -994,9 +929,7 @@ function calculateGpa(
   }
 }
 
-async function getOrganizationLogoImage(doc: PDFDocument, organizationId: string) {
-  const logoBytes = await getOrganizationLogoBytes(organizationId)
-
+async function embedOrganizationLogo(doc: PDFDocument, logoBytes: Awaited<ReturnType<typeof getOrganizationLogoBytes>>) {
   if (!logoBytes) return null
 
   try {
@@ -1010,8 +943,7 @@ async function getOrganizationLogoImage(doc: PDFDocument, organizationId: string
   }
 }
 
-async function getOrganizationLogoBytes(organizationId: string) {
-  const prisma = getPrismaClient()
+async function getOrganizationLogoBytes(organizationId: string, prisma: Prisma.TransactionClient) {
   const rows = await prisma.$queryRaw<Array<{ logoFileAssetId: string | null }>>`
     SELECT "logoFileAssetId" FROM "Organization" WHERE "id" = ${organizationId} LIMIT 1
   `

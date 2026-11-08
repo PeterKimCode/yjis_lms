@@ -121,11 +121,7 @@ function PolicySummary({
       />
       <SummaryCard
         label="Documents"
-        value={
-          data.policyFormValue?.document.reportCardsRequirePublishedGrades
-            ? "Visible after published grades"
-            : "Draft downloads allowed by policy"
-        }
+        value="Administrator approval required"
       />
       <SummaryCard
         label="GPA / grading scale"

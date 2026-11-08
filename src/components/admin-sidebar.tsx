@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, PanelLeftClose, PanelLeftOpen, Building2, MapPin, Network, CalendarDays, CalendarRange, ListOrdered, School, ShieldCheck, ScrollText, Megaphone } from "lucide-react"
+import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, PanelLeftClose, PanelLeftOpen, Building2, MapPin, Network, CalendarDays, CalendarRange, ListOrdered, School, ShieldCheck, ScrollText, Megaphone, ClipboardList } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { adminPrimaryLinks, adminSetupLinks } from "@/modules/admin/components"
@@ -12,7 +12,7 @@ import { SidebarFooter } from "@/components/sidebar-footer"
 import { useSidebarPreference } from "@/components/use-sidebar-preference"
 
 type MessageLink = { id: string; href: string; label: string; preview: string; unreadCount: number }
-const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell, "Audit Logs": ScrollText, Organizations: Building2, Campuses: MapPin, Departments: Network, "Academic Years": CalendarDays, Terms: CalendarRange, "Grade Levels": ListOrdered, Homerooms: School, Policies: ShieldCheck, "Login notices": Megaphone }
+const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell, "Audit Logs": ScrollText, Organizations: Building2, Campuses: MapPin, Departments: Network, "Academic Years": CalendarDays, Terms: CalendarRange, "Grade Levels": ListOrdered, Homerooms: School, Policies: ShieldCheck, "Login notices": Megaphone, "Grades & Documents": ClipboardList }
 
 export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canManageAdmissions = false, pendingRequests = 0 }: {
   logoUrl: string; email: string | null; schoolOnly: boolean; messages?: MessageLink[]; canManageAdmissions?: boolean; pendingRequests?: number
@@ -40,6 +40,7 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canMan
       </div>
       <nav aria-label="Admin navigation" className="sidebar-scroll min-h-0 min-w-0 flex-1 space-y-3 overflow-x-hidden overflow-y-auto overscroll-contain p-3">
         {group(primary, compact)}
+        {canManageAdmissions ? group([["/admin/grades-documents", "Grades & Documents"]], compact) : null}
         {!schoolOnly ? compact ? <div className="border-y border-slate-200 py-2" role="group" aria-label="Academic setup">{group(adminSetupLinks, true)}</div> : <details open className="rounded-md border border-slate-200 p-2"><summary className="cursor-pointer px-2 py-2 text-sm">Academic setup</summary>{group(adminSetupLinks)}</details> : null}
         {group(admissionLinks, compact)}
         {!compact && pathname.startsWith("/messages") && messages.length ? <div className="ml-3 grid gap-1 border-l border-slate-200 pl-2">{messages.map((message) => <Link key={message.id} href={message.href} onClick={() => setOpen(false)} aria-current={pathname === message.href ? "page" : undefined} className="rounded-md p-2 text-xs hover:bg-slate-100"><span className="block truncate font-medium">{message.label}{message.unreadCount ? ` (${message.unreadCount})` : ""}</span><span className="block truncate text-slate-500">{message.preview}</span></Link>)}</div> : null}
