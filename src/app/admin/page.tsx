@@ -14,9 +14,11 @@ import {
   getCourseWhereForAdmin,
   getUserWhereForAdmin,
   isSuperAdmin,
+  requireAdmin,
 } from "@/modules/admin/access"
 import { getAdminData } from "@/modules/admin/data"
 import { AdminPageHeader } from "@/modules/admin/components"
+import { SchoolAdminOverview } from "@/modules/admin/school-overview"
 import { getUnreadMessageCount } from "@/modules/messages/data"
 import { getUnreadNotificationCount } from "@/modules/notifications/service"
 
@@ -25,10 +27,13 @@ export const metadata = { title: "Admin overview" }
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ organizationId?: string }>
+  searchParams: Promise<{ organizationId?: string; scope?: string | string[] }>
 }) {
+  const [user, params] = await Promise.all([requireAdmin(), searchParams])
+  if (!isSuperAdmin(user) && user.roleAssignments.some(({ role }) => role === UserRole.SCHOOL_ADMIN)) {
+    return <SchoolAdminOverview admin={user} requestedScope={typeof params.scope === "string" ? params.scope : undefined} />
+  }
   const admin = await getAdminData()
-  const params = await searchParams
   const prisma = getPrismaClient()
   const canFilterOrganizations = isSuperAdmin(admin.user)
   const organizationCards = canFilterOrganizations

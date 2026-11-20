@@ -10,7 +10,7 @@ import { AdminAttendanceTabs } from "@/modules/attendance/admin-tabs"
 import { AttendanceQrScanner } from "@/modules/attendance/qr-scanner"
 import { recordSchoolAttendanceQr } from "@/modules/attendance/school-actions"
 import { DailyAbsenceReview, DailyAttendanceEdit, SchoolScheduleForm } from "@/modules/attendance/school-controls"
-import { dailyStudentSelect, effectiveSchoolSchedule, getSchoolAttendanceScopes, getSchoolSchedules, schoolStudents, studentCampus } from "@/modules/attendance/school-data"
+import { dailyStudentSelect, effectiveSchoolSchedule, getSchoolAttendanceDay, getSchoolAttendanceScopes, getSchoolSchedules, schoolStudents, studentCampus } from "@/modules/attendance/school-data"
 import { dailyLabels, dailyStatuses, minuteLabel, schoolPhase, schoolScopeKey, schoolTime } from "@/modules/attendance/school-rules"
 import { StudentQrRefresh } from "@/modules/attendance/student-qr"
 
@@ -37,11 +37,10 @@ export default async function SchoolAttendanceToday({ searchParams }: {
   const scopeKey = schoolScopeKey(scope.organizationId, scope.campusId)
   const url = (params: Record<string, string> = {}) => `${base}?${new URLSearchParams({ scope: scopeKey, ...params })}`
   const schedules = await getSchoolSchedules(scope.organizationId)
-  const schedule = effectiveSchoolSchedule(schedules, scope)
   const hasOverride = schedules.some((item) => item.scopeKey === scopeKey)
   const now = new Date()
-  const time = schoolTime(now, selected.timezone)
-  const phase = schoolPhase(schedule, time)
+  const { time, schedule, recordOnDay, settled, schoolDay, hasOverrides, scannersOpen } =
+    getSchoolAttendanceDay(scope, selected.timezone, schedules, now)
   const scheduled = (value: ReturnType<typeof schoolPhase>) => value !== "setup" && value !== "closed-day"
   const prs = getPrismaClient()
   const header = (
@@ -69,20 +68,6 @@ export default async function SchoolAttendanceToday({ searchParams }: {
   const filter = (["PENDING", ...dailyStatuses] as const).find((status) => status === query.status)
   const requestedPage = Number(read(query.page, 5))
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 1000) : 1
-  const recordOnDay = { organizationId: scope.organizationId, schoolDate: time.date }
-  const settled = { ...recordOnDay, status: { in: [...dailyStatuses] } }
-  const campusOverrides = scope.campusId ? [] : schedules.filter(({ campusId }) => campusId)
-  const scheduledOverrideIds = campusOverrides.filter((item) => scheduled(schoolPhase(item, time))).map((item) => item.campusId!)
-  const campusProfile = (ids: string[]): Prisma.StudentProfileWhereInput => ({
-    organizationId: scope.organizationId, campusId: { in: ids }, campus: { isActive: true, organizationId: scope.organizationId },
-  })
-  const schoolDay: Prisma.UserWhereInput = {
-    OR: [
-      { schoolAttendanceRecords: { some: settled } },
-      { studentProfile: campusProfile(scheduledOverrideIds) },
-      ...(scheduled(phase) ? [{ NOT: { studentProfile: campusProfile(campusOverrides.map((item) => item.campusId!)) } }] : []),
-    ],
-  }
   const people: Prisma.UserWhereInput = {
     ...schoolStudents(scope, now),
     AND: [
@@ -129,7 +114,6 @@ export default async function SchoolAttendanceToday({ searchParams }: {
     where: { id: { in: staffIds } }, select: { id: true, name: true },
   }) : []).map(({ id, name }) => [id, name]))
   const pendingIds = rows.filter(({ studentPhase, status }) => studentPhase === "review" && status === "PENDING").map(({ student }) => student.id)
-  const scannersOpen = phase === "open" || campusOverrides.some((item) => schoolPhase(item, time) === "open")
   const paging = { q, grade, homeroom, status: filter ?? "" }
 
   return (
@@ -144,7 +128,7 @@ export default async function SchoolAttendanceToday({ searchParams }: {
       </section>
       <section className="space-y-2 rounded-lg border bg-white p-4">
         <h2 className="break-words font-semibold">{selected.label} · {time.date}</h2>
-        {schedule ? <p className="text-sm">Default check-in {minuteLabel(schedule.opensMinute)}–{minuteLabel(schedule.closesMinute)} · Late from {minuteLabel(schedule.lateMinute)}{!scope.campusId && campusOverrides.length ? " · Some campuses have their own hours" : ""}</p>
+        {schedule ? <p className="text-sm">Default check-in {minuteLabel(schedule.opensMinute)}–{minuteLabel(schedule.closesMinute)} · Late from {minuteLabel(schedule.lateMinute)}{hasOverrides ? " · Some campuses have their own hours" : ""}</p>
           : <p className="text-sm">Set school or campus hours to begin daily attendance.</p>}
         <StudentQrRefresh label="Refresh attendance" />
       </section>

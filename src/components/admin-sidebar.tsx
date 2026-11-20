@@ -20,7 +20,7 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canMan
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [collapsed, toggleCollapsed] = useSidebarPreference()
-  const primary = schoolOnly ? adminPrimaryLinks.filter(([, label]) => ["Courses", "Class Sections", "Attendance", "Users", "Files"].includes(label)) : adminPrimaryLinks
+  const primary = schoolOnly ? adminPrimaryLinks.filter(([, label]) => ["Overview", "Courses", "Class Sections", "Attendance", "Users", "Files"].includes(label)) : adminPrimaryLinks
   const admissionLinks = canManageAdmissions ? [["/admin/enrollment-requests", `Enrollment requests${pendingRequests ? ` (${pendingRequests})` : ""}`], ["/admin/login-notices", "Login notices"]] as const : []
   function group(links: readonly (readonly [string, string])[], compact = false) {
     return <div className="grid gap-1">{links.map(([href, label]) => {
@@ -33,7 +33,7 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canMan
   function contents(compact = false, desktop = false) {
     return <>
       <div className={`sidebar-heading flex shrink-0 items-center gap-2 p-4 ${compact ? "flex-col" : ""}`}>
-      <Link href={schoolOnly ? "/admin/users" : "/admin"} aria-label="Admin home" className="flex min-w-0 flex-1 items-center gap-3" onClick={() => setOpen(false)}>
+      <Link href="/admin" aria-label="Admin home" className="flex min-w-0 flex-1 items-center gap-3" onClick={() => setOpen(false)}>
         <Image alt="Organization logo" src={logoUrl} width={40} height={40} className="size-10 shrink-0 object-contain" unoptimized={logoUrl.startsWith("/api/")} />
         {!compact ? <span className="min-w-0"><span className="block text-sm font-semibold">Admin workspace</span><span className="block truncate text-xs text-slate-500">{email}</span></span> : null}
       </Link>

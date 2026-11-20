@@ -26,6 +26,7 @@ async function staffScope(input: SchoolScope) {
 }
 
 function refreshDailyAttendance() {
+  revalidatePath("/admin")
   revalidatePath("/admin/attendance/today")
   revalidatePath("/student/school-attendance")
   revalidatePath("/parent/students/[studentId]", "page")

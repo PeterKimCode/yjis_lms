@@ -50,6 +50,7 @@ export async function requestGradeDocument(_: ActionState, form: FormData): Prom
     })
     revalidatePath("/student")
     revalidatePath("/admin/grades-documents")
+    revalidatePath("/admin")
     return { ok: true, message: "Request sent to your school." }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -134,6 +135,7 @@ async function processGradeDocument(form: FormData, decision: "preview" | "appro
       })
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30000 })
     revalidatePath("/admin/grades-documents")
+    revalidatePath("/admin")
     revalidatePath("/student")
     revalidatePath("/parent", "layout")
     return { ok: true, message: decision === "preview" ? "PDF preview is ready." : "Decision saved." }

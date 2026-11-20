@@ -3,7 +3,7 @@ import { UserRole, type Prisma } from "@prisma/client"
 import { getPrismaClient } from "@/lib/prisma"
 import { getAdminAssignments, hasSuperAdminRole, type AdminScopeAssignment } from "@/modules/admin/scope-rules"
 import { getCurrentUser } from "@/modules/auth/permissions"
-import { schoolScopeKey, type SchoolSchedule } from "./school-rules"
+import { dailyStatuses, schoolPhase, schoolScopeKey, schoolTime, type SchoolSchedule } from "./school-rules"
 
 export type SchoolScope = { organizationId: string; campusId: string | null }
 
@@ -99,6 +99,38 @@ export function effectiveSchoolSchedule<T extends SchoolSchedule>(schedules: Ite
   const byScope = new Map([...schedules].map((schedule) => [schedule.scopeKey, schedule]))
   return byScope.get(schoolScopeKey(scope.organizationId, scope.campusId)) ??
     byScope.get(schoolScopeKey(scope.organizationId, null)) ?? null
+}
+
+export function getSchoolAttendanceDay(
+  scope: SchoolScope,
+  timezone: string,
+  schedules: Awaited<ReturnType<typeof getSchoolSchedules>>,
+  now: Date
+) {
+  const time = schoolTime(now, timezone)
+  const schedule = effectiveSchoolSchedule(schedules, scope)
+  const phase = schoolPhase(schedule, time)
+  const overrides = scope.campusId ? [] : schedules.filter((item) => item.campusId !== null)
+  const overridePhases = overrides.map((item) => ({ campusId: item.campusId!, phase: schoolPhase(item, time) }))
+  const isScheduled = (phase: ReturnType<typeof schoolPhase>) => phase !== "setup" && phase !== "closed-day"
+  const campusProfile = (ids: string[]): Prisma.StudentProfileWhereInput => ({
+    organizationId: scope.organizationId, campusId: { in: ids }, campus: { isActive: true, organizationId: scope.organizationId },
+  })
+  const recordOnDay = { organizationId: scope.organizationId, schoolDate: time.date }
+  const settled = { ...recordOnDay, status: { in: [...dailyStatuses] } }
+  const schoolDay: Prisma.UserWhereInput = {
+    OR: [
+      { schoolAttendanceRecords: { some: settled } },
+      { studentProfile: campusProfile(overridePhases.filter((item) => isScheduled(item.phase)).map((item) => item.campusId)) },
+      ...(isScheduled(phase) ? [{ NOT: { studentProfile: campusProfile(overridePhases.map((item) => item.campusId)) } }] : []),
+    ],
+  }
+  return {
+    time, schedule, phase, recordOnDay, settled, schoolDay,
+    hasOverrides: overrides.length > 0,
+    scannersOpen: phase === "open" || overridePhases.some((item) => item.phase === "open"),
+    canReview: phase === "review" || overridePhases.some((item) => item.phase === "review"),
+  }
 }
 
 export async function getDailyStudentContext() {
