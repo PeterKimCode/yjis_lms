@@ -19,6 +19,8 @@ import {
   getParentStudentDetail,
 } from "@/modules/dashboards/data"
 import { StudentDocuments } from "@/modules/documents/student-documents"
+import { effectiveSchoolSchedule, studentCampus } from "@/modules/attendance/school-data"
+import { dailyLabels, minuteLabel, schoolPhase, schoolTime, type DailyStatus } from "@/modules/attendance/school-rules"
 import {
   getAttendanceSummary,
 } from "@/modules/attendance/summary"
@@ -52,22 +54,23 @@ export default async function ParentStudentDetailPage({
         student.studentProfile?.campus?.name ?? "Organization-wide"
       }`}
     >
+      <SchoolAttendance student={student} />
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <MetricCard label="Classes" value={student.enrollments.length} />
         <MetricCard
-          label="Attendance rate"
+          label="Class attendance rate"
           value={`${attendanceSummary.attendanceRate.toFixed(1)}%`}
         />
         <MetricCard
-          label="Present"
+          label="Class present"
           value={attendanceSummary.presentCount}
         />
         <MetricCard
-          label="Late"
+          label="Class late"
           value={attendanceSummary.lateCount}
         />
         <MetricCard
-          label="Absent"
+          label="Class absent"
           value={attendanceSummary.absentCount}
         />
         <MetricCard
@@ -104,7 +107,7 @@ export default async function ParentStudentDetailPage({
       />
 
       <SimpleTable
-        empty="No attendance records yet."
+        empty="No class attendance records yet."
         headers={["Class", "Term", "Campus", "Status", "Date"]}
         rows={student.attendanceRecords.map((record) => (
           <TableRow key={record.id}>
@@ -224,6 +227,50 @@ export default async function ParentStudentDetailPage({
         )}
       />
     </DashboardPage>
+  )
+}
+
+function SchoolAttendance({ student }: { student: NonNullable<Awaited<ReturnType<typeof getParentStudentDetail>>> }) {
+  const { organizationId, organization } = student
+  const { timezone, schoolAttendanceRecords } = organization
+  const time = schoolTime(new Date(), timezone)
+  const campusId = studentCampus(student, organizationId)
+  const schedule = effectiveSchoolSchedule(organization.schoolAttendanceSchedules, { organizationId, campusId })
+  const phase = organization.isActive ? schoolPhase(schedule, time) : "closed-day"
+  const today = schoolAttendanceRecords.find((record) => record.schoolDate === time.date)
+  const recent = schoolAttendanceRecords.filter((record) => record.schoolDate < time.date).slice(0, 10)
+  const todayStatus = today ? dailyLabels[today.status as DailyStatus] :
+    phase === "setup" ? "School attendance has not been set up yet." :
+    phase === "closed-day" ? "No school check-in scheduled today." :
+    phase === "before" ? "School check-in has not opened yet." : dailyLabels.PENDING
+  const checkInTime = (value: Date) => minuteLabel(schoolTime(value, timezone).minute)
+
+  return (
+    <section id="school-attendance" aria-labelledby="school-attendance-heading" className="scroll-mt-24 space-y-4 rounded-lg border bg-white p-4">
+      <div className="space-y-2">
+        <h2 id="school-attendance-heading" className="text-lg font-semibold">School attendance</h2>
+        <p className="text-sm text-muted-foreground">Today · {time.date}</p>
+        <p className="text-sm font-medium">
+          {todayStatus}{today?.checkedInAt ? ` · ${checkInTime(today.checkedInAt)}` : ""}
+        </p>
+      </div>
+      {recent.length ? (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Recent school attendance</h3>
+          <SimpleTable
+            empty="No earlier school attendance records."
+            headers={["School date", "Status", "Check-in time"]}
+            rows={recent.map((record) => (
+              <TableRow key={record.id}>
+                <TableCell>{record.schoolDate}</TableCell>
+                <TableCell>{dailyLabels[record.status as DailyStatus]}</TableCell>
+                <TableCell>{record.checkedInAt ? checkInTime(record.checkedInAt) : "-"}</TableCell>
+              </TableRow>
+            ))}
+          />
+        </div>
+      ) : null}
+    </section>
   )
 }
 

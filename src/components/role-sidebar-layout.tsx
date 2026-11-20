@@ -40,8 +40,9 @@ export async function RoleSidebarLayout({
 }: RoleSidebarLayoutProps) {
   const user = await requireAuth()
   const toneClass = toneClasses[tone]
-  const [classLinks, messageLinks, logoUrl] = await Promise.all([
-    getRoleClassLinks(user.id, tone),
+  const [classLinks, studentLinks, messageLinks, logoUrl] = await Promise.all([
+    tone === "parent" ? [] : getRoleClassLinks(user.id, tone),
+    tone === "parent" ? getParentSidebarLinks(user.id) : [],
     getConversationSidebarLinksForUser(user.id),
     getOrganizationLogoUrl(user.organizationId),
   ])
@@ -52,7 +53,7 @@ export async function RoleSidebarLayout({
       <RoleSidebarNav
         classLinks={classLinks}
         description={description}
-        links={links}
+        links={[...links, ...studentLinks]}
         messageLinks={messageLinks}
         logoUrl={logoUrl}
         sectionLinks={sectionLinks}
@@ -69,7 +70,7 @@ export async function RoleSidebarLayout({
 
 async function getRoleClassLinks(
   userId: string,
-  tone: "instructor" | "student" | "parent"
+  tone: "instructor" | "student"
 ) {
   const prisma = getPrismaClient()
 
@@ -108,76 +109,53 @@ async function getRoleClassLinks(
     }))
   }
 
-  if (tone === "student") {
-    const enrollments = await prisma.enrollment.findMany({
-      where: { studentId: userId },
-      select: {
-        classSection: {
-          select: {
-            id: true,
-            name: true,
-            course: { select: { title: true } },
-            instructors: {
-              select: {
-                isPrimary: true,
-                instructor: { select: { name: true, email: true } },
-              },
-              orderBy: [
-                { isPrimary: "desc" },
-                { instructor: { name: "asc" } },
-              ],
-            },
-          },
-        },
-      },
-      orderBy: { enrolledAt: "desc" },
-      take: 20,
-    })
-
-    return enrollments.map(({ classSection }) => ({
-      href: `/student/classes/${classSection.id}`,
-      id: classSection.id,
-      label: classSection.name,
-      subLabel: formatClassSubLabel(
-        classSection.course.title,
-        classSection.instructors
-      ),
-    }))
-  }
-
-  const relations = await prisma.parentStudentRelation.findMany({
-    where: { parentId: userId },
+  const enrollments = await prisma.enrollment.findMany({
+    where: { studentId: userId },
     select: {
-      student: {
+      classSection: {
         select: {
           id: true,
           name: true,
-          enrollments: {
+          course: { select: { title: true } },
+          instructors: {
             select: {
-              classSection: {
-                select: {
-                  id: true,
-                  name: true,
-                  course: { select: { title: true } },
-                },
-              },
+              isPrimary: true,
+              instructor: { select: { name: true, email: true } },
             },
-            take: 10,
+            orderBy: [
+              { isPrimary: "desc" },
+              { instructor: { name: "asc" } },
+            ],
           },
         },
       },
     },
-    take: 10,
+    orderBy: { enrolledAt: "desc" },
+    take: 20,
   })
 
-  return relations.flatMap((relation) =>
-    relation.student.enrollments.map(({ classSection }) => ({
-      href: `/parent/students/${relation.student.id}/classes/${classSection.id}`,
-      id: `${relation.student.id}-${classSection.id}`,
-      label: classSection.name,
-      subLabel: `${relation.student.name ?? "Linked student"} · ${classSection.course.title}`,
-    }))
-  )
+  return enrollments.map(({ classSection }) => ({
+    href: `/student/classes/${classSection.id}`,
+    id: classSection.id,
+    label: classSection.name,
+    subLabel: formatClassSubLabel(
+      classSection.course.title,
+      classSection.instructors
+    ),
+  }))
+}
+
+async function getParentSidebarLinks(parentId: string) {
+  const relations = await getPrismaClient().parentStudentRelation.findMany({
+    where: { parentId },
+    select: { student: { select: { id: true, name: true } } },
+    orderBy: [{ student: { name: "asc" } }, { studentId: "asc" }],
+  })
+
+  return relations.map(({ student }) => ({
+    href: `/parent/students/${student.id}`,
+    label: student.name,
+  }))
 }
 
 function formatClassSubLabel(

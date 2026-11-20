@@ -28,6 +28,7 @@ async function staffScope(input: SchoolScope) {
 function refreshDailyAttendance() {
   revalidatePath("/admin/attendance/today")
   revalidatePath("/student/school-attendance")
+  revalidatePath("/parent/students/[studentId]", "page")
   revalidatePath("/notifications")
 }
 
@@ -248,7 +249,7 @@ async function saveResult(tx: Prisma.TransactionClient, context: StaffScope, pre
       organizationId: parent.organizationId, userId: parent.id, type, channel,
       title: previous.status === "PENDING" ? `School attendance · ${dailyLabels[status]}` : "School attendance corrected",
       body: `${student.name} · ${context.organization.name} · ${schoolDate} · ${dailyLabels[status]}`.slice(0, 500),
-      actionUrl: `/parent/students/${studentId}`,
+      actionUrl: `/parent/students/${studentId}#school-attendance`,
       entityType: "SchoolAttendanceRecord", entityId: updated.id,
     })),
   })

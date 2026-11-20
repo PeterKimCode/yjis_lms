@@ -79,7 +79,13 @@ export const dailyStudentSelect = {
   },
 } satisfies Prisma.UserSelect
 
-export function studentCampus(student: Prisma.UserGetPayload<{ select: typeof dailyStudentSelect }>, organizationId: string) {
+export function studentCampus(student: {
+  studentProfile: {
+    organizationId: string
+    campusId: string | null
+    campus: { organizationId: string; isActive: boolean } | null
+  } | null
+}, organizationId: string) {
   const profile = student.studentProfile
   return profile?.organizationId === organizationId && profile.campus?.organizationId === organizationId && profile.campus.isActive
     ? profile.campusId : null

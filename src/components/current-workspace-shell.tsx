@@ -13,7 +13,7 @@ export async function CurrentWorkspaceShell({ children }: { children: ReactNode 
   const parent = tone === "parent"
   return <RoleSidebarLayout tone={tone} title={`${tone[0].toUpperCase()}${tone.slice(1)} workspace`} description={parent ? "Linked students, class records, messages, and notifications." : "Classes, coursework, messages, and notifications."} links={[
     { href: `/${tone}`, label: "Overview" },
-    { href: parent ? "/parent/students" : `/${tone}/classes`, label: parent ? "Linked students" : "Classes" },
+    ...(!parent ? [{ href: `/${tone}/classes`, label: "Classes" }] : []),
     { href: "/messages", label: "Messages" },
     { href: "/notifications", label: "Notifications" },
   ]}>{children}</RoleSidebarLayout>

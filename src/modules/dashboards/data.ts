@@ -5,10 +5,10 @@ import { UserRole } from "@prisma/client"
 import { getPrismaClient } from "@/lib/prisma"
 import {
   canViewClassSection,
-  canViewStudentData,
   requireAnyRole,
 } from "@/modules/auth/permissions"
 import { resolvePolicies } from "@/modules/policies/resolve"
+import { dailyStatuses } from "@/modules/attendance/school-rules"
 
 export async function getInstructorClasses() {
   const user = await requireAnyRole([UserRole.INSTRUCTOR, UserRole.HOMEROOM_TEACHER])
@@ -441,13 +441,22 @@ export async function getLessonFileOptionsForClassSection({
 }
 
 export async function getParentStudentDetail(parentId: string, studentId: string) {
-  if (!(await canViewStudentData(parentId, studentId))) {
-    return null
-  }
-
-  return getPrismaClient().user.findUnique({
-    where: { id: studentId },
+  return getPrismaClient().user.findFirst({
+    where: { id: studentId, studentParentRelations: { some: { parentId } } },
     include: {
+      organization: {
+        select: {
+          timezone: true,
+          isActive: true,
+          schoolAttendanceSchedules: true,
+          schoolAttendanceRecords: {
+            where: { studentId, status: { in: [...dailyStatuses] } },
+            select: { id: true, schoolDate: true, status: true, checkedInAt: true },
+            orderBy: { schoolDate: "desc" },
+            take: 11,
+          },
+        },
+      },
       studentProfile: {
         include: {
           campus: true,

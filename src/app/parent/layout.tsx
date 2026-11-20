@@ -8,7 +8,6 @@ export default function ParentLayout({ children }: { children: ReactNode }) {
       description="Linked students, class records, messages, and notifications."
       links={[
         { href: "/parent", label: "Overview" },
-        { href: "/parent/students", label: "Linked students" },
         { href: "/messages", label: "Messages" },
         { href: "/notifications", label: "Notifications" },
       ]}

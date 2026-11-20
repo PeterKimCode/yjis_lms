@@ -124,7 +124,7 @@ export function RoleSidebarNav({
             const active =
               pathname === link.href ||
               (link.href !== `/${tone}` && pathname.startsWith(`${link.href}/`))
-            const Icon = getSidebarIcon(link.label)
+            const Icon = getSidebarIcon(link.label, link.href)
 
             return (
               <div key={link.href}>
@@ -139,9 +139,9 @@ export function RoleSidebarNav({
                   title={collapsed ? link.label : undefined}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className={collapsed ? "sr-only" : ""}>{link.label}</span>
+                  <span className={collapsed ? "sr-only" : "min-w-0 break-words"}>{link.label}</span>
                 </Link>
-                {!collapsed && link.label === "Classes" && classLinks.length ? (
+                {!collapsed && link.href === `/${tone}/classes` && classLinks.length ? (
                   <div className="ml-3 mt-1 grid gap-1 border-l border-slate-200 pl-2">
                     {classLinks.map((classLink) => {
                       const classActive =
@@ -299,7 +299,7 @@ export function RoleSidebarNav({
                 const active =
                   pathname === link.href ||
                   (link.href !== `/${tone}` && pathname.startsWith(`${link.href}/`))
-                const Icon = getSidebarIcon(link.label)
+                const Icon = getSidebarIcon(link.label, link.href)
                 return (
                   <div key={link.href}>
                     <Link
@@ -313,9 +313,9 @@ export function RoleSidebarNav({
                       onClick={() => setMobileOpen(false)}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
-                      {link.label}
+                      <span className="min-w-0 break-words">{link.label}</span>
                     </Link>
-                    {link.label === "Classes" && classLinks.length ? (
+                    {link.href === `/${tone}/classes` && classLinks.length ? (
                       <div className="ml-3 mt-1 grid gap-1 border-l border-slate-200 pl-2">
                         {classLinks.map((classLink) => {
                           const classActive =
@@ -390,7 +390,8 @@ export function RoleSidebarNav({
   )
 }
 
-function getSidebarIcon(label: string): LucideIcon {
+function getSidebarIcon(label: string, href: string): LucideIcon {
+  if (href.startsWith("/parent/students/")) return School
   const normalized = label.toLowerCase()
 
   if (normalized.includes("overview")) return Home
