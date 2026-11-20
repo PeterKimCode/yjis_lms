@@ -8,7 +8,7 @@ import { requireAdmin } from "@/modules/admin/access"
 import { AdminPageHeader } from "@/modules/admin/components"
 import { AdminAttendanceTabs } from "@/modules/attendance/admin-tabs"
 import { AttendanceQrScanner } from "@/modules/attendance/qr-scanner"
-import { confirmSchoolAttendance, inspectSchoolAttendanceQr } from "@/modules/attendance/school-actions"
+import { recordSchoolAttendanceQr } from "@/modules/attendance/school-actions"
 import { DailyAbsenceReview, DailyAttendanceEdit, SchoolScheduleForm } from "@/modules/attendance/school-controls"
 import { dailyStudentSelect, effectiveSchoolSchedule, getSchoolAttendanceScopes, getSchoolSchedules, schoolStudents, studentCampus } from "@/modules/attendance/school-data"
 import { dailyLabels, dailyStatuses, minuteLabel, schoolPhase, schoolScopeKey, schoolTime } from "@/modules/attendance/school-rules"
@@ -148,11 +148,7 @@ export default async function SchoolAttendanceToday({ searchParams }: {
           : <p className="text-sm">Set school or campus hours to begin daily attendance.</p>}
         <StudentQrRefresh label="Refresh attendance" />
       </section>
-      {scannersOpen ? <AttendanceQrScanner
-        key={scopeKey} classSessionId={scopeKey}
-        inspectAction={inspectSchoolAttendanceQr.bind(null, scope)}
-        confirmAction={confirmSchoolAttendance.bind(null, scope)}
-      /> : null}
+      {scannersOpen ? <AttendanceQrScanner key={scopeKey} recordAction={recordSchoolAttendanceQr.bind(null, scope)} /> : null}
       <form action={base} className="grid gap-2 rounded-lg border bg-white p-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto] xl:items-end">
         <input type="hidden" name="scope" value={scopeKey} />
         <label className="grid gap-1 text-sm">Student name

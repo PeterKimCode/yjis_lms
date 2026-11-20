@@ -4,29 +4,32 @@ import { useEffect, useEffectEvent, useRef, useState, useTransition } from "reac
 import { useRouter } from "next/navigation"
 import { Camera, ScanLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import type { recordSchoolAttendanceQr } from "./school-actions"
+import { dailyLabels } from "./school-rules"
 import { confirmAttendanceIdentity, inspectAttendanceQr } from "./smart-actions"
 import { qrPrefix } from "./smart-shared"
 
 type Review = { studentId: string; studentName: string; receipt: string }
 
-export function AttendanceQrScanner({ classSessionId, inspectAction, confirmAction }: {
-  classSessionId: string
-  inspectAction?: (code: string) => ReturnType<typeof inspectAttendanceQr>
-  confirmAction?: (review: { studentId: string; receipt: string }) => ReturnType<typeof confirmAttendanceIdentity>
-}) {
+type ScannerProps = { classSessionId: string; recordAction?: never } |
+  { recordAction: (code: string) => ReturnType<typeof recordSchoolAttendanceQr>; classSessionId?: never }
+
+export function AttendanceQrScanner({ classSessionId, recordAction }: ScannerProps) {
   const router = useRouter()
   const video = useRef<HTMLVideoElement>(null)
   const [camera, setCamera] = useState(false)
   const [review, setReview] = useState<Review | null>(null)
   const [message, setMessage] = useState("")
   const [pending, startTransition] = useTransition()
+  const automatic = Boolean(recordAction)
 
-  const scan = useEffectEvent((code: string) => {
+  const scanForReview = useEffectEvent((code: string) => {
+    if (!classSessionId) return
     setCamera(false)
     setMessage("Checking QR…")
     startTransition(async () => {
       try {
-        const result = await (inspectAction ? inspectAction(code) : inspectAttendanceQr(classSessionId, code))
+        const result = await inspectAttendanceQr(classSessionId, code)
         if ("error" in result && result.error) setMessage(result.error)
         else if (result.studentId && result.studentName && result.receipt) {
           setReview({ studentId: result.studentId, studentName: result.studentName, receipt: result.receipt })
@@ -38,6 +41,21 @@ export function AttendanceQrScanner({ classSessionId, inspectAction, confirmActi
     })
   })
 
+  const recordScan = useEffectEvent(async (code: string, isActive: () => boolean) => {
+    if (!recordAction) return
+    try {
+      const result = await recordAction(code)
+      if (!isActive()) return
+      if ("ok" in result) {
+        setMessage(`${result.studentName} · ${dailyLabels[result.status]}`)
+      } else {
+        setMessage(result.error)
+      }
+    } catch {
+      if (isActive()) setMessage("Could not record the check-in. Ask the student to show their next QR.")
+    }
+  })
+
   useEffect(() => {
     if (!camera || !video.current) return
     const player = video.current
@@ -46,6 +64,7 @@ export function AttendanceQrScanner({ classSessionId, inspectAction, confirmActi
     let stream: MediaStream | undefined
     let timer: number | undefined
     let stopped = false
+    let lastCode: string | undefined
 
     async function start() {
       try {
@@ -62,7 +81,9 @@ export function AttendanceQrScanner({ classSessionId, inspectAction, confirmActi
         player.srcObject = stream
         await player.play()
         if (stopped) return
-        setMessage("Point the camera at the QR on the student's screen.")
+        setMessage(automatic
+          ? "Check the student's identity, then scan their QR to record attendance."
+          : "Point the camera at the QR on the student's screen.")
 
         const frame = () => {
           if (stopped) return
@@ -79,8 +100,17 @@ export function AttendanceQrScanner({ classSessionId, inspectAction, confirmActi
               const pixels = context.getImageData(0, 0, width, height)
               const code = decodeQr(pixels.data, width, height, { inversionAttempts: "dontInvert" })?.data
               if (code?.startsWith(qrPrefix)) {
-                scan(code)
-                return
+                if (!automatic) {
+                  scanForReview(code)
+                  return
+                }
+                if (code !== lastCode) {
+                  lastCode = code
+                  void recordScan(code, () => !stopped).finally(() => {
+                    if (!stopped) timer = window.setTimeout(frame, 160)
+                  })
+                  return
+                }
               }
             }
             timer = window.setTimeout(frame, 160)
@@ -104,14 +134,14 @@ export function AttendanceQrScanner({ classSessionId, inspectAction, confirmActi
       stream?.getTracks().forEach((track) => track.stop())
       player.srcObject = null
     }
-  }, [camera])
+  }, [automatic, camera])
 
   function confirm() {
-    if (!review) return
+    if (!review || !classSessionId) return
     startTransition(async () => {
       try {
         const input = { studentId: review.studentId, receipt: review.receipt }
-        const result = await (confirmAction ? confirmAction(input) : confirmAttendanceIdentity({ classSessionId, ...input }))
+        const result = await confirmAttendanceIdentity({ classSessionId, ...input })
         setMessage("error" in result && result.error ? result.error : `${review.studentName} checked in.`)
         setReview(null)
         router.refresh()

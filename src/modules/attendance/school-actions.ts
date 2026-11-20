@@ -4,13 +4,12 @@ import { AttendanceStatus, NotificationChannel, NotificationType, UserRole, type
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { getPrismaClient } from "@/lib/prisma"
-import { dailyStudentSelect, effectiveSchoolSchedule, findSchoolStaffScope, getDailyStudentContext, getSchoolSchedules, schoolStudents, signedInRole, studentCampus, type SchoolScope } from "./school-data"
+import { dailyStudentSelect, effectiveSchoolSchedule, findSchoolStaffScope, getDailyStudentContext, schoolStudents, signedInRole, studentCampus, type SchoolScope } from "./school-data"
 import { arrivalStatus, dailyLabels, dailyStatuses, parseMinute, schoolPhase, schoolScopeKey, schoolTime } from "./school-rules"
-import { issueReview, issueTicket, qrSecret, readReview, ticketHash } from "./smart-rules"
+import { issueTicket, qrSecret, ticketHash } from "./smart-rules"
 
 const id = z.string().min(1).max(80)
 const scopeInput = z.object({ organizationId: id, campusId: id.nullable() })
-const reviewInput = z.object({ studentId: id, receipt: z.string().min(1).max(80) })
 const statuses = z.enum([...dailyStatuses, "PENDING"])
 const revisionInput = z.object({
   studentId: id, schoolDate: z.string().max(10), status: statuses, note: z.string().trim().min(1).max(500),
@@ -19,6 +18,7 @@ const revisionInput = z.object({
 type TodayKey = { organizationId: string; studentId: string; schoolDate: string }
 type StaffScope = NonNullable<Awaited<ReturnType<typeof findSchoolStaffScope>>>
 type RecordStatus = keyof typeof dailyLabels
+type ArrivalQrResult = { ok: true; studentName: string; status: "PRESENT" | "LATE" } | { error: string }
 
 async function staffScope(input: SchoolScope) {
   const parsed = scopeInput.safeParse(input)
@@ -122,61 +122,35 @@ export async function issueSchoolAttendanceQr(expectedDate: string) {
   return { code: ticket.code, validForMs: Math.max(0, ticket.expiresAt - Date.now()) }
 }
 
-export async function inspectSchoolAttendanceQr(scope: SchoolScope, code: string) {
+export async function recordSchoolAttendanceQr(scope: SchoolScope, code: string): Promise<ArrivalQrResult> {
   const hash = typeof code === "string" && code.length < 80 ? ticketHash(code.trim()) : null
   if (!hash) return { error: "This is not an LMS attendance QR." }
   const context = await staffScope(scope)
-  const secret = qrSecret()
-  if (!context || !secret) return { error: "You cannot scan for this school or campus." }
-  const now = new Date()
-  const time = schoolTime(now, context.organization.timezone)
-  const prisma = getPrismaClient()
-  const record = await prisma.schoolAttendanceRecord.findUnique({
-    where: { ticketHash: hash, organizationId: scope.organizationId, schoolDate: time.date, status: AttendanceStatus.PENDING, ticketExpiresAt: { gt: now } },
-    select: { studentId: true },
-  })
-  if (!record) return { error: "The QR expired, was used, or belongs to a different school. Ask for the current school QR." }
-  const [student, schedules] = await Promise.all([
-    prisma.user.findFirst({ where: { ...schoolStudents(scope, now), id: record.studentId }, select: dailyStudentSelect }),
-    getSchoolSchedules(scope.organizationId),
-  ])
-  if (!student) return { error: "This student is outside your selected school or campus." }
-  const campusId = studentCampus(student, scope.organizationId)
-  if (schoolPhase(effectiveSchoolSchedule(schedules, { ...scope, campusId }), time) !== "open") {
-    return { error: "The school check-in window has closed for this student." }
-  }
-  return {
-    studentId: student.id, studentName: student.name,
-    receipt: issueReview(secret, ticketContext(scope.organizationId, time.date), student.id, context.actor.id, now.getTime()),
-  }
-}
-
-export async function confirmSchoolAttendance(scope: SchoolScope, input: z.input<typeof reviewInput>) {
-  const parsed = reviewInput.safeParse(input)
-  const context = await staffScope(scope)
-  const secret = qrSecret()
-  if (!parsed.success || !context || !secret) return { error: "Scan the student's current QR again." }
-  const { studentId, receipt } = parsed.data
-  const now = new Date()
-  const time = schoolTime(now, context.organization.timezone)
-  const scannedAt = readReview(secret, receipt, ticketContext(scope.organizationId, time.date), studentId, context.actor.id, now.getTime())
-  if (!scannedAt) return { error: "The identity review expired. Scan the QR again." }
-  const result = await getPrismaClient().$transaction(async (tx) => {
-    const student = await tx.user.findFirst({ where: { ...schoolStudents(scope, now), id: studentId }, select: dailyStudentSelect })
+  if (!context || !qrSecret()) return { error: "You cannot scan for this school or campus." }
+  const scannedAt = new Date()
+  const time = schoolTime(scannedAt, context.organization.timezone)
+  const result = await getPrismaClient().$transaction<ArrivalQrResult>(async (tx) => {
+    const [match] = await tx.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "SchoolAttendanceRecord"
+      WHERE "ticketHash" = ${hash} AND "organizationId" = ${scope.organizationId}
+        AND "schoolDate" = ${time.date} AND status = 'PENDING' AND "ticketExpiresAt" > ${scannedAt}
+      FOR UPDATE`
+    if (!match) return { error: "The QR expired, was used, or belongs to another school. Ask for the current school QR." }
+    const previous = await tx.schoolAttendanceRecord.findUniqueOrThrow({ where: { id: match.id } })
+    const student = await tx.user.findFirst({
+      where: { ...schoolStudents(scope, scannedAt), id: previous.studentId }, select: dailyStudentSelect,
+    })
     if (!student) return { error: "This student is outside your selected school or campus." }
     const campusId = studentCampus(student, scope.organizationId)
-    const key = todayKey(scope.organizationId, studentId, time.date)
-    const previous = await lockTodayRecord(tx, key, campusId)
-    if (previous.status !== "PENDING") return { error: "This student already has a confirmed attendance result." }
     const schedules = await tx.schoolAttendanceSchedule.findMany({ where: { organizationId: scope.organizationId } })
     const schedule = effectiveSchoolSchedule(schedules, { ...scope, campusId })
     const currentTime = schoolTime(new Date(), context.organization.timezone)
     if (!schedule || currentTime.date !== time.date || schoolPhase(schedule, currentTime) !== "open") {
       return { error: "The school check-in window has closed." }
     }
-    const status = arrivalStatus(schedule, schoolTime(scannedAt, context.organization.timezone).minute)
+    const status = arrivalStatus(schedule, time.minute)
     await saveResult(tx, context, previous, campusId, status, null, scannedAt, "school-attendance.check-in")
-    return { ok: true }
+    return { ok: true, studentName: student.name, status }
   })
   if ("ok" in result) refreshDailyAttendance()
   return result
