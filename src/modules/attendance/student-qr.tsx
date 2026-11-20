@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { getStudentAttendanceQr } from "./smart-actions"
 
-export function StudentQrRefresh() {
+export function StudentQrRefresh({ label = "Refresh sessions" }: { label?: string }) {
   const router = useRouter()
   useEffect(() => {
     const refresh = () => {
@@ -18,10 +18,20 @@ export function StudentQrRefresh() {
       document.removeEventListener("visibilitychange", refresh)
     }
   }, [router])
-  return <Button variant="outline" onClick={() => router.refresh()}>Refresh sessions</Button>
+  return <Button variant="outline" onClick={() => router.refresh()}>{label}</Button>
 }
 
-export function StudentAttendanceQr({ sessionId }: { sessionId: string }) {
+export function StudentAttendanceQr({
+  sessionId,
+  issueAction = getStudentAttendanceQr,
+  verifiedMessage = "Check-in verified. Your teacher will publish the final result.",
+  prompt = "Show this screen to your teacher. The QR changes every 12 seconds.",
+}: {
+  sessionId: string
+  issueAction?: typeof getStudentAttendanceQr
+  verifiedMessage?: string
+  prompt?: string
+}) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [active, setActive] = useState(false)
   const [ready, setReady] = useState(false)
@@ -41,12 +51,12 @@ export function StudentAttendanceQr({ sessionId }: { sessionId: string }) {
       const isCurrent = () => !cancelled && !document.hidden && request === requestCount
       const requestedAt = performance.now()
       try {
-        const result = await getStudentAttendanceQr(sessionId)
+        const result = await issueAction(sessionId)
         if (!isCurrent()) return
         if ("checkedIn" in result && result.checkedIn) {
           setReady(false)
           setCheckedIn(true)
-          setMessage("Check-in verified. Your teacher will publish the final result.")
+          setMessage(verifiedMessage)
           return
         }
         if ("error" in result && result.error) {
@@ -99,7 +109,7 @@ export function StudentAttendanceQr({ sessionId }: { sessionId: string }) {
       window.clearTimeout(expires)
       document.removeEventListener("visibilitychange", onVisibilityChange)
     }
-  }, [active, sessionId])
+  }, [active, issueAction, sessionId, verifiedMessage])
 
   return (
     <div className="space-y-3">
@@ -111,7 +121,7 @@ export function StudentAttendanceQr({ sessionId }: { sessionId: string }) {
       ) : null}
       <p className="text-sm" role="status">{message}</p>
       {active && !checkedIn && !ready && !message ? <p className="text-sm">Loading your QR…</p> : null}
-      {ready ? <p className="text-center text-sm">Show this screen to your teacher. The QR changes every 12 seconds.</p> : null}
+      {ready ? <p className="text-center text-sm">{prompt}</p> : null}
       {active && !checkedIn ? (
         <Button variant="outline" onClick={() => { setActive(false); setReady(false); setMessage("") }}>Hide QR</Button>
       ) : null}

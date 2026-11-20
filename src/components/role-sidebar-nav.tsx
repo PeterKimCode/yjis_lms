@@ -400,6 +400,7 @@ function getSidebarIcon(label: string): LucideIcon {
   if (normalized.includes("notification")) return Bell
   if (normalized.includes("linked")) return School
   if (normalized === "qr attendance") return QrCode
+  if (normalized === "school attendance") return CheckSquare
 
   return Layers
 }

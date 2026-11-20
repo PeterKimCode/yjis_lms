@@ -5,6 +5,10 @@ import { qrPrefix } from "./smart-shared"
 const rotationMs = 12_000
 const reviewMs = 45_000
 const digestPattern = /^[A-Za-z0-9_-]{43}$/
+export function qrSecret() {
+  return process.env.ATTENDANCE_QR_SECRET || process.env.NEXTAUTH_SECRET ||
+    (process.env.NODE_ENV === "development" ? "local-lms-attendance-development" : null)
+}
 export function isQrOpen(
   session: { qrOpenedAt: Date | null; qrClosesAt: Date | null; qrFinalizedAt: Date | null },
   now: Date

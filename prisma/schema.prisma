@@ -178,6 +178,8 @@ enum UserDeletionRequestStatus {
 }
 
 model Organization {
+  schoolAttendanceSchedules SchoolAttendanceSchedule[]
+  schoolAttendanceRecords SchoolAttendanceRecord[]
   loginNotices LoginNotice[]
 
   id                       String                    @id @default(cuid())
@@ -256,6 +258,8 @@ model Organization {
 }
 
 model Campus {
+  schoolAttendanceSchedules SchoolAttendanceSchedule[]
+  schoolAttendanceRecords SchoolAttendanceRecord[]
   id                      String                  @id @default(cuid())
   organizationId          String
   name                    String
@@ -295,6 +299,7 @@ model Campus {
 }
 
 model User {
+  schoolAttendanceRecords SchoolAttendanceRecord[]
   smartAttendanceCheckIns SmartAttendanceCheckIn[]
   gradeDocumentRequests GradeDocumentRequest[] @relation("GradeDocumentRequests")
   reviewedGradeDocuments GradeDocumentRequest[] @relation("ReviewedGradeDocuments")
@@ -979,6 +984,45 @@ model SmartAttendanceCheckIn {
   student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([attendanceSessionId, studentId])
+  @@index([studentId])
+}
+
+model SchoolAttendanceSchedule {
+  scopeKey       String       @id
+  organizationId String
+  campusId       String?
+  opensMinute    Int
+  lateMinute     Int
+  closesMinute   Int
+  weekdays       Int[]
+  closedDates    String[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?      @relation(fields: [campusId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([campusId])
+}
+
+model SchoolAttendanceRecord {
+  id             String           @id @default(cuid())
+  organizationId String
+  campusId       String?
+  studentId      String
+  schoolDate     String
+  status         AttendanceStatus @default(PENDING)
+  checkedInAt    DateTime?
+  note           String?
+  updatedById    String?
+  ticketHash     String?          @unique
+  ticketExpiresAt DateTime?
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  campus         Campus?          @relation(fields: [campusId], references: [id], onDelete: SetNull)
+  student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, studentId, schoolDate])
+  @@index([organizationId, schoolDate, campusId])
+  @@index([campusId])
   @@index([studentId])
 }
 

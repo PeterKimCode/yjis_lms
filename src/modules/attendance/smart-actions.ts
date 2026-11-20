@@ -8,7 +8,7 @@ import { writeAuditLog } from "@/modules/audit/service"
 import { getCurrentUser } from "@/modules/auth/permissions"
 import { resolvePolicies } from "@/modules/policies/resolve"
 import { activeAttendanceEnrollment, getSmartAttendanceManager } from "./smart-data"
-import { isQrOpen, issueReview, issueTicket, readReview, suggestedStatus, ticketHash } from "./smart-rules"
+import { isQrOpen, issueReview, issueTicket, qrSecret, readReview, suggestedStatus, ticketHash } from "./smart-rules"
 import { attendanceLabels, qrWindowMinutes } from "./smart-shared"
 
 const id = z.string().min(1).max(80)
@@ -19,11 +19,6 @@ const rosterEdit = z.object({
   status: z.enum(AttendanceStatus).exclude(["PENDING"]).nullable(),
   note: z.string().trim().max(500),
 })
-
-function qrSecret() {
-  return process.env.ATTENDANCE_QR_SECRET || process.env.NEXTAUTH_SECRET ||
-    (process.env.NODE_ENV === "development" ? "local-lms-attendance-development" : null)
-}
 
 async function getManagerSession(classSessionId: string) {
   if (!id.safeParse(classSessionId).success) return null

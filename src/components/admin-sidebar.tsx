@@ -24,7 +24,8 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canMan
   const admissionLinks = canManageAdmissions ? [["/admin/enrollment-requests", `Enrollment requests${pendingRequests ? ` (${pendingRequests})` : ""}`], ["/admin/login-notices", "Login notices"]] as const : []
   function group(links: readonly (readonly [string, string])[], compact = false) {
     return <div className="grid gap-1">{links.map(([href, label]) => {
-      const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`))
+      const active = pathname === href || (href !== "/admin" && pathname.startsWith(`${href}/`)) ||
+        (label === "Attendance" && (pathname === "/admin/attendance" || pathname.startsWith("/admin/attendance/")))
       const Icon = icons[label as keyof typeof icons] ?? Settings
       return <Link key={href} href={href} title={compact ? label : undefined} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)} className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm ${compact ? "justify-center" : ""} ${active ? "bg-zinc-900 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-zinc-900"}`}><Icon className="size-4 shrink-0" /><span className={compact ? "sr-only" : ""}>{label}</span></Link>
     })}</div>

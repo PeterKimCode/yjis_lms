@@ -9,7 +9,11 @@ import { qrPrefix } from "./smart-shared"
 
 type Review = { studentId: string; studentName: string; receipt: string }
 
-export function AttendanceQrScanner({ classSessionId }: { classSessionId: string }) {
+export function AttendanceQrScanner({ classSessionId, inspectAction, confirmAction }: {
+  classSessionId: string
+  inspectAction?: (code: string) => ReturnType<typeof inspectAttendanceQr>
+  confirmAction?: (review: { studentId: string; receipt: string }) => ReturnType<typeof confirmAttendanceIdentity>
+}) {
   const router = useRouter()
   const video = useRef<HTMLVideoElement>(null)
   const [camera, setCamera] = useState(false)
@@ -22,7 +26,7 @@ export function AttendanceQrScanner({ classSessionId }: { classSessionId: string
     setMessage("Checking QR…")
     startTransition(async () => {
       try {
-        const result = await inspectAttendanceQr(classSessionId, code)
+        const result = await (inspectAction ? inspectAction(code) : inspectAttendanceQr(classSessionId, code))
         if ("error" in result && result.error) setMessage(result.error)
         else if (result.studentId && result.studentName && result.receipt) {
           setReview({ studentId: result.studentId, studentName: result.studentName, receipt: result.receipt })
@@ -106,7 +110,8 @@ export function AttendanceQrScanner({ classSessionId }: { classSessionId: string
     if (!review) return
     startTransition(async () => {
       try {
-        const result = await confirmAttendanceIdentity({ classSessionId, studentId: review.studentId, receipt: review.receipt })
+        const input = { studentId: review.studentId, receipt: review.receipt }
+        const result = await (confirmAction ? confirmAction(input) : confirmAttendanceIdentity({ classSessionId, ...input }))
         setMessage("error" in result && result.error ? result.error : `${review.studentName} checked in.`)
         setReview(null)
         router.refresh()
