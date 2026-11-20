@@ -19,6 +19,7 @@ import {
   NotebookTabs,
   PanelLeftClose,
   PanelLeftOpen,
+  QrCode,
   School,
   type LucideIcon,
 } from "lucide-react"
@@ -398,6 +399,7 @@ function getSidebarIcon(label: string): LucideIcon {
   if (normalized.includes("message")) return MessageSquare
   if (normalized.includes("notification")) return Bell
   if (normalized.includes("linked")) return School
+  if (normalized === "qr attendance") return QrCode
 
   return Layers
 }

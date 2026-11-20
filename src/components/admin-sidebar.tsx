@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, PanelLeftClose, PanelLeftOpen, Building2, MapPin, Network, CalendarDays, CalendarRange, ListOrdered, School, ShieldCheck, ScrollText, Megaphone, ClipboardList } from "lucide-react"
+import { Menu, Home, BookOpen, GraduationCap, Users, FileText, Layers, MessageSquare, Bell, Settings, PanelLeftClose, PanelLeftOpen, Building2, MapPin, Network, CalendarDays, CalendarRange, ListOrdered, School, ShieldCheck, ScrollText, Megaphone, ClipboardList, CheckSquare } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { adminPrimaryLinks, adminSetupLinks } from "@/modules/admin/components"
@@ -12,7 +12,7 @@ import { SidebarFooter } from "@/components/sidebar-footer"
 import { useSidebarPreference } from "@/components/use-sidebar-preference"
 
 type MessageLink = { id: string; href: string; label: string; preview: string; unreadCount: number }
-const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell, "Audit Logs": ScrollText, Organizations: Building2, Campuses: MapPin, Departments: Network, "Academic Years": CalendarDays, Terms: CalendarRange, "Grade Levels": ListOrdered, Homerooms: School, Policies: ShieldCheck, "Login notices": Megaphone, "Grades & Documents": ClipboardList }
+const icons = { Overview: Home, Courses: BookOpen, "Class Sections": GraduationCap, Attendance: CheckSquare, Users, Files: FileText, Boards: Layers, Messages: MessageSquare, Notifications: Bell, "Audit Logs": ScrollText, Organizations: Building2, Campuses: MapPin, Departments: Network, "Academic Years": CalendarDays, Terms: CalendarRange, "Grade Levels": ListOrdered, Homerooms: School, Policies: ShieldCheck, "Login notices": Megaphone, "Grades & Documents": ClipboardList }
 
 export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canManageAdmissions = false, pendingRequests = 0 }: {
   logoUrl: string; email: string | null; schoolOnly: boolean; messages?: MessageLink[]; canManageAdmissions?: boolean; pendingRequests?: number
@@ -20,7 +20,7 @@ export function AdminSidebar({ logoUrl, email, schoolOnly, messages = [], canMan
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [collapsed, toggleCollapsed] = useSidebarPreference()
-  const primary = schoolOnly ? adminPrimaryLinks.filter(([, label]) => ["Courses", "Class Sections", "Users", "Files"].includes(label)) : adminPrimaryLinks
+  const primary = schoolOnly ? adminPrimaryLinks.filter(([, label]) => ["Courses", "Class Sections", "Attendance", "Users", "Files"].includes(label)) : adminPrimaryLinks
   const admissionLinks = canManageAdmissions ? [["/admin/enrollment-requests", `Enrollment requests${pendingRequests ? ` (${pendingRequests})` : ""}`], ["/admin/login-notices", "Login notices"]] as const : []
   function group(links: readonly (readonly [string, string])[], compact = false) {
     return <div className="grid gap-1">{links.map(([href, label]) => {

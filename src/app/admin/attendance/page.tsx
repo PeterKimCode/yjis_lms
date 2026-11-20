@@ -1,4 +1,5 @@
 import { getPrismaClient } from "@/lib/prisma"
+import { AdminAttendanceTabs } from "@/modules/attendance/admin-tabs"
 import {
   getClassSectionWhereForAdmin,
   requireAdmin,
@@ -26,6 +27,7 @@ export default async function AdminAttendancePage({
   const sessions = await getPrismaClient().attendanceSession.findMany({
     where: {
       classSection: getClassSectionWhereForAdmin(admin),
+      OR: [{ qrOpenedAt: null }, { qrFinalizedAt: { not: null } }],
     },
     include: {
       classSection: {
@@ -77,6 +79,7 @@ export default async function AdminAttendancePage({
         title="Attendance"
         description="Scoped attendance overview by class, student, term, and campus."
       />
+      <AdminAttendanceTabs view="records" />
       <SearchForm q={q} placeholder="Search attendance, classes, students..." />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <SummaryCard label="Total sessions" value={sessions.length} />

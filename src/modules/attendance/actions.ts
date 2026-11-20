@@ -129,9 +129,7 @@ export async function createAttendanceSession(formData: FormData) {
   })
   const attendanceSession = await prisma.attendanceSession.upsert({
     where: { classSessionId: classSession.id },
-    update: {
-      title: data.title ?? classSession.title ?? "Attendance",
-    },
+    update: {},
     create: {
       organizationId: classSession.organizationId,
       campusId: classSession.campusId,
@@ -141,6 +139,11 @@ export async function createAttendanceSession(formData: FormData) {
       takenAt: classSession.startsAt,
     },
   })
+  if (attendanceSession.qrOpenedAt) return
+  const title = data.title ?? classSession.title ?? "Attendance"
+  if (attendanceSession.title !== title) {
+    await prisma.attendanceSession.update({ where: { id: attendanceSession.id }, data: { title } })
+  }
   const enrollments = await prisma.enrollment.findMany({
     where: { classSectionId: data.classSectionId },
     select: { studentId: true },
@@ -220,6 +223,7 @@ export async function saveAttendanceRecords(formData: FormData) {
       organizationId: true,
       campusId: true,
       classSectionId: true,
+      qrOpenedAt: true,
       title: true,
       classSession: {
         select: {
@@ -231,6 +235,9 @@ export async function saveAttendanceRecords(formData: FormData) {
 
   if (!(await canManageClassSectionForAttendance(attendanceSession.classSectionId))) {
     throw new Error("Forbidden")
+  }
+  if (attendanceSession.qrOpenedAt) {
+    throw new Error("Review this record in QR attendance.")
   }
 
   const { attendance: policy } = await resolvePolicies({

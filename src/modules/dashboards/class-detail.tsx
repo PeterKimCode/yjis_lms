@@ -379,29 +379,40 @@ export async function ClassSectionDetail({
                 <TableCell>{session.location ?? "-"}</TableCell>
                 {mode === "instructor" ? (
                   <TableCell>
-                    {session.attendanceSession ? (
+                    {session.attendanceSession?.qrOpenedAt ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/attendance/${session.id}`}>QR attendance</Link>
+                      </Button>
+                    ) : session.attendanceSession ? (
                       "Created"
                     ) : (
-                      <form action={createAttendanceSession}>
-                        <input
-                          name="classSectionId"
-                          type="hidden"
-                          value={section.id}
-                        />
-                        <input
-                          name="classSessionId"
-                          type="hidden"
-                          value={session.id}
-                        />
-                        <input
-                          name="title"
-                          type="hidden"
-                          value={session.title ?? "Attendance"}
-                        />
-                        <Button size="sm" type="submit" variant="outline">
-                          Take attendance
-                        </Button>
-                      </form>
+                      <div className="flex flex-wrap gap-2">
+                        {session.deliveryMode !== DeliveryMode.ONLINE ? (
+                          <Button asChild size="sm">
+                            <Link href={`/attendance/${session.id}`}>QR attendance</Link>
+                          </Button>
+                        ) : null}
+                        <form action={createAttendanceSession}>
+                          <input
+                            name="classSectionId"
+                            type="hidden"
+                            value={section.id}
+                          />
+                          <input
+                            name="classSessionId"
+                            type="hidden"
+                            value={session.id}
+                          />
+                          <input
+                            name="title"
+                            type="hidden"
+                            value={session.title ?? "Attendance"}
+                          />
+                          <Button size="sm" type="submit" variant="outline">
+                            Take attendance
+                          </Button>
+                        </form>
+                      </div>
                     )}
                   </TableCell>
                 ) : null}
@@ -421,6 +432,9 @@ export async function ClassSectionDetail({
           title="Attendance"
         >
           <div className="space-y-4">
+            {mode === "student" ? (
+              <Button asChild variant="outline"><Link href="/student/attendance">Show attendance QR</Link></Button>
+            ) : null}
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <AttendanceStat
                 label="Total sessions"
@@ -460,7 +474,14 @@ export async function ClassSectionDetail({
                     Manage attendance
                   </summary>
                   <div className="space-y-3 pt-3">
-                    {section.attendanceSessions.map((attendance) => (
+                    {section.attendanceSessions.map((attendance) => attendance.qrOpenedAt ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white p-3" key={attendance.id}>
+                        <span className="text-sm font-medium">{attendance.title ?? "Attendance"} · {formatDateTime(attendance.takenAt)}</span>
+                        {attendance.classSessionId ? (
+                          <Button asChild size="sm" variant="outline"><Link href={`/attendance/${attendance.classSessionId}`}>Review QR attendance</Link></Button>
+                        ) : null}
+                      </div>
+                    ) : (
                       <details
                         className="rounded-md border bg-white p-3"
                         key={attendance.id}

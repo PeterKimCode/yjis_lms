@@ -295,6 +295,7 @@ model Campus {
 }
 
 model User {
+  smartAttendanceCheckIns SmartAttendanceCheckIn[]
   gradeDocumentRequests GradeDocumentRequest[] @relation("GradeDocumentRequests")
   reviewedGradeDocuments GradeDocumentRequest[] @relation("ReviewedGradeDocuments")
   enrollmentRequests EnrollmentRequest[] @relation("StudentRequests")
@@ -945,6 +946,10 @@ model AttendanceSession {
   classSessionId String?            @unique
   title          String?
   takenAt        DateTime           @default(now())
+  qrOpenedAt     DateTime?
+  qrClosesAt     DateTime?
+  qrLateAt       DateTime?
+  qrFinalizedAt  DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -952,11 +957,29 @@ model AttendanceSession {
   classSection   ClassSection       @relation(fields: [classSectionId], references: [id], onDelete: Cascade)
   classSession   ClassSession?      @relation(fields: [classSessionId], references: [id], onDelete: SetNull)
   records        AttendanceRecord[]
+  qrCheckIns     SmartAttendanceCheckIn[]
 
   @@index([organizationId])
   @@index([campusId])
   @@index([classSectionId])
   @@index([createdAt])
+  @@index([qrClosesAt])
+}
+
+model SmartAttendanceCheckIn {
+  attendanceSessionId String
+  studentId           String
+  ticketHash          String?           @unique
+  ticketExpiresAt     DateTime?
+  verifiedAt          DateTime?
+  verifiedById        String?
+  reviewStatus        AttendanceStatus?
+  reviewNote          String?
+  attendanceSession   AttendanceSession @relation(fields: [attendanceSessionId], references: [id], onDelete: Cascade)
+  student             User              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([attendanceSessionId, studentId])
+  @@index([studentId])
 }
 
 model AttendanceRecord {

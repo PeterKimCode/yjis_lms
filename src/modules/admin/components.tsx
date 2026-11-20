@@ -20,6 +20,7 @@ export const adminPrimaryLinks = [
   ["/admin", "Overview"],
   ["/admin/courses", "Courses"],
   ["/admin/class-sections", "Class Sections"],
+  ["/admin/attendance", "Attendance"],
   ["/admin/users", "Users"],
   ["/admin/boards", "Boards"],
   ["/admin/files", "Files"],

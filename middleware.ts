@@ -41,6 +41,8 @@ function isAllowedSchoolAdminPath(pathname: string) {
     pathname === "/admin/login-notices" ||
     pathname === "/admin/enrollment-requests" ||
     pathname === "/admin/grades-documents" ||
+    pathname === "/admin/attendance" ||
+    pathname === "/admin/attendance/qr" ||
     pathname === "/admin/files" ||
     pathname.startsWith("/admin/files/") ||
     pathname === "/admin/courses" ||
