@@ -365,6 +365,7 @@ export async function getAdminUserDetail(userId: string) {
         include: {
           classSection: {
             include: {
+              organization: { select: { timezone: true } },
               campus: true,
               course: true,
               term: true,

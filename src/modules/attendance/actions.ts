@@ -10,6 +10,7 @@ import {
 import { z } from "zod"
 
 import { getPrismaClient } from "@/lib/prisma"
+import { parseDateTimeLocalInTimeZone } from "@/lib/timezone"
 import { writeAuditLog } from "@/modules/audit/service"
 import { canManageClassSection, requireAnyRole } from "@/modules/auth/permissions"
 import {
@@ -34,15 +35,11 @@ function readStringArray(formData: FormData, name: string) {
     .map((value) => (typeof value === "string" ? value : ""))
 }
 
-function readDate(value: string) {
-  return new Date(value)
-}
-
 const classSessionSchema = z.object({
   classSectionId: requiredString,
   title: optionalString,
-  startsAt: requiredString.transform(readDate),
-  endsAt: optionalString.transform((value) => (value ? readDate(value) : null)),
+  startsAt: requiredString,
+  endsAt: optionalString,
   location: optionalString,
   meetingUrl: optionalString,
   deliveryMode: z.nativeEnum(DeliveryMode),
@@ -70,8 +67,12 @@ export async function createClassSession(formData: FormData) {
       organizationId: true,
       campusId: true,
       termId: true,
+      organization: { select: { timezone: true } },
     },
   })
+  const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, classSection.organization.timezone)
+  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, classSection.organization.timezone)
+  if (!startsAt || (data.endsAt && !endsAt)) throw new Error("Enter a valid class session date and time.")
 
   await prisma.classSession.create({
     data: {
@@ -80,8 +81,8 @@ export async function createClassSession(formData: FormData) {
       classSectionId: data.classSectionId,
       termId: classSection.termId,
       title: data.title,
-      startsAt: data.startsAt,
-      endsAt: data.endsAt,
+      startsAt,
+      endsAt,
       location: data.location,
       meetingUrl: data.meetingUrl,
       deliveryMode: data.deliveryMode,

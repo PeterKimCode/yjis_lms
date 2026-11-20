@@ -35,7 +35,6 @@ export default async function SchoolAttendanceToday({ searchParams }: {
   if (!selected) return <div className="space-y-4"><AdminAttendanceTabs view="today" /><p>No active schools or campuses are in your scope.</p></div>
   const scope = { organizationId: selected.organizationId, campusId: selected.campusId }
   const scopeKey = schoolScopeKey(scope.organizationId, scope.campusId)
-  const settings = query.view === "settings"
   const url = (params: Record<string, string> = {}) => `${base}?${new URLSearchParams({ scope: scopeKey, ...params })}`
   const schedules = await getSchoolSchedules(scope.organizationId)
   const schedule = effectiveSchoolSchedule(schedules, scope)
@@ -47,11 +46,10 @@ export default async function SchoolAttendanceToday({ searchParams }: {
   const prs = getPrismaClient()
   const header = (
     <>
-      <AdminPageHeader title="Today’s school attendance" description="" />
+      <AdminPageHeader title="School attendance" description="" />
       <AdminAttendanceTabs view="today" />
-      <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border bg-white p-4">
+      <div className="rounded-lg border bg-white p-4">
         <form action={base} className="flex min-w-0 flex-wrap items-end gap-2">
-          {settings ? <input type="hidden" name="view" value="settings" /> : null}
           <label className="grid min-w-0 max-w-full gap-1 text-sm font-medium">School or campus
             <select name="scope" defaultValue={scopeKey} className={selectClass}>
               {scopes.map((item) => {
@@ -62,21 +60,9 @@ export default async function SchoolAttendanceToday({ searchParams }: {
           </label>
           <Button variant="outline" type="submit">Apply</Button>
         </form>
-        <Button asChild variant="outline"><Link href={url(settings ? {} : { view: "settings" })}>{settings ? "Back to today’s roster" : "Schedule settings"}</Link></Button>
       </div>
     </>
   )
-  if (settings) return (
-    <div className="space-y-4">
-      {header}
-      <div>
-        <h2 className="text-lg font-semibold">Schedule for {selected.label}</h2>
-        <p className="text-sm text-muted-foreground">{selected.timezone}{scope.campusId && !hasOverride && schedule ? " · Using the school schedule" : ""}</p>
-      </div>
-      <SchoolScheduleForm key={`${scopeKey}:${JSON.stringify(schedule)}`} scope={scope} schedule={schedule} hasOverride={hasOverride} />
-    </div>
-  )
-
   const q = read(query.q)
   const grade = read(query.grade, 80)
   const homeroom = read(query.homeroom, 80)
@@ -149,6 +135,13 @@ export default async function SchoolAttendanceToday({ searchParams }: {
   return (
     <div className="space-y-4">
       {header}
+      <section aria-labelledby="school-attendance-schedule" className="space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="school-attendance-schedule" className="text-lg font-semibold">Schedule settings</h2>
+          {scope.campusId && !hasOverride && schedule ? <p className="text-sm text-muted-foreground">Using the school schedule</p> : null}
+        </div>
+        <SchoolScheduleForm key={`${scopeKey}:${JSON.stringify(schedule)}`} scope={scope} schedule={schedule} hasOverride={hasOverride} />
+      </section>
       <section className="space-y-2 rounded-lg border bg-white p-4">
         <h2 className="break-words font-semibold">{selected.label} · {time.date}</h2>
         {schedule ? <p className="text-sm">Default check-in {minuteLabel(schedule.opensMinute)}–{minuteLabel(schedule.closesMinute)} · Late from {minuteLabel(schedule.lateMinute)}{!scope.campusId && campusOverrides.length ? " · Some campuses have their own hours" : ""}</p>

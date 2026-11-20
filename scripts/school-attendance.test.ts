@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { dateTimeLocalInTimeZone, formatDateTimeInTimeZone, parseDateTimeLocalInTimeZone } from "../src/lib/timezone"
 import { arrivalStatus, minuteLabel, parseMinute, schoolPhase, schoolScopeKey, schoolTime } from "../src/modules/attendance/school-rules"
 
 const timeZone = "Asia/Seoul"
@@ -28,4 +29,12 @@ test("schedule input accepts only valid 24-hour times and campus schedules have 
   assert.equal(parseMinute("10:60"), null)
   assert.equal(schoolScopeKey("abc", null), "school:abc")
   assert.equal(schoolScopeKey("abc", "abc"), "campus:abc")
+})
+
+test("class attendance uses the school's local clock for input and date rollover on display", () => {
+  const session = parseDateTimeLocalInTimeZone("2026-11-20T17:30", "Asia/Seoul")
+  assert.equal(session?.toISOString(), "2026-11-20T08:30:00.000Z")
+  assert.equal(dateTimeLocalInTimeZone(session, "Asia/Manila"), "2026-11-20T16:30")
+  const legacyTime = new Date("2026-06-05T17:27:00Z")
+  assert.equal(formatDateTimeInTimeZone(legacyTime, "Asia/Seoul"), "Jun 6, 2026, 2:27 AM")
 })

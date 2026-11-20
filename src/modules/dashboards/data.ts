@@ -512,6 +512,7 @@ export async function getParentStudentDetail(parentId: string, studentId: string
         include: {
           attendanceSession: {
             include: {
+              organization: { select: { timezone: true } },
               classSession: true,
               classSection: {
                 include: {

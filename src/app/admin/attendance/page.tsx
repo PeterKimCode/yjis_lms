@@ -1,4 +1,5 @@
 import { getPrismaClient } from "@/lib/prisma"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import { AdminAttendanceTabs } from "@/modules/attendance/admin-tabs"
 import {
   getClassSectionWhereForAdmin,
@@ -30,6 +31,7 @@ export default async function AdminAttendancePage({
       OR: [{ qrOpenedAt: null }, { qrFinalizedAt: { not: null } }],
     },
     include: {
+      organization: { select: { timezone: true } },
       classSection: {
         include: {
           campus: true,
@@ -59,6 +61,7 @@ export default async function AdminAttendancePage({
       studentEmail: record.student.email ?? "-",
       status: record.status,
       takenAt: session.takenAt,
+      timezone: session.organization.timezone,
     }))
   )
   const filteredRows = recordRows.filter((row) =>
@@ -93,7 +96,7 @@ export default async function AdminAttendancePage({
       </div>
       <DataTable
         empty="No attendance sessions are available for your scope."
-        headers={["Class", "Student", "Status", "Course", "Term", "Campus", "Taken"]}
+        headers={["Class", "Student", "Status", "Course", "Term", "Campus", "Session time"]}
         minWidth="min-w-[900px]"
         rows={filteredRows.map((row) => (
           <TableRow key={row.id}>
@@ -106,7 +109,7 @@ export default async function AdminAttendancePage({
             <TableCell>{row.courseName}</TableCell>
             <TableCell>{row.termName}</TableCell>
             <TableCell>{row.campusName}</TableCell>
-            <TableCell>{row.takenAt.toLocaleString()}</TableCell>
+            <TableCell>{formatDateTimeInTimeZone(row.takenAt, row.timezone)}</TableCell>
           </TableRow>
         ))}
       />

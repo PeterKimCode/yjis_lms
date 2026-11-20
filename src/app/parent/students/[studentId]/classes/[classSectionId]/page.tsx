@@ -47,11 +47,11 @@ export default async function ParentClassPage({ params, searchParams }: {
       })} />
     </SectionBlock> : null}
     {selection.section === "sessions" ? <SectionBlock id="sessions" title="Sessions">
-      <SimpleTable empty="No class sessions yet." headers={["Title", "Starts", "Mode", "Location"]} rows={section.sessions.map((session) => <TableRow key={session.id}><TableCell>{session.title ?? "Class session"}</TableCell><TableCell>{formatDateTime(session.startsAt)}</TableCell><TableCell>{session.deliveryMode}</TableCell><TableCell>{session.location ?? "-"}</TableCell></TableRow>)} />
+      <SimpleTable empty="No class sessions yet." headers={["Title", "Starts", "Mode", "Location"]} rows={section.sessions.map((session) => <TableRow key={session.id}><TableCell>{session.title ?? "Class session"}</TableCell><TableCell>{formatDateTimeInTimeZone(session.startsAt, section.organization.timezone)}</TableCell><TableCell>{session.deliveryMode}</TableCell><TableCell>{session.location ?? "-"}</TableCell></TableRow>)} />
     </SectionBlock> : null}
     {selection.section === "attendance" ? <SectionBlock id="attendance" title="Attendance">
       <p className="mb-4 text-sm text-muted-foreground">Attendance rate: {attendance.attendanceRate.toFixed(1)}% · Present: {attendance.presentCount} · Late: {attendance.lateCount} · Absent: {attendance.absentCount}</p>
-      <SimpleTable empty="No attendance records yet." headers={["Session", "Date", "Status", "Note"]} rows={section.attendanceSessions.flatMap((session) => session.records.filter((record) => record.studentId === studentId).map((record) => <TableRow key={record.id}><TableCell>{session.title ?? session.classSession?.title ?? "Attendance"}</TableCell><TableCell>{formatDateTime(session.takenAt)}</TableCell><TableCell>{record.status}</TableCell><TableCell>{record.note ?? "-"}</TableCell></TableRow>))} />
+      <SimpleTable empty="No attendance records yet." headers={["Session", "Date", "Status", "Note"]} rows={section.attendanceSessions.flatMap((session) => session.records.filter((record) => record.studentId === studentId).map((record) => <TableRow key={record.id}><TableCell>{session.title ?? session.classSession?.title ?? "Attendance"}</TableCell><TableCell>{formatDateTimeInTimeZone(session.takenAt, section.organization.timezone)}</TableCell><TableCell>{record.status}</TableCell><TableCell>{record.note ?? "-"}</TableCell></TableRow>))} />
     </SectionBlock> : null}
     {selection.section === "assignments" ? <SectionBlock id="assignments" title="Assignments">
       <SimpleTable empty="No assignments yet." headers={["Title", "Due", "Status", "Score"]} rows={section.assignments.map((assignment) => {

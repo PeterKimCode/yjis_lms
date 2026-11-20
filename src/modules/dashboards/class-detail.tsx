@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { FormDialog } from "@/components/form-dialog"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import {
   DashboardPage,
   EmptyState,
@@ -88,6 +89,7 @@ export async function ClassSectionDetail({
     notFound()
   }
 
+  const classTime = (value: Date | null) => formatDateTimeInTimeZone(value, section.organization.timezone)
   const enrollmentCount = section.enrollments.length
   const policies = await resolvePolicies({
     organizationId: section.organizationId,
@@ -321,11 +323,11 @@ export async function ClassSectionDetail({
                   <Input name="title" placeholder="Class meeting" />
                 </label>
                 <label className="grid gap-1 text-sm">
-                  <span className="font-medium">Starts at</span>
+                  <span className="font-medium">Starts at (school time)</span>
                   <Input name="startsAt" required type="datetime-local" />
                 </label>
                 <label className="grid gap-1 text-sm">
-                  <span className="font-medium">Ends at</span>
+                  <span className="font-medium">Ends at (school time)</span>
                   <Input name="endsAt" type="datetime-local" />
                 </label>
                 <label className="grid gap-1 text-sm">
@@ -371,9 +373,9 @@ export async function ClassSectionDetail({
                 <TableCell className="font-medium">
                   {session.title ?? "Class session"}
                 </TableCell>
-                <TableCell>{formatDateTime(session.startsAt)}</TableCell>
+                <TableCell>{classTime(session.startsAt)}</TableCell>
                 {mode === "instructor" ? (
-                  <TableCell>{formatDateTime(session.endsAt)}</TableCell>
+                  <TableCell>{classTime(session.endsAt)}</TableCell>
                 ) : null}
                 <TableCell>{session.deliveryMode}</TableCell>
                 <TableCell>{session.location ?? "-"}</TableCell>
@@ -433,7 +435,7 @@ export async function ClassSectionDetail({
         >
           <div className="space-y-4">
             {mode === "student" ? (
-              <Button asChild variant="outline"><Link href="/student/attendance">Show attendance QR</Link></Button>
+              <Button asChild variant="outline"><Link href="/student/school-attendance#class-qr">Show attendance QR</Link></Button>
             ) : null}
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
               <AttendanceStat
@@ -476,7 +478,7 @@ export async function ClassSectionDetail({
                   <div className="space-y-3 pt-3">
                     {section.attendanceSessions.map((attendance) => attendance.qrOpenedAt ? (
                       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-white p-3" key={attendance.id}>
-                        <span className="text-sm font-medium">{attendance.title ?? "Attendance"} · {formatDateTime(attendance.takenAt)}</span>
+                        <span className="text-sm font-medium">{attendance.title ?? "Attendance"} · {classTime(attendance.takenAt)}</span>
                         {attendance.classSessionId ? (
                           <Button asChild size="sm" variant="outline"><Link href={`/attendance/${attendance.classSessionId}`}>Review QR attendance</Link></Button>
                         ) : null}
@@ -488,7 +490,7 @@ export async function ClassSectionDetail({
                       >
                         <summary className="cursor-pointer text-sm font-medium">
                           {attendance.title ?? "Attendance"} -{" "}
-                          {formatDateTime(attendance.takenAt)}
+                          {classTime(attendance.takenAt)}
                         <HelpTooltip>Default is Present. Change only students who are
                                 late, absent, excused, or pending.</HelpTooltip></summary>
                         <div className="pt-3">
@@ -582,7 +584,7 @@ export async function ClassSectionDetail({
                             attendance.classSession?.title ??
                             "Attendance"}
                         </TableCell>
-                        <TableCell>{formatDateTime(attendance.takenAt)}</TableCell>
+                        <TableCell>{classTime(attendance.takenAt)}</TableCell>
                         <TableCell>
                           <StatusBadge value={record.status} />
                         </TableCell>

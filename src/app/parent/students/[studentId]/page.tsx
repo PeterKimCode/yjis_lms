@@ -14,7 +14,6 @@ import {
   TableRow,
 } from "@/modules/dashboards/components"
 import {
-  formatDate,
   formatDateTime,
   getAttendancePolicyForOrganization,
   getParentStudentDetail,
@@ -121,7 +120,7 @@ export default async function ParentStudentDetailPage({
             </TableCell>
             <TableCell>{record.status}</TableCell>
             <TableCell>
-              {formatDateTime(record.checkedInAt) || formatDate(record.createdAt)}
+              {formatDateTimeInTimeZone(record.checkedInAt ?? record.createdAt, record.attendanceSession.organization.timezone)}
             </TableCell>
           </TableRow>
         ))}

@@ -44,7 +44,7 @@ function refreshAttendance(classSessionId: string, classSectionId: string) {
   revalidatePath("/admin/attendance")
   revalidatePath(`/instructor/classes/${classSectionId}`)
   revalidatePath(`/student/classes/${classSectionId}`)
-  revalidatePath("/student/attendance")
+  revalidatePath("/student/school-attendance")
   revalidatePath("/notifications")
 }
 

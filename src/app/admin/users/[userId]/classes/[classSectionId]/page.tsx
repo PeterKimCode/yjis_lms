@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatDateTimeInTimeZone } from "@/lib/timezone"
 import {
   AdminPageHeader,
   DataTable,
@@ -96,7 +97,7 @@ export default async function AdminStudentClassRecordPage({
               value={`${attendanceSummary.attendanceRate.toFixed(1)}%`}
             />
           </div>
-          <AttendanceTable rows={attendanceRows} />
+          <AttendanceTable rows={attendanceRows} timezone={section.organization.timezone} />
         </div>
       </DetailsSection>
 
@@ -153,7 +154,7 @@ function DetailsSection({
   )
 }
 
-function AttendanceTable({ rows }: { rows: ReturnType<typeof getAttendanceRows> }) {
+function AttendanceTable({ rows, timezone }: { rows: ReturnType<typeof getAttendanceRows>; timezone: string }) {
   return (
     <DataTable
       empty="No attendance records yet."
@@ -164,7 +165,7 @@ function AttendanceTable({ rows }: { rows: ReturnType<typeof getAttendanceRows> 
           <TableCell className="max-w-[260px] truncate">
             {row.session.title ?? row.session.classSession?.title ?? "Attendance"}
           </TableCell>
-          <TableCell>{formatDateTime(row.session.takenAt)}</TableCell>
+          <TableCell>{formatDateTimeInTimeZone(row.session.takenAt, timezone)}</TableCell>
           <TableCell>
             <Badge variant="secondary">{row.record.status}</Badge>
           </TableCell>
